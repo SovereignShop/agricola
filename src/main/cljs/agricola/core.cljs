@@ -1,4 +1,4 @@
-(ns ^:figwheel-hooks agricola.core
+(ns agricola.core
   (:require
    [agricola.events.app-state :as app-events]
    [agricola.constants.ui-idents]

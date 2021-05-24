@@ -12,3 +12,11 @@ pom.xml.asc
 .lein-failures
 .nrepl-port
 .cpcache/
+out/
+dist
+deps/bin
+resources/db
+resources/public/js
+resources/public/cljs-out
+node_modules
+target

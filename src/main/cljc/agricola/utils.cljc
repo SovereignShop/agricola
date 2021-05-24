@@ -65,10 +65,6 @@
            (comp cat (map #(assoc % :agricola.piece/round round-id)))
            [board-cards]))))
 
-(comment 
-  (make-game-pieces -1 db/words db/board-dimensions)
-
-  )
 
 (defn make-user
   ([username]
