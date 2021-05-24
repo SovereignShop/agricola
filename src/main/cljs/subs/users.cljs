@@ -1,0 +1,22 @@
+(ns ^:figwheel-always agricola.subs.users
+  (:require
+   [swig.macros :refer-macros [def-sub]]
+   [taoensso.timbre :refer-macros [debug info warn]]))
+
+(def-sub ::users
+  [:find (pull ?user [:user/alias
+                      :user/id
+                      :user/name
+                      :user/last-seen])
+   :in $ ?gid
+   :where
+   [?gid :group/users ?user]])
+
+(def-sub ::get-user
+  [:find (pull ?uid [:user/alias
+                     :user/id
+                     :user/name
+                     :user/last-seen]) .
+   :in $ ?uid
+   :where
+   [?uid :user/name]])
