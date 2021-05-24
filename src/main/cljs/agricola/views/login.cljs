@@ -1,6 +1,6 @@
 (ns agricola.views.login
   (:require [agricola.query :as q]
-            [swig.views :as swig-view]
+            [swig.dispatch :as swig-view]
             [agricola.subs.app-state :as app-state]
             [agricola.constants.ui-idents :as idents]
             [re-com.core :refer [h-box v-box line border title modal-panel

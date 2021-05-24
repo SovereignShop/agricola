@@ -3,7 +3,7 @@
    [agricola.constants.ui-tabs :as tabs]
    [agricola.subs.session :as session-subs]
    [agricola.subs.users :as user-subs]
-   [swig.views :as swig-view]
+   [swig.dispatch :as swig-view]
    [re-posh.core :as re-posh]
    [re-com.core :as rc]))
 

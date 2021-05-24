@@ -1,12 +1,12 @@
-(ns ^:figwheel-always agricola.events.pregame
+(ns agricola.events.pregame
   (:require
    [agricola.db :as db]
    [agricola.constants.ui-tabs :as tabs]
    [agricola.constants.ui-idents :as idents]
    [agricola.utils :as utils]
    [datascript.core :as d]
-   [swig.macros :refer [def-event-ds]]
-   [swig.events :refer [exit-fullscreen]]
+   [swig.macros :refer-macros [def-event-ds]]
+   [swig.events.tab :refer [exit-fullscreen]]
    [taoensso.timbre :refer-macros [debug info warn error]]))
 
 (def-event-ds ::enter-game [db [_ tab-id game-id]]

@@ -1,6 +1,6 @@
 (ns agricola.subs.game
   (:require
-   [swig.macros :refer [def-sub def-pull-sub]]))
+   [swig.macros :refer-macros [def-sub def-pull-sub]]))
 
 (def-sub ::cards
   [:find (pull ?card [:agricola.character-card/color

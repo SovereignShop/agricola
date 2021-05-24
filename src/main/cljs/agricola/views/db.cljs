@@ -2,7 +2,7 @@
   (:require
    [agricola.constants.ui-tabs :as tabs]
    [agricola.subs.db :as db-subs]
-   [swig.views :as swig-view]
+   [swig.dispatch :as swig-view]
    [re-com.core :as com]
    [re-posh.core :as re-posh]))
 

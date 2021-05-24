@@ -1,4 +1,4 @@
-(ns ^:figwheel-always agricola.views.pregame
+(ns agricola.views.pregame
   (:require
    [agricola.constants.ui-tabs :as tabs]
    [agricola.subs.pregame :as pregame-subs]
@@ -6,7 +6,7 @@
    [agricola.subs.session :as session-subs]
    [agricola.events.pregame :as pregame-events]
    [cljs-time.core :as time]
-   [swig.views :as swig-view]
+   [swig.dispatch :as swig-view]
    [re-com.core :refer [h-box v-box button line box scroller gap]]
    [re-posh.core :as re-posh]
    [goog.string :as gstr]

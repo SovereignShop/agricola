@@ -4,7 +4,7 @@
    [agricola.events.popover :as pop-events]
    [agricola.constants.ui-idents :as idents]
    [re-posh.core :as re-posh]
-   [swig.views :as swig-view]
+   [swig.dispatch :as swig-view]
    [re-com.core :refer [modal-panel]]))
 
 (defn main-popover []

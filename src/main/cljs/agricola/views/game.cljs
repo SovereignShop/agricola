@@ -1,4 +1,4 @@
-(ns ^:figwheel-always agricola.views.game
+(ns agricola.views.game
   (:require
    [agricola.subs.game :as game-subs]
    [agricola.subs.session :as session-subs]
@@ -8,7 +8,7 @@
    [agricola.events.game :as game-events]
    [agricola.events.pregame :as pregame-events]
    [agricola.db :as db]
-   [swig.views :as swig-view]
+   [swig.dispatch :as swig-view]
    [re-posh.core :as re-posh]
    [re-com.core :as com :refer [h-box v-box box button gap scroller input-text]]))
 
@@ -130,6 +130,7 @@
          [[box :child (str (:agricola.turn/word turn))]
           [gap :size "10px"]
           [box :child (str (:agricola.turn/number turn))]]]))))
+
 
 (defmethod swig-view/dispatch tabs/game-board
   [{tab-id :db/id}]

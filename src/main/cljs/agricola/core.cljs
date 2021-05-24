@@ -34,7 +34,7 @@
    [agricola.config :as config]
    [datascript.core :as d]
    [swig.core :as swig]
-   [swig.views :as swig-view]
+   [swig.dispatch :as swig-view]
    [re-posh.core :as re-posh]))
 
 (defonce _ (re-posh/connect! db/conn))

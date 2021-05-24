@@ -43,7 +43,6 @@
     (when error
       (ev/listen req goog.net.EventType/ERROR #(error req))
       (ev/listen req goog.net.EventType/TIMEOUT #(error req)))
-    (println "headers:" headers)
     (.send req uri method data
            (when headers (clj->js headers))
            30)))
@@ -61,14 +60,14 @@
        :params {:query q-str :datoms? datoms?}  ;; TODO: GET request body?
        :success (fn [resp]
                   (info :success)
-                  (let [results-str (.getResponseText resp)]
+                  (let [results-str ^js (.getResponseText resp)]
                     (info ::do-query :string/count (count results-str))
                     (let [results (dt/read-transit-str results-str)]
                       (info "TESTING" (type results) (keys (first results)))
                       (put! result results)
                       (re-posh/dispatch [:agricola.events.queries/cache-query query]))))
        :error (fn [resp]
-                (let [err (.getResponseText resp)]
+                (let [err ^js (.getResponseText resp)]
                   (js/console.log err)
                   (put! result err)))})
      result)))
@@ -85,11 +84,11 @@
               :edn? false
               :success (fn [resp]
                          (info :success)
-                         (let [results-str (.getResponseText resp)]
+                         (let [results-str ^js (.getResponseText resp)]
                            (info ::do-query :string/count (count results-str))
                            (put! result results-str)))
               :error (fn [resp]
-                       (let [err (.getResponseText resp)]
+                       (let [err ^js (.getResponseText resp)]
                          (js/console.log err)
                          (put! result err)))}
              opts))
@@ -107,7 +106,7 @@
                (let [datoms (into [[:db/retractEntity [:swig/ident :swig/root-view]]
                                    [:db/retractEntity [:swig/ident idents/modal-dialog]]
                                    [:db/retractEntity [:swig/ident idents/modal-dialog]]]
-                                  (dt/read-transit-str (.getResponseText resp)))
+                                  (dt/read-transit-str ^js (.getResponseText resp)))
                      datoms (conj datoms
                                   {:swig/ident       idents/main-popover
                                    :swig/type        :swig.type/window

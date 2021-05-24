@@ -1,7 +1,7 @@
 (ns agricola.views.chat
   "Adapted from: https://github.com/rauhs/klang/blob/master/src/cljs/klang/core.cljs"
   (:require
-   [swig.views :as swig-view]
+   [swig.dispatch :as swig-view]
    [agricola.events.chat :as chat-events]
    [cljsjs.highlight]
    [cljsjs.highlight.langs.clojure]

@@ -1,7 +1,7 @@
 (ns agricola.subs.clock
   (:require
    [agricola.constants.ui-idents :as idents]
-   [swig.macros :refer [def-sub]]))
+   [swig.macros :refer-macros [def-sub]]))
 
 (def-sub ::latest-time
   [:find ?time .

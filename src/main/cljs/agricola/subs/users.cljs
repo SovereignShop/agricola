@@ -1,4 +1,4 @@
-(ns ^:figwheel-always agricola.subs.users
+(ns agricola.subs.users
   (:require
    [swig.macros :refer-macros [def-sub]]
    [taoensso.timbre :refer-macros [debug info warn]]))
