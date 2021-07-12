@@ -169,6 +169,86 @@
    {:swig/ident idents/app-state}])
 
 (def schema
+  [{:db/ident :agricola.game/board
+    :db/valueType :db.type/ref
+    :db/cardinality :db.cardinality/one}
+   {:db/ident :agricola.board/type
+    :db/valueType :db.type/keyword
+    :db/cardinality :db.cardinality/one}
+   {:db/ident :agricola.board/spaces
+    :db/valueType :db.type/ref
+    :db/cardinality :db.cardinality/many}
+   {:db/ident :agricola.space/played?
+    :db/valueType :db.type/boolean
+    :db/cardinality :db.cardinality/one}
+   {:db/ident :agricola.space/occupied
+    :db/valueType :db.type/boolean
+    :db/cardinality :db.cardinality/one}
+   {:db/ident :agricola.space/type
+    :db/valueType :db.type/keyword
+    :db/cardinality :db.cardinality/one} ;; accumulation | single use
+   {:db/ident :agricola.space/name
+    :db/valueType :db.type/string
+    :db/cardinality :db.cardinality/one}
+   {:db/ident :agricola.space/id
+    :db/valueType :db.type/uuid
+    :db/cardinality :db.cardinality/one}
+   {:db/ident :agricola.game/players
+    :db/valueType :db.type/ref
+    :db/cardinality :db.cardinality/many}
+   {:db/ident :agricola.game/stage
+    :db/valueType :db.type/ref
+    :db/cardinality :db.cardinality/one}
+   {:db/ident :agricola.stage/round
+    :db/valueType :db.type/ref
+    :db/cardinality :db.cardinality/one}
+   {:db/ident :agricola.round/turn
+    :db/valueType :db.type/ref
+    :db/cardinality :db.cardinality/one}
+   {:db/ident :agricola.turn/player
+    :db/valueType :db.type/ref
+    :db/cardinality :db.cardinality/one}
+   {:db/ident :agricola.player/position
+    :db/valueType :db.type/tuple
+    :db/cardinality :db.cardinality/one}
+   {:db/ident :agricola.player/board
+    :db/valueType :db.type/ref
+    :db/cardinality :db.cardinality/one}
+   {:db/ident :agricola.player/cards
+    :db/valueType :db.type/ref
+    :db/cardinality :db.cardinality/many}
+   {:db/ident :agricola.card/type
+    :db/valueType :db.type/keyword
+    :db/cardinality :db.cardinality/one} ;; Occupation | Improvement | Major Improvement
+   {:db/ident :agricola.card/status
+    :db/valueType :db.type/keyword
+    :db/cardinality :db.cardinality/one} ;; Played | Unplayed
+   {:db/ident :agricola.card/description
+    :db/valueType :db.type/string
+    :db/cardinality :db.cardinality/one}
+   {:db/ident :agricola.card/requirements
+    :db/valueType :db.type/ref
+    :db/cardinality :db.cardinality/many}
+   {:db/ident :agricola.card/costs
+    :db/valueType :db.type/ref
+    :db/cardinality :db.cardinality/many}
+   {:db/ident :agricola.card/sprite
+    :db/valueType :db.type/string       ;; URL
+    :db/cardinality :db.cardinality/one}
+   {:db/ident :agricola.player-board/family
+    :db/valueType :db.type/ref
+    :db/cardinality :db.cardinality/many}
+   {:db/ident :agricola.player-board/spaces
+    :db/valueType :db.type/ref
+    :db/cardinality :db.cardinality/many}
+   {:db/ident :agricola.player-space/type
+    :db/valueType :db.type/keyword
+    :db/cardinality :db.cardinality/one}
+   {:db/ident :agricola.player-space/position
+    :db/valueType :db.type/tuple
+    :db/cardinality :db.cardinality/one}])
+
+(def schema
   [{:db/ident       :session/user
     :db/valueType   :db.type/ref
     :db/cardinality :db.cardinality/one
