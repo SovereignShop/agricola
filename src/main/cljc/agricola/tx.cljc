@@ -4,8 +4,18 @@
 
 (defn insert-optional [& {:keys [title tx]}])
 
-(defn add-grain [db])
+(defn add-food [entity n-food] [])
 
-(defn remove-grain [db entity-id n-grain] db)
+(defn remove-food [entity n-food] [])
 
-(defn remove-grain [db entity-id n-grain] db)
+(defn add-grain [entity n-grain] [])
+
+(defn remove-grain [entity n-grain] [])
+
+(defn add-field [player] [])
+
+(defn remove-field [player] [])
+
+(defn add-vegetable [entity n-vegetables] [])
+
+(defn remove-vegetable [entity n-vegetables] [])
