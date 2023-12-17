@@ -4,7 +4,7 @@
    [agricola.events :as events]
    [agricola.tx :as tx]
    [agricola.utils :as u]
-   [agricola.idents :as ids]))
+   [agricola.bits :as bits]))
 
 (defn- resource-acc
   ([resource entity-id]
@@ -19,17 +19,16 @@
 (def food-acc (partial resource-acc :agricola.bit/food))
 
 (defn field-watchman [event]
-  (let [card (u/get-ident event ids/field-watchman)
+  (let [card (u/get-game-bit event bits/field-watchman)
         player (u/get-owner card)
         player-id (:db/id player)]
-    (fn [db event]
-      (when (events/player-take-grain? event player-id)
-        (tx/insert-optional
-         :title "Add field to board"
-         :tx (tx/add-field player))))))
+    (when (events/player-take-grain? event player-id)
+      (tx/insert-optional
+       :title "Add field to board"
+       :tx (tx/add-fields player 1)))))
 
 (defn family-counseler [event]
-  (let [card (u/get-game-bit event ids/family-counseler)
+  (let [card (u/get-game-bit event bits/family-counseler)
         player (u/get-owner card)]
     (when (events/end-of-round? event)
       (let [workers (u/get-workers player)
@@ -37,17 +36,13 @@
             squares (map u/get-square workers)
             tiles (into #{} (map u/get-title) squares)]
         (when (= (count tiles) 1)
-          (cond (= n-workers 2) (tx/add-food player 1)
-                (= n-workers 3) (tx/add-grain player 1)
-                (= n-workers 4) (tx/add-vegetable player 1)))))))
-
-
-(:agricola.card/name :card/)
-(:agricola.deck/)
+          (case n-workers
+            2 (tx/add-food player 1)
+            3 (tx/add-grain player 1)
+            4 (tx/add-vegetables player 1)))))))
 
 (defn grain-elevator [event]
-  (let [db (d/entity-db event)
-        card (u/get-ident event ids/grain-elevator)
+  (let [card (u/get-game-bit event bits/grain-elevator)
         player (u/get-owner card)
         player-id (:db/id player)]
     (cond
@@ -67,18 +62,8 @@
                 (tx/add-grain player n-grain)
                 (tx/remove-grain card n-grain))))))))
 
-(defn plow-one-field [event]
-  (let [db (d/entity-db event)
-        bit (d/entity db ids/plow-one-field)]
-    (when (events/take-action? event ids/plow-one-field))))
-
-(defn plow-field [player-id]
-  (fn [db event]
-    (when (event/player-take? event player-id))))
-
 (def effects
-  {ids/grain-elevator   [grain-elevator]
-   ids/field-watchman   [field-watchman]
-   ids/family-counseler [family-counseler]
-   ids/day-laborer      [(partial food-acc 2)]
-   ids/plow-one-field   [(partial ply)]})
+  {bits/grain-elevator   [grain-elevator]
+   bits/field-watchman   [field-watchman]
+   bits/family-counseler [family-counseler]
+   bits/day-laborer      [(partial food-acc 2)]})

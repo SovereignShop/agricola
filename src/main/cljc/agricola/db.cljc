@@ -1,13 +1,11 @@
 (ns agricola.db
   (:require
-   [datascript.core :as d]))
+   [datascript.core :as d]
+   [datascript.storage :refer [file-storage]]))
 
 (def cfg {:store {:backend :file :path "/tmp/agricola"}})
 
-(defonce conn
-  (do
-    (d/create-database cfg)
-    (d/connect cfg)))
+d/create-conn
 
 (def card-schema
   [{:db/ident       :agricola.card/type
@@ -133,6 +131,9 @@
   [{:db/ident       :agricola.game/id
     :db/valueType   :db.type/uuid
     :db/cardinality :db.cardinality/one}
+   {:db/ident       :agricola.game/bits
+    :db/valueType   :db.type/ref
+    :db/cardinality :db.cardinality/one}
    {:db/ident       :agricola.game/name
     :db/valueType   :db.type/string
     :db/cardinality :db.cardinality/one}
@@ -168,3 +169,28 @@
    {:db/ident       :agricola.stage/number
     :db/valueType   :db.type/number
     :db/cardinality :db.cardinality/one}])
+
+(def schema
+  (into {:agricola.element/field-watchman {:db/valueType :db.type/ref}
+         :agricola.element/grain-elevator {:db/valueType :db.type/ref}}
+        (comp cat
+              (map (fn [{:keys [db/ident db/cardinality db/valueType]}]
+                     [ident (cond-> {:db/cardinality cardinality}
+                              (#{:db.type/ref :db.type/tuple} valueType) (assoc :db/valueType valueType))])))
+        (vector card-schema player-schema resource-schema board-schema
+                tile-schema piece-schema sprite-schema game-board-schema
+                gameplay-schema square-schema)))
+
+(def conn
+  (d/create-conn schema {:storage (file-storage "db")}))
+
+(d/transact! conn [{:db/id 1
+                    :agricola.element/field-watchman {:agricola.bit/is-active false}
+                    :agricola.element/grain-elevator {:db/id 3
+                                                      :agricola.bit/title "Grain Elevator"
+                                                      :agricola.bit/description ""}}])
+
+(:agricola.bit/is-active (:agricola.bit/field-watchman (d/entity @conn 1)))
+
+
+(d/entity @conn (:v (d/find-datom @conn :eavt 1 :agricola.bit/grain-elevator)))

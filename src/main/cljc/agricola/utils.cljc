@@ -21,9 +21,38 @@
   (:agricola.bit/children entity))
 
 (defn get-game-bit [event game-bit-name]
-  (let [db (d/entity-db event)
-        game-id (:db/id (:agricola.event/game event))]
-    (:v (d/find-datom db :eavt game-id game-bit-name))))
+  (let [game (:agricola.event/game event)
+        bits (:agricola.game/bits game)]
+    (get bits game-bit-name)))
+
+(defn current-game-round [game]
+  (-> game
+      (:agricola.game/current-stage)
+      (:agricola.stage/current-round)))
+
+(defn current-player [round]
+  (:agricola.round/current-player round))
+
+(defn action-taken? [game action]
+  (let [round (current-game-round game)
+        actions (into {}
+                      (map (juxt :agricola.action/name identity))
+                      (:agricola.round/actions round))]
+    (contains? actions (:agricola.action/name action))))
+
+(defn get-available-actions [game]
+  ;; 1. Read from board
+  ;; 2. Read from round action log
+  ;; How to time travel over board states? Just an action log?
+  ;; :
+  (let [db (d/entity game)
+        round (current-game-round game)
+        actions (:agricola.round/actions round)]
+    (d/datoms db :eavt (:db/id game) :agricola.game/element)
+    (get round :agricola)))
+
+(defn get-taken-actions [round]
+  (:agricola.round/taken-actions round))
 
 (defn make-square [ident position title description]
   (conj
@@ -86,3 +115,6 @@
      :agricola.game/id (UUID/randomUUID)
      :agricola.game/rounds squares
      :agricola.game/players (map :db/id players)}))
+
+(defn make-draft [players]
+  )
