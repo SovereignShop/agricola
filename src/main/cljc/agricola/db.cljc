@@ -1,11 +1,8 @@
 (ns agricola.db
   (:require
    [datascript.core :as d]
+   [clojure.pprint :refer [pprint]]
    [datascript.storage :refer [file-storage]]))
-
-(def cfg {:store {:backend :file :path "/tmp/agricola"}})
-
-d/create-conn
 
 (def card-schema
   [{:db/ident       :agricola.card/type
@@ -184,11 +181,59 @@ d/create-conn
 (def conn
   (d/create-conn schema {:storage (file-storage "db")}))
 
-(d/transact! conn [{:db/id 1
-                    :agricola.element/field-watchman {:agricola.bit/is-active false}
-                    :agricola.element/grain-elevator {:db/id 3
-                                                      :agricola.bit/title "Grain Elevator"
-                                                      :agricola.bit/description ""}}])
+(def undo-log (atom []))
+(def redo-log (atom []))
+
+
+(def retraction-conn
+  (d/create-conn schema {:storage (file-storage "retraction-log")}))
+
+(def addition-conn
+  (d/create-conn schema {:storage (file-storage "addition-log")}))
+
+(d/listen! conn :tmp (fn [{:keys [tx-data tx-meta]}]
+                       (when (and (:keep-history tx-meta) (pos? (count tx-data)))
+                         (let [groups (group-by :added tx-data)]
+                           (d/transact! retraction-conn (map #(assoc % :added true) (get groups false)))
+                           (d/transact! addition-conn (get groups true))))))
+
+(:eavt @retraction-conn)
+
+(defn undo [db n-steps]
+  (with-meta
+    (mapv #(assoc % :added false)
+          (take n-steps (d/rseek-datoms db :eavt)))
+    {:keep-history false}))
+
+(defn redo [start-idx n-steps]
+  (with-meta
+    (mapv #(assoc % :added true)
+          (subvec start-idx (+ start-idx n-steps) @redo-log))
+    {:keep-history false}))
+
+(d/transact! conn
+             [{:db/id 1
+               :agricola.bit/number 13
+               ;; :agricola.element/field-watchman {:agricola.bit/is-active true
+               ;;                                   :db/id 2}
+               ;; :agricola.element/grain-elevator {:db/id 3
+               ;;                                   :agricola.bit/title "Grain Elevator"
+               ;;                                   :agricola.bit/description ""}
+               }]
+             {:keep-history true})
+
+(:eavt @conn)
+
+(d/rseek-datoms @conn :eavt)
+
+(let [db @conn
+      before (d/entity db 1)
+      db-after (:db-after (d/with db (undo db 3)))
+      after (d/entity db-after 1)]
+  (mapv :agricola.bit/number [before after]))
+
+@undo-log
+@redo-log
 
 (:agricola.bit/is-active (:agricola.bit/field-watchman (d/entity @conn 1)))
 
