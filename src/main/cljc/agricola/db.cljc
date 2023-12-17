@@ -1,12 +1,13 @@
 (ns agricola.db
   (:require
-   [datahike.api :as d]))
+   [datascript.core :as d]))
 
 (def cfg {:store {:backend :file :path "/tmp/agricola"}})
 
-(d/create-database cfg)
-
-(def conn (d/connect cfg))
+(defonce conn
+  (do
+    (d/create-database cfg)
+    (d/connect cfg)))
 
 (def card-schema
   [{:db/ident       :agricola.card/type
@@ -49,8 +50,6 @@
     :db/valueType   :db.type/boolean
     :db/cardinality :db.cardinality/one}])
 
-(d/transact conn card-schema)
-
 (def resource-schema
   [{:db/ident       :agricola.resource/type
     :db/valueType   :db.type/keyword
@@ -58,8 +57,6 @@
    {:db/ident       :agricola.resource/quantity
     :db/valueType   :db.type/number
     :db/cardinality  :db.cardinality/one}])
-
-(d/transact conn resource-schema)
 
 (def player-schema
   [{:db/ident       :agricola.player/alias
@@ -75,14 +72,10 @@
     :db/valueType   :db.type/ref
     :db/cardinality :db.cardinality/one}])
 
-(d/transact conn player-schema)
-
 (def board-schema
   [{:db/ident       :agricola.board/tiles
     :db/valueType   :db.type/ref
     :db/cardinality :db.cardinality/many}])
-
-(d/transact conn board-schema)
 
 (def tile-schema
   [{:db/ident       :agricola.tile/type
@@ -91,8 +84,6 @@
    {:db/ident       :agricola.tile/pieces
     :db/valueType   :db.type/ref
     :db/cardinality :db.cardinality/many}])
-
-(d/transact conn tile-schema)
 
 (def piece-schema
   [{:db/ident       :agricola.piece/type
@@ -105,8 +96,6 @@
     :db/valueType   :db.type/ref
     :db/cardinality :db.cardinality/one}])
 
-(d/transact conn piece-schema)
-
 (def sprite-schema
   [{:db/ident       :agricola.sprite/type
     :db/valueType   :db.type/keyword
@@ -115,23 +104,22 @@
     :db/valueType   :db.type/string
     :db/cardinality :db.cardinality/one}])
 
-(d/transact conn sprite-schema)
-
 (def game-board-schema
   [{:db/ident       :agricola.game-board/squares
     :db/valueType   :db.type/ref
     :db/cardinality :db.cardinality/many}])
 
-(d/transact conn game-board-schema)
-
 (def square-schema
   [{:db/ident       :agricola.square/type
     :db/valueType   :db.type/keyword
     :db/cardinality :db.cardinality/one}
-   {:db/ident       :agricola.square/name
+   {:db/ident       :agricola.square/title
     :db/valueType   :db.type/keyword
     :db/cardinality :db.cardinality/one}
-   {:db/ident       :agricola.square/pieces
+   {:db/ident       :agricola.square/description
+    :db/valueType   :db.type/keyword
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :agricola.square/bits
     :db/valueType   :db.type/ref
     :db/cardinality :db.cardinality/many}
    {:db/ident       :agricola.square/position
@@ -141,4 +129,42 @@
     :db/valueType   :db.type/boolean
     :db/cardinality :db.cardinality/one}])
 
-(d/transact conn square-schema)
+(def gameplay-schema
+  [{:db/ident       :agricola.game/id
+    :db/valueType   :db.type/uuid
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :agricola.game/name
+    :db/valueType   :db.type/string
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :agricola.game/board
+    :db/valueType   :db.type/ref
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :agricola.game/current-round
+    :db/valueType   :db.type/ref
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :agricola.game/rounds
+    :db/valueType   :db.type/ref
+    :db/cardinality :db.cardinality/many}
+   {:db/ident       :agricola.game/players
+    :db/valueType   :db.type/ref
+    :db/cardinality :db.cardinality/many}
+   {:db/ident       :agricola.game/finished?
+    :db/valueType   :db.type/boolean
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :agricola.game/current-stage
+    :db/valueType   :db.type/ref
+    :db/cardinality :db.cardinality/one}
+
+   {:db/ident       :agricola.round/current-player
+    :db/valueType   :db.type/ref
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :agricola.round/number
+    :db/valueType   :db.type/number
+    :db/cardinality :db.cardinality/one}
+   {:db/ident       :agricola.round/square
+    :db/valueType   :db.type/ref
+    :db/cardinality :db.cardinality/one}
+
+   {:db/ident       :agricola.stage/number
+    :db/valueType   :db.type/number
+    :db/cardinality :db.cardinality/one}])

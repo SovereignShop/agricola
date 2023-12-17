@@ -1,21 +1,29 @@
 (ns agricola.tx
   (:require
-   [datahike.api :as d]))
+   [datascript.core :as d]))
 
 (defn insert-optional [& {:keys [title tx]}])
 
-(defn add-food [entity n-food] [])
+(defn add-resource [entity resource n]
+  [[(:db/id entity) resource (+ (get entity resource) n)]])
 
-(defn remove-food [entity n-food] [])
+(defn add-food [entity n-food]
+  (add-resource entity :agricola.bit/food n-food))
 
-(defn add-grain [entity n-grain] [])
+(defn add-grain [entity n-grain]
+  (add-resource entity :agricola.bit/grain n-grain))
 
-(defn remove-grain [entity n-grain] [])
+(defn remove-grain [entity n-grain]
+  (add-resource entity :agricola.bit/grain (- n-grain)))
 
-(defn add-field [player] [])
+(defn add-fields [entity n-fields]
+  (add-resource entity :agricola.bit/field n-fields))
 
-(defn remove-field [player] [])
+(defn remove-fields [entity n-fields]
+  (add-resource entity :agricola.bit/field (- n-fields)))
 
-(defn add-vegetable [entity n-vegetables] [])
+(defn add-vegetables [entity n-vegetables]
+  (add-resource entity :agricola.bit/vegetable n-vegetables))
 
-(defn remove-vegetable [entity n-vegetables] [])
+(defn remove-vegetables [entity n-vegetables]
+  (add-resource entity :agricola.bit/vegetable (- n-vegetables)))
