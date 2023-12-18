@@ -62,6 +62,39 @@
                 (tx/add-grain player n-grain)
                 (tx/remove-grain card n-grain))))))))
 
+(defn return-workers [players]
+  (for [player players
+          worker (u/get-workers player)]
+      (let [home-square (u/get-home-room worker)]
+        [(:db/id worker) :agricola.worker/square home-square])))
+
+(defn increment-accumulator [accumulator]
+  (d/datom (:db/id accumulator)
+           :agricola.accumulator/quantity
+           (+ (u/get-acc-quantity accumulator) (u/get-acc-increment accumulator))))
+
+(defn increment-board [board]
+  (for [action (u/get-actions board)
+        acc (u/get-accumulators action)]
+    (increment-accumulator acc)))
+
+(defn new-round [event]
+  (let [game (u/get-game event)
+        players (u/get-players game)
+        return-workers-tx-data (return-workers players)
+        inc-board-tx-data (increment-board (u/get-board game))]
+    (concat return-workers-tx-data inc-board-tx-data)))
+
+(defn next-turn [event]
+  (let [game (u/get-game event)
+        round (u/get-current-game-round game)
+        player (u/get-current-player round)
+        next-player (u/get-next-player player)]
+    (when next-player
+      [(d/datom (:db/id round) :agricola.round/current-player (:db/id next-player))])))
+
+(defn step-game [game])
+
 (def effects
   {bits/grain-elevator   [grain-elevator]
    bits/field-watchman   [field-watchman]

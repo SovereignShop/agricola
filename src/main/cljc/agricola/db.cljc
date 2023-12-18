@@ -181,61 +181,35 @@
 (def conn
   (d/create-conn schema {:storage (file-storage "db")}))
 
-(def undo-log (atom []))
-(def redo-log (atom []))
+(def history-logs (atom {}))
 
+(d/listen! conn :tmp
+           (fn [{:keys [tx-data tx-meta]}]
+             (let [{:keys [tx-log-id]} tx-meta]
+               (when (and tx-log-id (pos? (count tx-data)))
+                 (let [groups (group-by :added tx-data)]
+                   (swap! history-logs
+                          (fn [history]
+                            (update history
+                                    tx-log-id
+                                    (fn [logs]
+                                      (-> logs
+                                          (update :added into (get groups true))
+                                          (update :removed into (get groups false))))))))))))
 
-(def retraction-conn
-  (d/create-conn schema {:storage (file-storage "retraction-log")}))
+(comment
+  (doseq [i (range 10)]
+    (d/transact! conn
+                 [{:db/id 1
+                   :agricola.bit/number i
+                   ;; :agricola.element/field-watchman {:agricola.bit/is-active true
+                   ;;                                   :db/id 2}
+                   ;; :agricola.element/grain-elevator {:db/id 3
+                   ;;                                   :agricola.bit/title "Grain Elevator"
+                   ;;                                   :agricola.bit/description ""}
+                   }]
+                 {:tx-log-id :game-1}))
 
-(def addition-conn
-  (d/create-conn schema {:storage (file-storage "addition-log")}))
+  (-> @history-logs :game-1 :removed)
 
-(d/listen! conn :tmp (fn [{:keys [tx-data tx-meta]}]
-                       (when (and (:keep-history tx-meta) (pos? (count tx-data)))
-                         (let [groups (group-by :added tx-data)]
-                           (d/transact! retraction-conn (map #(assoc % :added true) (get groups false)))
-                           (d/transact! addition-conn (get groups true))))))
-
-(:eavt @retraction-conn)
-
-(defn undo [db n-steps]
-  (with-meta
-    (mapv #(assoc % :added false)
-          (take n-steps (d/rseek-datoms db :eavt)))
-    {:keep-history false}))
-
-(defn redo [start-idx n-steps]
-  (with-meta
-    (mapv #(assoc % :added true)
-          (subvec start-idx (+ start-idx n-steps) @redo-log))
-    {:keep-history false}))
-
-(d/transact! conn
-             [{:db/id 1
-               :agricola.bit/number 13
-               ;; :agricola.element/field-watchman {:agricola.bit/is-active true
-               ;;                                   :db/id 2}
-               ;; :agricola.element/grain-elevator {:db/id 3
-               ;;                                   :agricola.bit/title "Grain Elevator"
-               ;;                                   :agricola.bit/description ""}
-               }]
-             {:keep-history true})
-
-(:eavt @conn)
-
-(d/rseek-datoms @conn :eavt)
-
-(let [db @conn
-      before (d/entity db 1)
-      db-after (:db-after (d/with db (undo db 3)))
-      after (d/entity db-after 1)]
-  (mapv :agricola.bit/number [before after]))
-
-@undo-log
-@redo-log
-
-(:agricola.bit/is-active (:agricola.bit/field-watchman (d/entity @conn 1)))
-
-
-(d/entity @conn (:v (d/find-datom @conn :eavt 1 :agricola.bit/grain-elevator)))
+  )

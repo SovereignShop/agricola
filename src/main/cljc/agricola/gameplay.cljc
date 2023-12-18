@@ -1,12 +1,12 @@
 (ns agricola.gameplay
   (:require
    [agricola.utils :as u]
-   [agricola.idents :as ids]
+   [agricola.bits :as bits]
    [clojure.pprint :refer [pprint]]
    [datascript.core :as d]))
 
 (defn print-game-state [db]
-  (let [game (d/entity db ids/test-game)
+  (let [game (d/entity db bits/test-game)
         players (:agricola.game/players game)
         current-round (:agricola.game/current-round game)
         current-player (:agricola.game/current-player current-round)
