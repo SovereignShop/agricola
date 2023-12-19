@@ -1,11 +1,13 @@
 {:deps  {org.clojure/clojure {:mvn/version "1.11.1"}
          io.github.tonsky/datascript-storage-sql {:mvn/version "2.0.0"}
+         io.github.humbleui/humbleui             {:git/url "https://github.com/HumbleUI/HumbleUI.git"
+                                                  :sha "9e6088e40e516f267d59ef91aa8606d5025947a1"}
          datascript/datascript                   {:mvn/version "1.6.1"}
 
          reagent/reagent {:mvn/version "1.2.0"}
 
          re-posh                {:local/root "../re-posh"} #_{:mvn/version "0.3.1"
-                                 :exclusions  [denistakeda/posh reagent/reagent]}
+                                                              :exclusions  [denistakeda/posh reagent/reagent]}
          posh                   {:git/url "https://github.com/cartesian-theatrics/posh.git"
                                  :sha     "9110abfd204e239ddb8a16f9c0e0a84265e37009"
                                  :tag     "release/0.0.1"

@@ -66,7 +66,8 @@
                               (tx/remove-grain card n-grain))))))))
     `on-play (fn [this game] this)}
   #:agricola.card
-  {:title "Grain Elevator"})
+  {:name bits/grain-elevator
+   :title "Grain Elevator"})
 
 (playable? field-watchman 123)
 

@@ -25,7 +25,6 @@
 
 (defmethod handle-action bits/play-one-occupation-expensive
   [action]
-  ;; How to handle pre-conditions? Need predicates
   (let [occupation (u/get-chosen-occupation action)]
     (concat
      (tx/add-food (u/get-player action) -1)
