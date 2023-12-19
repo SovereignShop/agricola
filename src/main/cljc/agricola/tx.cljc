@@ -1,8 +1,10 @@
 (ns agricola.tx
   (:require
+   [agricola.utils :as u]
    [datascript.core :as d]))
 
-(defn insert-optional [& {:keys [title tx]}])
+(defn insert-optional [& {:keys [title tx]}]
+  tx)
 
 (defn add-resource [entity resource n]
   [[(:db/id entity) resource (+ (get entity resource) n)]])
@@ -12,6 +14,9 @@
 
 (defn add-grain [entity n-grain]
   (add-resource entity :agricola.bit/grain n-grain))
+
+(defn add-wood [entity n-grain]
+  (add-resource entity :agricola.bit/wood n-grain))
 
 (defn remove-grain [entity n-grain]
   (add-resource entity :agricola.bit/grain (- n-grain)))
@@ -27,3 +32,12 @@
 
 (defn remove-vegetables [entity n-vegetables]
   (add-resource entity :agricola.bit/vegetable (- n-vegetables)))
+
+(defn assoc-entity [entity attr value]
+  [(d/datom (:db/id entity) attr value)])
+
+(defn move-resources [from to]
+  (let [a (:agricola.space/resources from)]
+    (conj (vec (for [id (map :db/id a)]
+                 [:db/add (:db/id to) :agricola.space/resources id]))
+          [:db/retract (:db/id from) :agricola.space/resources])))

@@ -2,9 +2,8 @@
   (:require
    [datascript.core :as d]))
 
-(defn take-action [name player-id action-id]
-  {:agricola.event/name name
-   :agricola.event/player player-id
+(defn take-action [player-id action-id]
+  {:agricola.event/player player-id
    :agricola.event/action action-id})
 
 (defn use-effect [name player-id effect-id]

@@ -169,14 +169,16 @@
 
 (def schema
   (into {:agricola.element/field-watchman {:db/valueType :db.type/ref}
-         :agricola.element/grain-elevator {:db/valueType :db.type/ref}}
+         :agricola.element/grain-elevator {:db/valueType :db.type/ref}
+         :agricola.space/resources {:db/valueType :db.type/ref
+                                     :db/cardinality :db.cardinality/many}}
         (comp cat
               (map (fn [{:keys [db/ident db/cardinality db/valueType]}]
                      [ident (cond-> {:db/cardinality cardinality}
                               (#{:db.type/ref :db.type/tuple} valueType) (assoc :db/valueType valueType))])))
         (vector card-schema player-schema resource-schema board-schema
-                tile-schema piece-schema sprite-schema game-board-schema
-                gameplay-schema square-schema)))
+                tile-schema piece-schema sprite-schema
+                game-board-schema gameplay-schema square-schema)))
 
 (def conn
   (d/create-conn schema {:storage (file-storage "db")}))
@@ -198,6 +200,7 @@
                                           (update :removed into (get groups false))))))))))))
 
 (comment
+
   (doseq [i (range 10)]
     (d/transact! conn
                  [{:db/id 1

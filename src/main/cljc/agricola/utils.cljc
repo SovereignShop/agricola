@@ -5,6 +5,24 @@
   #?(:clj
      (:import [java.util UUID])))
 
+(defn take-action? [event]
+  (:agricola.event/action event))
+
+(defn player-take-action? [event player-id]
+  (when-let [action (take-action? event)]
+    (let [player (:agricola.action/player action)]
+      (and (= (:db/id player) player-id) action))))
+
+(defn player-take-grain? [event player-id]
+  (when-let [action (player-take-action? event player-id)]
+    (= (:agricola.action/name action) :action/take-grain)))
+
+(defn end-of-round? [event]
+  (= (:agricola.event/name event) :events/end-of-round))
+
+(defn new-round? [event]
+  (= (:agricola.event/name event) :events/new-round))
+
 (defn get-owner [entity]
   (:agricola.bit/owner entity))
 
@@ -60,6 +78,12 @@
         bits (:agricola.game/bits game)]
     (get bits game-bit-name)))
 
+(defn get-resources [action]
+  (:agricola.action/resources action))
+
+(defn get-player [action]
+  (:agricola.action/player action))
+
 (defn get-next-round [round]
   (:agricola.round/next-round round))
 
@@ -85,6 +109,12 @@
         actions (get-actions board)
         untaken-actions (remove action-taken? actions)]
     untaken-actions))
+
+(defn get-occupations [player]
+  (:agricola.player/occupations player))
+
+(defn get-chosen-occupation [action]
+  (:agricola.action/occupation action))
 
 (defn make-square [ident position title description]
   (conj
