@@ -52,6 +52,8 @@
 
 (defn is-acc-resource? [])
 
+(defn get-active-effects [game])
+
 (defn get-acc-type [accumulator]
   (:agricola.accumulator/type accumulator))
 

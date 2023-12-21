@@ -1,4 +1,4 @@
-(ns agicola.views.humbleui
+(ns agicola.ui
   (:require
    [io.github.humbleui.ui :as ui])
   (:import
@@ -11,7 +11,7 @@
      (ui/draggable
       {:on-dragging (fn [event] (println "dragging:" ((juxt :x :y) event)))
        :on-drop (fn [event] (println "dropped:" event))
-       :pos (IPoint. 300 300)}
+       :pos (IPoint. 300 300) }
       (ui/label "Click me!"))
      #_(ui/column
         (interpose

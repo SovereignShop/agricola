@@ -1,4 +1,4 @@
-(ns agricola.events.game
+(ns agricola.actions
   (:require
    [agricola.bits :as bits]
    [agricola.utils :as u]
