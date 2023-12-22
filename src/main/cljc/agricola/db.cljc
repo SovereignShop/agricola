@@ -170,8 +170,16 @@
 (def schema
   (into {:agricola.element/field-watchman {:db/valueType :db.type/ref}
          :agricola.element/grain-elevator {:db/valueType :db.type/ref}
+         :agricola.event/id        {:db/unique :db.unique/identity}
          :agricola.space/resources {:db/valueType :db.type/ref
-                                     :db/cardinality :db.cardinality/many}}
+                                    :db/cardinality :db.cardinality/many}
+         :agricola.event/game {:db/valueType :db.type/ref
+                               :db/cardinality :db.cardinality/one}
+         :agricola.game/board {:db/valueType :db.type/ref
+                               :db/cardinality :db.cardinality/one}
+         :agricola.board/actions {:db/cardinality :db.cardinality/many
+                                  :db/valueType :db.type/ref}
+         :agricola.action/name {:db/cardinality :db.cardinality/one}}
         (comp cat
               (map (fn [{:keys [db/ident db/cardinality db/valueType]}]
                      [ident (cond-> {:db/cardinality cardinality}
@@ -184,6 +192,8 @@
   (d/create-conn schema {:storage (file-storage "db")}))
 
 (def history-logs (atom {}))
+
+(def event-id [:agricola.event/id :global-event])
 
 (d/listen! conn :tmp
            (fn [{:keys [tx-data tx-meta]}]
