@@ -19,8 +19,10 @@
      (handle-action event))
    (do-effects event)))
 
+(defn listen [{:keys [db-after tx-meta tx-data]}]
+  (when (:signal tx-meta)
+    (println "world")
+    (process-event (d/entity db-after db/event-id))))
+
 (defonce game-listener
-  (d/listen! db/conn :game (fn [{:keys [db-after tx-meta tx-data]}]
-                             (when (:signal tx-meta)
-                               (println "signal: " tx-data)
-                               (process-event (d/entity db-after db/event-id))))))
+  (d/listen! db/conn :game #'listen))
