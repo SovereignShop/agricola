@@ -3,8 +3,7 @@
    [agricola.bits :as bits]
    [agricola.utils :as u]
    [agricola.tx :as tx]
-   [datascript.core :as d]
-   [agricola.macros :refer [def-event-ds]]))
+   [datascript.core :as d]))
 
 (defmulti handle-action :agricola.action/name)
 
@@ -75,7 +74,7 @@
 (defmethod handle-action bits/family-growth
   [action])
 
-(defmethod handle-aciton bits/starting-player
+(defmethod handle-action bits/starting-player
   [action])
 
 (defmethod handle-action bits/build-fences

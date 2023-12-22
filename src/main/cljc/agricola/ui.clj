@@ -1,38 +1,45 @@
-(ns agicola.ui
+(ns agricola.ui
   (:require
    [datascript.core :as d]
    [agricola.db :as db]
    [agricola.utils :as u]
+   [agricola.game :as g]
    [io.github.humbleui.ui :as ui])
   (:import
    [io.github.humbleui.types IPoint]))
+
+(defn signal! [event]
+  (let [tx-data [(conj event db/event-id)]]
+    (d/transact! db/conn tx-data {:signal true})))
 
 (defn render [event]
   (let [game (u/get-game event)
         board (u/get-board game)
         actions (u/get-actions board)]
-    (println "actions:" event game board actions)
     (let [gap-size 40]
       (ui/default-theme
        {}
        (ui/center
-        (apply
-         ui/column
-         (for [action actions]
-           (do (println "action")
-               (ui/label (str "Action: " (:agricola.action/name action)))))))))))
+        (ui/column
+         (interpose (ui/gap 15 15)
+                    (for [action actions]
+                      (ui/button
+                       #(signal! {:agricola.event/name (:agricola.action/name action)})
+                       (ui/label (:agricola.action/name action)))))))))))
 
-(def ui (atom (render (d/entity @db/conn db/event-id))))
+(defonce ui (atom (render (d/entity @db/conn db/event-id))))
 
-(ui/start-app!
- (ui/window
-  {:title "Humble 🐝 UI"}
-  ui))
+(defonce app
+  (ui/start-app!
+   (ui/window
+    {:title "Humble 🐝 UI"}
+    ui)))
 
-(do
+(comment
+
+
   (d/listen! db/conn :ui (fn [{:keys [db-after tx-meta]}]
                            (when (:ui-update tx-meta)
-                             (println "Updating UI")
                              (reset! ui (render (d/entity @db/conn db/event-id))))))
 
 
@@ -53,7 +60,5 @@
                         {:agricola.action/name :take-clay}]}}}]
                    {:ui-update true})
       nil)
-
-  (d/enttiy @db/conn db/event-id)
 
   )
