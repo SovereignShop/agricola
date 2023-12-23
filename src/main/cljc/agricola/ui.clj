@@ -13,7 +13,7 @@
   (let [tx-data [(conj event db/event-id)]]
     (d/transact! db/conn tx-data {:signal true})))
 
-(defn render-board [board]
+(defn draw-board [board]
   (let [actions (u/get-actions board)
         gap-size 15]
     (ui/center
@@ -26,15 +26,15 @@
                      :agricola.event/type :aciton})
           (ui/label (:agricola.bit/title action)))))))))
 
-(defn render-player-farm [farm])
+(defn draw-farm [farm])
 
-(defn render-players [players]
+(defn draw-players [players]
   (ui/center
    (ui/column
     (for [player players]
       (ui/column
        (ui/label (:agricola.player/name player))
-       (render-player-farm (:agricola.player/farm player)))))))
+       (draw-farm (:agricola.player/farm player)))))))
 
 (defn render [event]
   (let [game (u/get-game event)
@@ -43,8 +43,8 @@
     (ui/default-theme
      {}
      (ui/row
-      (render-players players)
-      (render-board board)))))
+      (draw-players players)
+      (draw-board board)))))
 
 (defonce ui (atom (render (d/entity @db/conn db/event-id))))
 
@@ -68,32 +68,48 @@
                  :agricola.event/id :global-event}]
                {:ui-update true})
 
-  (do (d/transact! db/conn
-                   [{:agricola.event/name :init
-                     :agricola.event/id :global-event
-                     :agricola.event/game
-                     {:agricola.game/board
-                      {:agricola.board/actions
-                       [{:agricola.action/name bits/take-one-grain
-                         :agricola.bit/title "Take One Grain"
-                         :agricola.bit/description ""}
-                        {:agricola.action/name bits/take-three-wood
-                         :agricola.bit/title "Take Three Wood"
-                         :agricola.bit/description ""}
-                        {:agricola.action/name bits/take-two-wood
-                         :agricola.bit/title "Take Two Wood"}]}
-                      :agricola.game/players
-                      [{:agricola.player/name "Lori"
-                        :agricola.player/farm {:agricola.farm/house {:agricola.house/type :wood
-                                                                     :agricola.house/n-rooms 2}
-                                               :agricola.farm/animals []
-                                               :agricola.farm/fields []
-                                               :agricola.farm/pastures []}}
-                       {:agricola.player/name "Cleo"
-                        :agricola.player/occupations []
-                        :agricola.player/improvements []
-                        :agricola.player/farm {:agricola.player-board/squares []}}]}}]
-                   {:ui-update true})
+  (do (d/transact!
+       db/conn
+       [{:agricola.event/name :init
+         :agricola.event/id :global-event
+         :agricola.event/game
+         {:agricola.game/board
+          {:agricola.board/actions
+           [{:agricola.action/name bits/take-one-grain
+             :agricola.bit/title "Take One Grain"
+             :agricola.bit/description ""}
+            {:agricola.action/name bits/take-three-wood
+             :agricola.bit/title "Take Three Wood"
+             :agricola.bit/description ""}
+            {:agricola.action/name bits/take-two-wood
+             :agricola.bit/title "Take Two Wood"}]}
+          :agricola.game/players
+          [{:agricola.player/name "Lori"
+            :agricola.player/farm
+            {:agricola.farm/house
+             {:agricola.house/type :wood
+              :agricola.house/n-rooms 2}
+             :agricola.farm/animals []
+             :agricola.farm/fields []
+             :agricola.farm/pastures []}}
+           {:agricola.player/name "Cleo"
+            :agricola.player/occupations
+            [{:agricola.card/name bits/field-watchman
+              :agricola.card/type :occupation
+              :agricola.card/title "Field Watchman"
+              :agricola.card/description ""}
+             {:agricola.card/name bits/family-counseler
+              :agricola.card/type :occupation
+              :agricola.card/title "Family Counseler"}]
+            :agricola.player/improvements []
+            :agricola.player/farm
+            {:agricola.farm/house
+             {:agricola.house/type :clay
+              :agricola.house/n-roots 2}
+             :agricola.house/animals []
+             :agricola.house/fields []
+             :agricola.farm/pastures []}}]}}]
+       {:ui-update true})
       nil)
 
   )
