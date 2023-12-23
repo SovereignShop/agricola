@@ -17,7 +17,10 @@
    :agricola.farm/house {:db/valueType :db.type/ref}
    :agricola.farm/animals {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
    :agricola.farm/fields {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
-   :agricola.farm/pastures {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}})
+   :agricola.farm/pastures {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+   :agricola.farm/squares {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+   :agricola.field/resources {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+   :agricola.pasture/squares {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}})
 
 (def conn
   (d/create-conn schema {:storage (file-storage "db")}))

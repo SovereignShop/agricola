@@ -10,7 +10,7 @@
   (let [game (u/get-game event)
         effects (u/get-active-effects game)]
     (for [effect effects
-          datom (handle-effect effect)]
+          datom (handle-effect effect event)]
       datom)))
 
 (defn process-event [event]
@@ -21,7 +21,6 @@
 
 (defn listen [{:keys [db-after tx-meta tx-data]}]
   (when (:signal tx-meta)
-    (println "world")
     (process-event (d/entity db-after db/event-id))))
 
 (defonce game-listener

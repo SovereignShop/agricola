@@ -26,7 +26,16 @@
                      :agricola.event/type :aciton})
           (ui/label (:agricola.bit/title action)))))))))
 
-(defn draw-farm [farm])
+(defn draw-farm [farm]
+  (let [house (:agricola.farm/house farm)
+        animals (:agricola.farm/animals farm)
+        fields (:agricola.farm/fields farm)
+        pastures (:agricola.farm/pastures farm)]
+    (ui/column
+     (ui/label (str (map (juxt :agricola.animal/type :agricola.animal/quantity) animals)))
+     (ui/label (str (map (juxt :agricola.field/type :agricola.field/quantity) fields)))
+     (ui/label (str "Pastures" pastures))
+     (ui/label (str "House: " (:agricola.house/type house) " " (:agricola.house/n-rooms house) " rooms.")))))
 
 (defn draw-players [players]
   (ui/center
@@ -37,6 +46,7 @@
        (draw-farm (:agricola.player/farm player)))))))
 
 (defn render [event]
+  (println "rendering")
   (let [game (u/get-game event)
         board (u/get-board game)
         players (u/get-players game)]
@@ -54,13 +64,14 @@
     {:title "Humble 🐝 UI"}
     ui)))
 
+(defn listen [{:keys [db-after tx-meta]}]
+  (when (:ui-update tx-meta)
+    (println "update")
+    (reset! ui (render (d/entity @db/conn db/event-id)))))
+
+(defonce ui-listener (d/listen! db/conn :ui #'listen))
+
 (comment
-
-
-  (d/listen! db/conn :ui (fn [{:keys [db-after tx-meta]}]
-                           (when (:ui-update tx-meta)
-                             (reset! ui (render (d/entity @db/conn db/event-id))))))
-
 
 
   (d/transact! db/conn
@@ -90,7 +101,11 @@
              {:agricola.house/type :wood
               :agricola.house/n-rooms 2}
              :agricola.farm/animals []
-             :agricola.farm/fields []
+             :agricola.farm/fields [{:agricola.field/resources
+                                     [{:agricola.resource/type :grain
+                                       :agricola.resource/quantity 3}
+                                      {:agricola.resource/type :vetetable
+                                       :agricola.resource/quantity 2}]}]
              :agricola.farm/pastures []}}
            {:agricola.player/name "Cleo"
             :agricola.player/occupations
@@ -105,10 +120,17 @@
             :agricola.player/farm
             {:agricola.farm/house
              {:agricola.house/type :clay
-              :agricola.house/n-roots 2}
-             :agricola.house/animals []
+              :agricola.house/n-rooms 2}
+             :agricola.house/animals [{:agricola.animal/type :sheep
+                                       :agricola.animal/quantity 2}
+                                      {:agricola.animal/type :boar
+                                       :agricola.animal/quantity 3}]
              :agricola.house/fields []
-             :agricola.farm/pastures []}}]}}]
+             :agricola.farm/pastures [{:agricola.pasture/squares [-2]}]
+             :agricola.farm/stables [{:agricola.stable/square -2}]
+             :agricola.farm/squares [{:agricola.square/pos [0 0] :db/id -2}
+                                     {:agricola.square/pos [0 1] :db/id -3}
+                                     {:agricola.square/pos [0 2] :db/id -4}]}}]}}]
        {:ui-update true})
       nil)
 
