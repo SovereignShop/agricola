@@ -23,8 +23,11 @@
        (for [action actions]
          (ui/button
           #(signal! {:agricola.event/name (:agricola.action/name action)
-                     :agricola.event/type :aciton})
+                     :agricola.event/type :action})
           (ui/label (:agricola.bit/title action)))))))))
+
+(defn with-gap [size & args]
+  (interpose (ui/gap size size) args))
 
 (defn draw-farm [farm]
   (let [house (:agricola.farm/house farm)
@@ -32,29 +35,38 @@
         fields (:agricola.farm/fields farm)
         pastures (:agricola.farm/pastures farm)]
     (ui/column
-     (ui/label (str (map (juxt :agricola.animal/type :agricola.animal/quantity) animals)))
-     (ui/label (str (map (juxt :agricola.field/type :agricola.field/quantity) fields)))
-     (ui/label (str "Pastures" pastures))
-     (ui/label (str "House: " (:agricola.house/type house) " " (:agricola.house/n-rooms house) " rooms.")))))
+     (with-gap 15
+       (ui/label (str (mapv (juxt :agricola.animal/type :agricola.animal/quantity) animals)))
+       (ui/label (str (mapv (juxt :agricola.field/type :agricola.field/quantity) fields)))
+       (ui/label (str "Pastures" pastures))
+       (ui/label (str "House: " (:agricola.house/type house) " " (:agricola.house/n-rooms house) " rooms."))
+       (ui/label (str "Played Occupations:"))
+       (ui/label (str "Unplayed Occupations:"))
+       (ui/label (str "Played Improvements:"))
+       (ui/label (str "Unplayed Improvements:"))))))
 
 (defn draw-players [players]
   (ui/center
    (ui/column
-    (for [player players]
-      (ui/column
-       (ui/label (:agricola.player/name player))
-       (draw-farm (:agricola.player/farm player)))))))
+    (interpose
+     (ui/gap 40 40)
+     (for [player players]
+       (ui/column
+        (ui/label (:agricola.player/name player))
+        (ui/gap 20 20)
+        (draw-farm (:agricola.player/farm player))))))))
 
 (defn render [event]
-  (println "rendering")
   (let [game (u/get-game event)
         board (u/get-board game)
         players (u/get-players game)]
     (ui/default-theme
      {}
-     (ui/row
-      (draw-players players)
-      (draw-board board)))))
+     (ui/center
+      (ui/row
+       (draw-players players)
+       (ui/gap 20 20)
+       (draw-board board))))))
 
 (defonce ui (atom (render (d/entity @db/conn db/event-id))))
 
@@ -93,7 +105,13 @@
              :agricola.bit/title "Take Three Wood"
              :agricola.bit/description ""}
             {:agricola.action/name bits/take-two-wood
-             :agricola.bit/title "Take Two Wood"}]}
+             :agricola.bit/title "Take Two Wood"}
+            {:agricola.action/name bits/take-one-reed
+             :agricola.bit/title "Take One Reed"
+             :agricola.bit/description ""}
+            {:agricola.action/name bits/fishing
+             :agricola.bit/title "Fishing"
+             :agricola.bit/description ""}]}
           :agricola.game/players
           [{:agricola.player/name "Lori"
             :agricola.player/farm
@@ -121,11 +139,11 @@
             {:agricola.farm/house
              {:agricola.house/type :clay
               :agricola.house/n-rooms 2}
-             :agricola.house/animals [{:agricola.animal/type :sheep
-                                       :agricola.animal/quantity 2}
-                                      {:agricola.animal/type :boar
-                                       :agricola.animal/quantity 3}]
-             :agricola.house/fields []
+             :agricola.farm/animals [{:agricola.animal/type :sheep
+                                      :agricola.animal/quantity 2}
+                                     {:agricola.animal/type :boar
+                                      :agricola.animal/quantity 3}]
+             :agricola.farm/fields []
              :agricola.farm/pastures [{:agricola.pasture/squares [-2]}]
              :agricola.farm/stables [{:agricola.stable/square -2}]
              :agricola.farm/squares [{:agricola.square/pos [0 0] :db/id -2}

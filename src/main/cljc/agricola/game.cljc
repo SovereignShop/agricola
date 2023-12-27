@@ -4,6 +4,7 @@
    [agricola.db :as db]
    [agricola.actions :refer [handle-action]]
    [agricola.effects :refer [handle-effect]]
+   [agricola.events :refer [handle-event]]
    [datascript.core :as d]))
 
 (defn do-effects [event]
@@ -14,9 +15,11 @@
       datom)))
 
 (defn process-event [event]
+  ;; Event handlers can emit more events.
   (concat
-   (when (= (:agricola.event/type event) :action)
-     (handle-action event))
+   (case (:agricola.event/type event)
+     :action (handle-action event)
+     :event (handle-event event))
    (do-effects event)))
 
 (defn listen [{:keys [db-after tx-meta tx-data]}]

@@ -1,4 +1,5 @@
 (ns agricola.effects
+  "All effects executed on every event and return zero or more datoms."
   (:require
    [datascript.core :as d]
    [agricola.tx :as tx]
