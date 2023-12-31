@@ -121,8 +121,7 @@
              :agricola.action/resources {:agricola.resource/wood 2
                                          :agricola.resource/grain 2
                                          :agricola.resource/clay 3}
-             :agricola.action/accumulator
-             {:agricola.accumulator/increment {:agricola.reource/wood 2}}
+             :agricola.action/increments {:agricola.resource/wood 2}
              :agricola.bit/title "Take One Grain"
              :agricola.bit/description ""}
             {:agricola.action/name bits/take-three-wood

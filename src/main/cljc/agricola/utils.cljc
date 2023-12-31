@@ -118,6 +118,11 @@
 (defn get-chosen-occupation [action]
   (:agricola.action/occupation action))
 
+(defonce tempids (atom -1000000000))
+
+(defn next-tempid! []
+  (swap! tempids dec))
+
 (defn make-square [ident position title description]
   (conj
    {:agricola.square/position position

@@ -24,7 +24,9 @@
 
 (defn listen [{:keys [db-after tx-meta tx-data]}]
   (when (:signal tx-meta)
-    (process-event (d/entity db-after db/event-id))))
+    (d/transact! db/conn
+                 (process-event (d/entity db-after db/event-id))
+                 {:ui-update true})))
 
 (defonce game-listener
   (d/listen! db/conn :game #'listen))
