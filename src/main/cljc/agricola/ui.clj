@@ -13,6 +13,19 @@
   (let [tx-data [(conj event db/event-id)]]
     (d/transact! db/conn tx-data {:signal true})))
 
+(defn with-gap [size & args]
+  (interpose (ui/gap size size) args))
+
+(defn draw-action [action]
+  (ui/column
+   (ui/label (str (:agricola.bit/title action)))
+   (ui/gap 10 10)
+   (ui/row
+    (apply with-gap 5
+           (map ui/label
+                (for [[resource-key quantity] (:agricola.action/resources action)]
+                  (str (name resource-key) ":" quantity)))))))
+
 (defn draw-board [board]
   (let [actions (u/get-actions board)
         gap-size 15]
@@ -24,10 +37,7 @@
          (ui/button
           #(signal! {:agricola.event/name (:agricola.action/name action)
                      :agricola.event/type :action})
-          (ui/label (:agricola.bit/title action)))))))))
-
-(defn with-gap [size & args]
-  (interpose (ui/gap size size) args))
+          (draw-action action))))))))
 
 (defn draw-farm [farm]
   (let [house (:agricola.farm/house farm)
@@ -56,6 +66,13 @@
         (ui/gap 20 20)
         (draw-farm (:agricola.player/farm player))))))))
 
+(defn draw-event-buttons []
+  (ui/column
+   (ui/button
+    #(signal! {:agricola.event/name :agricola.event/start-round
+               :agricola.event/type :event})
+    (ui/height 15 (ui/label "Start Round")))))
+
 (defn render [event]
   (let [game (u/get-game event)
         board (u/get-board game)
@@ -66,7 +83,9 @@
       (ui/row
        (draw-players players)
        (ui/gap 20 20)
-       (draw-board board))))))
+       (draw-board board)
+       (ui/gap 20 20)
+       (draw-event-buttons))))))
 
 (defonce ui (atom (render (d/entity @db/conn db/event-id))))
 
@@ -99,11 +118,11 @@
          {:agricola.game/board
           {:agricola.board/actions
            [{:agricola.action/name bits/take-one-grain
-             :agricola.action/accumulators
-             [{:agricola.accumulator/resources [{:agricola.resource/wood 2
-                                                 :agricola.resource/grain 2
-                                                 :agricola.resource/clay 3}]
-               :agricola.accumulator/increment [{:agricola.reource/wood 2}]}]
+             :agricola.action/resources {:agricola.resource/wood 2
+                                         :agricola.resource/grain 2
+                                         :agricola.resource/clay 3}
+             :agricola.action/accumulator
+             {:agricola.accumulator/increment {:agricola.reource/wood 2}}
              :agricola.bit/title "Take One Grain"
              :agricola.bit/description ""}
             {:agricola.action/name bits/take-three-wood
