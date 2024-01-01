@@ -73,7 +73,12 @@
     #(signal! #:agricola.event
               {:name :agricola.event/start-round
                :type :transition})
-    (ui/height 15 (ui/label "Start Round")))))
+    (ui/height 15 (ui/label "Start Round")))
+   (ui/button
+    #(signal! #:agricola.event
+              {:name :agricola.event/end-round
+               :type :transition})
+    (ui/height 15 (ui/label "End Round")))))
 
 (defn render [event]
   (let [game (u/get-game event)

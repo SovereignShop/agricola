@@ -14,9 +14,12 @@
           datom (handle-effect effect event)]
       datom)))
 
+(defn- concat-with-meta [& xs]
+  (with-meta (apply concat xs) (transduce (map meta) merge xs)))
+
 (defn process-event [event]
   ;; Event handlers can emit more events.
-  (concat
+  (concat-with-meta
    (case (:agricola.event/type event)
      :action (handle-action event)
      :transition (handle-transition event))
@@ -24,9 +27,11 @@
 
 (defn listen [{:keys [db-after tx-meta tx-data]}]
   (when (:signal tx-meta)
-    (d/transact! db/conn
-                 (process-event (d/entity db-after db/event-id))
-                 {:ui-update true})))
+    (let [new-tx-data (process-event (d/entity db-after db/event-id))]
+      (println "meta" (meta new-tx-data))
+      (d/transact! db/conn
+                   new-tx-data
+                   (merge {:ui-update true} (meta new-tx-data))))))
 
 (defonce game-listener
   (d/listen! db/conn :game #'listen))

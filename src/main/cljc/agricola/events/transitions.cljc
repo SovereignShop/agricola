@@ -1,12 +1,14 @@
 (ns agricola.events.transitions
   (:require
+   [agricola.tx :as tx]
    [datascript.core :as d]
    [agricola.utils :as u]))
 
 (defmulti handle-transition :agricola.event/name)
 
 (defmethod handle-transition :agricola.event/end-round
-  [event])
+  [event]
+  (tx/signal :agricola.event/start-round :transition))
 
 (defmethod handle-transition :agricola.event/start-round
   [event]
@@ -21,3 +23,5 @@
            :when (= (namespace resource-key) "agricola.resource")]
        (let [x (get resources resource-key 0)]
          (d/datom (or (:db/id resources) (u/next-tempid!)) resource-key (+ x inc)))))))
+
+;; Explicit Game flow

@@ -1,0 +1,8 @@
+#+title: Todos
+
+1. [X] Incrementing board
+2. [ ] Taking an action
+3. [ ]
+4. [ ] Playable round
+5. [ ] First occupation effect
+6. [ ]

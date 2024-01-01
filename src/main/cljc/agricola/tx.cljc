@@ -1,5 +1,6 @@
 (ns agricola.tx
   (:require
+   [agricola.db :as db]
    [agricola.utils :as u]
    [datascript.core :as d]))
 
@@ -41,3 +42,10 @@
     (conj (vec (for [id (map :db/id a)]
                  [:db/add (:db/id to) :agricola.space/resources id]))
           [:db/retract (:db/id from) :agricola.space/resources])))
+
+(defn signal [name type]
+  (with-meta
+    [(conj #:agricola.event {:name name
+                             :type type}
+           db/event-id)]
+    {:signal true}))
