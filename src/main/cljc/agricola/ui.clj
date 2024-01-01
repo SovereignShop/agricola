@@ -33,10 +33,11 @@
      (ui/column
       (interpose
        (ui/gap gap-size gap-size)
-       (for [action actions]
+       (for [action (sort-by :db/id actions)]
          (ui/button
-          #(signal! {:agricola.event/name (:agricola.action/name action)
-                     :agricola.event/type :action})
+          #(signal! #:agricola.event
+                    {:name (:agricola.action/name action)
+                     :type :action})
           (draw-action action))))))))
 
 (defn draw-farm [farm]
@@ -60,7 +61,7 @@
    (ui/column
     (interpose
      (ui/gap 40 40)
-     (for [player players]
+     (for [player (sort-by :db/id players)]
        (ui/column
         (ui/label (:agricola.player/name player))
         (ui/gap 20 20)
@@ -69,8 +70,9 @@
 (defn draw-event-buttons []
   (ui/column
    (ui/button
-    #(signal! {:agricola.event/name :agricola.event/start-round
-               :agricola.event/type :event})
+    #(signal! #:agricola.event
+              {:name :agricola.event/start-round
+               :type :transition})
     (ui/height 15 (ui/label "Start Round")))))
 
 (defn render [event]
@@ -97,7 +99,6 @@
 
 (defn listen [{:keys [db-after tx-meta]}]
   (when (:ui-update tx-meta)
-    (println "update")
     (reset! ui (render (d/entity @db/conn db/event-id)))))
 
 (defonce ui-listener (d/listen! db/conn :ui #'listen))

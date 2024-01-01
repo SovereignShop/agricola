@@ -2,9 +2,9 @@
   (:require
    [agricola.utils :as u]
    [agricola.db :as db]
-   [agricola.actions :refer [handle-action]]
+   [agricola.events.actions :refer [handle-action]]
+   [agricola.events.transitions :refer [handle-transition]]
    [agricola.effects :refer [handle-effect]]
-   [agricola.events :refer [handle-event]]
    [datascript.core :as d]))
 
 (defn do-effects [event]
@@ -19,7 +19,7 @@
   (concat
    (case (:agricola.event/type event)
      :action (handle-action event)
-     :event (handle-event event))
+     :transition (handle-transition event))
    (do-effects event)))
 
 (defn listen [{:keys [db-after tx-meta tx-data]}]

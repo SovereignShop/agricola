@@ -1,14 +1,14 @@
-(ns agricola.events
+(ns agricola.events.transitions
   (:require
    [datascript.core :as d]
    [agricola.utils :as u]))
 
-(defmulti handle-event :agricola.event/name)
+(defmulti handle-transition :agricola.event/name)
 
-(defmethod handle-event :agricola.event/end-round
+(defmethod handle-transition :agricola.event/end-round
   [event])
 
-(defmethod handle-event :agricola.event/start-round
+(defmethod handle-transition :agricola.event/start-round
   [event]
   (let [game (u/get-game event)
         board (u/get-board game)
