@@ -9,8 +9,13 @@
 
 (defmethod handle-action bits/take-three-wood
   [action]
-  (let [player (u/get-player action)]
-    (tx/move-resources action player)))
+  (let [game (u/get-game action)
+        player (u/get-player game)
+        player-resources (u/get-resources player)
+        
+        square (u/get-square action)
+        square-resources (u/get-resources square)]
+    (tx/move-resources square-resources player-resources)))
 
 (defmethod handle-action bits/take-one-grain
   [action]
@@ -21,8 +26,10 @@
 
 (defmethod handle-action bits/plow-one-field
   [action]
-  (let [player (u/get-player action)]
-    (tx/add-fields player 1)))
+  (let [game (u/get-player action)
+        player (u/get-current-player game)
+        resources (u/get-resources player)]
+    (tx/add-fields resources 1)))
 
 (defmethod handle-action bits/play-one-occupation-expensive
   [action]
