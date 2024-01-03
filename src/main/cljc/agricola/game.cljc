@@ -18,17 +18,15 @@
   (with-meta (apply concat xs) (transduce (map meta) merge xs)))
 
 (defn process-event [event]
-  ;; Event handlers can emit more events.
   (concat-with-meta
    (case (:agricola.event/type event)
      :action (handle-action event)
      :transition (handle-transition event))
    (do-effects event)))
 
-(defn listen [{:keys [db-after tx-meta tx-data]}]
+(defn listen [{:keys [db-after tx-meta]}]
   (when (:signal tx-meta)
     (let [new-tx-data (process-event (d/entity db-after db/event-id))]
-      (println "meta" (meta new-tx-data))
       (d/transact! db/conn
                    new-tx-data
                    (merge {:ui-update true} (meta new-tx-data))))))

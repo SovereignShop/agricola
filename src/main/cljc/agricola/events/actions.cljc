@@ -5,7 +5,7 @@
    [agricola.tx :as tx]
    [datascript.core :as d]))
 
-(defmulti handle-action :agricola.action/name)
+(defmulti handle-action :agricola.event/name)
 
 (defmethod handle-action bits/take-three-wood
   [action]
@@ -14,8 +14,10 @@
 
 (defmethod handle-action bits/take-one-grain
   [action]
-  (let [player (u/get-player action)]
-    (tx/add-grain player 1)))
+  (let [game (u/get-game action)
+        player (u/get-current-player game)
+        resources (u/get-resources player)]
+    (tx/add-grain resources 1)))
 
 (defmethod handle-action bits/plow-one-field
   [action]

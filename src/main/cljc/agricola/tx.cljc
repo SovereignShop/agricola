@@ -8,31 +8,31 @@
   tx)
 
 (defn add-resource [entity resource n]
-  [[(:db/id entity) resource (+ (get entity resource) n)]])
+  [(d/datom (:db/id entity) resource (+ (get entity resource 0) n))])
 
 (defn add-food [entity n-food]
-  (add-resource entity :agricola.bit/food n-food))
+  (add-resource entity :agricola.resource/food n-food))
 
 (defn add-grain [entity n-grain]
-  (add-resource entity :agricola.bit/grain n-grain))
+  (add-resource entity :agricola.resource/grain n-grain))
 
 (defn add-wood [entity n-grain]
-  (add-resource entity :agricola.bit/wood n-grain))
+  (add-resource entity :agricola.resource/wood n-grain))
 
 (defn remove-grain [entity n-grain]
-  (add-resource entity :agricola.bit/grain (- n-grain)))
+  (add-resource entity :agricola.resource/grain (- n-grain)))
 
 (defn add-fields [entity n-fields]
-  (add-resource entity :agricola.bit/field n-fields))
+  (add-resource entity :agricola.resource/field n-fields))
 
 (defn remove-fields [entity n-fields]
-  (add-resource entity :agricola.bit/field (- n-fields)))
+  (add-resource entity :agricola.resource/field (- n-fields)))
 
 (defn add-vegetables [entity n-vegetables]
-  (add-resource entity :agricola.bit/vegetable n-vegetables))
+  (add-resource entity :agricola.resource/vegetable n-vegetables))
 
 (defn remove-vegetables [entity n-vegetables]
-  (add-resource entity :agricola.bit/vegetable (- n-vegetables)))
+  (add-resource entity :agricola.resource/vegetable (- n-vegetables)))
 
 (defn assoc-entity [entity attr value]
   [(d/datom (:db/id entity) attr value)])

@@ -23,7 +23,7 @@
    (ui/row
     (apply with-gap 5
            (map ui/label
-                (for [[resource-key quantity] (:agricola.action/resources action)]
+                (for [[resource-key quantity] (:agricola.entity/resources action)]
                   (str (name resource-key) ":" quantity)))))))
 
 (defn draw-board [board]
@@ -35,9 +35,10 @@
        (ui/gap gap-size gap-size)
        (for [action (sort-by :db/id actions)]
          (ui/button
-          #(signal! #:agricola.event
-                    {:name (:agricola.action/name action)
-                     :type :action})
+          #(do (println "hello world" (:agricola.action/name action))
+               (signal! #:agricola.event
+                        {:name (:agricola.action/name action)
+                         :type :action}))
           (draw-action action))))))))
 
 (defn draw-farm [farm]
@@ -112,8 +113,9 @@
 
 
   (d/transact! db/conn
-               [{:agricola.event/name :init
-                 :agricola.event/id :global-event}]
+               [#:agricola.event
+                {:name :init
+                 :id :global-event}]
                {:ui-update true})
 
   (do (d/transact!
@@ -121,10 +123,11 @@
        [{:agricola.event/name :init
          :agricola.event/id :global-event
          :agricola.event/game
-         {:agricola.game/board
+         {:agricola.game/current-player -20
+          :agricola.game/board
           {:agricola.board/actions
            [{:agricola.action/name bits/take-one-grain
-             :agricola.action/resources {:agricola.resource/wood 2
+             :agricola.entity/resources {:agricola.resource/wood 2
                                          :agricola.resource/grain 2
                                          :agricola.resource/clay 3}
              :agricola.action/increments {:agricola.resource/wood 2}
@@ -142,7 +145,9 @@
              :agricola.bit/title "Fishing"
              :agricola.bit/description ""}]}
           :agricola.game/players
-          [{:agricola.player/name "Lori"
+          [{:db/id -20
+            :agricola.player/name "Lori"
+            :agricola.entity/resources {:agricola.resource/grain 2}
             :agricola.player/farm
             {:agricola.farm/house
              {:agricola.house/type :wood
@@ -155,6 +160,7 @@
                                        :agricola.resource/quantity 2}]}]
              :agricola.farm/pastures []}}
            {:agricola.player/name "Cleo"
+            :agricola.entity/resources {:agricola.resource/grain 2}
             :agricola.player/occupations
             [{:agricola.card/name bits/field-watchman
               :agricola.card/type :occupation

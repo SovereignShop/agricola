@@ -8,6 +8,7 @@
    :agricola.space/resources {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
    :agricola.event/game {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
    :agricola.game/board {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+   :agricola.game/current-player {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
    :agricola.board/actions {:db/cardinality :db.cardinality/many :db/valueType :db.type/ref}
    :agricola.action/name {:db/cardinality :db.cardinality/one}
    :agricola.game/players {:db/valueType :db.type/ref :db/cardinaltiy :db.cardinality/many}
@@ -22,7 +23,7 @@
    :agricola.field/resources {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
    :agricola.pasture/squares {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
    :agricola.action/accumulator {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
-   :agricola.action/resources {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+   :agricola.entity/resources {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
    :agricola.action/increments {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}})
 
 (def conn

@@ -80,11 +80,8 @@
         bits (:agricola.game/bits game)]
     (get bits game-bit-name)))
 
-(defn get-resources [action]
-  (:agricola.action/resources action))
-
-(defn get-player [action]
-  (:agricola.action/player action))
+(defn get-current-player [game]
+  (:agricola.game/current-player game))
 
 (defn get-next-round [round]
   (:agricola.round/next-round round))
@@ -96,6 +93,9 @@
 
 (defn get-current-player [round]
   (:agricola.round/current-player round))
+
+(defn get-resources [entity]
+  (:agricola.entity/resources entity))
 
 (defn get-next-player [player]
   (:agricola.player/next-player player))
