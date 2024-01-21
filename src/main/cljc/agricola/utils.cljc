@@ -15,7 +15,7 @@
 
 (defn player-take-grain? [event player-id]
   (when-let [action (player-take-action? event player-id)]
-    (= (:agricola.action/name action) :action/take-grain)))
+    (= (:agricola.event/name action) :action/take-grain)))
 
 (defn end-of-round? [event]
   (= (:agricola.event/name event) :events/end-of-round))

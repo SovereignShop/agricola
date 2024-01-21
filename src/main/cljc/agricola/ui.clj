@@ -35,9 +35,9 @@
        (ui/gap gap-size gap-size)
        (for [action (sort-by :db/id actions)]
          (ui/button
-          #(do (println "hello world" (:agricola.action/name action))
+          #(do (println "hello world" (:agricola.event/name action))
                (signal! #:agricola.event
-                        {:name (:agricola.action/name action)
+                        {:name (:agricola.event/name action)
                          :type :action}))
           (draw-action action))))))))
 
@@ -126,22 +126,22 @@
          {:agricola.game/current-player -20
           :agricola.game/board
           {:agricola.board/actions
-           [{:agricola.action/name bits/take-one-grain
+           [{:agricola.event/name bits/take-one-grain
              :agricola.entity/resources {:agricola.resource/wood 2
                                          :agricola.resource/grain 2
                                          :agricola.resource/clay 3}
              :agricola.action/increments {:agricola.resource/wood 2}
              :agricola.bit/title "Take One Grain"
              :agricola.bit/description ""}
-            {:agricola.action/name bits/take-three-wood
+            {:agricola.event/name bits/take-three-wood
              :agricola.bit/title "Take Three Wood"
              :agricola.bit/description ""}
-            {:agricola.action/name bits/take-two-wood
+            {:agricola.event/name bits/take-two-wood
              :agricola.bit/title "Take Two Wood"}
-            {:agricola.action/name bits/take-one-reed
+            {:agricola.event/name bits/take-one-reed
              :agricola.bit/title "Take One Reed"
              :agricola.bit/description ""}
-            {:agricola.action/name bits/fishing
+            {:agricola.event/name bits/fishing
              :agricola.bit/title "Fishing"
              :agricola.bit/description ""}]}
           :agricola.game/players

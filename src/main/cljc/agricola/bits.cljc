@@ -40,7 +40,10 @@
 (def build-rooms :agricola.square/build-rooms)
 (def day-laborer :agricola.square/day-laborer)
 (def take-sheep :agricola.square/take-sheep)
+(def take-boar :agricola.square/take-boar)
+(def take-cattle :agricola.square/take-cattle)
 (def take-stone-round-2 :agricola.square/take-stone-round-2)
+(def take-stone-round-4 :agricola.square/take-stone-round-4)
 (def renovate :agricola.square/renovate)
 (def family-growth :agricola.square/family-growth)
 (def starting-player :agricola.square/starting-player)
@@ -48,6 +51,9 @@
 (def major-or-minor :agricola.square/major-or-minor)
 (def sow-bake :agricola.square/sow-bake)
 (def take-one-vegetable :agricola.square/take-one-vegetable)
+(def plow-and-sow :agricola.square/plow-and-sow)
+(def grow-family-without-room :agricola.square/grow-family-without-room)
+(def reno-fence :agricola.square/reno-fence)
 
 ;; Cards
 (def grain-elevator :agricola.card/grain-elevator)
