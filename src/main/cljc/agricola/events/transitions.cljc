@@ -86,11 +86,12 @@
                 username
                 password)]
     (if id
-      (tx/signal :eurozone.event/login-complete :transition)
-      (tx/signal :eurozone.event/login-failed :transition))))
+      (tx/signal :eurozone.event/login-complete :transition true)
+      (tx/signal :eurozone.event/login-failed :transition true))))
 
 (defmethod handle-transition :eurozone.event/create-user [event]
   (let [name (:eurozone.event/name event)
         alias (:eurozone.event/alias event)
         pass (:eurozone.event/password event)
-        pass-confirm (:eurozone.event/confirm-password event)]))
+        pass-confirm (:eurozone.event/confirm-password event)]
+    ))

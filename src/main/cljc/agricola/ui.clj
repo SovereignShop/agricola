@@ -81,7 +81,7 @@
                :type :transition})
     (ui/height 15 (ui/label "End Round")))))
 
-(defn render [event]
+(defn render-game [event]
   (let [game (u/get-game event)
         board (u/get-board game)
         players (u/get-players game)]
@@ -94,6 +94,20 @@
        (draw-board board)
        (ui/gap 20 20)
        (draw-event-buttons))))))
+
+(defn home-screen [event]
+  (ui/column
+   (ui/label "Home Screen")
+   (ui/button #(signal! {})
+              (ui/label "Start a game!"))))
+
+(defn login-screen [login-failed?]
+  (ui/label (str "login screen: " login-failed?)))
+
+(defn render [event]
+  (case (:eurozone.event/name event)
+    :eurozone.event/login-failed (login-screen true)
+    :eurozone.event/login-complete (home-screen event)))
 
 (defonce ui (atom (render (d/entity @db/conn db/event-id))))
 
