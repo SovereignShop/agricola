@@ -5,7 +5,7 @@
    [datascript.core :as d]
    [agricola.utils :as u]))
 
-(defmulti handle-transition :agricola.event/name)
+(defmulti handle-transition :eurozone.event/name)
 
 (defmethod handle-transition :agricola.event/end-round [event]
   (tx/signal :agricola.event/start-round :transition))
@@ -62,15 +62,18 @@
 
 (defmethod handle-transition :agricola.event/create-game [event]
   (let [game-id (u/next-tempid!)
-        user (:agricola.event/user event)
-        alias (:agricola.user/alias user)]
-    (d/datom game-id :agricola.game/players {:agricola.player/name alias})))
+        user (:eurozone.event/user event)
+        username (:eurozone.user/name user)
+        alias (:eurozone.user/alias user)]
+    (conj
+     (tx/signal :agricola.event/start-pre-game :transition)
+     (d/datom game-id :agricola.game/players {:agricola.player/name (if (empty? alias) username alias)}))))
 
 (defmethod handle-transition :agricola.event/join-game [event]
   (let [user (:eurozone.event/user event)
         game (u/get-game event)
         alias (:agricola.user/alias user)]
-    (d/datom (:db/id game) :agricola.game/players {:agricola.player/name alias})))
+    [(d/datom (:db/id game) :agricola.game/players {:agricola.player/name alias})]))
 
 (defmethod handle-transition :eurozone.event/login [event]
   (let [username (:eurozone.event/username event)
@@ -86,7 +89,9 @@
                 username
                 password)]
     (if id
-      (tx/signal :eurozone.event/login-complete :transition true)
+      (conj
+       (tx/signal :eurozone.event/login-complete :transition true)
+       (d/datom (:db/id event) :eurozone.event/user id))
       (tx/signal :eurozone.event/login-failed :transition true))))
 
 (defmethod handle-transition :eurozone.event/create-user [event]

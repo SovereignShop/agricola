@@ -15,13 +15,13 @@
 
 (defn player-take-grain? [event player-id]
   (when-let [action (player-take-action? event player-id)]
-    (= (:agricola.event/name action) :action/take-grain)))
+    (= (:eurozone.event/name action) :action/take-grain)))
 
 (defn end-of-round? [event]
-  (= (:agricola.event/name event) :events/end-of-round))
+  (= (:eurozone.event/name event) :events/end-of-round))
 
 (defn new-round? [event]
-  (= (:agricola.event/name event) :events/new-round))
+  (= (:eurozone.event/name event) :events/new-round))
 
 (defn get-owner [entity]
   (:agricola.bit/owner entity))

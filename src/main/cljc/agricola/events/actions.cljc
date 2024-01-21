@@ -5,7 +5,7 @@
    [agricola.tx :as tx]
    [datascript.core :as d]))
 
-(defmulti handle-action :agricola.event/name)
+(defmulti handle-action :eurozone.event/name)
 
 (defmethod handle-action bits/take-three-wood
   [action]

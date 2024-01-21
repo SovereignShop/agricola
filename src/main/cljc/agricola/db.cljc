@@ -6,68 +6,68 @@
    [datascript.storage :refer [file-storage]]))
 
 (def harvest-steps
-  [{:agricola.event/name :harvest/begin-harvest}
-   {:agricola.event/name :harvest/sow-fields}
-   {:agricola.event/name :harvest/breed-animals}])
+  [{:eurozone.event/name :harvest/begin-harvest}
+   {:eurozone.event/name :harvest/sow-fields}
+   {:eurozone.event/name :harvest/breed-animals}])
 
 (def phase-one-steps
-  [{:agricola.event/name :agricola.event/start-round
+  [{:eurozone.event/name :agricola.event/start-round
     :agricola.event/type :transition
     :agricola.round/phase 1
-    :agricola.round/action {:agricola.event/name bits/take-sheep
+    :agricola.round/action {:eurozone.event/name bits/take-sheep
                             :agricola.action/active false
                             :agricola.action/increments {:agricola.resource/sheep 0}
                             :agricola.entity/resources {:agricola.resource/sheep 1}}}
-   {:agricola.event/name :agricola.event/start-round
+   {:eurozone.event/name :agricola.event/start-round
     :agricola.event/type :transition
     :agricola.round/phase 1
-    :agricola.round/action {:agricola.event/name bits/major-or-minor}}
-   {:agricola.event/name :agricola.event/start-round
+    :agricola.round/action {:eurozone.event/name bits/major-or-minor}}
+   {:eurozone.event/name :agricola.event/start-round
     :agricola.event/type :transition
     :agricola.round/phase 1
-    :agricola.event/action {:agricola.event/name bits/sow-bake}}
-   {:agricola.event/name :agricola.event/start-round
+    :agricola.event/action {:eurozone.event/name bits/sow-bake}}
+   {:eurozone.event/name :agricola.event/start-round
     :agricola.event/type :transition
     :agricola.round/phase 1
-    :agricola.event/action {:agricola.event/name bits/build-fences}}
-   {:agricola.event/name :end-phase}])
+    :agricola.event/action {:eurozone.event/name bits/build-fences}}
+   {:eurozone.event/name :end-phase}])
 
 (def phase-two-steps
-  [{:agricola.event/name :agricola.event/start-round
+  [{:eurozone.event/name :agricola.event/start-round
     :agricola.event/type :transition
     :agricola.round/phase 2
-    :agricola.event/action {:agricola.event/name bits/family-growth}}
-   {:agricola.event/name :agricola.event/start-round
+    :agricola.event/action {:eurozone.event/name bits/family-growth}}
+   {:eurozone.event/name :agricola.event/start-round
     :agricola.event/type :transition
     :agricola.round/phase 2
-    :agricola.event/action {:agricola.event/name bits/take-stone-round-2
+    :agricola.event/action {:eurozone.event/name bits/take-stone-round-2
                             :agricola.action/increments {:agricola.resource/stone 0}
                             :agricola.action/resources {:agricola.resource/stone 1}}}
-   {:agricola.event/name :agricola.event/start-round
+   {:eurozone.event/name :agricola.event/start-round
     :agricola.event/type :transition
     :agricola.round/phase 2
-    :agricola.round/action {:agricola.event/name bits/renovate}}])
+    :agricola.round/action {:eurozone.event/name bits/renovate}}])
 
 (def phase-three-steps
-  [{:agricola.event/name :agricola.event/start-round
+  [{:eurozone.event/name :agricola.event/start-round
     :agricola.event/type :transition
     :agricola.round/phase 3
-    :agricola.round/action {:agricola.event/name bits/take-one-vegetable}}
-   {:agricola.event/name :agricola.event/start-round
+    :agricola.round/action {:eurozone.event/name bits/take-one-vegetable}}
+   {:eurozone.event/name :agricola.event/start-round
     :agricola.event/type :transition
     :agricola.round/phase 3
-    :agricola.round/action {:agricola.event/name bits/take-boar
+    :agricola.round/action {:eurozone.event/name bits/take-boar
                             :agricola.action/increments {:agricola.resource/boar 0}
                             :agricola.action/resources {:agricola.resource/boar 1}}}])
 
 (def phase-four-steps
-  [{:agricola.event/name :agricola.event/start-round
+  [{:eurozone.event/name :agricola.event/start-round
     :agricola.event/type :transition
     :agricola.round/phase 4
-    :agricola.round/action {:agricola.event/name bits/take-stone-round-4
+    :agricola.round/action {:eurozone.event/name bits/take-stone-round-4
                             :agricola.action/increments {:agricola.resource/stone 0}
                             :agricola.action/resources {:agricola.resource/stone 1}}}
-   {:agricola.event/name :agricola.event/start-round
+   {:eurozone.event/name :agricola.event/start-round
     :agricola.event/type :transition
     :agricola.round/phase 4
     :agricola.round/action {:agricola.event/anme bits/take-cattle
@@ -75,16 +75,16 @@
                             :agricola.action/resources {:agricola.resource/cattle 1}}}])
 
 (def phase-five-steps
-  [{:agricola.event/name :agricola.event/start-round
+  [{:eurozone.event/name :agricola.event/start-round
     :agricola.event/type :transition
     :agricla.round/phase 5
-    :agricola.round/action {:agricola.event/name bits/plow-and-sow}}])
+    :agricola.round/action {:eurozone.event/name bits/plow-and-sow}}])
 
 (def phase-six-steps
-  [{:agricola.event/name :agricola.event/start-round
+  [{:eurozone.event/name :agricola.event/start-round
     :agricola.event/type :transition
     :agricola.round/phase 6
-    :agricola.round/action {:agricola.event/name bits/reno-fence}}])
+    :agricola.round/action {:eurozone.event/name bits/reno-fence}}])
 
 
 (def game-steps
@@ -95,6 +95,7 @@
 
 (def schema
   {:eurozone/user {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+   :eurozone.event/user {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
    :agricola.event/id {:db/unique :db.unique/identity}
    :agricola.space/resources {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
    :agricola.event/game {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
@@ -103,7 +104,7 @@
    :agricola.game/board {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
    :agricola.game/current-player {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
    :agricola.board/actions {:db/cardinality :db.cardinality/many :db/valueType :db.type/ref}
-   :agricola.event/name {:db/cardinality :db.cardinality/one}
+   :eurozone.event/name {:db/cardinality :db.cardinality/one}
    :agricola.action/increments {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
    :agricola.action/accumulator {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
    :agricola.game/players {:db/valueType :db.type/ref :db/cardinaltiy :db.cardinality/many}

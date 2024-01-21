@@ -35,9 +35,9 @@
        (ui/gap gap-size gap-size)
        (for [action (sort-by :db/id actions)]
          (ui/button
-          #(do (println "hello world" (:agricola.event/name action))
+          #(do (println "hello world" (:eurozone.event/name action))
                (signal! #:agricola.event
-                        {:name (:agricola.event/name action)
+                        {:name (:eurozone.event/name action)
                          :type :action}))
           (draw-action action))))))))
 
@@ -95,10 +95,20 @@
        (ui/gap 20 20)
        (draw-event-buttons))))))
 
+(defn pregame-screen [event]
+  (ui/button #() (ui/label "Start Draft")))
+
+(defn choose-game [event]
+  (let [user (:eurozone.event/user event)]
+    (ui/column
+     (ui/button #(signal! {:eurozone.event/name :agricola.event/create-game
+                           :agricola.event/user (:db/id user)})
+                (ui/label "Agricola")))))
+
 (defn home-screen [event]
   (ui/column
    (ui/label "Home Screen")
-   (ui/button #(signal! {})
+   (ui/button #(signal! {:eurozone.event/name :eurozone.event/choose-game})
               (ui/label "Start a game!"))))
 
 (defn login-screen [login-failed?]
@@ -106,8 +116,11 @@
 
 (defn render [event]
   (case (:eurozone.event/name event)
+    :agricola.event/start-pre-game (pregame-screen event)
+
     :eurozone.event/login-failed (login-screen true)
-    :eurozone.event/login-complete (home-screen event)))
+    :eurozone.event/login-complete (home-screen event)
+    :eurozone.event/choose-game (choose-game event)))
 
 (defonce ui (atom (render (d/entity @db/conn db/event-id))))
 
@@ -134,28 +147,28 @@
 
   (do (d/transact!
        db/conn
-       [{:agricola.event/name :init
+       [{:eurozone.event/name :init
          :agricola.event/id :global-event
          :agricola.event/game
          {:agricola.game/current-player -20
           :agricola.game/board
           {:agricola.board/actions
-           [{:agricola.event/name bits/take-one-grain
+           [{:eurozone.event/name bits/take-one-grain
              :agricola.entity/resources {:agricola.resource/wood 2
                                          :agricola.resource/grain 2
                                          :agricola.resource/clay 3}
              :agricola.action/increments {:agricola.resource/wood 2}
              :agricola.bit/title "Take One Grain"
              :agricola.bit/description ""}
-            {:agricola.event/name bits/take-three-wood
+            {:eurozone.event/name bits/take-three-wood
              :agricola.bit/title "Take Three Wood"
              :agricola.bit/description ""}
-            {:agricola.event/name bits/take-two-wood
+            {:eurozone.event/name bits/take-two-wood
              :agricola.bit/title "Take Two Wood"}
-            {:agricola.event/name bits/take-one-reed
+            {:eurozone.event/name bits/take-one-reed
              :agricola.bit/title "Take One Reed"
              :agricola.bit/description ""}
-            {:agricola.event/name bits/fishing
+            {:eurozone.event/name bits/fishing
              :agricola.bit/title "Fishing"
              :agricola.bit/description ""}]}
           :agricola.game/players
