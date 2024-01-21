@@ -5,7 +5,6 @@
    [datascript.core :as d]
    [datascript.storage :refer [file-storage]]))
 
-
 (def harvest-steps
   [{:agricola.event/name :harvest/begin-harvest}
    {:agricola.event/name :harvest/sow-fields}
@@ -87,20 +86,6 @@
     :agricola.round/phase 6
     :agricola.round/action {:agricola.event/name bits/reno-fence}}])
 
-(def all-steps
-  (concat
-   phase-one-steps
-   harvest-steps
-   phase-two-steps
-   harvest-steps
-   phase-three-steps
-   harvest-steps
-   phase-four-steps
-   harvest-steps
-   phase-five-steps
-   harvest-steps
-   phase-six-steps
-   harvest-steps))
 
 (def game-steps
   [{:agricola.game/steps
@@ -109,10 +94,12 @@
              (not= (:agricola.round/phase step) 6) (assoc :agricola.round/next-round id))))}])
 
 (def schema
-  {:agricola.event/id        {:db/unique :db.unique/identity}
+  {:eurozone/user {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+   :agricola.event/id {:db/unique :db.unique/identity}
    :agricola.space/resources {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
    :agricola.event/game {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
-   :agricola.event/action {:db/valueType :db.type/ref :db/cardinality :db.cardinatliy/one}
+   :agricola.event/action {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+   :agricola.game/starting-player {:db/valueType :db.type/ref :db/cardinality :db.cardinatliy/one}
    :agricola.game/board {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
    :agricola.game/current-player {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
    :agricola.board/actions {:db/cardinality :db.cardinality/many :db/valueType :db.type/ref}
@@ -120,6 +107,7 @@
    :agricola.action/increments {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
    :agricola.action/accumulator {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
    :agricola.game/players {:db/valueType :db.type/ref :db/cardinaltiy :db.cardinality/many}
+   :agricola.player/next-player {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
    :agricola.player/farm {:db/valueType :db.type/ref}
    :agricola.player/occupations {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
    :agricola.player/improvements {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
