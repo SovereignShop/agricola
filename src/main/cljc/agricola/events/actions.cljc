@@ -10,7 +10,7 @@
 (defmethod handle-action bits/take-three-wood
   [action]
   (let [game (u/get-game action)
-        player (u/get-player game)
+        player (u/get-current-player game)
         player-resources (u/get-resources player)
         
         square (u/get-square action)
@@ -26,7 +26,7 @@
 
 (defmethod handle-action bits/plow-one-field
   [action]
-  (let [game (u/get-player action)
+  (let [game (u/get-current-player action)
         player (u/get-current-player game)
         resources (u/get-resources player)]
     (tx/add-fields resources 1)))
@@ -35,37 +35,37 @@
   [action]
   (let [occupation (u/get-chosen-occupation action)]
     (concat
-     (tx/add-food (u/get-player action) -1)
+     (tx/add-food (u/get-current-player action) -1)
      (tx/assoc-entity occupation :agricola.occupation/played true))))
 
 (defmethod handle-action bits/fishing
   [action]
-  (let [player (u/get-player action)]
+  (let [player (u/get-current-player action)]
     (tx/move-resources action player)))
 
 (defmethod handle-action bits/take-two-wood
   [action]
-  (let [player (u/get-player action)]
+  (let [player (u/get-current-player action)]
     (tx/move-resources action player)))
 
 (defmethod handle-action bits/take-one-clay-board-one
   [action]
-  (let [player (u/get-player action)]
+  (let [player (u/get-current-player action)]
     (tx/move-resources action player)))
 
 (defmethod handle-action bits/take-one-clay-board-two
   [action]
-  (let [player (u/get-player action)]
+  (let [player (u/get-current-player action)]
     (tx/move-resources action player)))
 
 (defmethod handle-action bits/take-one-reed
   [action]
-  (let [player (u/get-player action)]
+  (let [player (u/get-current-player action)]
     (tx/move-resources action player)))
 
 (defmethod handle-action bits/build-rooms
   [action]
-  (let [player (u/get-player action)]
+  (let [player (u/get-current-player action)]
     ))
 
 (defmethod handle-action bits/day-laborer

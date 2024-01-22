@@ -47,6 +47,9 @@
 (defn get-players [game]
   (:agricola.game/players game))
 
+(defn get-current-player [game]
+  (:agricola.game/current-player game))
+
 (defn get-actions [board]
   (:agricola.board/actions board))
 

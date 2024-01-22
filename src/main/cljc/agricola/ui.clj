@@ -85,15 +85,13 @@
   (let [game (u/get-game event)
         board (u/get-board game)
         players (u/get-players game)]
-    (ui/default-theme
-     {}
-     (ui/center
-      (ui/row
-       (draw-players players)
-       (ui/gap 20 20)
-       (draw-board board)
-       (ui/gap 20 20)
-       (draw-event-buttons))))))
+    (ui/center
+     (ui/row
+      (draw-players players)
+      (ui/gap 20 20)
+      (draw-board board)
+      (ui/gap 20 20)
+      (draw-event-buttons)))))
 
 (defn pregame-screen [event]
   (ui/button #() (ui/label "Start Draft")))
@@ -112,15 +110,36 @@
               (ui/label "Start a game!"))))
 
 (defn login-screen [login-failed?]
-  (ui/label (str "login screen: " login-failed?)))
+  (let [name-state (atom {:text ""})
+        alias-state (atom {:text ""})]
+    (ui/center
+     (ui/column
+      (ui/row (ui/center (ui/width 50 (ui/label "Name:"))) (ui/width 80 (ui/text-field {} name-state)))
+      (ui/gap 5 5)
+      (ui/row (ui/center (ui/width 50 (ui/label "Alias:"))) (ui/width 80 (ui/text-field {} alias-state)))
+      (ui/gap 5 5)
+      (ui/width (+ 50 80) (ui/button #(signal! {:eurozone.event/name :eurozone.event/login})
+                                     (ui/center (ui/label "Login"))))
+      (ui/gap 5 5)
+      (ui/width (+ 50 80) (ui/button #(signal! {:eurozone.event/name :eurozone.event/create-user
+                                                :eurozone.user/name @name-state
+                                                :eurozone.user/alias @alias-state})
+                                     (ui/center (ui/label "Create User"))))))))
 
 (defn render [event]
-  (case (:eurozone.event/name event)
-    :agricola.event/start-pre-game (pregame-screen event)
+  (ui/default-theme
+   {}
+   (case (:eurozone.event/name event)
+     :agricola.event/start-pre-game (pregame-screen event)
 
-    :eurozone.event/login-failed (login-screen true)
-    :eurozone.event/login-complete (home-screen event)
-    :eurozone.event/choose-game (choose-game event)))
+     :eurozone.event/login-failed (login-screen true)
+     :eurozone.event/login-complete (home-screen event)
+     :eurozone.event/choose-game (choose-game event)
+     :eurozone.event/login-screen (login-screen false))))
+
+(defonce _ (do (d/transact! db/conn
+                            [(conj {:eurozone.event/name :eurozone.event/login-screen}
+                                   db/event-id)])))
 
 (defonce ui (atom (render (d/entity @db/conn db/event-id))))
 
@@ -135,6 +154,8 @@
     (reset! ui (render (d/entity @db/conn db/event-id)))))
 
 (defonce ui-listener (d/listen! db/conn :ui #'listen))
+
+(reset! ui (render (d/entity @db/conn db/event-id)))
 
 (comment
 

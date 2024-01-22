@@ -1,5 +1,7 @@
 {:deps  {org.clojure/clojure {:mvn/version "1.11.1"}
-           org.clojure/core.async {:mvn/version "1.6.681"}
+         org.clojure/core.async {:mvn/version "1.6.681"}
+         org.xerial/sqlite-jdbc {:mvn/version "3.34.0"}
+         com.github.atomashpolskiy/bt-core {:mvn/version "1.10"}
          io.github.tonsky/datascript-storage-sql {:mvn/version "2.0.0"}
          io.github.humbleui/humbleui             {:git/url "https://github.com/HumbleUI/HumbleUI.git"
                                                   :sha "9e6088e40e516f267d59ef91aa8606d5025947a1"}

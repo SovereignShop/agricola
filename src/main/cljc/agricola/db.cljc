@@ -3,7 +3,13 @@
    [agricola.bits :as bits]
    [agricola.utils :as u]
    [datascript.core :as d]
-   [datascript.storage :refer [file-storage]]))
+   [datascript.storage :refer [file-storage]])
+  (:import
+   [org.sqlite SQLiteDataSource]))
+
+(def datasource
+  (doto (SQLiteDataSource.)
+    (.setUrl "jdbc:sqlite:target/db.sqlite")))
 
 (def harvest-steps
   [{:eurozone.event/name :harvest/begin-harvest}
@@ -86,13 +92,6 @@
     :agricola.round/phase 6
     :agricola.round/action {:eurozone.event/name bits/reno-fence}}])
 
-
-(def game-steps
-  [{:agricola.game/steps
-    (vec (for [[id step] (map vector (repeatedly u/next-tempid!) all-steps)]
-           (cond-> (assoc step :db/id (inc id))
-             (not= (:agricola.round/phase step) 6) (assoc :agricola.round/next-round id))))}])
-
 (def schema
   {:eurozone/user {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
    :eurozone.event/user {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
@@ -100,7 +99,7 @@
    :agricola.space/resources {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
    :agricola.event/game {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
    :agricola.event/action {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
-   :agricola.game/starting-player {:db/valueType :db.type/ref :db/cardinality :db.cardinatliy/one}
+   :agricola.game/starting-player {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
    :agricola.game/board {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
    :agricola.game/current-player {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
    :agricola.board/actions {:db/cardinality :db.cardinality/many :db/valueType :db.type/ref}
