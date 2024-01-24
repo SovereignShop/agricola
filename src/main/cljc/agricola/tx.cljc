@@ -46,7 +46,7 @@
 (defn signal
   ([name type ui-update?]
    (with-meta
-     [(conj #:agricola.event {:name name
+     [(conj #:eurozone.event {:name name
                               :type type}
             db/event-id)]
      {:signal true :ui-update ui-update?}))

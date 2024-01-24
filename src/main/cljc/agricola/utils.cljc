@@ -3,7 +3,9 @@
    [agricola.bits :as bits]
    [datascript.core :as d])
   #?(:clj
-     (:import [java.util UUID])))
+     (:import [java.util UUID]
+              [java.security MessageDigest]
+              [java.math BigInteger])))
 
 (defn take-action? [event]
   (:agricola.event/action event))
@@ -37,9 +39,6 @@
 
 (defn get-bits [entity]
   (:agricola.bit/children entity))
-
-(defn get-game [event]
-  (:agricola.event/game event))
 
 (defn get-board [game]
   (:agricola.game/board game))
@@ -79,7 +78,7 @@
   (:agricola.resource/quantity resource))
 
 (defn get-game-bit [event game-bit-name]
-  (let [game (:agricola.event/game event)
+  (let [game (:eurozone.event/game event)
         bits (:agricola.game/bits game)]
     (get bits game-bit-name)))
 
@@ -187,3 +186,10 @@
      :agricola.game/id (UUID/randomUUID)
      :agricola.game/rounds squares
      :agricola.game/players (map :db/id players)}))
+
+(defn hash-username-password [username password]
+  (let [input-str (str username ":" password)
+        md (MessageDigest/getInstance "SHA-256")]
+    (.update md (.getBytes input-str "UTF-8"))
+    (let [digest (.digest md)
+          big-int (BigInteger. 1 digest)])))
