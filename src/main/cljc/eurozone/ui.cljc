@@ -11,7 +11,7 @@
 (defmulti ui-event :eurozone.event/name)
 
 (defmethod ui-event :default [event]
-  (print "unhandled UI event: " (:eurozone.event/name event)))
+  (println "unhandled UI event: " (:eurozone.event/name event)))
 
 (defn signal! [event]
   (let [tx-data [(conj event db/event-id)]]

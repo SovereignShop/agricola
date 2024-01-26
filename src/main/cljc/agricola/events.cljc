@@ -158,8 +158,8 @@
         username (:eurozone.user/name user)
         alias (:eurozone.user/alias user)]
     (conj
-     (eu/signal :agricola.event/start-pre-game :transition)
-     (d/datom game-id :agricola.game/players {:agricola.player/name (if (empty? alias) username alias)}))))
+     (eu/signal :agricola.event/start-pre-game :transition true)
+     {:agricola.game/players [{:agricola.player/name (if (empty? alias) username alias)}]})))
 
 (defmethod handle-event :agricola.event/join-game [event]
   (let [user (:eurozone.event/user event)

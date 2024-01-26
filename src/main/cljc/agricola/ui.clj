@@ -100,7 +100,7 @@
                            :agricola.event/user (:db/id user)})
                 (ui/label "Agricola")))))
 
-(defmethod ui-event :eurozone.event/start-pre-game [event]
+(defmethod ui-event :agricola.event/start-pre-game [event]
   (ui/button #() (ui/label "Start Draft")))
 
 (comment
