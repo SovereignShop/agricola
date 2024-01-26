@@ -2,11 +2,11 @@
   "All effects executed on every event and return zero or more datoms."
   (:require
    [datascript.core :as d]
+   [eurozone.effects :refer [handle-effect]]
    [agricola.tx :as tx]
    [agricola.utils :as u]
    [agricola.bits :as bits]))
 
-(defmulti handle-effect (fn [effect _] (:agricola.effect/bit effect)))
 
 (defmethod handle-effect bits/grain-elevator
   [_ event]

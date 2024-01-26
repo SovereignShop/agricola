@@ -1,15 +1,12 @@
 (ns agricola.events
   (:require
+   [eurozone.events :refer [handle-event]]
+   [eurozone.utils :as eu]
    [agricola.bits :as bits]
    [agricola.utils :as u]
    [agricola.tx :as tx]
    [agricola.db :as db]
    [datascript.core :as d]))
-
-(defmulti handle-event :eurozone.event/name)
-
-(defmethod handle-event :default [event]
-  (println "no handler for event:" (:eurozone.event/name event)))
 
 (defmethod handle-event bits/take-three-wood
   [action]
@@ -103,7 +100,7 @@
   [action])
 
 (defmethod handle-event :agricola.event/end-round [event]
-  (tx/signal :agricola.event/start-round :transition))
+  (eu/signal :agricola.event/start-round :transition))
 
 (defmethod handle-event :agricola.event/start-round [event]
   (let [game (u/get-game event)
@@ -161,7 +158,7 @@
         username (:eurozone.user/name user)
         alias (:eurozone.user/alias user)]
     (conj
-     (tx/signal :agricola.event/start-pre-game :transition)
+     (eu/signal :agricola.event/start-pre-game :transition)
      (d/datom game-id :agricola.game/players {:agricola.player/name (if (empty? alias) username alias)}))))
 
 (defmethod handle-event :agricola.event/join-game [event]
@@ -169,44 +166,3 @@
         game (u/get-game event)
         alias (:agricola.user/alias user)]
     [(d/datom (:db/id game) :agricola.game/players {:agricola.player/name alias})]))
-
-(defmethod handle-event :eurozone.event/login [event]
-  (let [username (:eurozone.user/name event)
-        password (:eurozone.event/password event)
-        key (u/hash-username-password username password)
-
-        db (d/entity-db event)
-        id (d/q '[:find ?user-id .
-                  :in $ ?uname ?key
-                  :where
-                  [?user-id :eurozone.user/name ?uname]
-                  [?user-id :eurozone.user/key ?key]]
-                db
-                username
-                key)]
-    (if id
-      (conj
-       (tx/signal :eurozone.event/login-complete :transition true)
-       (d/datom (:db/id event) :eurozone.event/user id))
-      (tx/signal :eurozone.event/login-failed :transition true))))
-
-(defmethod handle-event :eurozone.event/create-user [event]
-  (let [username (:eurozone.user/name event)
-        pass (:eurozone.event/password event)
-        key (u/hash-username-password name pass)
-
-        db (d/entity-db event)
-
-        id (d/q '[:find ?user-id .
-                  :in $ ?uname
-                  :where
-                  [?user-id :eurozone.user/name ?uname]]
-                db
-                username)]
-    (if id
-      (tx/signal :eurozone.event/username-already-exists :transition true)
-      (conj
-       (tx/signal :eurozone.event/login-complete :transition true)
-       {:eurozone.user/name username
-        :eurozone.user/key key
-        :eurozone.user/alias ""}))))

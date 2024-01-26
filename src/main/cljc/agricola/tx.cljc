@@ -42,13 +42,3 @@
     (conj (vec (for [id (map :db/id a)]
                  [:db/add (:db/id to) :agricola.space/resources id]))
           [:db/retract (:db/id from) :agricola.space/resources])))
-
-(defn signal
-  ([name type ui-update?]
-   (with-meta
-     [(conj #:eurozone.event {:name name
-                              :type type}
-            db/event-id)]
-     {:signal true :ui-update ui-update?}))
-  ([name type]
-   (signal name type false)))

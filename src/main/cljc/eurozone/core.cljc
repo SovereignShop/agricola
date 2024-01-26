@@ -1,9 +1,9 @@
-(ns agricola.game
+(ns eurozone.core
   (:require
    [agricola.utils :as u]
-   [agricola.db :as db]
-   [agricola.events :refer [handle-event]]
-   [agricola.effects :refer [handle-effect]]
+   [eurozone.db :as db]
+   [eurozone.events :refer [handle-event]]
+   [eurozone.effects :refer [handle-effect]]
    [datascript.core :as d]))
 
 (defn do-effects [event]
@@ -28,5 +28,5 @@
                    new-tx-data
                    (merge {:ui-update true} (meta new-tx-data))))))
 
-(defonce game-listener
+(defonce event-listener
   (d/listen! db/conn :game #'listen))

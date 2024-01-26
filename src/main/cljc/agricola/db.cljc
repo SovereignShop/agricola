@@ -1,14 +1,8 @@
 (ns agricola.db
   (:require
+   [eurozone.db :as db]
    [agricola.bits :as bits]
-   [datascript.core :as d]
-   [datascript.storage :refer [file-storage]])
-  (:import
-   [org.sqlite SQLiteDataSource]))
-
-(def datasource
-  (doto (SQLiteDataSource.)
-    (.setUrl "jdbc:sqlite:target/db.sqlite")))
+   [datascript.core :as d]))
 
 (def harvest-steps
   [{:eurozone.event/name :harvest/begin-harvest}
@@ -79,53 +73,29 @@
     :agricola.round/action {:eurozone.event/name bits/reno-fence}}])
 
 (def schema
-  {:eurozone/user {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
-   :eurozone.event/user {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
-   :eurozone.event/id {:db/unique :db.unique/identity}
-   :agricola.space/resources {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
-   :eurozone.event/game {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
-   :agricola.event/action {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+  {:agricola.space/resources      {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+   :agricola.event/action         {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
    :agricola.game/starting-player {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
-   :agricola.game/board {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
-   :agricola.game/current-player {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
-   :agricola.board/actions {:db/cardinality :db.cardinality/many :db/valueType :db.type/ref}
-   :eurozone.event/name {:db/cardinality :db.cardinality/one}
-   :agricola.action/increments {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
-   :agricola.action/accumulator {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
-   :agricola.game/players {:db/valueType :db.type/ref :db/cardinaltiy :db.cardinality/many}
-   :agricola.player/next-player {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
-   :agricola.player/farm {:db/valueType :db.type/ref}
-   :agricola.player/occupations {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
-   :agricola.player/improvements {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
-   :agricola.farm/house {:db/valueType :db.type/ref}
-   :agricola.farm/animals {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
-   :agricola.farm/fields {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
-   :agricola.farm/pastures {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
-   :agricola.farm/squares {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
-   :agricola.field/resources {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
-   :agricola.pasture/squares {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
-   :agricola.entity/resources {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}})
+   :agricola.game/board           {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+   :agricola.game/current-player  {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+   :agricola.board/actions        {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+   :agricola.action/increments    {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+   :agricola.action/accumulator   {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+   :agricola.game/players         {:db/valueType :db.type/ref :db/cardinaltiy :db.cardinality/many}
+   :agricola.player/next-player   {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+   :agricola.player/farm          {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+   :agricola.player/occupations   {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+   :agricola.player/improvements  {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+   :agricola.farm/house           {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+   :agricola.farm/animals         {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+   :agricola.farm/fields          {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+   :agricola.farm/pastures        {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+   :agricola.farm/squares         {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+   :agricola.field/resources      {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+   :agricola.pasture/squares      {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+   :agricola.entity/resources     {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}})
 
-(def conn
-  (d/create-conn schema {:storage (file-storage "db")}))
-
-(def history-logs (atom {}))
-
-(def event-id [:eurozone.event/id :global-event])
-
-(d/listen! conn :history
-           (fn [{:keys [tx-data tx-meta]}]
-             (let [{:keys [tx-log-id]} tx-meta]
-               (when (and tx-log-id (pos? (count tx-data)))
-                 (let [groups (group-by :added tx-data)]
-                   (swap! history-logs
-                          (fn [history]
-                            (update history
-                                    tx-log-id
-                                    (fn [logs]
-                                      (-> logs
-                                          (update :added into (get groups true))
-                                          (update :removed into (get groups false))))))))))))
+(d/reset-schema! db/conn (merge db/schema schema))
 
 (comment
 

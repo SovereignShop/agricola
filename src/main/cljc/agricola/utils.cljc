@@ -40,6 +40,9 @@
 (defn get-bits [entity]
   (:agricola.bit/children entity))
 
+(defn get-game [event]
+  (:eurozone.event/game event))
+
 (defn get-board [game]
   (:agricola.game/board game))
 

@@ -1,9 +1,9 @@
 (ns agricola.ui
   (:require
    [datascript.core :as d]
-   [agricola.db :as db]
+   [eurozone.ui :refer [ui-event]]
+   [eurozone.db :as db]
    [agricola.utils :as u]
-   [agricola.game :as g]
    [agricola.bits :as bits]
    [io.github.humbleui.ui :as ui])
   (:import
@@ -93,92 +93,15 @@
       (ui/gap 20 20)
       (draw-event-buttons)))))
 
-(defn pregame-screen [event]
-  (ui/button #() (ui/label "Start Draft")))
-
-(defn choose-game [event]
+(defmethod ui-event :eurozone.event/choose-game [event]
   (let [user (:eurozone.event/user event)]
     (ui/column
      (ui/button #(signal! {:eurozone.event/name :agricola.event/create-game
                            :agricola.event/user (:db/id user)})
                 (ui/label "Agricola")))))
 
-(defn home-screen [event]
-  (ui/column
-   (ui/label "Home Screen")
-   (ui/button #(signal! {:eurozone.event/name :eurozone.event/choose-game})
-              (ui/label "Start a game!"))))
-
-(.length
- (doto (StringBuilder.)
-   (.append \a)))
-
-(defn login-screen [event]
-  (let [name-state (atom {:text (or (:eurozone.user/name event) "") :placeholder "Username..."})
-        password-state (atom {:text (or (:eurozone.event/password event) "")
-                             :placeholder "Password..."})
-
-        width 130
-        login-signal #(signal! {:eurozone.event/name :eurozone.event/login
-                                :eurozone.event/type :transition
-                                :eurozone.user/name (:text @name-state)
-                                :eurozone.event/password (:text @password-state)})]
-    (ui/center
-     (ui/focus-controller
-      (ui/column
-       (ui/width width (ui/text-field {} name-state))
-       (ui/gap 5 5)
-       (ui/width width (ui/text-field {} password-state))
-       (ui/gap 5 5)
-       (ui/focusable
-        (ui/on-key-focused
-         {:enter login-signal}
-         (ui/width width (ui/button login-signal (ui/center (ui/label "Login"))))))
-       (ui/gap 5 5)
-       (ui/width width (ui/button #(signal! {:eurozone.event/name :eurozone.event/create-user
-                                             :eurozone.event/type :transition
-                                             :eurozone.user/name (:text @name-state)
-                                             :eurozone.user/password (:text @password-state)})
-                                  (ui/center (ui/label "Create User"))))
-       (when (= (:eurozone.event/name event) :eurozone.event/username-already-exists)
-         (ui/column
-          (ui/gap 5 5)
-          (ui/center (ui/label "User already exists")))))))))
-
-(defn render [event]
-  (ui/default-theme
-   {}
-   (case (:eurozone.event/name event)
-     :agricola.event/start-pre-game (pregame-screen event)
-
-     (:eurozone.event/login-failed :eurozone.event/username-already-exists) (login-screen event)
-     :eurozone.event/login-complete (home-screen event)
-     :eurozone.event/choose-game (choose-game event)
-     :eurozone.event/login-screen (login-screen false))))
-
-(defonce _ (do (d/transact! db/conn
-                            [(conj {:eurozone.event/name :eurozone.event/login-screen}
-                                   db/event-id)])))
-
-(defonce ui (atom (render (d/entity @db/conn db/event-id))))
-
-(defonce app
-  (ui/start-app!
-   (ui/window
-    {:title "Humble 🐝 UI"}
-    ui)))
-
-(defn listen [{:keys [tx-meta]}]
-  (when (:ui-update tx-meta)
-    (reset! ui (render (d/entity @db/conn db/event-id)))))
-
-(defonce ui-listener (d/listen! db/conn :ui #'listen))
-
-(do
-  (d/transact! db/conn
-               [(conj {:eurozone.event/name :eurozone.event/login-screen}
-                      db/event-id)])
-  (reset! ui (render (d/entity @db/conn db/event-id))))
+(defmethod ui-event :eurozone.event/start-pre-game [event]
+  (ui/button #() (ui/label "Start Draft")))
 
 (comment
 
