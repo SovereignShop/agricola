@@ -161,7 +161,8 @@
     (conj
      (eu/signal :agricola.event/start-pre-game :transition true)
      {:db/id (:db/id event) :eurozone.event/game game-id}
-     {:agricola.game/players [{:agricola.player/name (if (empty? alias) username alias)}]
+     {:db/id game-id
+      :agricola.game/players [{:agricola.player/name (if (empty? alias) username alias)}]
       :eurozone.game/name "agricola"})))
 
 (defmethod handle-event :agricola.event/join-game [event]

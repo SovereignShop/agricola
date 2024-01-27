@@ -16,6 +16,7 @@
   (println "unhandled UI event: " (:eurozone.event/name event)))
 
 (defn signal! [event]
+  (println "logging in" event)
   (let [tx-data [(conj event db/event-id)]]
     (d/transact! db/conn tx-data {:signal true :ui-update false})))
 
@@ -62,7 +63,10 @@
               (ui/label "Start a game!"))))
 
 (defn render [event]
-  (ui/default-theme {} (ui-event event)))
+  (try
+    (ui/default-theme {} (ui-event event))
+    (catch Exception e
+      (println (:eurozone.event/name event) ":" (.getMessage event)))))
 
 (defonce _ (do (d/transact! db/conn
                             [(conj {:eurozone.event/name :eurozone.event/login-screen}
@@ -76,14 +80,16 @@
     {:title "Humble 🐝 UI"}
     ui)))
 
+
 (defn listen [{:keys [tx-meta]}]
   (when (:ui-update tx-meta)
     (reset! ui (render (d/entity @db/conn db/event-id)))))
 
 (defonce ui-listener (d/listen! db/conn :ui #'listen))
 
-(do
-  (d/transact! db/conn
-               [(conj {:eurozone.event/name :eurozone.event/login-screen}
-                      db/event-id)])
-  (reset! ui (render (d/entity @db/conn db/event-id))))
+^:chord/o (do
+            (d/transact! db/conn
+                         [(conj {:eurozone.event/name :eurozone.event/login-screen}
+                                db/event-id)])
+
+            ^:chord/x (reset! ui (render (d/entity @db/conn db/event-id))))

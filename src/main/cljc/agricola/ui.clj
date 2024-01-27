@@ -10,7 +10,9 @@
 
 (defn signal! [event]
   (let [tx-data [(conj event db/event-id)]]
-    (d/transact! db/conn tx-data {:signal true :ui-update false})))
+    (try (d/transact! db/conn tx-data {:signal true})
+         (catch Exception e
+           (println "Error transacting UI signal:" event "\n" (.getMessage e))))))
 
 (defn with-gap [size & args]
   (interpose (ui/gap size size) args))
@@ -95,10 +97,10 @@
 (defmethod ui-event :agricola.event/find-or-create-game [event])
 
 (defmethod ui-event :eurozone.event/choose-game [event]
-  (let [user (:eurozone.event/user event)]
+  (let [username (:eurozone.event/username event)]
     (ui/column
      (ui/button #(signal! {:eurozone.event/name :agricola.event/create-game
-                           :agricola.event/user (:db/id user)})
+                           :agricola.event/username username})
                 (ui/label "Agricola")))))
 
 (defmethod ui-event :agricola.event/start-pre-game [event]
