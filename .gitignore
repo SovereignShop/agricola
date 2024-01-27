@@ -2,6 +2,7 @@ pom.xml
 pom.xml.asc
 *.jar
 *.class
+*.log
 /lib/
 /classes/
 /target/
@@ -14,6 +15,7 @@ pom.xml.asc
 .cpcache/
 .shadow-cljs/
 out/
+db/
 dist
 deps/bin
 resources/db
