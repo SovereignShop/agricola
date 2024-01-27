@@ -96,7 +96,6 @@
 
 (defmethod ui-event :eurozone.event/choose-game [event]
   (let [username (:eurozone.event/username event)]
-    (println "username" username)
     (ui/column
      (ui/button #(signal! :agricola.event/create-game
                           {:eurozone.event/username username})

@@ -13,10 +13,9 @@
    [io.github.humbleui.types IPoint]))
 
 (defmethod ui-event :default [event]
-  (println "unhandled UI event: " (:eurozone.event/name event)))
+  (println "unhandled UI event: " (:eurozone.event/name event) event))
 
 (defn signal! [event]
-  (println "logging in" event)
   (let [tx-data [(conj event db/event-id)]]
     (d/transact! db/conn tx-data {:signal true :ui-update false})))
 
@@ -30,7 +29,6 @@
 
         width 130
         login-signal #(signal! {:eurozone.event/name :eurozone.event/login
-                                :eurozone.event/type :transition
                                 :eurozone.event/username (:text @name-state)
                                 :eurozone.event/password (:text @password-state)})]
     (ui/center
@@ -46,7 +44,6 @@
          (ui/width width (ui/button login-signal (ui/center (ui/label "Login"))))))
        (ui/gap 5 5)
        (ui/width width (ui/button #(signal! {:eurozone.event/name :eurozone.event/create-user
-                                             :eurozone.event/type :transition
                                              :eurozone.event/username (:text @name-state)
                                              :eurozone.user/password (:text @password-state)})
                                   (ui/center (ui/label "Create User"))))
@@ -64,7 +61,8 @@
 
 (defn render [event]
   (try
-    (ui/default-theme {} (ui-event event))
+    (when-let [view (ui-event event)]
+      (ui/default-theme {} view))
     (catch Exception e
       (println (:eurozone.event/name event) ":" (.getMessage event)))))
 
