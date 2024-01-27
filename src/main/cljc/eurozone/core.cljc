@@ -25,6 +25,7 @@
 
 (defn listen [{:keys [db-after tx-meta]}]
   (when (:signal tx-meta)
+
     (let [event (d/entity db-after db/event-id)
           new-tx-data (process-event event)]
       (try (d/transact! db/conn
@@ -32,6 +33,9 @@
                         (merge {:ui-update true} (meta new-tx-data)))
            (catch Exception e
              (println "Error transacting backend tx: " (:eurozone.event/name event) "\n" (.getMessage e)))))))
+
+(comment ^:chord/l (do (listen {:db-after @db/conn :tx-meta {:signal true}})
+                       nil))
 
 (defonce event-listener
   (d/listen! db/conn :game #'listen))

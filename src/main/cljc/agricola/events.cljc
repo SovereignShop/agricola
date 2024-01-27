@@ -155,14 +155,13 @@
 
 (defmethod handle-event :agricola.event/create-game [event]
   (let [game-id (u/next-tempid!)
-        user (:eurozone.event/user event)
-        username (:eurozone.user/name user)
-        alias (:eurozone.user/alias user)]
+        username (:eurozone.event/username event)]
+    (println username)
     (conj
      (eu/signal :agricola.event/start-pre-game :transition true)
      {:db/id (:db/id event) :eurozone.event/game game-id}
      {:db/id game-id
-      :agricola.game/players [{:agricola.player/name (if (empty? alias) username alias)}]
+      :agricola.game/players {:agricola.player/name username}
       :eurozone.game/name "agricola"})))
 
 (defmethod handle-event :agricola.event/join-game [event]

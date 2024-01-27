@@ -83,7 +83,8 @@
 
 (defn listen [{:keys [tx-meta]}]
   (when (:ui-update tx-meta)
-    (reset! ui (render (d/entity @db/conn db/event-id)))))
+    (when-let [new-state (render (d/entity @db/conn db/event-id))]
+      (reset! ui new-state))))
 
 (defonce ui-listener (d/listen! db/conn :ui #'listen))
 
@@ -92,4 +93,5 @@
                          [(conj {:eurozone.event/name :eurozone.event/login-screen}
                                 db/event-id)])
 
-            ^:chord/x (reset! ui (render (d/entity @db/conn db/event-id))))
+            ^:chord/x (when-let [new-state (render (d/entity @db/conn db/event-id))]
+                        (reset! ui new-state)))

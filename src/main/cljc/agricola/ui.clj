@@ -8,11 +8,15 @@
   (:import
    [io.github.humbleui.types IPoint]))
 
-(defn signal! [event]
-  (let [tx-data [(conj event db/event-id)]]
-    (try (d/transact! db/conn tx-data {:signal true})
-         (catch Exception e
-           (println "Error transacting UI signal:" event "\n" (.getMessage e))))))
+(defn signal!
+  ([event-name]
+   (signal! event-name {}))
+  ([event-name event-data]
+   (let [event (assoc event-data :eurozone.event/name event-name)
+         tx-data [(conj event db/event-id)]]
+     (try (d/transact! db/conn tx-data {:signal true})
+          (catch Exception e
+            (println "Error transacting UI signal:" event "\n" (.getMessage e)))))))
 
 (defn with-gap [size & args]
   (interpose (ui/gap size size) args))
@@ -37,9 +41,7 @@
        (for [action (sort-by :db/id actions)]
          (ui/button
           #(do (println "hello world" (:eurozone.event/name action))
-               (signal! #:eurozone.event
-                        {:name (:eurozone.event/name action)
-                         :type :action}))
+               (signal! (:eurozone.event/name action)))
           (draw-action action))))))))
 
 (defn draw-farm [farm]
@@ -72,14 +74,10 @@
 (defn draw-event-buttons []
   (ui/column
    (ui/button
-    #(signal! #:eurozone.event
-              {:name :agricola.event/start-round
-               :type :transition})
+    #(signal! :agricola.event/start-round)
     (ui/height 15 (ui/label "Start Round")))
    (ui/button
-    #(signal! #:eurozone.event
-              {:name :agricola.event/end-round
-               :type :transition})
+    #(signal! :agricola.event/end-round)
     (ui/height 15 (ui/label "End Round")))))
 
 (defn render-game [event]
@@ -98,13 +96,17 @@
 
 (defmethod ui-event :eurozone.event/choose-game [event]
   (let [username (:eurozone.event/username event)]
+    (println "username" username)
     (ui/column
-     (ui/button #(signal! {:eurozone.event/name :agricola.event/create-game
-                           :agricola.event/username username})
+     (ui/button #(signal! :agricola.event/create-game
+                          {:eurozone.event/username username})
                 (ui/label "Agricola")))))
 
+(defmethod ui-event :eurozone.event/draft-view [event]
+  (ui/center (ui/label "Draft View")))
+
 (defmethod ui-event :agricola.event/start-pre-game [event]
-  (ui/button #() (ui/label "Start Draft")))
+  (ui/button #(signal! :eurozone.event/draft-view) (ui/label "Start Draft")))
 
 (comment
 
