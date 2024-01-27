@@ -4,7 +4,6 @@
    [eurozone.ui :refer [ui-event]]
    [eurozone.db :as db]
    [agricola.utils :as u]
-   [agricola.bits :as bits]
    [io.github.humbleui.ui :as ui])
   (:import
    [io.github.humbleui.types IPoint]))
@@ -93,6 +92,8 @@
       (ui/gap 20 20)
       (draw-event-buttons)))))
 
+(defmethod ui-event :agricola.event/find-or-create-game [event])
+
 (defmethod ui-event :eurozone.event/choose-game [event]
   (let [user (:eurozone.event/user event)]
     (ui/column
@@ -120,22 +121,22 @@
          {:agricola.game/current-player -20
           :agricola.game/board
           {:agricola.board/actions
-           [{:eurozone.event/name bits/take-one-grain
+           [{:eurozone.event/name :agricola.square/take-one-grain
              :agricola.entity/resources {:agricola.resource/wood 2
                                          :agricola.resource/grain 2
                                          :agricola.resource/clay 3}
              :agricola.action/increments {:agricola.resource/wood 2}
              :agricola.bit/title "Take One Grain"
              :agricola.bit/description ""}
-            {:eurozone.event/name bits/take-three-wood
+            {:eurozone.event/name :agricola.square/take-three-wood
              :agricola.bit/title "Take Three Wood"
              :agricola.bit/description ""}
-            {:eurozone.event/name bits/take-two-wood
+            {:eurozone.event/name :agricola.square/take-two-wood
              :agricola.bit/title "Take Two Wood"}
-            {:eurozone.event/name bits/take-one-reed
+            {:eurozone.event/name :agricola.square/take-one-reed
              :agricola.bit/title "Take One Reed"
              :agricola.bit/description ""}
-            {:eurozone.event/name bits/fishing
+            {:eurozone.event/name :agricola.square/fishing
              :agricola.bit/title "Fishing"
              :agricola.bit/description ""}]}
           :agricola.game/players
@@ -156,11 +157,11 @@
            {:agricola.player/name "Cleo"
             :agricola.entity/resources {:agricola.resource/grain 2}
             :agricola.player/occupations
-            [{:agricola.card/name bits/field-watchman
+            [{:agricola.card/name :agricola.square/field-watchman
               :agricola.card/type :occupation
               :agricola.card/title "Field Watchman"
               :agricola.card/description ""}
-             {:agricola.card/name bits/family-counseler
+             {:agricola.card/name :agricola.square/family-counseler
               :agricola.card/type :occupation
               :agricola.card/title "Family Counseler"}]
             :agricola.player/improvements []

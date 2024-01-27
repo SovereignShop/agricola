@@ -1,16 +1,13 @@
 (ns agricola.effects
-  "All effects executed on every event and return zero or more datoms."
+  "All active effects executed on every event and return zero or more datoms."
   (:require
    [datascript.core :as d]
    [eurozone.effects :refer [handle-effect]]
-   [agricola.tx :as tx]
-   [agricola.utils :as u]
-   [agricola.bits :as bits]))
+   [agricola.utils :as u]))
 
-
-(defmethod handle-effect bits/grain-elevator
+(defmethod handle-effect :agricola.card/grain-elevator
   [_ event]
-  (let [card (u/get-game-bit event bits/grain-elevator)
+  (let [card (u/get-game-bit event :agricola.card/grain-elevator)
         player (u/get-owner card)
         player-id (:db/id player)]
     (cond
@@ -18,31 +15,31 @@
       (let [grain-pieces (:agricola.card/pieces card)
             n-grain (count grain-pieces)]
         (when (< n-grain 3)
-          (tx/add-grain card 1)))
+          (u/add-grain card 1)))
 
       (u/player-take-grain? event player-id)
       (let [grain-pieces (u/get-bits card)
             n-grain (count grain-pieces)]
         (when (pos? n-grain)
-          (tx/insert-optional
+          (u/insert-optional
            :title "Take grain from grain elevator?"
            :tx (into
-                (tx/add-grain player n-grain)
-                (tx/remove-grain card n-grain))))))))
+                (u/add-grain player n-grain)
+                (u/remove-grain card n-grain))))))))
 
-(defmethod handle-effect bits/field-watchman
+(defmethod handle-effect :agricola.card/field-watchman
   [_ event]
-  (let [card (u/get-game-bit event bits/field-watchman)
+  (let [card (u/get-game-bit event :agricola.card/field-watchman)
         player (u/get-owner card)
         player-id (:db/id player)]
     (when (u/player-take-grain? event player-id)
-      (tx/insert-optional
+      (u/insert-optional
        :title "Add field to board"
-       :tx (tx/add-fields player 1)))))
+       :tx (u/add-fields player 1)))))
 
-(defmethod handle-effect bits/family-counseler
+(defmethod handle-effect :agricola.card/family-counseler
   [_ event]
-  (let [card (u/get-game-bit event bits/family-counseler)
+  (let [card (u/get-game-bit event :agricola.card/family-counseler)
         player (u/get-owner card)]
     (when (u/end-of-round? event)
       (let [workers (u/get-workers player)
@@ -51,6 +48,6 @@
             tiles (into #{} (map u/get-title) squares)]
         (when (= (count tiles) 1)
           (case n-workers
-            2 (tx/add-food player 1)
-            3 (tx/add-grain player 1)
-            4 (tx/add-vegetables player 1)))))))
+            2 (u/add-food player 1)
+            3 (u/add-grain player 1)
+            4 (u/add-vegetables player 1)))))))

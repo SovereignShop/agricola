@@ -8,7 +8,7 @@
    [agricola.db :as db]
    [datascript.core :as d]))
 
-(defmethod handle-event bits/take-three-wood
+(defmethod handle-event :agricola.square/take-three-wood
   [action]
   (let [game (u/get-game action)
         player (u/get-current-player game)
@@ -16,87 +16,87 @@
         
         square (u/get-square action)
         square-resources (u/get-resources square)]
-    (tx/move-resources square-resources player-resources)))
+    (u/move-resources square-resources player-resources)))
 
-(defmethod handle-event bits/take-one-grain
+(defmethod handle-event :agricola.square/take-one-grain
   [action]
   (let [game (u/get-game action)
         player (u/get-current-player game)
         resources (u/get-resources player)]
-    (tx/add-grain resources 1)))
+    (u/add-grain resources 1)))
 
-(defmethod handle-event bits/plow-one-field
+(defmethod handle-event :agricola.square/plow-one-field
   [action]
   (let [game (u/get-current-player action)
         player (u/get-current-player game)
         resources (u/get-resources player)]
-    (tx/add-fields resources 1)))
+    (u/add-fields resources 1)))
 
-(defmethod handle-event bits/play-one-occupation-expensive
+(defmethod handle-event :agricola.square/play-one-occupation-expensive
   [action]
   (let [occupation (u/get-chosen-occupation action)]
     (concat
-     (tx/add-food (u/get-current-player action) -1)
-     (tx/assoc-entity occupation :agricola.occupation/played true))))
+     (u/add-food (u/get-current-player action) -1)
+     (u/assoc-entity occupation :agricola.occupation/played true))))
 
-(defmethod handle-event bits/fishing
+(defmethod handle-event :agricola.square/fishing
   [action]
   (let [player (u/get-current-player action)]
-    (tx/move-resources action player)))
+    (u/move-resources action player)))
 
-(defmethod handle-event bits/take-two-wood
+(defmethod handle-event :agricola.square/take-two-wood
   [action]
   (let [player (u/get-current-player action)]
-    (tx/move-resources action player)))
+    (u/move-resources action player)))
 
-(defmethod handle-event bits/take-one-clay-board-one
+(defmethod handle-event :agricola.square/take-one-clay-board-one
   [action]
   (let [player (u/get-current-player action)]
-    (tx/move-resources action player)))
+    (u/move-resources action player)))
 
-(defmethod handle-event bits/take-one-clay-board-two
+(defmethod handle-event :agricola.square/take-one-clay-board-two
   [action]
   (let [player (u/get-current-player action)]
-    (tx/move-resources action player)))
+    (u/move-resources action player)))
 
-(defmethod handle-event bits/take-one-reed
+(defmethod handle-event :agricola.square/take-one-reed
   [action]
   (let [player (u/get-current-player action)]
-    (tx/move-resources action player)))
+    (u/move-resources action player)))
 
-(defmethod handle-event bits/build-rooms
+(defmethod handle-event :agricola.square/build-rooms
   [action]
   (let [player (u/get-current-player action)]
     ))
 
-(defmethod handle-event bits/day-laborer
+(defmethod handle-event :agricola.square/day-laborer
   [action])
 
-(defmethod handle-event bits/take-sheep
+(defmethod handle-event :agricola.square/take-sheep
   [action])
 
-(defmethod handle-event bits/take-stone-round-2
+(defmethod handle-event :agricola.square/take-stone-round-2
   [action])
 
-(defmethod handle-event bits/renovate
+(defmethod handle-event :agricola.square/renovate
   [action])
 
-(defmethod handle-event bits/family-growth
+(defmethod handle-event :agricola.square/family-growth
   [action])
 
-(defmethod handle-event bits/starting-player
+(defmethod handle-event :agricola.square/starting-player
   [action])
 
-(defmethod handle-event bits/build-fences
+(defmethod handle-event :agricola.square/build-fences
   [action])
 
-(defmethod handle-event bits/major-or-minor
+(defmethod handle-event :agricola.square/major-or-minor
   [action])
 
-(defmethod handle-event bits/sow-bake
+(defmethod handle-event :agricola.square/sow-bake
   [action])
 
-(defmethod handle-event bits/take-one-vegetable
+(defmethod handle-event :agricola.square/take-one-vegetable
   [action])
 
 (defmethod handle-event :agricola.event/end-round [event]
@@ -152,6 +152,9 @@
      (d/datom (:db/id game) :agricola.game/starting-player (:db/id first-player))
      (concat player-sequence game-steps))))
 
+(defmethod handle-event :agricola.event/start-draft [event]
+  )
+
 (defmethod handle-event :agricola.event/create-game [event]
   (let [game-id (u/next-tempid!)
         user (:eurozone.event/user event)
@@ -159,7 +162,9 @@
         alias (:eurozone.user/alias user)]
     (conj
      (eu/signal :agricola.event/start-pre-game :transition true)
-     {:agricola.game/players [{:agricola.player/name (if (empty? alias) username alias)}]})))
+     {:db/id (:db/id event) :eurozone.event/game game-id}
+     {:agricola.game/players [{:agricola.player/name (if (empty? alias) username alias)}]
+      :eurozone.game/name "agricola"})))
 
 (defmethod handle-event :agricola.event/join-game [event]
   (let [user (:eurozone.event/user event)

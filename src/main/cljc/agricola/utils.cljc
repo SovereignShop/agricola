@@ -7,6 +7,46 @@
               [java.security MessageDigest]
               [java.math BigInteger])))
 
+(defn insert-optional [& {:keys [title tx]}]
+  tx)
+
+(defn add-resource [entity resource n]
+  [(d/datom (:db/id entity) resource (+ (get entity resource 0) n))])
+
+(defn add-food [entity n-food]
+  (add-resource entity :agricola.resource/food n-food))
+
+(defn add-grain [entity n-grain]
+  (add-resource entity :agricola.resource/grain n-grain))
+
+(defn add-wood [entity n-grain]
+  (add-resource entity :agricola.resource/wood n-grain))
+
+(defn remove-grain [entity n-grain]
+  (add-resource entity :agricola.resource/grain (- n-grain)))
+
+(defn add-fields [entity n-fields]
+  (add-resource entity :agricola.resource/field n-fields))
+
+(defn remove-fields [entity n-fields]
+  (add-resource entity :agricola.resource/field (- n-fields)))
+
+(defn add-vegetables [entity n-vegetables]
+  (add-resource entity :agricola.resource/vegetable n-vegetables))
+
+(defn remove-vegetables [entity n-vegetables]
+  (add-resource entity :agricola.resource/vegetable (- n-vegetables)))
+
+(defn assoc-entity [entity attr value]
+  [(d/datom (:db/id entity) attr value)])
+
+(defn move-resources [from to]
+  (let [a (:agricola.space/resources from)]
+    (conj (vec (for [id (map :db/id a)]
+                 [:db/add (:db/id to) :agricola.space/resources id]))
+          [:db/retract (:db/id from) :agricola.space/resources])))
+
+
 (defn take-action? [event]
   (:agricola.event/action event))
 
@@ -127,68 +167,6 @@
 
 (defn next-tempid! []
   (swap! tempids dec))
-
-(defn make-square [ident position title description]
-  (conj
-   {:agricola.square/position position
-    :agricola.square/title title
-    :agricola.square/description description}
-   ident))
-
-(defn make-stage-one-rounds [first-round-id]
-  (let [[[r1 p1] [r2 p2] [r3 p3] [r4 p4]] (shuffle [[1 9] [2 12] [3 13] [4 14]])]
-    [{:db/id first-round-id
-      :agricola.round/number r1
-      :agricola.round/square (make-square bits/take-sheep p1 "1 Sheep" "")}
-     {:agricola.round/number r2
-      :agricola.round/square (make-square bits/build-fences p2 "Fences" "")}
-     {:agricola.round/number r3
-      :agricola.round/square (make-square bits/sow-bake p3 "Sow And/Or Bake" "")}
-     {:agricola.round/number r4
-      :agricola.round/square (make-square bits/major-or-minor p4 "Major or Minor Improvment" "")}]))
-
-(defn make-stage-two-rounds []
-  (let [[[r1 p1] [r2 p2] [r3 p3]] (shuffle [[5 15] [6 16] [7 17]])]
-    [{:agricola.round/number r1
-      :agricola.round/square (make-square bits/take-stone-round-2 p1 "1 Stone" "")}
-     {:agricola.round/number r2
-      :agricola.round/square (make-square bits/renovate p2 "1 Stone" "")}
-     {:agricola.round/number r3
-      :agricola.round/square (make-square bits/family-growth p3 "Family Growth" "")}]))
-
-(defn make-squares [n-players first-round-id]
-  (into (case n-players
-          3 [(make-square bits/take-one-building-resource 0 "Take 1 Building Resource" "")
-             (make-square bits/play-one-occupation-expensive 1 "1 Occupation" "")
-             (make-square bits/take-two-wood 4 "2 Wood" "")
-             (make-square bits/take-one-clay-board-one 5 "1 Clay" "")]
-          4 []
-          5 [])
-        cat
-        [[(make-square bits/build-rooms 6 "Build room(s)" "")
-          (make-square bits/starting-player 13/2 "Starting Player" "")
-          (make-square bits/take-one-grain 7 "Starting Player" "")
-          (make-square bits/plow-one-field 15/2 "Plow one field" "")
-          (make-square bits/play-one-occupation 8 "1 Occupation" "")
-          (make-square bits/day-laborer 17/2 "Day Laborer" "")
-          (make-square bits/take-three-wood 10 "3 Wood" "")
-          (make-square bits/take-one-clay-board-two 21/2 "1 Clay" "")
-          (make-square bits/take-one-reed 11 "1 Reed" "")
-          (make-square bits/fishing 11 "Fishing" "")]
-         (make-stage-one-rounds first-round-id)
-         (make-stage-two-rounds)]))
-
-(defn make-game [players]
-  (let [game-id -1
-        first-round-id -2
-        n-players (count players)
-        squares (make-squares n-players first-round-id)]
-    {:db/id game-id
-     :agricola.game/current-round -2
-     :agricola.game/name ""
-     :agricola.game/id (UUID/randomUUID)
-     :agricola.game/rounds squares
-     :agricola.game/players (map :db/id players)}))
 
 (defn hash-username-password [username password]
   (let [input-str (str username ":" password)
