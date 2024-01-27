@@ -1,14 +1,16 @@
 (ns eurozone.ui
   (:require
    [datascript.core :as d]
+   [eurozone.methods :refer [ui-event]]
+   [agricola.effects]
+   [agricola.events]
+   [agricola.ui]
+   [eurozone.events]
    [eurozone.db :as db]
    [eurozone.core]
-   [eurozone.utils :as u]
    [io.github.humbleui.ui :as ui])
   (:import
    [io.github.humbleui.types IPoint]))
-
-(defmulti ui-event :eurozone.event/name)
 
 (defmethod ui-event :default [event]
   (println "unhandled UI event: " (:eurozone.event/name event)))

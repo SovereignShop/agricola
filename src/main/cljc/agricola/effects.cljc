@@ -2,7 +2,7 @@
   "All active effects executed on every event and return zero or more datoms."
   (:require
    [datascript.core :as d]
-   [eurozone.effects :refer [handle-effect]]
+   [eurozone.methods :refer [handle-effect]]
    [agricola.utils :as u]))
 
 (defmethod handle-effect :agricola.card/grain-elevator

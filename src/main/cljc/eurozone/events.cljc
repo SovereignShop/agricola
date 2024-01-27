@@ -1,10 +1,9 @@
 (ns eurozone.events
   (:require
+   [eurozone.methods :refer [handle-event]]
    [eurozone.utils :as u]
    [eurozone.db :as db]
    [datascript.core :as d]))
-
-(defmulti handle-event :eurozone.event/name)
 
 (defmethod handle-event :default [event]
   (println "no handler for event:" (:eurozone.event/name event)))

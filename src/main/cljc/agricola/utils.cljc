@@ -1,6 +1,5 @@
 (ns agricola.utils
   (:require
-   [agricola.bits :as bits]
    [datascript.core :as d])
   #?(:clj
      (:import [java.util UUID]

@@ -1,10 +1,8 @@
 (ns agricola.events
   (:require
-   [eurozone.events :refer [handle-event]]
+   [eurozone.methods :refer [handle-event]]
    [eurozone.utils :as eu]
-   [agricola.bits :as bits]
    [agricola.utils :as u]
-   [agricola.tx :as tx]
    [agricola.db :as db]
    [datascript.core :as d]))
 

@@ -2,8 +2,7 @@
   (:require
    [agricola.utils :as u]
    [eurozone.db :as db]
-   [eurozone.events :refer [handle-event]]
-   [eurozone.effects :refer [handle-effect]]
+   [eurozone.methods :refer [handle-event handle-effect]]
    [datascript.core :as d]))
 
 (defn do-effects [event]

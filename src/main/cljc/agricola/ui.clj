@@ -1,7 +1,7 @@
 (ns agricola.ui
   (:require
    [datascript.core :as d]
-   [eurozone.ui :refer [ui-event]]
+   [eurozone.methods :refer [ui-event]]
    [eurozone.db :as db]
    [agricola.utils :as u]
    [io.github.humbleui.ui :as ui])
