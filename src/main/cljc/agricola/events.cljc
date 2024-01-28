@@ -150,8 +150,11 @@
      (d/datom (:db/id game) :agricola.game/starting-player (:db/id first-player))
      (concat player-sequence game-steps))))
 
-(defmethod handle-event :agricola.event/start-draft [event]
-  )
+(defmethod handle-event :agricola.event/draft-view [event]
+  (let [game (u/get-game event)
+        players (:agricola.game/players game)]
+    (println "draft view")
+    []))
 
 (defmethod handle-event :agricola.event/create-game [event]
   (let [game-id (u/next-tempid!)

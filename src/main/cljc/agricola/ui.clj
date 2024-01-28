@@ -100,8 +100,14 @@
                           {:eurozone.event/username username})
                 (ui/label "Agricola")))))
 
-(defmethod ui-event :eurozone.event/draft-view [event]
-  (let [game (u/get-game event)]
+(defmethod ui-event :agricola.event/draft-view [event]
+  (let [game (u/get-game event)
+        username (:eurozone.event/username event)
+        players (:agricola.game/players game)
+
+        user-player (first (filter #(= (:agricola.player/name %) username)
+                                   players))
+        ]
     (ui/center (ui/label "Draft View"))))
 
 (defmethod ui-event :agricola.event/start-pre-game [event]
@@ -109,7 +115,7 @@
         players (:agricola.game/players game)]
     (ui/center
      (apply ui/column
-            (ui/button #(signal! :eurozone.event/draft-view)
+            (ui/button #(signal! :agricola.event/draft-view)
                        (ui/label "Start Draft"))
             (ui/gap 20 20)
             (ui/label "Pre Game View")
@@ -136,7 +142,7 @@
                                             (str/join "," (map :agricola.player/name
                                                                (:agricola.game/players game)))))))))))
       (ui/gap 50 50)
-      (ui/button #(signal! :eurozone.event/draft-view) (ui/label "Create A Game"))))))
+      (ui/button #(signal! :agricola.event/draft-view) (ui/label "Create A Game"))))))
 
 (comment
 
