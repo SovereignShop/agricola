@@ -156,7 +156,6 @@
 (defmethod handle-event :agricola.event/create-game [event]
   (let [game-id (u/next-tempid!)
         username (:eurozone.event/username event)]
-    (println username)
     (conj
      (eu/signal :agricola.event/start-pre-game)
      {:db/id (:db/id event) :eurozone.event/game game-id}

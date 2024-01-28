@@ -93,21 +93,32 @@
       (ui/gap 20 20)
       (draw-event-buttons)))))
 
-(defmethod ui-event :agricola.event/find-or-create-game [event])
-
 (defmethod ui-event :eurozone.event/choose-game [event]
   (let [username (:eurozone.event/username event)]
     (ui/column
-     (ui/button #(signal! :agricola.event/create-game
+     (ui/button #(signal! :agricola.event/find-or-create-game
                           {:eurozone.event/username username})
                 (ui/label "Agricola")))))
 
 (defmethod ui-event :eurozone.event/draft-view [event]
   (let [game (u/get-game event)]
-    (ui/row
-     (ui/center (ui/label "Draft View")))))
+    (ui/center (ui/label "Draft View"))))
 
 (defmethod ui-event :agricola.event/start-pre-game [event]
+  (let [game (u/get-game event)
+        players (:agricola.game/players game)]
+    (ui/center
+     (apply ui/column
+            (ui/button #(signal! :eurozone.event/draft-view)
+                       (ui/label "Start Draft"))
+            (ui/gap 20 20)
+            (ui/label "Pre Game View")
+            (ui/gap 20 20)
+            (interpose
+             (ui/gap 5 5)
+             (map (comp ui/label :agricola.player/name) players))))))
+
+(defmethod ui-event :agricola.event/find-or-create-game [event]
   (let [games (u/get-all-games event)]
     (ui/center
      (ui/row
