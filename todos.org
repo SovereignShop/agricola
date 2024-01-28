@@ -1,8 +1,16 @@
 #+title: Todos
 
 1. [X] Incrementing board
-2. [ ] Taking an action
-3. [ ]
-4. [ ] Playable round
-5. [ ] First occupation effect
-6. [ ]
+2. [X] Login in
+3. [X] Undo
+4. [X] Separate Eurozone
+5. [X] View current users
+6. [X] Creating a Game
+7. [ ] Joining a game
+8. [ ] Drafting
+9. [ ] Taking an action
+10. [ ] Playing a round
+11. [ ] Playing a phase
+12. [ ] Playable round
+13. [ ] First occupation effect
+14. [ ]

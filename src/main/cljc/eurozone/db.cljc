@@ -24,7 +24,7 @@
 (def event-id [:eurozone.event/id :global-event])
 
 (defn init-history! []
-  (reset! history-logs {:added [()] :removed [()] :meta-data [{}] :next-index 0}) )
+  (reset! history-logs {:added [()] :removed [()] :meta-data [{}] :next-index 0}))
 
 (defn undo! []
   (let [{:keys [added removed meta-data]} @history-logs]
@@ -69,4 +69,8 @@
 
 
 (comment
-  ^:chord/b (do (undo!) nil))
+
+  ^:chord/b (do (undo!) nil)
+  ^:chord/a (d/transact! conn [{:eurozone.user/name "B"}] {:ui-update true})
+
+  )

@@ -82,6 +82,16 @@
 (defn get-game [event]
   (:eurozone.event/game event))
 
+(defn get-all-games [event]
+  (let [db (d/entity-db event)
+        game-ids (d/q '[:find [?game-id ...]
+                        :in $
+                        :where
+                        [?game-id :agricola.game/players]]
+                       db)]
+    (for [game-id game-ids]
+      (d/entity db game-id))))
+
 (defn get-board [game]
   (:agricola.game/board game))
 

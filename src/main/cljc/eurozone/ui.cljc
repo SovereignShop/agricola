@@ -54,17 +54,24 @@
 
 
 (defmethod ui-event :eurozone.event/login-complete [event]
-  (ui/column
-   (ui/center (ui/label "Home Screen"))
-   (ui/button #(signal! {:eurozone.event/name :eurozone.event/choose-game})
-              (ui/label "Start a game!"))))
+  (let [usernames (d/q '[:find [?name ...]  :in $ :where [?id :eurozone.user/name ?name]]
+                       (d/entity-db event))]
+    (ui/column
+     (ui/gap 10 10)
+     (ui/center (ui/label "Home Screen"))
+     (ui/gap 10 10)
+     (ui/center (apply ui/row (interpose (ui/gap 15 15) (mapv ui/label usernames))))
+     (ui/gap 10 10)
+     (ui/button #(signal! {:eurozone.event/name :eurozone.event/choose-game})
+                (ui/label "Start a game!")))))
 
 (defn render [event]
+  (println "rendering:" (:eurozone.event/name event))
   (try
     (when-let [view (ui-event event)]
       (ui/default-theme {} view))
     (catch Exception e
-      (println (:eurozone.event/name event) ":" (.getMessage event)))))
+      (println (:eurozone.event/name event) ":" (.getMessage e)))))
 
 (defonce _ (do (d/transact! db/conn
                             [(conj {:eurozone.event/name :eurozone.event/login-screen}

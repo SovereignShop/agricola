@@ -4,6 +4,7 @@
    [eurozone.methods :refer [ui-event]]
    [eurozone.db :as db]
    [agricola.utils :as u]
+   [clojure.string :as str]
    [io.github.humbleui.ui :as ui])
   (:import
    [io.github.humbleui.types IPoint]))
@@ -102,10 +103,22 @@
                 (ui/label "Agricola")))))
 
 (defmethod ui-event :eurozone.event/draft-view [event]
-  (ui/center (ui/label "Draft View")))
+  (let [game (u/get-game event)]
+    (ui/row
+     (ui/center (ui/label "Draft View")))))
 
 (defmethod ui-event :agricola.event/start-pre-game [event]
-  (ui/button #(signal! :eurozone.event/draft-view) (ui/label "Start Draft")))
+  (let [games (u/get-all-games event)]
+    (ui/center
+     (ui/row
+      (ui/center
+       (apply ui/column
+              (for [game games]
+                (ui/label (str "game:" (:db/id game) ":"
+                               (str/join "," (map :agricola.player/name
+                                                  (:agricola.game/players game))))))))
+      (ui/gap 50 50)
+      (ui/button #(signal! :eurozone.event/draft-view) (ui/label "Create A Game"))))))
 
 (comment
 
