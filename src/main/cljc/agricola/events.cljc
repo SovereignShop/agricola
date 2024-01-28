@@ -98,7 +98,7 @@
   [action])
 
 (defmethod handle-event :agricola.event/end-round [event]
-  (eu/signal :agricola.event/start-round :transition))
+  (eu/signal :agricola.event/start-round))
 
 (defmethod handle-event :agricola.event/start-round [event]
   (let [game (u/get-game event)
@@ -158,14 +158,15 @@
         username (:eurozone.event/username event)]
     (println username)
     (conj
-     (eu/signal :agricola.event/start-pre-game :transition true)
+     (eu/signal :agricola.event/start-pre-game)
      {:db/id (:db/id event) :eurozone.event/game game-id}
      {:db/id game-id
       :agricola.game/players {:agricola.player/name username}
       :eurozone.game/name "agricola"})))
 
 (defmethod handle-event :agricola.event/join-game [event]
-  (let [user (:eurozone.event/user event)
-        game (u/get-game event)
-        alias (:agricola.user/alias user)]
-    [(d/datom (:db/id game) :agricola.game/players {:agricola.player/name alias})]))
+  (let [username (:eurozone.event/username event)
+        game (u/get-game event)]
+    (conj
+     (eu/signal :agricola.event/start-pre-game true)
+     {:db/id (:db/id game) :agricola.game/players [{:agricola.player/name username}]})))

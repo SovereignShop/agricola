@@ -113,10 +113,17 @@
      (ui/row
       (ui/center
        (apply ui/column
-              (for [game games]
-                (ui/label (str "game:" (:db/id game) ":"
-                               (str/join "," (map :agricola.player/name
-                                                  (:agricola.game/players game))))))))
+              (interpose
+               (ui/gap 5 5)
+               (for [game games]
+                 (ui/row
+                  (ui/button #(signal! :agricola.event/join-game
+                                       {:eurozone.event/game (:db/id game)})
+                             (ui/label "Join Game"))
+                  (ui/gap 10 10)
+                  (ui/center (ui/label (str (or (:agricola.game/name game) (:db/id game)) ":"
+                                            (str/join "," (map :agricola.player/name
+                                                               (:agricola.game/players game)))))))))))
       (ui/gap 50 50)
       (ui/button #(signal! :eurozone.event/draft-view) (ui/label "Create A Game"))))))
 

@@ -6,7 +6,7 @@
 4. [X] Separate Eurozone
 5. [X] View current users
 6. [X] Creating a Game
-7. [ ] Joining a game
+7. [X] Joining a game
 8. [ ] Drafting
 9. [ ] Taking an action
 10. [ ] Playing a round

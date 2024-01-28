@@ -21,11 +21,11 @@
       (format "%032x" big-int))))
 
 (defn signal
-  ([name type ui-update?]
+  ([name ui-update?]
    (with-meta
      [(conj #:eurozone.event {:name name
                               :type type}
             db/event-id)]
      {:signal true :ui-update ui-update?}))
-  ([name type]
-   (signal name type false)))
+  ([name]
+   (signal name false)))
