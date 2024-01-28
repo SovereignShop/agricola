@@ -93,3 +93,5 @@
 
             ^:chord/x (when-let [new-state (render (d/entity @db/conn db/event-id))]
                         (reset! ui new-state)))
+
+(db/init-history!)
