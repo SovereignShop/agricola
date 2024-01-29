@@ -1,6 +1,9 @@
 (ns agricola.utils
+
   (:require
-   [datascript.core :as d])
+   [datascript.core :as d]
+   [clojure.data.csv :as csv]
+   [clojure.java.io :as io])
   #?(:clj
      (:import [java.util UUID]
               [java.security MessageDigest]
@@ -177,9 +180,36 @@
 (defn next-tempid! []
   (swap! tempids dec))
 
+(defn parse-csv-file [file-path]
+  (with-open [reader (io/reader file-path)]
+    (doall (csv/read-csv reader))))
+
+(defn csv->maps
+  ([csv-data]
+   (first csv-data))
+  ([csv-data header]
+   (mapv (fn [row] (zipmap (map first header)
+                           (map #((second %1) %2) header row)))
+         (next csv-data))))
+
 (defn hash-username-password [username password]
   (let [input-str (str username ":" password)
         md (MessageDigest/getInstance "SHA-256")]
     (.update md (.getBytes input-str "UTF-8"))
     (let [digest (.digest md)
           big-int (BigInteger. 1 digest)])))
+
+(defn create-minor-improvement-hand [n-cards]
+  [{:}])
+
+(defn try-parse-float [val]
+  (try
+    (Float/parseFloat val)
+    (catch Exception e
+      val)))
+
+(defn try-parse-int [val]
+  (try
+    (Integer/parseInt val)
+    (catch Exception e
+      val)))

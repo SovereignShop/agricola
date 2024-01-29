@@ -1,5 +1,7 @@
 (ns agricola.db
   (:require
+   [agricola.utils :as u]
+   [clojure.string :as str]
    [datascript.core :as d]
    [eurozone.db :as db]))
 
@@ -117,6 +119,55 @@
     :agricola.bit/title "Fishing"
     :agricola.bit/description ""}])
 
+(def occupations
+  [{:agricola.card/name :field-watchman
+    :agricola.card/type :occupation
+    :agricola.card/title "Field Watchman"
+    :agricola.card/description ""}
+   {:agricola.card/name :family-counseler
+    :agricola.card/type :occupation
+    :agricola.card/title "Family Counseler"}
+   {:agricola.card/name :meat-seller
+    :agricola.card/title "Meat-seller"
+    :agricola.card/type :occupation
+    :agricola.card/description ""}])
+
+(let [cards (u/csv->maps (u/parse-csv-file "decks.csv")
+                         [[:edition keyword]
+                          [:publisher keyword]
+                          [:expansion keyword]
+                          [:deck keyword]
+                          [:number u/try-parse-float]
+                          [:type (fn [v]
+                                   (cond (.contains v "Minor") :minor
+                                         (.contains v "Major") :major
+                                         (.contains v "Occupation") :occupation
+                                         (.contains v "Mother") :mother
+                                         (.contains v "Father") :father
+                                         :else v))]
+                          [:min-players (fn [v]
+                                          (if (= (.length v) 0) 1 (Integer/parseInt (.substring v 0 1))))]
+                          [:name str]
+                          [:cost (fn [v]
+                                   (try (into
+                                         {}
+                                         (vec (for [pair (str/split v #",")]
+                                                (let [[number type] (str/split pair #" ")]
+                                                  [(keyword "agricola.resource" (str/lower-case type)) (u/try-parse-int number)]))))
+                                        (catch Exception e v)))]
+                          [:victory-points u/try-parse-int]
+                          [:prerequisites str]
+                          [:left-passing str]
+                          [:category str]
+                          [:text str]])
+      type-groups (group-by :type cards)]
+  (into #{} (map :min-players cards)))
+
+(str/split "1 Wood,3 Clay" #",")
+
+["Edition" "Publisher" "Base/Expansion" "Deck" "Number" "Type" "Player(s)"
+ "Name" "Cost" "VPs" "Prerequisites"
+ "Passing Left" "Card Category (Revised only)" "Text"]
 (def tmp-players
   [{:agricola.player/name "Lori"
     :agricola.entity/resources {:agricola.resource/grain 2}
@@ -135,13 +186,7 @@
    {:agricola.player/name "Cleo"
     :agricola.entity/resources {:agricola.resource/grain 2}
     :agricola.player/occupations
-    [{:agricola.card/name :agricola.square/field-watchman
-      :agricola.card/type :occupation
-      :agricola.card/title "Field Watchman"
-      :agricola.card/description ""}
-     {:agricola.card/name :agricola.square/family-counseler
-      :agricola.card/type :occupation
-      :agricola.card/title "Family Counseler"}]
+
     :agricola.player/improvements []
     :agricola.player/farm
     {:agricola.farm/house
