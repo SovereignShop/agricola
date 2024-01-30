@@ -74,7 +74,8 @@
     :agricola.round/action {:eurozone.event/name :agricola.square/reno-fence}}])
 
 (def schema
-  {:agricola.space/resources      {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+  {:agricola.card/cost            {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+   :agricola.space/resources      {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
    :agricola.event/action         {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
    :agricola.game/name            {:db/unique :db.unique/identity}
    :agricola.game/starting-player {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
@@ -149,25 +150,38 @@
                                           (if (= (.length v) 0) 1 (Integer/parseInt (.substring v 0 1))))]
                           [:name str]
                           [:cost (fn [v]
-                                   (try (into
-                                         {}
-                                         (vec (for [pair (str/split v #",")]
-                                                (let [[number type] (str/split pair #" ")]
-                                                  [(keyword "agricola.resource" (str/lower-case type)) (u/try-parse-int number)]))))
-                                        (catch Exception e v)))]
-                          [:victory-points u/try-parse-int]
-                          [:prerequisites str]
+                                   (when-not (= v "")
+                                     (try (into
+                                           {}
+                                           (vec (for [pair (str/split v #",")]
+                                                  (let [[number type] (str/split pair #" ")]
+                                                    [(keyword "agricola.resource" (str/lower-case type)) (u/try-parse-int number)]))))
+                                          (catch Exception e v))))]
+                          [:victory-points (fn [v] (if (= v "") nil (u/try-parse-int v)))]
+                          [:prerequisites (fn [v] (if (= v "") nil (str v)))]
                           [:left-passing str]
                           [:category str]
                           [:text str]])
-      type-groups (group-by :type cards)]
-  (into #{} (map :min-players cards)))
+      type-groups (group-by :type cards)
+      parse-card (fn [{:keys [name text min-players victory-points cost prerequisites passing]}]
+                   (cond->
+                       #:agricola.card {:name name
+                                        :text text
+                                        :min-players min-players}
+                       victory-points (assoc :victory-points victory-points)
+                       cost (assoc :cost cost)
+                       prerequisites (assoc :prerequisites prerequisites)
+                       passing (assoc :passing true)))]
 
-(str/split "1 Wood,3 Clay" #",")
+  (def minor-improvements
+    (mapv parse-card (:minor type-groups)))
 
-["Edition" "Publisher" "Base/Expansion" "Deck" "Number" "Type" "Player(s)"
- "Name" "Cost" "VPs" "Prerequisites"
- "Passing Left" "Card Category (Revised only)" "Text"]
+  (def major-improvements
+    (mapv parse-card (:major type-groups)))
+
+  (def occupations
+    (mapv parse-card (:occupation type-groups))))
+
 (def tmp-players
   [{:agricola.player/name "Lori"
     :agricola.entity/resources {:agricola.resource/grain 2}
@@ -185,13 +199,9 @@
 
    {:agricola.player/name "Cleo"
     :agricola.entity/resources {:agricola.resource/grain 2}
-    :agricola.player/occupations
-
-    :agricola.player/improvements []
     :agricola.player/farm
-    {:agricola.farm/house
-     {:agricola.house/type :clay
-      :agricola.house/n-rooms 2}
+    {:agricola.farm/house {:agricola.house/type :clay
+                           :agricola.house/n-rooms 2}
      :agricola.farm/animals [{:agricola.animal/type :sheep
                               :agricola.animal/quantity 2}
                              {:agricola.animal/type :boar

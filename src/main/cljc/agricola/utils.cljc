@@ -185,12 +185,11 @@
     (doall (csv/read-csv reader))))
 
 (defn csv->maps
-  ([csv-data]
-   (first csv-data))
   ([csv-data header]
-   (mapv (fn [row] (zipmap (map first header)
-                           (map #((second %1) %2) header row)))
-         (next csv-data))))
+   (let [fs (map second header)
+         ks (map first header)]
+     (mapv (fn [row] (zipmap ks (map #(%1 %2) fs row)))
+           (next csv-data)))))
 
 (defn hash-username-password [username password]
   (let [input-str (str username ":" password)
@@ -198,9 +197,6 @@
     (.update md (.getBytes input-str "UTF-8"))
     (let [digest (.digest md)
           big-int (BigInteger. 1 digest)])))
-
-(defn create-minor-improvement-hand [n-cards]
-  [{:}])
 
 (defn try-parse-float [val]
   (try

@@ -24,9 +24,9 @@
                 key)]
     (if id
       (conj
-       (u/signal :eurozone.event/login-complete :transition true)
+       (u/signal :eurozone.event/login-complete true)
        (d/datom (:db/id event) :eurozone.event/user id))
-      (u/signal :eurozone.event/login-failed :transition true))))
+      (u/signal :eurozone.event/login-failed true))))
 
 (defmethod handle-event :eurozone.event/create-user [event]
   (let [username (:eurozone.event/username event)
@@ -42,9 +42,9 @@
                 db
                 username)]
     (if id
-      (u/signal :eurozone.event/username-already-exists :transition true)
+      (u/signal :eurozone.event/username-already-exists true)
       (conj
-       (u/signal :eurozone.event/login-complete :transition true)
+       (u/signal :eurozone.event/login-complete true)
        {:eurozone.user/name username
         :eurozone.user/key key
         :eurozone.user/alias ""}))))
