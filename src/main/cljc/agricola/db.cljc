@@ -81,6 +81,8 @@
    :agricola.game/starting-player {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
    :agricola.game/board           {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
    :agricola.game/current-player  {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+   :agricola.game/draft           {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+   :agricola.draft/draws          {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
    :agricola.board/actions        {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
    :agricola.action/name          {:db/unique :db.unique/identity}
    :agricola.action/increments    {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}

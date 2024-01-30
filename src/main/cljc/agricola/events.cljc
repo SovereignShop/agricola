@@ -152,9 +152,19 @@
 
 (defmethod handle-event :agricola.event/draft-view [event]
   (let [game (u/get-game event)
-        players (:agricola.game/players game)]
-    (println "draft view")
-    []))
+        players (:agricola.game/players game)
+
+        minor-draft (for [player players]
+                      (shuffle (take 9 db/minor-improvements)))
+        major-draft (for [_ (range (count players))]
+                      (shuffle (take 9 db/occupations)))]
+    {:db/id (:db/id game)
+     :agricola.game/draft
+     {:agricola.draft/draws
+      (for [[player minor-draft major-draft] (map vector players minor-draft major-draft)]
+        {:agricola.draft/minors minor-draft
+         :agricola.draft/majors major-draft
+         :agricola.draft/player (:db/id player)})}}))
 
 (defmethod handle-event :agricola.event/create-game [event]
   (let [game-id (u/next-tempid!)
