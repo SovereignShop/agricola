@@ -155,16 +155,16 @@
         players (:agricola.game/players game)
 
         minor-draft (for [player players]
-                      (shuffle (take 9 db/minor-improvements)))
+                      (take 9 db/minor-improvements))
         major-draft (for [_ (range (count players))]
-                      (shuffle (take 9 db/occupations)))]
-    {:db/id (:db/id game)
-     :agricola.game/draft
-     {:agricola.draft/draws
-      (for [[player minor-draft major-draft] (map vector players minor-draft major-draft)]
-        {:agricola.draft/minors minor-draft
-         :agricola.draft/majors major-draft
-         :agricola.draft/player (:db/id player)})}}))
+                      (take 9 db/occupations))]
+    [{:db/id (:db/id game)
+      :agricola.game/draft
+      {:agricola.draft/draws
+       (for [[player minor-draft major-draft] (map vector players minor-draft major-draft)]
+         {:agricola.draw/minor-improvements minor-draft
+          :agricola.draw/occupations major-draft
+          :agricola.draw/start-player (:db/id player)})}}]))
 
 (defmethod handle-event :agricola.event/create-game [event]
   (let [game-id (u/next-tempid!)

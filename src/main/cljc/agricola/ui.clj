@@ -5,9 +5,15 @@
    [eurozone.db :as db]
    [agricola.utils :as u]
    [clojure.string :as str]
+   [io.github.humbleui.font :as font]
    [io.github.humbleui.ui :as ui])
   (:import
+   [io.github.humbleui.skija Font Typeface FontStyle]
    [io.github.humbleui.types IPoint]))
+
+(defn create-bold-font [size]
+  (font/make-with-size (Typeface/makeFromName "Arial" FontStyle/BOLD)
+                       size))
 
 (defn signal!
   ([event-name]
@@ -102,13 +108,29 @@
 
 (defmethod ui-event :agricola.event/draft-view [event]
   (let [game (u/get-game event)
-        username (:eurozone.event/username event)
-        players (:agricola.game/players game)
-
-        user-player (first (filter #(= (:agricola.player/name %) username)
-                                   players))
-        ]
-    (ui/center (ui/label "Draft View"))))
+        draft (:agricola.game/draft game)
+        username (:eurozone.event/username event)]
+    (ui/center
+     (ui/row
+      (interpose
+       (ui/gap 20 20)
+       (for [draw (:agricola.draft/draws draft)
+             :when  (= (-> draw :agricola.draw/start-player :agricola.player/name) username)]
+         (ui/vscroll
+          (ui/row
+           (interpose
+            (ui/gap 10 10)
+            (for [card-type-key [:agricola.draw/minor-improvements
+                                 :agricola.draw/occupations]]
+              (ui/column
+               (interpose
+                (ui/gap 5 5)
+                (cons
+                 (if (= card-type-key :agricola.draw/minor-improvements)
+                   (ui/label {:font (create-bold-font 32)} "Minor Improvements")
+                   (ui/label {:font (create-bold-font 32)} "Occupations"))
+                 (for [card (card-type-key draw)]
+                   (ui/button #() (ui/label (:agricola.card/name card)))))))))))))))))
 
 (defmethod ui-event :agricola.event/start-pre-game [event]
   (let [game (u/get-game event)

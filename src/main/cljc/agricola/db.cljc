@@ -74,33 +74,36 @@
     :agricola.round/action {:eurozone.event/name :agricola.square/reno-fence}}])
 
 (def schema
-  {:agricola.card/cost            {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
-   :agricola.space/resources      {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
-   :agricola.event/action         {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
-   :agricola.game/name            {:db/unique :db.unique/identity}
-   :agricola.game/starting-player {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
-   :agricola.game/board           {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
-   :agricola.game/current-player  {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
-   :agricola.game/draft           {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
-   :agricola.draft/draws          {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
-   :agricola.board/actions        {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
-   :agricola.action/name          {:db/unique :db.unique/identity}
-   :agricola.action/increments    {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
-   :agricola.action/accumulator   {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
-   :agricola.game/players         {:db/valueType :db.type/ref :db/cardinaltiy :db.cardinality/many}
-   :agricola.player/name          {:db/unique :db.unique/identity}
-   :agricola.player/next-player   {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
-   :agricola.player/farm          {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
-   :agricola.player/occupations   {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
-   :agricola.player/improvements  {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
-   :agricola.farm/house           {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
-   :agricola.farm/animals         {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
-   :agricola.farm/fields          {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
-   :agricola.farm/pastures        {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
-   :agricola.farm/squares         {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
-   :agricola.field/resources      {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
-   :agricola.pasture/squares      {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
-   :agricola.entity/resources     {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}})
+  {:agricola.card/cost               {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+   :agricola.space/resources         {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+   :agricola.event/action            {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+   :agricola.game/name               {:db/unique :db.unique/identity}
+   :agricola.game/starting-player    {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+   :agricola.game/board              {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+   :agricola.game/current-player     {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+   :agricola.game/draft              {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+   :agricola.draft/draws             {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+   :agricola.draw/start-player       {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+   :agricola.draw/minor-improvements {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+   :agricola.draw/occupations        {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+   :agricola.board/actions           {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+   :agricola.action/name             {:db/unique :db.unique/identity}
+   :agricola.action/increments       {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+   :agricola.action/accumulator      {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+   :agricola.game/players            {:db/valueType :db.type/ref :db/cardinaltiy :db.cardinality/many}
+   :agricola.player/name             {:db/unique :db.unique/identity}
+   :agricola.player/next-player      {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+   :agricola.player/farm             {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+   :agricola.player/occupations      {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+   :agricola.player/improvements     {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+   :agricola.farm/house              {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+   :agricola.farm/animals            {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+   :agricola.farm/fields             {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+   :agricola.farm/pastures           {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+   :agricola.farm/squares            {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+   :agricola.field/resources         {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+   :agricola.pasture/squares         {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+   :agricola.entity/resources        {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}})
 
 (def initial-actions
   [{:agricola.action/name :agricola.square/take-one-grain
