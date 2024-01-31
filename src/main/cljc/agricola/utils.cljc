@@ -1,5 +1,4 @@
 (ns agricola.utils
-
   (:require
    [datascript.core :as d]
    [clojure.data.csv :as csv]

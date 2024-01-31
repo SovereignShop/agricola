@@ -169,10 +169,9 @@
                           [:text str]])
       type-groups (group-by :type cards)
       parse-card (fn [{:keys [name text min-players victory-points cost prerequisites passing]}]
-                   (cond->
-                       #:agricola.card {:name name
-                                        :text text
-                                        :min-players min-players}
+                   (cond-> {:agricola.card/name name
+                            :agricola.card/text text
+                            :agricola.card/min-players min-players}
                        victory-points (assoc :victory-points victory-points)
                        cost (assoc :cost cost)
                        prerequisites (assoc :prerequisites prerequisites)

@@ -3,6 +3,7 @@ pom.xml.asc
 *.jar
 *.class
 *.log
+.gitlibs
 /lib/
 /classes/
 /target/

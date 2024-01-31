@@ -6,10 +6,16 @@
    [agricola.utils :as u]
    [clojure.string :as str]
    [io.github.humbleui.font :as font]
+   [io.github.humbleui.paint :as paint]
    [io.github.humbleui.ui :as ui])
   (:import
-   [io.github.humbleui.skija Font Typeface FontStyle]
+   [io.github.humbleui.skija Font Typeface FontStyle Paint PaintMode Color4f]
    [io.github.humbleui.types IPoint]))
+
+(Color4f. 0.0 0.6 1.0 1.0)
+
+(defn ui! [tx-data]
+  (d/transact! db/conn tx-data {:ui-update true}))
 
 (defn create-bold-font [size]
   (font/make-with-size (Typeface/makeFromName "Arial" FontStyle/BOLD)
@@ -106,6 +112,11 @@
                           {:eurozone.event/username username})
                 (ui/label "Agricola")))))
 
+(defn create-paint [color]
+  (doto (Paint.)
+    (.setColor color)
+    (.setMode (Paint$Mode/FILL))))
+
 (defmethod ui-event :agricola.event/draft-view [event]
   (let [game (u/get-game event)
         draft (:agricola.game/draft game)
@@ -129,8 +140,23 @@
                  (if (= card-type-key :agricola.draw/minor-improvements)
                    (ui/label {:font (create-bold-font 32)} "Minor Improvements")
                    (ui/label {:font (create-bold-font 32)} "Occupations"))
-                 (for [card (card-type-key draw)]
-                   (ui/button #() (ui/label (:agricola.card/name card)))))))))))))))))
+                 (for [card (sort-by :db/id (card-type-key draw))]
+                   (let [showing (:local/showing card false)
+                         showing-toggle (ui/button #(ui! [{:db/id (:db/id card)
+                                                           :local/showing (not showing)}])
+                                                   (ui/label (:agricola.card/name card)))]
+                     (if showing
+                       (ui/column showing-toggle
+                                  (ui/gap 5 5)
+                                  (ui/width 130 (ui/paragraph (:agricola.card/text card)))
+                                  (ui/gap 5 5)
+                                  (ui/height 30
+                                             (ui/rect
+                                              (paint/fill 0xFFF5C3C1)
+                                              (ui/clickable
+                                               {:on-click #(ui! :agricola.event/draft-card)}
+                                               (ui/center (ui/label "draft card"))))))
+                       showing-toggle))))))))))))))))
 
 (defmethod ui-event :agricola.event/start-pre-game [event]
   (let [game (u/get-game event)
