@@ -52,14 +52,14 @@
    (when-not (:no-history tx-meta)
      (let [{new-added true new-removed false} (group-by :added tx-data)]
        (if (zero? (count tx-data))
-         (do (println "Fixed point")
+         (do #_(println "Fixed point")
              (swap! history-logs
                     (fn [history]
                       (-> history
                           (update :added conj (list))
                           (update :removed conj (list))
                           (update :meta-data conj {})))))
-         (do (println "Merging datoms")
+         (do #_(println "Merging datoms")
              (swap! history-logs
                     (fn [{:keys [added removed meta-data] :as history}]
                       (-> history
@@ -71,6 +71,6 @@
 (comment
 
   ^:chord/b (do (undo!) nil)
-  ^:chord/a (d/transact! conn [{:eurozone.user/name "B"}] {:ui-update true})
+  ^:chord/a (d/transact! conn [{:eurozone.user/name "B"}] {:view-event true})
 
   )

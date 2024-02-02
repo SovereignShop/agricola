@@ -20,12 +20,18 @@
           big-int (BigInteger. 1 digest)]
       (format "%032x" big-int))))
 
+
+(defn view
+  ([event-name]
+   (view event-name {}))
+  ([event-name event-data]
+   (with-meta [(conj (assoc event-data :eurozone.event/view event-name) db/event-id)]
+     {:view-event true})))
+
 (defn signal
-  ([name ui-update?]
+  ([event-name]
+   (signal event-name {}))
+  ([event-name event-data]
    (with-meta
-     [(conj #:eurozone.event {:name name
-                              :type type}
-            db/event-id)]
-     {:signal true :ui-update ui-update?}))
-  ([name]
-   (signal name false)))
+     [(conj (assoc event-data :eurozone.event/name event-name) db/event-id)]
+     {:view-event true})))

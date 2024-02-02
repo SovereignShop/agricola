@@ -158,19 +158,24 @@
                       (take 9 db/minor-improvements))
         major-draft (for [_ (range (count players))]
                       (take 9 db/occupations))]
-    [{:db/id (:db/id game)
+    (conj
+     (eu/view :agricola.event/draft-view)
+     {:db/id (:db/id game)
       :agricola.game/draft
       {:agricola.draft/draws
        (for [[player minor-draft major-draft] (map vector players minor-draft major-draft)]
          {:agricola.draw/minor-improvements minor-draft
           :agricola.draw/occupations major-draft
-          :agricola.draw/start-player (:db/id player)})}}]))
+          :agricola.draw/start-player (:db/id player)})}})))
+
+(defmethod handle-event :agricola.event/draft-card [event]
+  (println (keys event)))
 
 (defmethod handle-event :agricola.event/create-game [event]
   (let [game-id (u/next-tempid!)
         username (:eurozone.event/username event)]
     (conj
-     (eu/signal :agricola.event/start-pre-game)
+     (eu/view :agricola.event/start-pre-game)
      {:db/id (:db/id event) :eurozone.event/game game-id}
      {:db/id game-id
       :agricola.game/players {:agricola.player/name username}
@@ -180,5 +185,5 @@
   (let [username (:eurozone.event/username event)
         game (u/get-game event)]
     (conj
-     (eu/signal :agricola.event/start-pre-game true)
+     (eu/view :agricola.event/start-pre-game)
      {:db/id (:db/id game) :agricola.game/players [{:agricola.player/name username}]})))

@@ -1,7 +1,7 @@
 (ns eurozone.ui
   (:require
    [datascript.core :as d]
-   [eurozone.methods :refer [ui-event]]
+   [eurozone.methods :refer [ui-event view! signal!]]
    [agricola.effects]
    [agricola.events]
    [agricola.ui]
@@ -13,14 +13,7 @@
    [io.github.humbleui.types IPoint]))
 
 (defmethod ui-event :default [event]
-  (println "unhandled UI event: " (:eurozone.event/name event) event))
-
-(defn signal! [event]
-  (let [tx-data [(conj event db/event-id)]]
-    (d/transact! db/conn tx-data {:signal true :ui-update false})))
-
-(derive :eurozone.event/login-failed :eurozone.event/login-screen)
-(derive :eurozone.event/username-already-exists :eurozone.event/login-screen)
+  (println "unhandled UI event: " (:eurozone.event/view event) event))
 
 (defmethod ui-event :eurozone.event/login-screen [event]
   (let [name-state (atom {:text (or (:eurozone.event/username event) "") :placeholder "Username..."})
@@ -28,8 +21,8 @@
                               :placeholder "Password..."})
 
         width 130
-        login-signal #(signal! {:eurozone.event/name :eurozone.event/login
-                                :eurozone.event/username (:text @name-state)
+        login-signal #(signal! :eurozone.event/login
+                               {:eurozone.event/username (:text @name-state)
                                 :eurozone.event/password (:text @password-state)})]
     (ui/center
      (ui/focus-controller
@@ -43,11 +36,11 @@
          {:enter login-signal}
          (ui/width width (ui/button login-signal (ui/center (ui/label "Login"))))))
        (ui/gap 5 5)
-       (ui/width width (ui/button #(signal! {:eurozone.event/name :eurozone.event/create-user
-                                             :eurozone.event/username (:text @name-state)
+       (ui/width width (ui/button #(signal! :eurozone.event/create-user
+                                            {:eurozone.event/username (:text @name-state)
                                              :eurozone.user/password (:text @password-state)})
                                   (ui/center (ui/label "Create User"))))
-       (when (= (:eurozone.event/name event) :eurozone.event/username-already-exists)
+       (when (= (:eurozone.event/view event) :eurozone.event/username-already-exists)
          (ui/column
           (ui/gap 5 5)
           (ui/center (ui/label "User already exists")))))))))
@@ -62,19 +55,19 @@
      (ui/gap 10 10)
      (ui/center (apply ui/row (interpose (ui/gap 15 15) (mapv ui/label usernames))))
      (ui/gap 10 10)
-     (ui/button #(signal! {:eurozone.event/name :eurozone.event/choose-game})
+     (ui/button #(view! :eurozone.event/choose-game)
                 (ui/label "Start a game!")))))
 
 (defn render [event]
-  (println "rendering:" (:eurozone.event/name event))
+  (println "rendering:" (:eurozone.event/view event))
   (try
     (when-let [view (ui-event event)]
       (ui/default-theme {} view))
     (catch Exception e
-      (println (:eurozone.event/name event) ":" (.getMessage e)))))
+      (println (:eurozone.event/view event) ":" (.getMessage e)))))
 
 (defonce _ (do (d/transact! db/conn
-                            [(conj {:eurozone.event/name :eurozone.event/login-screen}
+                            [(conj {:eurozone.event/view :eurozone.event/login-screen}
                                    db/event-id)])))
 
 (defonce ui (atom (render (d/entity @db/conn db/event-id))))
@@ -87,7 +80,7 @@
 
 
 (defn listen [{:keys [tx-meta]}]
-  (when (:ui-update tx-meta)
+  (when (:view-event tx-meta)
     (when-let [new-state (render (d/entity @db/conn db/event-id))]
       (reset! ui new-state))))
 
@@ -95,7 +88,7 @@
 
 ^:chord/o (do
             (d/transact! db/conn
-                         [(conj {:eurozone.event/name :eurozone.event/login-screen}
+                         [(conj {:eurozone.event/view :eurozone.event/login-screen}
                                 db/event-id)])
 
             ^:chord/x (when-let [new-state (render (d/entity @db/conn db/event-id))]

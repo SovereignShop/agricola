@@ -245,7 +245,7 @@
                             [{:eurozone.event/name :init
                               :eurozone.event/id :global-event
                               :eurozone.event/game [:agricola.game/name "Game A"]}]]]
-               (d/transact! db/conn tx-data {:ui-update false})))
+               (d/transact! db/conn tx-data {:view-event true})))
       nil) )
 
 (comment

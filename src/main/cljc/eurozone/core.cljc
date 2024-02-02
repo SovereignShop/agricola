@@ -24,12 +24,13 @@
       (println (:eurozone.event/name event) ":" (.getMessage e)))))
 
 (defn listen [{:keys [db-after tx-meta tx-data]}]
-  (cond (:signal tx-meta)
+  (cond (:signal-event tx-meta)
         (let [event (d/entity db-after db/event-id)
+              _ (println "signal:" (:eurozone.event/signal event))
               new-tx-data (process-event event)]
           (try (d/transact! db/conn
                             new-tx-data
-                            (merge {:ui-update true} (meta new-tx-data)))
+                            (merge {:view-event true} (meta new-tx-data)))
                (catch Exception e
                  (println "Error transacting backend tx: " (:eurozone.event/name event) "\n" (.getMessage e)))))
 
@@ -37,7 +38,7 @@
         (seq tx-data) (d/transact! db/conn [])
         :else nil))
 
-(comment ^:chord/l (do (listen {:db-after @db/conn :tx-meta {:signal true}})
+(comment ^:chord/l (do (listen {:db-after @db/conn :tx-meta {:signal-event true}})
                        nil))
 
 (defonce event-listener

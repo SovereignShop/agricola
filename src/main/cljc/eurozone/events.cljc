@@ -6,7 +6,7 @@
    [datascript.core :as d]))
 
 (defmethod handle-event :default [event]
-  (println "no handler for event:" (:eurozone.event/name event)))
+  (println "no handler for event:" (:eurozone.event/signal event)))
 
 (defmethod handle-event :eurozone.event/login [event]
   (let [username (:eurozone.event/username event)
@@ -24,7 +24,7 @@
                 key)]
     (if id
       (conj
-       (u/signal :eurozone.event/login-complete true)
+       (u/view :eurozone.event/login-complete true)
        (d/datom (:db/id event) :eurozone.event/user id))
       (u/signal :eurozone.event/login-failed true))))
 
@@ -42,9 +42,9 @@
                 db
                 username)]
     (if id
-      (u/signal :eurozone.event/username-already-exists true)
+      (u/view :eurozone.event/username-already-exists)
       (conj
-       (u/signal :eurozone.event/login-complete true)
+       (u/view :eurozone.event/login-complete)
        {:eurozone.user/name username
         :eurozone.user/key key
         :eurozone.user/alias ""}))))

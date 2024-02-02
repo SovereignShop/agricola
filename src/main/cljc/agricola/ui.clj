@@ -1,7 +1,7 @@
 (ns agricola.ui
   (:require
    [datascript.core :as d]
-   [eurozone.methods :refer [ui-event]]
+   [eurozone.methods :refer [ui-event signal! view!]]
    [eurozone.db :as db]
    [agricola.utils :as u]
    [clojure.string :as str]
@@ -12,24 +12,12 @@
    [io.github.humbleui.skija Font Typeface FontStyle Paint PaintMode Color4f]
    [io.github.humbleui.types IPoint]))
 
-(Color4f. 0.0 0.6 1.0 1.0)
-
 (defn ui! [tx-data]
-  (d/transact! db/conn tx-data {:ui-update true}))
+  (d/transact! db/conn tx-data {:view-event true}))
 
 (defn create-bold-font [size]
   (font/make-with-size (Typeface/makeFromName "Arial" FontStyle/BOLD)
                        size))
-
-(defn signal!
-  ([event-name]
-   (signal! event-name {}))
-  ([event-name event-data]
-   (let [event (assoc event-data :eurozone.event/name event-name)
-         tx-data [(conj event db/event-id)]]
-     (try (d/transact! db/conn tx-data {:signal true})
-          (catch Exception e
-            (println "Error transacting UI signal:" event "\n" (.getMessage e)))))))
 
 (defn with-gap [size & args]
   (interpose (ui/gap size size) args))
@@ -108,14 +96,9 @@
 (defmethod ui-event :eurozone.event/choose-game [event]
   (let [username (:eurozone.event/username event)]
     (ui/column
-     (ui/button #(signal! :agricola.event/find-or-create-game
-                          {:eurozone.event/username username})
+     (ui/button #(view! :agricola.event/find-or-create-game
+                        {:eurozone.event/username username})
                 (ui/label "Agricola")))))
-
-(defn create-paint [color]
-  (doto (Paint.)
-    (.setColor color)
-    (.setMode (Paint$Mode/FILL))))
 
 (defmethod ui-event :agricola.event/draft-view [event]
   (let [game (u/get-game event)
@@ -154,7 +137,7 @@
                                              (ui/rect
                                               (paint/fill 0xFFF5C3C1)
                                               (ui/clickable
-                                               {:on-click #(ui! :agricola.event/draft-card)}
+                                               {:on-click (fn [_] (signal! :agricola.event/draft-card))}
                                                (ui/center (ui/label "draft card"))))))
                        showing-toggle))))))))))))))))
 
