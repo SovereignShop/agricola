@@ -190,7 +190,7 @@
                 {:db/id (:db/id draw)
                  :agricola.draw/start-player (:db/id next-player)
                  :agricola.draw/selected false})))
-       {:db/id (:db/id draw) :agricola.draw/selected true})
+       [{:db/id (:db/id draw) :agricola.draw/selected true}])
      (case (:agricola.card/type card)
        :minor [[:db/retract (:db/id draw) :agricola.draw/minor-improvements (:db/id card)]
                [:db/add (:db/id card) :local/showing false]
