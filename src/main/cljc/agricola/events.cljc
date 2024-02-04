@@ -154,37 +154,52 @@
   (let [game (u/get-game event)
         players (:agricola.game/players game)
 
-        minor-draft (for [player players]
-                      (take 9 db/minor-improvements))
-        major-draft (for [_ (range (count players))]
-                      (take 9 db/occupations))]
+        minor-draft (map (fn [_ v] v) players (partition 9 db/minor-improvements))
+        occupation-draft (map (fn [_ v] v) players (partition 9 db/occupations))]
     (conj
-     (eu/view :agricola.event/draft-view)
+     (into (eu/view :agricola.event/draft-view)
+           (for [[p1 p2] (partition 2 1
+                                    (let [ps (vec (shuffle players))]
+                                      (conj (vec ps) (nth ps 0))))]
+             [:db/add (:db/id p1) :agricola.player/next-player (:db/id p2)]))
+
      {:db/id (:db/id game)
       :agricola.game/draft
       {:agricola.draft/draws
-       (for [[player minor-draft major-draft] (map vector players minor-draft major-draft)]
+       (for [[player minor-draft occupation-draft] (map vector players minor-draft occupation-draft)]
          {:agricola.draw/minor-improvements minor-draft
-          :agricola.draw/occupations major-draft
+          :agricola.draw/occupations occupation-draft
           :agricola.draw/start-player (:db/id player)})}})))
 
 (defmethod handle-event :agricola.event/draft-card [event]
   (let [player (u/get-player event)
         card (:agricola.event/card event)
-        draft (:agricola.game/draft (u/get-game event))
+        game (u/get-game event)
+        draft (:agricola.game/draft game)
         username (:eurozone.event/username event)
         draws (:agricola.draft/draws draft)
         draw (first (filter #(= (-> % :agricola.draw/start-player :agricola.player/name) username)
-                            draws))]
-    (case (:agricola.card/type card)
-      :minor [[:db/retract (:db/id draw) :agricola.draw/minor-improvements (:db/id card)]
-              [:db/add (:db/id card) :local/showing false]
-              {:db/id (:db/id player)
-               :agricola.player/minor-improvements [(:db/id card)]}]
-      :occupation [[:db/retract (:db/id draw) :agricola.draw/occupations (:db/id card)]
-                   [:db/add (:db/id card) :local/showing false]
-                   {:db/id (:db/id player)
-                    :agricola.player/occupations [(:db/id card)]}])))
+                            draws))
+
+        all-players-chosen? (= (count (filter :agricola.draw/selected draws)) (dec (count draws)))]
+    (into
+     (if all-players-chosen?
+       (vec (for [draw draws]
+              (let [player (:agricola.draw/start-player draw)
+                    next-player (:agricola.player/next-player player)]
+                {:db/id (:db/id draw)
+                 :agricola.draw/start-player (:db/id next-player)
+                 :agricola.draw/selected false})))
+       {:db/id (:db/id draw) :agricola.draw/selected true})
+     (case (:agricola.card/type card)
+       :minor [[:db/retract (:db/id draw) :agricola.draw/minor-improvements (:db/id card)]
+               [:db/add (:db/id card) :local/showing false]
+               {:db/id (:db/id player)
+                :agricola.player/minor-improvements [(:db/id card)]}]
+       :occupation [[:db/retract (:db/id draw) :agricola.draw/occupations (:db/id card)]
+                    [:db/add (:db/id card) :local/showing false]
+                    {:db/id (:db/id player)
+                     :agricola.player/occupations [(:db/id card)]}]))))
 
 (defmethod handle-event :agricola.event/create-game [event]
   (let [game-id (u/next-tempid!)
