@@ -77,6 +77,7 @@
   {:agricola.card/cost               {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
    :agricola.space/resources         {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
    :agricola.event/action            {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
+   :agricola.event/card              {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
    :agricola.game/name               {:db/unique :db.unique/identity}
    :agricola.game/starting-player    {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
    :agricola.game/board              {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
@@ -95,7 +96,8 @@
    :agricola.player/next-player      {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
    :agricola.player/farm             {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
    :agricola.player/occupations      {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
-   :agricola.player/improvements     {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+   :agricola.player/minor-improvements     {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
+   :agricola.player/major-improvements     {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
    :agricola.farm/house              {:db/valueType :db.type/ref :db/cardinality :db.cardinality/one}
    :agricola.farm/animals            {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
    :agricola.farm/fields             {:db/valueType :db.type/ref :db/cardinality :db.cardinality/many}
@@ -124,19 +126,6 @@
    {:agricola.action/name :agricola.square/fishing
     :agricola.bit/title "Fishing"
     :agricola.bit/description ""}])
-
-(def occupations
-  [{:agricola.card/name :field-watchman
-    :agricola.card/type :occupation
-    :agricola.card/title "Field Watchman"
-    :agricola.card/description ""}
-   {:agricola.card/name :family-counseler
-    :agricola.card/type :occupation
-    :agricola.card/title "Family Counseler"}
-   {:agricola.card/name :meat-seller
-    :agricola.card/title "Meat-seller"
-    :agricola.card/type :occupation
-    :agricola.card/description ""}])
 
 (let [cards (u/csv->maps (u/parse-csv-file "decks.csv")
                          [[:edition keyword]
@@ -168,10 +157,11 @@
                           [:category str]
                           [:text str]])
       type-groups (group-by :type cards)
-      parse-card (fn [{:keys [name text min-players victory-points cost prerequisites passing]}]
+      parse-card (fn [{:keys [name text min-players victory-points cost prerequisites passing type]}]
                    (cond-> {:agricola.card/name name
                             :agricola.card/text text
-                            :agricola.card/min-players min-players}
+                            :agricola.card/min-players min-players
+                            :agricola.card/type type}
                        victory-points (assoc :victory-points victory-points)
                        cost (assoc :cost cost)
                        prerequisites (assoc :prerequisites prerequisites)
@@ -242,6 +232,9 @@
   (do (doall (for [tx-data [initial-actions
                             tmp-players
                             tmp-games
+                            minor-improvements
+                            major-improvements
+                            occupations
                             [{:eurozone.event/name :init
                               :eurozone.event/id :global-event
                               :eurozone.event/game [:agricola.game/name "Game A"]}]]]

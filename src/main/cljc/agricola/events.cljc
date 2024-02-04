@@ -169,7 +169,22 @@
           :agricola.draw/start-player (:db/id player)})}})))
 
 (defmethod handle-event :agricola.event/draft-card [event]
-  (println (keys event)))
+  (let [player (u/get-player event)
+        card (:agricola.event/card event)
+        draft (:agricola.game/draft (u/get-game event))
+        username (:eurozone.event/username event)
+        draws (:agricola.draft/draws draft)
+        draw (first (filter #(= (-> % :agricola.draw/start-player :agricola.player/name) username)
+                            draws))]
+    (case (:agricola.card/type card)
+      :minor [[:db/retract (:db/id draw) :agricola.draw/minor-improvements (:db/id card)]
+              [:db/add (:db/id card) :local/showing false]
+              {:db/id (:db/id player)
+               :agricola.player/minor-improvements [(:db/id card)]}]
+      :occupation [[:db/retract (:db/id draw) :agricola.draw/occupations (:db/id card)]
+                   [:db/add (:db/id card) :local/showing false]
+                   {:db/id (:db/id player)
+                    :agricola.player/occupations [(:db/id card)]}])))
 
 (defmethod handle-event :agricola.event/create-game [event]
   (let [game-id (u/next-tempid!)
@@ -184,6 +199,7 @@
 (defmethod handle-event :agricola.event/join-game [event]
   (let [username (:eurozone.event/username event)
         game (u/get-game event)]
+    (println username )
     (conj
      (eu/view :agricola.event/start-pre-game)
      {:db/id (:db/id game) :agricola.game/players [{:agricola.player/name username}]})))

@@ -102,6 +102,7 @@
 
 (defmethod ui-event :agricola.event/draft-view [event]
   (let [game (u/get-game event)
+        player (u/get-player event)
         draft (:agricola.game/draft game)
         username (:eurozone.event/username event)]
     (ui/center
@@ -114,16 +115,22 @@
           (ui/row
            (interpose
             (ui/gap 10 10)
-            (for [card-type-key [:agricola.draw/minor-improvements
-                                 :agricola.draw/occupations]]
+            (for [[card-type cards] [[:draft-minor (:agricola.draw/minor-improvements draw)]
+                                     [:draft-occupation (:agricola.draw/occupations draw)]
+                                     [:player-minor (:agricola.player/minor-improvements player)]
+                                     [:player-occupation (:agricola.player/occupations player)]]]
               (ui/column
                (interpose
                 (ui/gap 5 5)
                 (cons
-                 (if (= card-type-key :agricola.draw/minor-improvements)
-                   (ui/label {:font (create-bold-font 32)} "Minor Improvements")
-                   (ui/label {:font (create-bold-font 32)} "Occupations"))
-                 (for [card (sort-by :db/id (card-type-key draw))]
+                 (ui/label
+                  {:font (create-bold-font 32)}
+                  (case card-type
+                    :draft-minor "Minor Improvements"
+                    :draft-occupation "Occupations"
+                    :player-minor "Drafted Minors"
+                    :player-occupation "Drafted Occupations"))
+                 (for [card (sort-by :db/id cards)]
                    (let [showing (:local/showing card false)
                          showing-toggle (ui/button #(ui! [{:db/id (:db/id card)
                                                            :local/showing (not showing)}])
@@ -137,7 +144,8 @@
                                              (ui/rect
                                               (paint/fill 0xFFF5C3C1)
                                               (ui/clickable
-                                               {:on-click (fn [_] (signal! :agricola.event/draft-card))}
+                                               {:on-click (fn [_] (signal! :agricola.event/draft-card
+                                                                           {:agricola.event/card (:db/id card)}))}
                                                (ui/center (ui/label "draft card"))))))
                        showing-toggle))))))))))))))))
 

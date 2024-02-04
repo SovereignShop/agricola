@@ -174,6 +174,13 @@
 (defn get-chosen-occupation [action]
   (:agricola.action/occupation action))
 
+(defn get-player [event]
+  (let [game (get-game event)
+        players (:agricola.game/players game)
+        username (:eurozone.event/username event)]
+    (first
+     (filter #(= username (:agricola.player/name %1)) players))))
+
 (defonce tempids (atom -1000000000))
 
 (defn next-tempid! []
