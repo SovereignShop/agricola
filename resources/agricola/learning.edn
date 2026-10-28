@@ -1,0 +1,34 @@
+{:schema-version 1
+ :action-space "macro-v1"
+ :encoding
+ {:version "signed-log-features-v1"
+  :observation-dim 2048
+  :action-dim 512
+  :player-slots 4
+  :hash "blake2b-64"
+  :transform "signed-log1p"
+  :dtype "float32"
+  :hidden-size 96}
+ :observation
+ {:remove-state [:draw :log :scores :winners]
+  :remove-player [:name :received :work-baseline]
+  :own-hand-only true
+  :revealed-rounds-only true
+  :draft :public-plus-own-packet}
+ :action
+ {:identity-ignore [:decision :wave]
+  :legality :production-engine
+  :ordering :canonical-edn
+  :representation :parameterized-command
+  :coverage :bounded-macro-actions
+  :limitations
+  ["Single-room and single-stable build candidates; not every combined build."
+   "Rectangular fence plans; not every legal fence topology."
+   "Greedy crop-order sowing and feeding candidates; not every allocation."
+   "Current queued card effect order; no alternative effect reordering or Lasso activation."]}
+ :protocol
+ {:transport :json-lines
+  :authority :edn
+  :operations [:schema :reset :observe :step :replay :load-recording]
+  :record-format 1}
+ :reward {:type :terminal-score :scale 50.0 :perspective :absolute-seat :discount 1.0}}

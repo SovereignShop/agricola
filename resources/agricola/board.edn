@@ -1,0 +1,249 @@
+{:actions
+ {:fishing
+  {:accumulate true, :gain {:food 1}, :group :food, :name "Fishing"},
+  :improvement
+  {:description "Build one available major improvement.",
+   :group :farm,
+   :name "Major Improvement"},
+  :renovate
+  {:description "Renovate, then optionally build an improvement.",
+   :group :farm,
+   :name "House Redevelopment"},
+  :clay
+  {:accumulate true,
+   :gain {:clay 1},
+   :group :resources,
+   :name "Clay Pit"},
+  :animal-market
+  {:name "Animal Market",
+   :group :animals,
+   :description
+   "Choose a sheep + 1 food, a boar, or pay 1 food for a cattle."},
+  :redevelop
+  {:description "Renovate, then optionally build fences.",
+   :group :farm,
+   :name "Farm Redevelopment"},
+  :traveling
+  {:accumulate true,
+   :gain {:food 1},
+   :group :food,
+   :name "Traveling Players"},
+  :copse
+  {:accumulate true,
+   :gain {:wood 1},
+   :group :resources,
+   :name "Copse"},
+  :meeting
+  {:accumulate true,
+   :description "Take the food and become starting player.",
+   :gain {:food 1},
+   :group :family,
+   :name "Meeting Place"},
+  :cattle
+  {:accumulate true,
+   :gain {:cattle 1},
+   :group :animals,
+   :name "Cattle Market"},
+  :lessons-extra
+  {:description "Play an occupation for the printed food cost.",
+   :group :family,
+   :name "Additional Lessons"},
+  :grove
+  {:accumulate true,
+   :gain {:wood 2},
+   :group :resources,
+   :name "Grove"},
+  :stone-west
+  {:accumulate true,
+   :gain {:stone 1},
+   :group :resources,
+   :name "Western Quarry"},
+  :urgent-growth
+  {:description "Grow your family, even without an empty room.",
+   :group :family,
+   :name "Urgent Wish for Children"},
+  :hollow
+  {:accumulate true,
+   :gain {:clay 1},
+   :group :resources,
+   :name "Hollow"},
+  :lessons-copse
+  {:name "Copse Lessons",
+   :group :family,
+   :description "Play an occupation for 2 food. Linked to Copse."},
+  :wood
+  {:accumulate true,
+   :gain {:wood 3},
+   :group :resources,
+   :name "Forest"},
+  :plow
+  {:description "Plow one field adjacent to your fields.",
+   :group :farm,
+   :name "Farmland"},
+  :fences
+  {:description
+   "Enclose pastures. Each new fence costs 1 wood; 15 total.",
+   :group :animals,
+   :name "Fencing"},
+  :boar
+  {:accumulate true,
+   :gain {:boar 1},
+   :group :animals,
+   :name "Pig Market"},
+  :build
+  {:description
+   "Build rooms (5 material + 2 reed) and/or stables (2 wood).",
+   :group :farm,
+   :name "Farm Expansion"},
+  :side-job
+  {:description "Build one stable for 1 wood and/or bake bread.",
+   :group :farm,
+   :name "Side Job"},
+  :lessons-growth
+  {:name "Growth Lessons",
+   :group :family,
+   :description
+   "First two occupations cost 1 food each; later ones cost 2. Linked to Modest Wish for Children."},
+  :riverbank
+  {:name "Riverbank Forest",
+   :group :resources,
+   :accumulate true,
+   :gain {:wood 1},
+   :bonus {:reed 1}},
+  :reed
+  {:accumulate true,
+   :gain {:reed 1},
+   :group :resources,
+   :name "Reed Bank"},
+  :sheep
+  {:accumulate true,
+   :gain {:sheep 1},
+   :group :animals,
+   :name "Sheep Market"},
+  :vegetable
+  {:gain {:vegetable 1}, :group :farm, :name "Vegetable Seeds"},
+  :lessons
+  {:description "Play an occupation; the first is free, then 1 food.",
+   :group :family,
+   :name "Lessons"},
+  :market
+  {:description
+   "3 players: reed or stone + food. 4 players: reed + stone + food.",
+   :group :resources,
+   :name "Resource Market"},
+  :labor {:gain {:food 2}, :group :food, :name "Day Laborer"},
+  :stone-east
+  {:accumulate true,
+   :gain {:stone 1},
+   :group :resources,
+   :name "Eastern Quarry"},
+  :cultivation
+  {:description "Plow one field and/or sow.",
+   :group :farm,
+   :name "Cultivation"},
+  :growth
+  {:description "Grow your family if you have an empty room.",
+   :group :family,
+   :name "Basic Wish for Children"},
+  :modest-growth
+  {:name "Modest Wish for Children",
+   :group :family,
+   :description
+   "From round 5: grow your family if you have an empty room. Linked to Growth Lessons."},
+  :grain {:gain {:grain 1}, :group :farm, :name "Grain Seeds"},
+  :house-building
+  {:name "House Building",
+   :group :farm,
+   :description
+   "Build rooms (5 material + 2 reed each). Linked to Traveling Players."},
+  :sow-bake
+  {:description "Sow empty fields and/or bake bread.",
+   :group :farm,
+   :name "Grain Utilization"}},
+ :animals [:sheep :boar :cattle],
+ :harvest-rounds #{7 4 13 11 9 14},
+ :improvements
+ {:well
+  {:cost {:stone 3, :wood 1},
+   :description "1 food at the start of each of the next 5 rounds.",
+   :name "Well",
+   :points 4},
+  :basketry
+  {:bonus [2 4 5],
+   :cost {:reed 2, :stone 2},
+   :craft :reed,
+   :name "Basketmaker's Workshop",
+   :points 2,
+   :rate 3},
+  :clay-oven
+  {:bake 5,
+   :cost {:clay 3, :stone 1},
+   :limit 1,
+   :name "Clay Oven",
+   :oven true,
+   :points 2},
+  :fireplace-3
+  {:bake 2,
+   :cook {:boar 2, :cattle 3, :sheep 2, :vegetable 2},
+   :cost {:clay 3},
+   :name "Fireplace",
+   :points 1},
+  :fireplace-2
+  {:bake 2,
+   :cook {:boar 2, :cattle 3, :sheep 2, :vegetable 2},
+   :cost {:clay 2},
+   :name "Fireplace",
+   :points 1},
+  :hearth-4
+  {:bake 3,
+   :cook {:boar 3, :cattle 4, :sheep 2, :vegetable 3},
+   :cost {:clay 4},
+   :name "Cooking Hearth",
+   :points 1,
+   :upgrade true},
+  :hearth-5
+  {:bake 3,
+   :cook {:boar 3, :cattle 4, :sheep 2, :vegetable 3},
+   :cost {:clay 5},
+   :name "Cooking Hearth",
+   :points 1,
+   :upgrade true},
+  :pottery
+  {:bonus [3 5 7],
+   :cost {:clay 2, :stone 2},
+   :craft :clay,
+   :name "Pottery",
+   :points 2,
+   :rate 2},
+  :stone-oven
+  {:bake 4,
+   :cost {:clay 1, :stone 3},
+   :limit 2,
+   :name "Stone Oven",
+   :oven true,
+   :points 3},
+  :joinery
+  {:bonus [3 5 7],
+   :cost {:stone 2, :wood 2},
+   :craft :wood,
+   :name "Joinery",
+   :points 2,
+   :rate 2}},
+ :resources
+ [:wood
+  :clay
+  :reed
+  :stone
+  :grain
+  :vegetable
+  :food
+  :sheep
+  :boar
+  :cattle],
+ :stages
+ [[:sheep :improvement :sow-bake :fences]
+  [:growth :renovate :stone-west]
+  [:vegetable :boar]
+  [:cattle :stone-east]
+  [:urgent-growth :cultivation]
+  [:redevelop]]}

@@ -1,0 +1,746 @@
+{
+  "artwork": "Agricola, Uwe Rosenberg; illustrations by Klemens Franz; Lookout Games. Third-party artwork is not covered by the application source code license.",
+  "edition": "Korean Revised Edition boards/major cards and English Revised Edition hand cards; English game labels and effects supplied by Eurozone. Original English edition round-card fronts and stage backs.",
+  "files": [
+    {
+      "file": "board.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/asset/board.svg",
+      "sha256": "4ac7b02bd4c515a5f540edf3246b881f8ca4b424acb1d8591639f6ce5f88b0e4",
+      "note": "Original embedded bitmap extracted without modification"
+    },
+    {
+      "file": "clay.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/image/clay.png",
+      "sha256": "0c74cda025f943c3d9549e466c7725ebdd5fdc56b7222df89fa2815a5a839777",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "cow.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/image/cow.png",
+      "sha256": "a4b63dcc5d74c3f5daaa1ce33f11df14f34af25cd2e583caa1e5f2660334aba4",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "farm.jpeg",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/asset/farm.svg",
+      "sha256": "eafa14d582e65e00f8ad60266369642e5e623905b1d2d5960ae28a137e2d2430",
+      "note": "Original embedded bitmap extracted without modification"
+    },
+    {
+      "file": "farmer_blue.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/image/farmer_blue.png",
+      "sha256": "6662428601e67b0d0af4181e1aaf90ffd3f50d54889015b3876faa1178c8ba89",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "farmer_green.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/image/farmer_green.png",
+      "sha256": "7f224efd097ee93f0990620bb77f4ff80a2fafa64ef6a06c9a59291372c3eb4e",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "farmer_red.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/image/farmer_red.png",
+      "sha256": "b561a0047eb5734e902a8fa74cd5aa4bec1509fddd85a4b5ecff6e043afdc6dd",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "farmer_yellow.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/image/farmer_yellow.png",
+      "sha256": "ba4df73b63571e0d259605ad7690c22890ef8c73c9c9b458e24c292f086b0fc0",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "food.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/image/food.png",
+      "sha256": "e815df237a1fc0fa9e14630001c1e2048c1561394447d11703ee9a9dfcf65ce2",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "grain2.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/image/grain2.png",
+      "sha256": "d15e90a11bb6a05dacd3c5d43a2de1e35b85c5a2580f21f34ab2d46e4ed0bfae",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "house.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/image/house.png",
+      "sha256": "e4cdf2b408e8d0bff394009957f2eedbc15e9d0acbde47a8a149a53f2248e50b",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "major-1.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/asset/main/main1.png",
+      "sha256": "9537a567adcebb4c5d00da894cc4a8c45249834b89799b9b02665c6668f78aa8",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "major-10.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/asset/main/main10.png",
+      "sha256": "668659f993c256a1214ecae13044ea167df1facf03f7e38ce713b0044bd5b777",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "major-2.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/asset/main/main2.png",
+      "sha256": "1ca9f487bb2fec35aebdc12d0ef660afa4f6e1267774c806ff7ea154e0fabfc0",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "major-3.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/asset/main/main3.png",
+      "sha256": "c41cff8ba1a7d7f2c7209bb6bfc7ce55485be1871633f730f73852eba031deab",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "major-4.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/asset/main/main4.png",
+      "sha256": "c6b69ec699d412e147f5b3acbae375fc8cd7b4b5bf82818219b57b00c157f7ab",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "major-5.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/asset/main/main5.png",
+      "sha256": "50f78fa272401450f55c6827d917a1ec99ec4891420722a5dd19f4b651cfd2ff",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "major-6.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/asset/main/main6.png",
+      "sha256": "fe641d9323cf1226a897bd3c61389b86b73c4add5a06ae15489e5105fe31a065",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "major-7.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/asset/main/main7.png",
+      "sha256": "1f6afd5f87cdb0a3580aaac8fd5d236a80627cfe10c2e39bef5c2a1653666f61",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "major-8.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/asset/main/main8.png",
+      "sha256": "e571e1b42e0bfb7556e6ed82a717d637305b56f510c58ac5268ee48ec64c9e1d",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "major-9.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/asset/main/main9.png",
+      "sha256": "186116c69a914cf83548bbbf0a23e6c475c8cc9b75420a9bc3080143cfd3b0fb",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "pig.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/image/pig.png",
+      "sha256": "fa668c1051fd8940c5dcb05c1778ba3d8e8fd1f1b40bbe9039c72db38cb5fb33",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "plow.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/image/plow.png",
+      "sha256": "2193b66e4db76f297ec1350980445139f4f30ff6df4130fcd3839be54c12794b",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "reed.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/image/reed.png",
+      "sha256": "9c41e08736433c84672ccb580925f2ce81e813daf37ac2cb7836c868e146d08a",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "rock.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/image/rock.png",
+      "sha256": "0e28f6cb713981c704f2172b4ea8236dd2885357176c27fe6126859092aaefe3",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "rock_room.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/image/rock_room.png",
+      "sha256": "886f745317de1145ab5e0c44bfcd5bebac8b6c5209914dd86b4d1b3d4c0423fa",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "sheep.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/image/sheep.png",
+      "sha256": "5a6e78407c429c1959daa3f24d26222bb876593df664d80038227364a91c6349",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "soil_room.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/image/soil_room.png",
+      "sha256": "9e92964799d674631cedd1f9620427410ea050c1890fc4a5ee821c7944c3449c",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "tree.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/image/tree.png",
+      "sha256": "5c32a96ca8f0610a8d320b0411b41fbce354791fbe0fc8aea875dd2f8f42dda3",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "vegetable.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/image/vegetable.png",
+      "sha256": "b317f9689fd2ad7692331324f0796c82b1fc0a88ae9a13a17022fd9d7a933fa7",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "wood_room.png",
+      "source": "https://github.com/dslov89/agricola/tree/f728cabe0faf005213e5b0671b0ca1c830ba51b5/src/image/wood_room.png",
+      "sha256": "27cda1eefb1915896dedb9918a0b5d5785da327c1f271080b3bd64499ea09666",
+      "note": "Original file, unmodified"
+    },
+    {
+      "file": "cards/a002.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/shiftingcultivation.png",
+      "sha256": "35554b7ab75118f900aba400e2026620d72b6721a6ce0331c3c90f979c487d11",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a005.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/clayembankment.png",
+      "sha256": "96a6642c26ff2a39852aeaf5296f7e9f1ffc558c0b05736500b4fbc915ed5c8d",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a009.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/younganimalmarket.png",
+      "sha256": "86b89271162c6ff613914afa1f3e8561a458e692158e9bf832120ea56f51c9c9",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a012.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/drinkingtrough.png",
+      "sha256": "2961ffa58b3061534406f0822a8dc7089c368f04b603786dc35c4bfe6aa9b740",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a016.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/rammedclay.png",
+      "sha256": "57038f03ce2af429de00e8de3f61c0bf5f87f18da074e2d363c38ea23be22c8c",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a019.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/handplow.png",
+      "sha256": "2eae5e80b051396768bf5c583bed0b0eef9a10b26ebe1e96cbe25569b34e7119",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a024.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/threshingboard.png",
+      "sha256": "c42848d88dbadc8331be8ad588f071f1d7e8505b2ad8d1b62dd1ac861a460a11",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a026.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/sleepingcorner.png",
+      "sha256": "8245efe1cf02767e834463a3d8b7dbfdd54919ea35e3bc726330229c20409ff4",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a032.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/manger.png",
+      "sha256": "83a1b4ade1d40fcf9bc38f23a11680d92bbdf15e294726684d4f54c60ee45349",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a033.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/bigcountry.png",
+      "sha256": "8236bd9b7500e828da7b3fa223744975264267738e69654b48583ee5d7d49a39",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a038.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/woolblankets.png",
+      "sha256": "6d227122cc09a0e727fb2779c43ec2d76661ec39582a1ea28e03bdc0d296e20e",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a044.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/pondhut.png",
+      "sha256": "5e04a5b2f5b27beef51698a3f03e98bd6afb269f2b51fe257ba5438b01c29863",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a050.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/milkjug.png",
+      "sha256": "6ce24ee0ce8e59d9321e3ac32c23c12b6ad67ae1bb31b33d4a0067cbd702d9c3",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a053.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/claypipe.png",
+      "sha256": "689c051f89cccd55969ba04bd36fbd4a69c261eb2f3fc28b2450e8001510df58",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a055.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/junkroom.png",
+      "sha256": "5a5a15f892575a5b1e22de79f681f93c70ca314ad0a6146032dc8143dc1c602a",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a056.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/basket.png",
+      "sha256": "090374cbbd6c3ac973292a6ceb689a34183841a754390b9bced5deaa9a842d85",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a063.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/dutchwindmill.png",
+      "sha256": "2dd3d291d8376171932437e3b084f73048982c5f059cfbc921a9ce2475f2233f",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a067.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/cornscoop.png",
+      "sha256": "1db953c46403b54e0f0ddca69857e27e54ba0ccc7289ed1016adedebde2ff4c3",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a069.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/largegreenhouse.png",
+      "sha256": "3b8e3737e1f454a7016b42b8b348fdf176deb5068ba654ef485115ae13ba69ce",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a071.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/clearingspade.png",
+      "sha256": "bfd5b329ef4c7b5e83c7c974b6098c481b54658a2f3c679c740301a41345cb12",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a075.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/lumbermill.png",
+      "sha256": "2402c246f6b9f8c11c7af5a97d11bd2b4760fbd3144ce487387291be2dda5d63",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a078.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/canoe.png",
+      "sha256": "1ab3b72c34ae3790ec027d470abd1ea8d2770cc659b47be6603a80a274505630",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a080.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/stonetongs.png",
+      "sha256": "b709e48ccdb0c222222277d7b7eab7c7fabd65cf8351fdfcbe4be252cc39b65c",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a086.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/animaltamer.png",
+      "sha256": "4f8a5a7b22b193e6540ad8ea3bc67b82624a579836f37c07e4ad9c6cb3fc4cb8",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a087.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/conservator.png",
+      "sha256": "89691cd11c90af1223338317dae4b7fadc3016a347dfff9f8e8abec00e13107c",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a088.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/hedgekeeper.png",
+      "sha256": "de6632f535bfef89e9afc9219c5f3fa9d3a992426c10983f83f655c8df29ab0b",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a090.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/plowdriver.png",
+      "sha256": "f3485967fb7d614184f67d49f0888cf739dd68d702c26ef4eefe90ea40147598",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a098.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/stablearchitect.png",
+      "sha256": "e334f544701d3a82b628f413d4347ae4b75f62677202debea19aa4e83e5a47d1",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a102.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/grocer.png",
+      "sha256": "e9d3d9f6fffbc4f32b2b24bf12d741d3547167675f021a9ee3a05c39976ae1eb",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a108.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/mushroomcollector.png",
+      "sha256": "e78f3f42a9daa19dcaff89dfac17f407c2dd669bd7d1653753865023e443537b",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a110.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/roughcaster.png",
+      "sha256": "800cbf1a89b24d6bfa538140d037de420d43a4fcd3a03b4285ce41d739cd9447",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a112.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/scytheworker.png",
+      "sha256": "3e770e3ebebcd82b46578dd722f04caedf6a545a318357b4baad726bcdb60d1f",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a114.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/seasonalworker.png",
+      "sha256": "fb38050a283f93b38efa937e14f587b2a9d766a97e59e491e3e45445db139087",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a116.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/woodcutter.png",
+      "sha256": "a8ee9d4225407fbe98f939880ff6a26e5460fbafc4c695e45fced8b06a622873",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a119.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/firewoodcollector.png",
+      "sha256": "cb9d0172b51b21664349dce4a3b112a10032692bd1af6fdc4c19fe21b11f5f8b",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a120.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/clayhutbuilder.png",
+      "sha256": "696889a12c7be854cc9bbaffcc18e5de02b987a0136872eb2b4be39c275dac2d",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a123.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/framebuilder.png",
+      "sha256": "ebf78ee70fae491d5d09c70ab21508539b260b675692a43baa1df2a6e58f6ba3",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a125.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/priest.png",
+      "sha256": "78db7f208c967726b0b3812a1e2b11f5ddbcb851ae198e6ff0d1ef321f56bd72",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a143.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/stonecutter.png",
+      "sha256": "8f011b038c3e63b544dea432363c1a7600d72ef3fc4322bca391f8cb88b5385b",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a147.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/animaldealer.png",
+      "sha256": "88b6f50062a680c4c683a5624dadd7e37ac222793578ef97f9ee04c398c15104",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a155.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/conjurer.png",
+      "sha256": "5bee06471b82636f5ea2e21e3038c6ac1d5f15dc838bb7a0e97c58141f32071b",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a160.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/lutenist.png",
+      "sha256": "cc7d68f12fcd984586d8abb2a9ea2b03feb08b1cdef08ca7b0fb6d240981025a",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/a165.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/pigbreeder.png",
+      "sha256": "55be2788ee9c8073c7d6af6b2640e4f7169fd918ef08ffd38ac8752e2cc04bb2",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b002.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/minipasture.png",
+      "sha256": "ccdfac3075d53949e7771fb3d1a3ca3b30f2b1c849a912372837dd0dd56e09e8",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b008.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/marketstall.png",
+      "sha256": "d5abba2021d6bc9501c803347572f437981318c82a29fe47464a62ee52e7a80a",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b010.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/caravan.png",
+      "sha256": "5061f15105956e2f90cb20076ab7be60fecbb5630634b1d74cba6c6645fe9f1c",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b013.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/carpentersparlor.png",
+      "sha256": "a4a67a3dfdf85a4112cd903a8e1522c27bbba9b9ffafe6757c687772cd1876b1",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b016.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/mininghammer.png",
+      "sha256": "05ea01a28ebc89f42736332961e9c57024e2fcb944ff993fdf0f84b2143b5251",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b019.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/moldboardplow.png",
+      "sha256": "98e110f3edfb7cd38eb0076615d913e280c161cad7d06aad103c77cedc032a59",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b024.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/lasso.png",
+      "sha256": "056d4769bd3283495a1c104e86c597b208a2f7c558a93318a14caf91c9950659",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b025.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/breadpaddle.png",
+      "sha256": "f97243c7758fe0c0d838733c7c37643b5b592363cd5bd9793e9d963ebe1a48a1",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b033.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/mantelpiece.png",
+      "sha256": "0180eb6483ddafde34bdf363204393d43cd4e94fc71375d972ce5e5d6c0621e3",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b036.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/bottles.png",
+      "sha256": "b13f17f6b1df1b10c03e11152f3a0ab884a21a6d832fad350202a7fcb440c85c",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b039.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/loom.png",
+      "sha256": "584c9efcb3ad48627bf2d571f377bb74f14c07781f4749f62454fa7cce63b870",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b045.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/strawberrypatch.png",
+      "sha256": "deb51835e3a93937cbbcafa3180878693980713b049ea1be748a49c954493ba9",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b047.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/herringpot.png",
+      "sha256": "87290f532308b3eb17fab196c5a97491906b9d0d39f931d4526182e7a55c76fa",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b050.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/butterchurn.png",
+      "sha256": "8f5598ad5594a190a8a8f3cdd2118c0045f243a4adb15a5cb50bbee9d9fa7fd8",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b056.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/brook.png",
+      "sha256": "fd657f16325555bfbbab38383ddabae2ad1c6f2015f3a17a59c943486092feb2",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b057.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/scullery.png",
+      "sha256": "01b30084829c2462206fc9980236930e70d976ab83a3853e47928bae1de71435",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b061.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/threefieldrotation.png",
+      "sha256": "516812b6ab8a22c97d7c0352c5004ef8bb77fb60228adee82bcc1e6b29e15673",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b062.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/pitchfork.png",
+      "sha256": "aff36f71c1c5020570916f1eb2991f5c00094e6a38c72eb7f6f4edbb5a56943b",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b066.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/sackcart.png",
+      "sha256": "55da977248d8c9c3638a696c2b579b484a80515f4c16e6c891d5c7d511017af2",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b068.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/beanfield.png",
+      "sha256": "c943e67f6d5841461a5ae27b840cb599d37d4dc624a3df2fe5bcf9a765356470",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b074.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/thickforest.png",
+      "sha256": "d78fb3f09824eacd23010c8819f7a1cd5be949a152c990c13b9e8c4fc5fa2be7",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b077.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/loampit.png",
+      "sha256": "45a8beb656b1a1f5fa40c66599e972cad0e0f7201b2eb20b5f811afe4d1740df",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b080.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/hardporcelain.png",
+      "sha256": "cdc9b1cd7371bb3cf9fb1f08eb5ee5b82f179809a6745226076389a2cb924cf5",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b084.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/acornsbasket.png",
+      "sha256": "aa3eba789d843b3a2ca6983a61b5a6a2b12f3587a9edf769a7363ba5c7a9bbbf",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b087.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/cottager.png",
+      "sha256": "24e58d283884ef284c6853b2b28fa33fdf0eea3984a67f3326cd308244146e7e",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b089.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/groom.png",
+      "sha256": "7b687cdc4875cc52ea082fcf45fe7c6804bd2f5f63deb8a4f866bf7cb84f6fc0",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b091.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/assistanttiller.png",
+      "sha256": "a16e35d0756d3949bb0da2189c9975f108159c83f67a56dc9c962073e7adb3b3",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b095.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/masterbricklayer.png",
+      "sha256": "49e4acef89d2495563c50343a69e759c493751124ce94328682e55927fc23f56",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b097.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/scholar.png",
+      "sha256": "05a3af22c03e6cdc5aa20156db0cf2d7e0be9536df5909289d7ce6d6db6e7277",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b098.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/organicfarmer.png",
+      "sha256": "48171caf019767bdca199c7e4cb1ae31883c2da767863571c815fdfb536b42c5",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b099.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/tutor.png",
+      "sha256": "5827b81b034746bfbb37d94d24bf526f6534e6a576833a5eacafe74ec5708555",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b102.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/consultant.png",
+      "sha256": "fca5f5dbf3ee0d7e6d4bd5458c8052c240a6d87ca05c1f1a66ec2ccb868fff9d",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b104.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/sheepwalker.png",
+      "sha256": "753f7ab37356bbe6a3f826d17e8a36bebf52752358dc7ca73acb86da0bef029f",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b107.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/manservant.png",
+      "sha256": "b347e5f71352dd261c267694c83f30d127af54ebae4d84d9297fc9d5828e3205",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b108.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/ovenfiringboy.png",
+      "sha256": "2fda00c96f43c691318b9147b07a99b469248a30031740d6acbc2607c8bd4a06",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b109.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/papermaker.png",
+      "sha256": "9f32302a1911bf5684bfef02b3e9577c782d01096d82446768dcbe4773215fc2",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b114.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/childless.png",
+      "sha256": "b3b30ef0d6b68e4d5e4b0393cd0537e58d136ce29398674493eecf96500de5e7",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b121.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/geologist.png",
+      "sha256": "c358101d56cf0fda7bd013fdec02ad5ac2641a7e04899f69d980f9da936965a0",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b123.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/roofballaster.png",
+      "sha256": "02e3c74acadc5ac14bf4902ec2edfe1ae01ecf72772f1baf8f6e185359c8298a",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b126.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/carpenter.png",
+      "sha256": "7e5c109e9ff97933f79275f584eccd999dad01335e2257234bee4e422e7d5716",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b136.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/housesteward.png",
+      "sha256": "9312e03d9c4a50ea9e14dccf0fbc51f300220e5ad1ccd9470f5563cb153c509d",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b142.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/greengrocer.png",
+      "sha256": "370326a9ec3378b8d36c6c4fec2af3da85c5884a48020eaf5f0a8f422ad453aa",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b145.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/brushwoodcollector.png",
+      "sha256": "ab4b5613c6b6edb6ed2d781ea7cb4eac3502f9036e80c54e8713d68a5dbe0a8e",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b156.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/storehousekeeper.png",
+      "sha256": "b77a73c5788998186a9c58065f843be975abba75264b5cd23225f1ed745adc25",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b163.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/pastor.png",
+      "sha256": "26dee138a07c7d68448df07bdaa2067764b3c58dbd7d81e917029031b88f525d",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b164.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/sheepwhisperer.png",
+      "sha256": "4505a9fefb172c095ef0e49d6167a57f8409b4daabdb25e0b58792207fb4f0a7",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "cards/b166.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/cattlefeeder.png",
+      "sha256": "0141919d1152fea01aa6562a2112ff2a9ae062a7c96aa43dc26afc8123d3a80a",
+      "note": "Original English card image, unmodified"
+    },
+    {
+      "file": "round-front.jpg",
+      "source": "https://dl.dropboxusercontent.com/s/yqqwv0zmy3648hy/Stage%20A.jpg",
+      "reference": "https://github.com/SNiLD/TabletopSimulatorAgricola/blob/5e675a143d7192b271615d9f1a406fd04a1913f1/src/workshop.json",
+      "sha256": "3df1b8998b4591307719239b84975003c9ecee550ce99c88be74e92547971a6f",
+      "note": "Original English edition round-card sheet, unmodified; displayed as a 10 by 7 CSS sprite. Revised Edition action names and rules supplied by Eurozone."
+    },
+    {
+      "file": "round-back.jpg",
+      "source": "https://dl.dropboxusercontent.com/s/az1ywbwhkob49yt/Stage%20Backs%20A.jpg",
+      "reference": "https://github.com/SNiLD/TabletopSimulatorAgricola/blob/5e675a143d7192b271615d9f1a406fd04a1913f1/src/workshop.json",
+      "sha256": "71c3f5b0fde6ecfe6521c3fee6141ec30e266e780c1beb14c04aba898d193fd7",
+      "note": "Original English edition round-card sheet, unmodified; displayed as a 10 by 7 CSS sprite. Revised Edition action names and rules supplied by Eurozone."
+    }
+  ]
+}

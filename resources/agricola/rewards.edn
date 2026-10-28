@@ -1,0 +1,12 @@
+{:version "food-growth-v1"
+ :scale 50.0
+ :discount 1.0
+ :terminal-potential 0.0
+ :weights {:meal-coverage 2.0
+           :productive-food 0.6
+           :cooking-access 1.0
+           :supported-family-round 0.6
+           :supported-spare-room-round 0.15
+           :begging 2.0}
+ :limits {:productive-food 8.0 :cooking-food-per-action 2.0}
+ :interpretation "Potential differences provide immediate credit; terminal potential is zero, so complete-game return equals actual score minus the fixed initial potential. Forecasts are public-state proxies, not extra Agricola rules."}

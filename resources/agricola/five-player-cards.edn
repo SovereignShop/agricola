@@ -1,0 +1,48 @@
+{:a169 {:passive {:off-siter true}}
+ :a170 {:ability {:op :free-placement-fences}}
+ :a171 {:triggers [{:event :use-space :effect {:op :sidekick :optional? true :cost {:food 1}}}]}
+ :a172 {:triggers [{:event :return-home :effect {:op :boat-painter :optional? true}}]}
+ :a173 {:triggers [{:event :work-start :effect {:op :clay-thief :optional? true}}]}
+ :a174 {:passive {:master-hora true}}
+ :a175 {:triggers [{:event :use-space :spaces #{:hollow} :effect {:op :hollow-gardener}}]}
+ :a176 {:play [{:op :wheelmaker}]}
+ :a177 {:play [{:op :middleman-stock}] :triggers [{:event :use-space :effect {:op :middleman}}]}
+ :a178 {:triggers [{:event :build-rooms :scope :others :effect {:op :carpenters-boy}}]}
+ :a179 {:triggers [{:event :use-space :spaces #{:stone-west :stone-east} :effect {:op :gain :goods {:sheep 1}}}]}
+ :a180 {:passive {:animal-brander true}}
+ :b169 {:passive {:livestock-sustainer true}}
+ :b170 {:triggers [{:event :round-start :effect {:op :corral-builder :optional? true}}]}
+ :b171 {:action-space :greenhouse}
+ :b172 {:triggers [{:event :round-start :effect {:op :cattle-caregiver}}]}
+ :b173 {:triggers [{:event :use-space :effect {:op :sweeper}}] :ability {:op :cash-card}}
+ :b174 {:triggers [{:event :use-space :spaces #{:riverbank} :effect {:op :gain :goods {:vegetable 1}}}]}
+ :b175 {:triggers [{:event :before-field-phase :effect {:op :field-overseer}}]}
+ :b176 {:passive {:lone-occupation true} :triggers [{:event :use-space :scope :others :spaces #{:meeting} :effect {:op :gain :goods {:food 1 :wood 1}}}]}
+ :b177 {:triggers [{:event :plow :effect {:op :gain :goods {:stone 1}}}]}
+ :b178 {:triggers [{:event :use-space :scope :others :spaces #{:market} :effect {:op :tag-along :optional? true}}]}
+ :b179 {:triggers [{:event :return-home :effect {:op :wild-boar-hunter :optional? true :cost {:wood 1}}}]}
+ :b180 {:triggers [{:event :use-space :effect {:op :game-teaser}}]}
+ :c169 {:triggers [{:event :use-space :effect {:op :fast-mason :optional? true}}]}
+ :c170 {:play [{:op :amateur-fencer :optional? true}]}
+ :c171 {:triggers [{:event :return-home :effect {:op :young-artist :optional? true :cost {:food 1}}}]}
+ :c172 {:triggers [{:event :plow :scope :others :effect {:op :field-counter}}] :ability {:op :cash-card}}
+ :c173 {:triggers [{:event :use-space :scope :all :spaces #{:house-building} :effect {:op :top-outer}}]}
+ :c174 {:triggers [{:event :return-home :effect {:op :stone-custodian}}]}
+ :c175 {:triggers [{:event :use-space :spaces #{:lessons :lessons-copse :lessons-growth} :effect {:op :village-teacher}}]}
+ :c176 {:triggers [{:event :use-space :spaces #{:plow :cultivation} :effect {:op :gain :goods {:clay 2}}}]}
+ :c177 {:triggers [{:event :use-space :spaces #{:riverbank :grove :hollow :copse :traveling} :effect {:op :exchange :cost {:food 1} :goods {:stone 1} :optional? true}}]}
+ :c178 {:triggers [{:event :before-field-phase :effect {:op :choose-good :choices [:wood :clay :reed :stone]}}]}
+ :c179 {:triggers [{:event :fence :effect {:op :bovine-pioneer}}]}
+ :c180 {:triggers [{:event :use-space :effect {:op :trapper :optional? true :cost {:food 1}}}]}
+ :d169 {:triggers [{:event :use-space :scope :others :effect {:op :plowsmith :optional? true :cost {:food 1}}}]}
+ :d170 {:action-space :fold-builder}
+ :d171 {:triggers [{:event :lessons-paid :scope :others :effect {:op :gain :goods {:food 1}}}]}
+ :d172 {:ability {:op :reed-food}}
+ :d173 {:triggers [{:event :major-built :scope :all :effect {:op :bank-food}}] :ability {:op :cash-card}}
+ :d174 {:triggers [{:event :use-space :spaces #{:clay} :effect {:op :exchange :cost {:food 1} :goods {:vegetable 1} :optional? true}}]}
+ :d175 {:triggers [{:event :renovate :scope :all :effect {:op :countryman :optional? true}}]}
+ :d176 {:triggers [{:event :use-space :effect {:op :woodshacker}}]}
+ :d177 {:play [{:op :graduate}]}
+ :d178 {:action-space :substitute-teacher}
+ :d179 {:action-space :bullcatcher}
+ :d180 {:passive {:part-time-worker true}}}

@@ -1,0 +1,8 @@
+{:main eurozone.browser.bot-worker
+ :output-to "resources/public/js/bot-worker.js"
+ :output-dir "resources/public/js/bot-out"
+ :asset-path "/js/bot-out"
+ :optimizations :simple
+ :source-map "resources/public/js/bot-worker.js.map"
+ :pretty-print false
+ :target :webworker}

@@ -1,0 +1,18 @@
+;; A deterministic mid-game visual fixture, saved only to the smoke test's temp file.
+(require '[eurozone.store :as store] '[agricola.engine :as a])
+(let [s (store/make-store (System/getenv "EUROZONE_DATA"))
+      token (apply str (repeat 64 "a"))
+      result (store/transact! s token {:event :create :mode :local :name "Art fixture" :names ["Art fixture"] :title "Tabletop fixture"})
+      id (:id result)
+      g (a/new-game ["Art fixture"] (vec (mapcat identity a/stages)) 0)
+      p (-> (get-in g [:players 0])
+            (a/gain {:wood 30 :clay 20 :stone 20 :reed 10 :grain 4 :vegetable 2 :food 20})
+            (a/place-tile :field 4)
+            (a/sow [{:cell 4 :crop :grain}])
+            (a/build-fences (a/edges 14))
+            (a/gain {:sheep 2}))
+      g (reduce #(a/build-improvement %1 0 {:improvement %2})
+                (assoc-in g [:players 0] p) [:fireplace-2 :well :joinery])
+      rooms (assoc-in @(:rooms s) [id :state] g)]
+  (store/save! s rooms)
+  (println id))

@@ -22,5 +22,25 @@ deps/bin
 resources/db
 resources/public/js
 resources/public/cljs-out
+/src/cljs/agricola/bot.cljs
+/src/cljs/agricola/afterstate_value.cljs
 node_modules
 target
+
+# Browser server saves (separate from the legacy desktop database)
+/data/
+__pycache__/
+.venv-ai/
+
+node_modules/
+.env
+.env.*
+!.env.example
+
+# Local editor caches and desktop event journals
+.clj-kondo/.cache/
+.lsp/
+*.swp
+*.swo
+/addition-log/
+/retraction-log/

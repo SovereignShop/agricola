@@ -1,4 +1,22 @@
-{:deps  {org.clojure/clojure {:mvn/version "1.11.1"}
+{:paths ["src/main/cljc" "resources" "src/clj"]
+ :deps {org.clojure/clojure {:mvn/version "1.11.1"}
+        org.clojure/data.json {:mvn/version "2.5.2"}
+        datascript/datascript {:mvn/version "1.6.1"}
+        http-kit/http-kit {:mvn/version "2.5.3"}}
+ :aliases
+ {:cljs {:extra-paths ["src/cljs"]
+          :extra-deps {org.clojure/clojurescript {:mvn/version "1.11.60"}
+                       reagent/reagent {:mvn/version "0.8.1"}
+                       re-frame/re-frame {:mvn/version "1.2.0"}}
+          :main-opts ["-m" "cljs.main" "-co" "build.cljs.edn"]}
+  :browser-build {:main-opts ["scripts/compile_browser.clj"]}
+  :ai {:extra-deps {org.clojure/data.json {:mvn/version "2.5.2"}}
+       :main-opts ["-m" "agricola.ai"]}
+  :simulate {:main-opts ["-m" "agricola.simulation"]}
+  :run {:main-opts ["-m" "eurozone.server"]}
+  :test {:extra-paths ["test"] :main-opts ["-m" "eurozone.test-runner"]}
+  ;; The original desktop prototype is separate from the browser runtime.
+  :desktop {:extra-deps {org.clojure/clojure {:mvn/version "1.11.1"}
          org.clojure/core.async {:mvn/version "1.6.681"}
          org.xerial/sqlite-jdbc {:mvn/version "3.34.0"}
          org.clojure/data.csv {:mvn/version "1.0.0"}
@@ -10,12 +28,9 @@
 
          reagent/reagent {:mvn/version "1.2.0"}
 
-         re-posh                {:local/root "../re-posh"} #_{:mvn/version "0.3.1"
+         re-posh/re-posh        {:local/root "../re-posh"} #_{:mvn/version "0.3.1"
                                                               :exclusions  [denistakeda/posh reagent/reagent]}
-         posh                   {:git/url "https://github.com/cartesian-theatrics/posh.git"
+         posh/posh              {:git/url "https://github.com/cartesian-theatrics/posh.git"
                                  :sha     "9110abfd204e239ddb8a16f9c0e0a84265e37009"
                                  :tag     "release/0.0.1"
-                                 :exclusions [reagent/reagent]}
-
-         }
- :paths ["src/main/cljc"]}
+                                 :exclusions [reagent/reagent]}}}}}

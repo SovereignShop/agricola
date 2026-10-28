@@ -1,0 +1,345 @@
+{:a002 {:play [{:op :plow}]},
+ :a005 {:play [{:divisor 2, :op :proportional-gain, :resource :clay}]},
+ :a009 {:play [{:goods {:cattle 1}, :op :gain}]},
+ :a012 {:passive {:pasture-capacity 2}},
+ :a016
+ {:passive {:clay-fences true}, :play [{:goods {:clay 1}, :op :gain}]},
+ :a019 {:play [{:goods {:field 1}, :offsets [5], :op :schedule}]},
+ :a024
+ {:triggers
+  [{:effect {:op :bake, :optional? true},
+    :event :use-space,
+    :spaces #{:cultivation :plow}}]},
+ :a026 {:passive {:share-growth true}},
+ :a032 {:score {:thresholds [6 7 8 10], :type :pasture-spaces}},
+ :a033 {:play [{:goods {:food 2}, :op :remaining-rounds, :points 1}]},
+ :a038 {:score {:type :house, :values {:clay 2, :stone 0, :wood 3}}},
+ :a044 {:play [{:goods {:food 1}, :offsets [1 2 3], :op :schedule}]},
+ :a050
+ {:triggers
+  [{:effect {:op :all-gain, :others {:food 1}, :owner {:food 3}},
+    :event :use-space,
+    :scope :all,
+    :spaces #{:cattle}}]},
+ :a053
+ {:triggers
+  [{:condition [:building-resources 7],
+    :effect {:goods {:food 2}, :op :gain},
+    :event :return-home}]},
+ :a055
+ {:triggers
+  [{:effect {:goods {:food 1}, :op :gain},
+    :event :build-improvement}]},
+ :a056
+ {:triggers
+  [{:effect
+    {:cost {:wood 2},
+     :goods {:food 3},
+     :op :return-goods,
+     :optional? true},
+    :event :use-space,
+    :spaces #{:copse :grove :wood}}]},
+ :a063
+ {:triggers
+  [{:condition [:after-harvest],
+    :effect {:goods {:food 3}, :op :gain},
+    :event :bake}]},
+ :a067
+ {:triggers
+  [{:effect {:goods {:grain 1}, :op :gain},
+    :event :use-space,
+    :spaces #{:grain}}]},
+ :a069
+ {:play [{:goods {:vegetable 1}, :offsets [4 7 9], :op :schedule}]},
+ :a071 {:ability {:op :move-crop}},
+ :a075 {:passive {:improvement-discount {:wood 1}}},
+ :a078
+ {:triggers
+  [{:effect {:goods {:food 1, :reed 1}, :op :gain},
+    :event :use-space,
+    :spaces #{:fishing}}]},
+ :a080
+ {:triggers
+  [{:effect {:goods {:stone 1}, :op :gain},
+    :event :use-space,
+    :spaces #{:stone-east :stone-west}}]},
+ :a083 {:triggers [{:effect {:op :shepherd-crook}, :event :fence}]},
+ :a086
+ {:passive {:room-pets true},
+  :play [{:choices [:wood :grain], :op :choose-good}]},
+ :a087 {:passive {:direct-stone true}},
+ :a088 {:passive {:free-fences 3}},
+ :a090
+ {:triggers
+  [{:condition [:house :stone],
+    :effect {:cost {:food 1}, :op :plow, :optional? true},
+    :event :round-start}]},
+ :a092
+ {:triggers
+  [{:effect {:cost {:food 1}, :op :adopt, :optional? true},
+    :event :grow}]},
+ :a098 {:score {:type :unfenced-stables}},
+ :a102
+ {:ability {:cost {:food 1}, :op :buy-stock},
+  :play
+  [{:goods
+    [:vegetable :reed :clay :vegetable :stone :reed :grain :wood],
+    :op :stock}]},
+ :a108
+ {:triggers
+  [{:effect
+    {:cost {:wood 1},
+     :goods {:food 2},
+     :op :return-goods,
+     :optional? true},
+    :event :use-space,
+    :spaces #{:copse :grove :wood}}]},
+ :a110
+ {:triggers
+  [{:condition [:house :clay],
+    :effect {:goods {:food 3}, :op :gain},
+    :event :build-rooms}
+   {:condition [:previous-house :clay],
+    :effect {:goods {:food 3}, :op :gain},
+    :event :renovate}]},
+ :a111
+ {:triggers
+  [{:effect
+    {:goods {:food 1},
+     :offsets [1 2 3 4],
+     :op :schedule,
+     :optional? true},
+    :event :build-rooms}]},
+ :a112
+ {:play [{:goods {:grain 1}, :op :gain}],
+  :triggers
+  [{:effect {:op :extra-grain-harvest, :optional? true},
+    :event :field-phase}]},
+ :a114
+ {:triggers
+  [{:effect {:op :seasonal-crop},
+    :event :use-space,
+    :spaces #{:labor}}]},
+ :a116
+ {:triggers
+  [{:effect {:goods {:wood 1}, :op :gain},
+    :event :use-space,
+    :spaces #{:copse :grove :wood}}]},
+ :a119
+ {:triggers
+  [{:effect {:goods {:wood 1}, :op :gain},
+    :event :use-space,
+    :spaces #{:cultivation :grain :plow :sow-bake}}]},
+ :a120
+ {:triggers
+  [{:condition [:not-house :wood],
+    :effect {:goods {:clay 2}, :offsets [1 2 3 4 5], :op :schedule},
+    :event :check-state,
+    :once? true}]},
+ :a123 {:passive {:frame-builder true}},
+ :a125
+ {:play
+  [{:condition [:house-rooms :clay 2],
+    :effect {:goods {:clay 3, :reed 2, :stone 2}, :op :gain},
+    :op :conditional}]},
+ :a133
+ {:score
+  {:thresholds [5 6 7 8 9 10],
+   :type :improvements,
+   :values [2 3 4 5 7 9]}},
+ :a138
+ {:triggers
+  [{:effect {:cost {:wood 1}, :op :harpoon, :optional? true},
+    :event :use-space,
+    :spaces #{:fishing}}]},
+ :a143 {:passive {:stone-discount 1}},
+ :a147
+ {:triggers
+  [{:effect {:cost {:food 1}, :op :extra-animal, :optional? true},
+    :event :use-space,
+    :spaces #{:boar :cattle :sheep}}]},
+ :a155
+ {:triggers
+  [{:effect {:goods {:grain 1, :wood 1}, :op :gain},
+    :event :use-space,
+    :spaces #{:traveling}}]},
+ :a160
+ {:triggers
+  [{:effects
+    [{:goods {:food 1, :wood 1}, :op :gain}
+     {:cost {:food 2},
+      :goods {:vegetable 1},
+      :op :exchange,
+      :optional? true}],
+    :event :use-space,
+    :scope :others,
+    :spaces #{:traveling}}]},
+ :a165
+ {:play [{:goods {:boar 1}, :op :gain}],
+  :triggers
+  [{:condition [:round 12],
+    :effect {:op :breed-boar},
+    :event :return-home}]},
+ :b002 {:play [{:op :mini-pasture}]},
+ :b008 {:play [{:goods {:vegetable 1}, :op :gain}]},
+ :b010 {:passive {:extra-room 1}},
+ :b013 {:passive {:wood-room-cost 2}},
+ :b016
+ {:play [{:goods {:food 1}, :op :gain}],
+  :triggers
+  [{:effect {:cost {}, :op :stable, :optional? true},
+    :event :renovate}]},
+ :b019
+ {:play [{:op :set-uses, :uses 2}],
+  :triggers
+  [{:effect {:limited? true, :op :plow, :optional? true},
+    :event :use-space,
+    :spaces #{:plow}}]},
+ :b024 {:passive {:lasso true}},
+ :b025
+ {:play [{:goods {:food 1}, :op :gain}],
+  :triggers
+  [{:effect {:op :bake, :optional? true}, :event :occupation}]},
+ :b033
+ {:passive {:no-renovation true},
+  :play [{:op :remaining-rounds, :points 1}]},
+ :b036 {:cost :bottles},
+ :b039
+ {:score {:divisor 3, :resource :sheep, :type :animals},
+  :triggers [{:effect {:op :loom}, :event :field-phase}]},
+ :b045 {:play [{:goods {:food 1}, :offsets [1 2 3], :op :schedule}]},
+ :b047
+ {:triggers
+  [{:effect {:goods {:food 1}, :offsets [1 2 3], :op :schedule},
+    :event :use-space,
+    :spaces #{:fishing}}]},
+ :b050 {:triggers [{:effect {:op :dairy}, :event :field-phase}]},
+ :b056
+ {:cost :fishing-person,
+  :triggers
+  [{:effect {:goods {:food 1}, :op :gain},
+    :event :use-space,
+    :spaces #{:clay :reed :stone-west :wood}}]},
+ :b057
+ {:triggers
+  [{:condition [:house :wood],
+    :effect {:goods {:food 1}, :op :gain},
+    :event :round-start}]},
+ :b061
+ {:triggers
+  [{:condition [:three-fields],
+    :effect {:goods {:food 3}, :op :gain},
+    :event :before-field-phase}]},
+ :b062
+ {:triggers
+  [{:condition [:occupied :plow],
+    :effect {:goods {:food 3}, :op :gain},
+    :event :use-space,
+    :spaces #{:grain}}]},
+ :b066
+ {:play [{:goods {:grain 1}, :op :schedule, :rounds [5 8 11 14]}]},
+ :b068 {:passive {:card-field :vegetable}},
+ :b074
+ {:cost :clay-supply,
+  :play
+  [{:goods {:wood 1}, :op :schedule, :rounds [2 4 6 8 10 12 14]}]},
+ :b077
+ {:triggers
+  [{:effect {:goods {:clay 3}, :op :gain},
+    :event :use-space,
+    :spaces #{:labor}}]},
+ :b080 {:ability {:op :porcelain}},
+ :b084 {:play [{:goods {:boar 1}, :offsets [1 2], :op :schedule}]},
+ :b087
+ {:triggers
+  [{:effect {:op :cottage, :optional? true},
+    :event :use-space,
+    :spaces #{:labor}}]},
+ :b089
+ {:play [{:goods {:wood 1}, :op :gain}],
+  :triggers
+  [{:condition [:house :stone],
+    :effect {:cost {:wood 1}, :op :stable, :optional? true},
+    :event :round-start}]},
+ :b091
+ {:triggers
+  [{:effect {:op :plow, :optional? true},
+    :event :use-space,
+    :spaces #{:labor}}]},
+ :b095 {:passive {:major-stone-discount-per-room true}},
+ :b097
+ {:triggers
+  [{:condition [:house :stone],
+    :effect {:op :scholar, :optional? true},
+    :event :round-start}]},
+ :b098 {:score {:type :organic-pastures}},
+ :b099 {:play [{:op :tutor-start}], :score {:type :tutor}},
+ :b102 {:play [{:op :consultant}]},
+ :b104 {:ability {:op :sheep-exchange}},
+ :b107
+ {:triggers
+  [{:condition [:house :stone],
+    :effect
+    {:goods {:food 3},
+     :op :schedule,
+     :rounds [1 2 3 4 5 6 7 8 9 10 11 12 13 14]},
+    :event :check-state,
+    :once? true}]},
+ :b108
+ {:triggers
+  [{:effect {:op :bake, :optional? true},
+    :event :use-space,
+    :spaces #{:copse :grove :wood}}]},
+ :b109 {:passive {:paper-maker true}},
+ :b114
+ {:triggers
+  [{:condition [:childless],
+    :effects
+    [{:goods {:food 1}, :op :gain}
+     {:choices [:grain :vegetable], :op :choose-good}],
+    :event :round-start}]},
+ :b118
+ {:triggers
+  [{:condition [:rooms 2],
+    :effect {:goods {:wood 1}, :op :gain},
+    :event :round-start}]},
+ :b121
+ {:triggers
+  [{:effect {:goods {:clay 1}, :op :gain},
+    :event :use-space,
+    :spaces #{:reed :wood}}
+   {:condition [:players-at-least 3],
+    :effect {:goods {:clay 1}, :op :gain},
+    :event :use-space,
+    :spaces #{:clay}}]},
+ :b123 {:play [{:cost {:food 1}, :op :roof-stone, :optional? true}]},
+ :b126 {:passive {:room-material-cost 3}},
+ :b136 {:play [{:op :house-steward}], :score {:type :most-rooms}},
+ :b142
+ {:triggers
+  [{:effect {:goods {:vegetable 1}, :op :gain},
+    :event :use-space,
+    :spaces #{:grain}}]},
+ :b145 {:passive {:brushwood true}},
+ :b156
+ {:triggers
+  [{:effect {:choices [:clay :grain], :op :choose-good},
+    :event :use-space,
+    :spaces #{:market}}]},
+ :b163
+ {:triggers
+  [{:condition [:only-two-rooms],
+    :effect {:goods {:clay 2, :reed 1, :stone 1, :wood 3}, :op :gain},
+    :event :check-state,
+    :once? true}]},
+ :b164
+ {:play [{:goods {:sheep 1}, :offsets [2 5 8 10], :op :schedule}]},
+ :b166
+ {:triggers
+  [{:effect
+    {:cost {:food 1},
+     :goods {:cattle 1},
+     :op :exchange,
+     :optional? true},
+    :event :use-space,
+    :spaces #{:grain}}]}}

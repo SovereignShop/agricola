@@ -1,0 +1,4 @@
+# CUDA 12.6 wheel retains sm_75 support for the GTX 1660.
+--extra-index-url https://download.pytorch.org/whl/cu126
+-r requirements.txt
+torch==2.14.1+cu126

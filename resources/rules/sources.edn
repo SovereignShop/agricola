@@ -1,0 +1,31 @@
+{:edition :revised-2016
+ :reviewed "2026-10-27"
+ :sources
+ [{:id :printed-rules :authority :publisher
+   :url "https://www.lookout-spiele.de/upload/en_agricolare.html_Rules_Agricola-RE_EN.pdf"}
+  {:id :printed-appendix :authority :publisher
+   :url "https://lookout-spiele.de/upload/en_agricolare.html_Appendix_Agricola-RE_EN.pdf"}
+  {:id :five-six-player-extension :authority :publisher
+   :url "https://www.lookout-spiele.de/upload/en_agricolare_56players.html_Rules_Agricola-RE-56Expansion_EN.pdf"
+   :note "Five-player linked spaces, action amounts, round-five growth restriction and 48 occupations. Extra major improvements are six-player only."}
+  {:id :bgg-revised :authority :community-forum
+   :url "https://boardgamegeek.com/boardgame/200680/agricola-revised-edition/forums/66"}
+  {:id :lumin-compendium :authority :unofficial-compilation :edition :revised-2016
+   :url "https://docs.google.com/document/d/1WUl0HlzX6Yx0ume75UmpaIMhoHukx9XufM_LbV1oZ6E/edit"}
+  {:id :play-agricola :authority :community-forum :edition :mixed
+   :url "http://playagricola.com/forums/index.php?board=23.0"
+   :note "Check card edition and printing. Separate expansion boards are linked from the forum index."}]
+ :regressions
+ [{:id :scholar-start-of-round :cards [:revised-base/b097]
+   :source "https://boardgamegeek.com/thread/2505218/b097-scholar"
+   :cross-reference "https://docs.google.com/document/d/1WUl0HlzX6Yx0ume75UmpaIMhoHukx9XufM_LbV1oZ6E/edit"
+   :authority :community-clarification-of-printed-text
+   :rule "Scholar acts at round start; Well income is available."
+   :limitation "The test's blanket assertion about newly played round-start triggers is not a verified general ruling. The compendium explicitly allows newly played Plow Driver immediately; see open_issues.edn. Remaining-round schedules such as Manservant are a separate case."
+   :test agricola.card-game-test/scholar-uses-current-printing-round-start-timing}
+  {:id :scholar-manservant :cards [:revised-base/b097 :revised-base/b107]
+   :source "https://docs.google.com/document/d/1WUl0HlzX6Yx0ume75UmpaIMhoHukx9XufM_LbV1oZ6E/edit"
+   :authority :unofficial-compilation
+   :rule "Manservant played by Scholar schedules food starting next round."
+   :test agricola.card-game-test/scholar-manservant-schedules-only-remaining-rounds}]
+ :scope "Source index and individually tested rulings, not an exhaustive audit of community rulings."}

@@ -1,0 +1,7 @@
+{:main eurozone.browser.core
+ :output-to "resources/public/js/main.js"
+ :output-dir "resources/public/js/out"
+ :asset-path "/js/out"
+ :optimizations :simple
+ :source-map "resources/public/js/main.js.map"
+ :pretty-print false}
