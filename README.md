@@ -238,16 +238,19 @@ only at five players. Their optional decisions, extra card action spaces, paymen
 one-use effects, and automatic triggers use the shared rules engine. Five online
 seats and mixed-packet draws are supported, including extra-card draws.
 
-**Artifex:** 65 of its 120 cards now have native definitions (34 minors and 31
+**Artifex:** 77 of its 120 cards now have native definitions (40 minors and 37
 occupations). Alternative printed payments and optional multi-option effects have
 explicit, saved workflows. Native rules cover conditional family capacity, boars
 on empty field tiles, discounts for building multiple rooms, free renovation,
-feeding choices, and payments to the acting player. Partial packs show
-implemented/total counts in table setup; only implemented cards enter hands.
-Hosts can exclude Artifex for base-only
-games. The resulting pool has 209 hand cards plus the ten base major improvements.
+feeding choices, payments to the acting player, additional improvement and
+occupation actions, selected-field crop collection, and post-field-phase baking.
+Nested card actions retain their pending choices across saves and reconnects.
+Field prerequisites include field cards; field-tile requirements count only
+tiles on the farm. Partial packs show implemented/total counts in table setup;
+only implemented cards enter hands. Hosts can exclude Artifex for base-only games.
+The resulting pool has 221 hand cards plus the ten base major improvements.
 
-**Coverage limits:** the remaining 55 Artifex cards, other expansion decks,
+**Coverage limits:** the remaining 43 Artifex cards, other expansion decks,
 six-player games, Original Edition card rules, solo campaigns, and optional
 multiplayer action tiles are not enabled.
 A headless bot and recording/replay harness are available below. The imported
@@ -500,6 +503,7 @@ Additional browser integration coverage (after building and installing Playwrigh
 python test/browser_table_flow.py
 python test/browser_card_workflows.py
 python test/browser_artifex.py
+python test/browser_artifex_actions.py
 python test/browser_peer.py
 ```
 

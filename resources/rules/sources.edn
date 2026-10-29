@@ -16,7 +16,17 @@
    :url "http://playagricola.com/forums/index.php?board=23.0"
    :note "Check card edition and printing. Separate expansion boards are linked from the forum index."}]
  :regressions
- [{:id :wood-worker-funds-cultivator :cards [:catalog/revised-artifex-expansion-a-164-wood-worker :catalog/revised-artifex-expansion-a-91-shifting-cultivator]
+ [{:id :fields-and-field-tiles :cards [:revised-base/b068 :catalog/revised-artifex-expansion-a-70-lifting-machine :catalog/revised-artifex-expansion-a-72-calcium-fertilizers]
+   :source "https://www.lookout-spiele.de/upload/de_agricolare.html_Appendix_Agricola-RE_EN.pdf"
+   :authority :publisher :page 3
+   :rule "Field prerequisites include cards that identify themselves as fields. Field-tile prerequisites count only tiles on the farmyard board."
+   :test agricola.artifex-crop-test/field-card-prerequisites-distinguish-fields-from-field-tiles}
+  {:id :winnowing-fan-after-field-phase :cards [:catalog/revised-artifex-expansion-a-61-winnowing-fan :revised-base/a112]
+   :source "https://docs.google.com/document/d/1WUl0HlzX6Yx0ume75UmpaIMhoHukx9XufM_LbV1oZ6E/edit"
+   :authority :unofficial-compilation
+   :rule "Winnowing Fan resolves after field-phase effects and converts one grain using a baking improvement without a Bake Bread action."
+   :test agricola.artifex-crop-test/winnowing-fan-waits-for-the-end-of-the-field-phase}
+  {:id :wood-worker-funds-cultivator :cards [:catalog/revised-artifex-expansion-a-164-wood-worker :catalog/revised-artifex-expansion-a-91-shifting-cultivator]
    :source "https://docs.google.com/document/d/1WUl0HlzX6Yx0ume75UmpaIMhoHukx9XufM_LbV1oZ6E/edit"
    :authority :unofficial-compilation
    :rule "Wood Worker resolves during use; its sheep may be cooked to fund Shifting Cultivator. Basket and Mushroom Collector resolve later."
