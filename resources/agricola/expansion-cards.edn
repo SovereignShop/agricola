@@ -69,6 +69,15 @@
           :revised-artifex-expansion-a-11-mud-patch
           {:play [{:op :gain, :goods {:boar 1}}],
            :passive {:boar-on-empty-fields true}},
+          :revised-artifex-expansion-a-115-chief-forester
+          {:triggers
+           [{:event :use-space,
+             :spaces #{:copse :grove :wood :riverbank},
+             :effect
+             {:op :sow-offer,
+              :optional? true,
+              :unconditional? false,
+              :max-fields 1}}]},
           :revised-artifex-expansion-a-117-wood-carrier
           {:play [{:op :gain, :goods {:wood [:improvements]}}]},
           :revised-artifex-expansion-a-118-treegardener
@@ -123,6 +132,18 @@
                :optional? true,
                :kinds #{:occupation},
                :occupation-cost 0}]}]},
+          :revised-artifex-expansion-a-132-publican
+          {:triggers
+           [{:event :before-sow,
+             :scope :others,
+             :condition [:test [:= [:context :unconditional?] true]],
+             :effect
+             {:op :sequence,
+              :optional? true,
+              :cost {:grain 1},
+              :effects
+              [{:op :give-to-actor, :goods {:grain 1}}
+               {:op :points, :amount 1}]}}]},
           :revised-artifex-expansion-a-135-animal-reeve
           {:play [{:op :house-steward}],
            :global-score? true,
@@ -627,6 +648,11 @@
              :effect
              {:op :gain,
               :goods {:food [:context :harvested-grain-fields]}}}]},
+          :revised-artifex-expansion-a-65-seed-pellets
+          {:triggers
+           [{:event :before-sow,
+             :condition [:test [:= [:context :unconditional?] true]],
+             :effect {:op :gain, :goods {:grain 1}}}]},
           :revised-artifex-expansion-a-66-feeding-dish
           {:triggers
            [{:event :use-space,
@@ -665,6 +691,14 @@
            [{:event :use-space,
              :spaces #{:stone-west :stone-east},
              :effect {:op :add-field-crops, :amount 1}}]},
+          :revised-artifex-expansion-a-73-agricultural-fertilizers
+          {:triggers
+           [{:event :use-farm-spaces,
+             :condition [:test [:>= [:context :used-spaces] 2]],
+             :effect
+             {:op :sow-offer,
+              :optional? true,
+              :unconditional? true}}]},
           :revised-artifex-expansion-a-74-stable-tree
           {:triggers
            [{:event :build-stables,
@@ -686,6 +720,15 @@
              :scope :all,
              :spaces #{:boar},
              :effect {:op :gain, :goods {:clay 2}}}]},
+          :revised-artifex-expansion-a-79-garden-hoe
+          {:triggers
+           [{:event :sow,
+             :condition
+             [:test
+              [:and
+               [:= [:context :unconditional?] true]
+               [:> [:context :vegetables-sown] 0]]],
+             :effect {:op :gain, :goods {:clay 1, :stone 1}}}]},
           :revised-artifex-expansion-a-8-food-basket
           {:play [{:op :gain, :goods {:grain 1, :vegetable 1}}]},
           :revised-artifex-expansion-a-81-interim-storage

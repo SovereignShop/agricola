@@ -89,11 +89,11 @@
                :build (concat (for [cell cells opts payments] (assoc opts :rooms [cell]))
                               (for [cell (range 15)] {:stables [cell]}))
                :fences @fences
-               :sow-bake (for [plantings (sow-plans p) grain (range (inc (min 8 (a/amount p :grain))))]
+               :sow-bake (for [plantings (if (g/staged-sowing? state pid space) [[]] (sow-plans p)) grain (range (inc (min 8 (a/amount p :grain))))]
                            {:plantings plantings :bake-grain grain})
                :cultivation (for [cell (cons nil cells)
                                   :let [plowed (if cell (attempt #(a/place-tile p :field cell)) p)]
-                                  :when plowed plantings (sow-plans plowed)]
+                                  :when plowed plantings (if (g/staged-sowing? state pid space) [[]] (sow-plans plowed))]
                               (cond-> {:plantings plantings} cell (assoc :cell cell)))
                :growth (cons {} minors)
                :improvement (concat majors minors)
@@ -106,7 +106,8 @@
                part (if (and (c/has? p :d180) (:accumulate (a/action-definition state space))) [false true] [false])]
            (cond-> (merge {:type :action :space space} option) hora (assoc :master-hora? true) double (assoc :animal-brander? true) part (assoc :part-time? true)))))
      ;; Sleeping Corner can share Growth; validate-space decides whether it can.
-     (filter #(or (not (contains? (:occupied state) %)) (and (#{:growth :urgent-growth} %) (c/has? p :a026))) (:active state)))))
+     (filter #(and (not (contains? (:cancelled-sowing state) [pid % (:round state)]))
+                   (or (not (contains? (:occupied state) %)) (and (#{:growth :urgent-growth} %) (c/has? p :a026)))) (:active state)))))
 (def animal-orders [[:sheep :boar :cattle] [:sheep :cattle :boar] [:boar :sheep :cattle]
                     [:boar :cattle :sheep] [:cattle :sheep :boar] [:cattle :boar :sheep]])
 (defn housing-plans [p]
@@ -124,6 +125,14 @@
   (let [p (g/p state pid) head (first (:effect-queue state)) effect (:effect head)
         options (case (:op effect)
                   (:plow :stable :mini-pasture :corral-builder :amateur-fencer :plowsmith) (map #(hash-map :cell %) (range 15))
+                  :sow-offer [{}]
+                  :sow (let [player (g/sowing-player state pid effect)
+                             plans (if (:max-fields effect)
+                                     (for [cell (field-ids player) crop [:grain :vegetable]] [{:cell cell :crop crop}])
+                                     (remove empty? (sow-plans player)))]
+                         (for [plantings plans grain (if (= :sow-bake (get-in effect [:source-command :space]))
+                                                      (range (inc (min 8 (a/amount player :grain)))) [0])]
+                           {:plantings plantings :bake-grain grain}))
                   :choose (map #(hash-map :option %) (range (count (:options effect))))
                   :take-pile-good (g/pile-good-options state effect)
                   :choose-good (map #(hash-map :resource %) (:choices effect))

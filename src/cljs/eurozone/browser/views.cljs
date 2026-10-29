@@ -580,7 +580,8 @@
                       {:type :resolve :decision (:decision-id g) :keep keep :grain (get draft :effect-grain 1)
                        :action (or (:effect-action draft) (if (= op :young-artist) :draw :room))
                        :resource (or (:effect-resource draft) (first (or (:choices effect) (if (= op :boat-painter) [:grain :food] [:grain :vegetable]))))
-                       :plantings (when (and (= op :countryman) (some? (:cell draft))) [{:cell (:cell draft) :crop (or (:effect-resource draft) :grain)}])})
+                       :plantings (if (= op :sow) (:plantings draft)
+                                    (when (and (= op :countryman) (some? (:cell draft))) [{:cell (:cell draft) :crop (or (:effect-resource draft) :grain)}]))})
         choice (cond-> choice (and (= op :card-action) (:card choice)) (dissoc :improvement :upgrade :bake-grain))
         choice (if (= op :take-pile-good)
                  (merge (dissoc choice :resource) (select-keys effect [:space :resource])
@@ -589,7 +590,7 @@
         reason (try (card-game/resolve-choice (with-private-hand g (:id p) ui) (:id p) choice) nil
                     (catch :default error (.-message error)))]
     [:div.card-decision
-     [:div.eyebrow "RESOLVE A CARD EFFECT"] [:h3 (if (= op :ability-window) "After the harvest" (or (:name (cards/card (:card head))) "Make room for your animals"))]
+     [:div.eyebrow "RESOLVE A CARD EFFECT"] [:h3 (if (= op :ability-window) "After the harvest" (or (:name (cards/card (:card head))) (when (#{:sow :sow-offer} op) "Sow crops") "Make room for your animals"))]
      (when (= op :ability-window) [:p.small "You may use your card abilities before continuing to the next round or final scoring."])
      (when (and (= op :take-pile-good) (nil? (:space effect)))
        [field "Accumulation space"
@@ -599,13 +600,32 @@
          (for [{:keys [space resource]} (card-game/pile-good-options g effect)] ^{:key (str space resource)}
            [:option {:value (pr-str [space resource])}
             (str (:name (a/action-definition g space)) " · 1 " (labels resource))])]])
+     (when (= op :sow-offer)
+       [:p.small (if (:max-fields effect) "You may sow exactly one field." "You may take a Sow action. Grain offered before sowing will be available when you choose your fields.")])
+     (when (= op :sow)
+       (let [player (card-game/sowing-player g (:id p) effect)]
+         [:div
+          (for [cell (concat (a/tiles player :field) (sort (keys (:card-fields player))))
+                :let [tile (get-in player (a/field-path cell)) selected (first (filter #(= cell (:cell %)) (:plantings draft)))]
+                :when (zero? (get tile :count 0))]
+            ^{:key cell}
+            [field (if (integer? cell) (str "Sow field " (inc cell)) (str "Sow " (:name (cards/card cell))))
+             [:select {:aria-label (if (integer? cell) (str "Sow field " (inc cell)) (str "Sow " (:name (cards/card cell))))
+                       :value (or (some-> selected :crop name) "")
+                       :on-change #(let [value (.. % -target -value) other (vec (remove (fn [planting] (= cell (:cell planting))) (:plantings draft)))]
+                                     (draft! :plantings (if (seq value) (conj other {:cell cell :crop (keyword value)}) other)))}
+              [:option {:value ""} "Leave empty"]
+              (for [crop [:grain :vegetable] :when (or (nil? (:allowed-crop tile)) (= crop (:allowed-crop tile)))]
+                ^{:key crop} [:option {:value (name crop)} (labels crop)])]])
+          (when (= :sow-bake (get-in effect [:source-command :space]))
+            [field "Grain to bake" [number-input (get draft :bake-grain 0) #(draft! :bake-grain %) (a/amount p :grain)]])]))
      (when (= op :choose)
        [field "Card effect" [:select {:value (if (some? (:option draft)) (:option draft) "")
                                       :on-change #(draft! :option (js/parseInt (.. % -target -value)))}
                              [:option {:value ""} "Choose an effect…"]
                              (for [[index option] (map-indexed vector (:options effect))] ^{:key index}
                                [:option {:value index} (:label option)])]])
-     (when (#{:preparation :work :return-home :field-harvest :feeding :finish-round} (:phase g))
+     (when (and (not= (:id p) (:sow-in-progress g)) (#{:preparation :work :return-home :field-harvest :feeding :finish-round} (:phase g)))
        [:details [:summary "Convert goods to food"] [conversion-controls p draft :convert]
         [button "Convert to food" #(dispatch :command {:type :convert :goods (or (:convert draft) {})}) "button secondary" busy?]])
      (when (:card head) [:p.small (:text (cards/card (:card head)))])
@@ -692,7 +712,7 @@
         [:label.checkbox [:input {:type "checkbox" :checked (boolean (:cook? draft)) :on-change #(draft! :cook? (.. % -target -checked))}] "Cook surplus (requires a cooking improvement)"]])
      (when (and reason (not= op :sidekick)) [:p.card-unavailable {:role "status"} reason])
      [:div.form-row
-      (when-not (= op :sidekick) [button (if (= op :ability-window) "Finish harvest decisions →" "Resolve effect →")
+      (when-not (= op :sidekick) [button (case op :ability-window "Finish harvest decisions →" :sow-offer "Take Sow action" "Resolve effect →")
        #(dispatch :command choice) "button primary" (or busy? (boolean reason))])
       (when (card-game/optional-effect? g head) [button "Skip this effect" #(dispatch :command {:type :resolve :decision (:decision-id g) :skip? true}) "text-button" busy?])]]))
 
@@ -724,7 +744,7 @@
         (or (:busy? ui) (not (:connected? ui)) (boolean reason))]])))
 (defn card-abilities [g p]
   (let [permission @(rf/subscribe [:permission]) abilities (filter #(get-in (cards/card %) [:ability]) (cards/active-owned p))]
-    (when (and (seq abilities) (some #{(:id p)} (:seats permission)) (#{:preparation :work :return-home :field-harvest :feeding :breeding :housing :finish-round} (:phase g)))
+    (when (and (not= (:id p) (:sow-in-progress g)) (seq abilities) (some #{(:id p)} (:seats permission)) (#{:preparation :work :return-home :field-harvest :feeding :breeding :housing :finish-round} (:phase g)))
       [:div.panel [:div.eyebrow "CARD ABILITIES"]
        (for [cid abilities] ^{:key cid} [card-ability g p cid])])))
 
