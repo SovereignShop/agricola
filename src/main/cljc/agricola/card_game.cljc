@@ -169,6 +169,17 @@
                                  (when (= 5 (count (:players g))) [(event :major-built pid context)])
                                  (when (pos? (get choice :bake-grain 0)) [(event :bake pid context)])
                                  [(event :check-state pid)])))))))
+(def building-resources #{:wood :clay :reed :stone})
+(defn pile-good-options [g effect]
+  (vec (for [space (sort (:active g))
+             :let [definition (a/action-definition g space) pile (get-in g [:piles space])]
+             :when (and (:accumulate definition) (or (nil? (:space effect)) (= space (:space effect)))
+                        (>= (reduce + (vals (select-keys pile building-resources))) (:minimum-building effect 0)))
+             resource (sort (keys pile))
+             :when (and (pos? (get pile resource 0))
+                        (or (not (:building-only? effect)) (building-resources resource))
+                        (or (nil? (:resource effect)) (= resource (:resource effect))))]
+         {:space space :resource resource})))
 (defn optional-effect? [g {:keys [player effect]}]
   (and (:optional? effect)
        (or (nil? (:mandatory-at effect))
@@ -187,6 +198,15 @@
           :ability-window g
           :card-action (granted-card-action g pid effect choice)
           :gain (update-in g [:players pid] a/gain (expr/quantities g pid context (:goods effect)))
+          :store-goods (update-in g [:players pid :card-state card :stored-goods]
+                                 #(merge-with + (or % {}) (expr/quantities g pid context (:goods effect))))
+          :release-stored (-> g (update-in [:players pid] a/gain (get-in current [:card-state card :stored-goods] {}))
+                              (assoc-in [:players pid :card-state card :stored-goods] {}))
+          :take-pile-good
+          (let [selection (merge (select-keys effect [:space :resource]) (select-keys choice [:space :resource]))
+                {:keys [space resource]} selection]
+            (a/require! (some #{selection} (pile-good-options g effect)) "Choose an eligible good from an accumulation space.")
+            (-> g (update-in [:piles space resource] dec) (update-in [:players pid] a/gain {resource 1})))
           :exchange (update-in g [:players pid] a/gain (expr/quantities g pid context (:goods effect)))
           :threshold-exchange
           (do (a/require! (>= (a/amount current (:resource effect)) (:minimum effect)) "You do not have enough crops for this exchange.")
@@ -365,6 +385,7 @@
         choices (cond
                   (#{:plow :mini-pasture :stable} op) (map #(hash-map :cell %) (range 15))
                   (= :bake op) [{:grain 1}]
+                  (= :take-pile-good op) (pile-good-options g effect)
                   (= :renovate op) [{} {:renovate-to :stone}]
                   (= :bake-one op) (map #(hash-map :improvement %) (:improvements (p g player)))
                   (= :take-field-crop op) (map #(hash-map :cell %) (concat (a/tiles (p g player) :field) (keys (:card-fields (p g player)))))
@@ -626,14 +647,16 @@
 (defn card-spaces [g pid]
   (vec (for [owner (:players g) cid (c/active-owned owner)
              :let [kind (:action-space (c/card cid))]
-             :when (and kind (or (= pid (:id owner)) (= kind :fold-builder)))]
+             :when (and kind (or (= pid (:id owner)) (#{:fold-builder :chapel} kind)))]
          {:card cid :owner (:id owner) :kind kind})))
 (defn card-space-error [g pid cid]
-  (let [{:keys [kind]} (first (filter #(= cid (:card %)) (card-spaces g pid)))
+  (let [{:keys [kind owner]} (first (filter #(= cid (:card %)) (card-spaces g pid)))
         rounds (vec (drop (count (a/base-actions (count (:players g)) (:variant g))) (:active g)))]
     (cond
       (nil? kind) "You cannot use this card action space."
       (contains? (:occupied g) cid) "This card action space is occupied."
+      (and (= kind :chapel) (not= pid owner) (zero? (a/amount (p g pid) :grain))) "Pay the Chapel owner one grain to use this space."
+      (and (= kind :forest-tallyman) (not-every? #(contains? (:occupied g) %) [:wood :clay])) "Forest and Clay Pit must both be occupied."
       (and (= kind :greenhouse) (not-any? (set (:active g)) [:fences :renovate :vegetable])) "None of this card's actions have been revealed."
       (and (= kind :substitute-teacher) (not-every? #(contains? (:occupied g) %) five/lessons)) "All three Lessons spaces must be occupied, not merely blocked."
       (and (= kind :bullcatcher) (not (and (get rounds 5) (contains? (:occupied g) (get rounds 2)) (contains? (:occupied g) (get rounds 5))))) "The round 3 and 6 spaces must both be occupied."
@@ -660,7 +683,11 @@
           :substitute-teacher
           (do (a/require! (#{:resources :crops} (:bundle cmd)) "Choose all four building resources or both crops.")
               (-> base (update-in [:players pid] a/gain (if (= :resources (:bundle cmd)) {:wood 1 :clay 1 :reed 1 :stone 1} {:grain 1 :vegetable 1})) (mark-worker pid card-space)))
-          :bullcatcher (-> base (update-in [:players pid] a/gain {:cattle 1 :food 2}) (mark-worker pid card-space)))
+          :bullcatcher (-> base (update-in [:players pid] a/gain {:cattle 1 :food 2}) (mark-worker pid card-space))
+          :chapel (-> (if (= pid owner) base
+                        (-> base (update-in [:players pid] a/pay {:grain 1}) (update-in [:players owner] a/gain {:grain 1})))
+                      (update-in [:players pid :bonus-points] (fnil + 0) 3) (mark-worker pid card-space))
+          :forest-tallyman (-> base (update-in [:players pid] a/gain {:clay 2 :wood 3}) (mark-worker pid card-space)))
         after (cond-> after (seq (set/difference (:improvements (p after pid)) (:improvements (p g pid)))) (update-in [:major-builds pid] (fnil inc 0)))]
     (-> after (queue-front (action-events g after pid (assoc cmd :space card-space))) with-housing)))
 (defn ability [g pid {:keys [card resource amount from to] :as cmd}]

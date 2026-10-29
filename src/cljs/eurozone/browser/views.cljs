@@ -395,7 +395,9 @@
                                :greenhouse (for [id [:fences :renovate :vegetable] :when (some #{id} (:active g))] [id (:name (a/action-definition g id))])
                                :fold-builder [[:fences "Fence, then take a sheep"]]
                                :substitute-teacher [[:market "Resources or crops"]]
-                               :bullcatcher [[:labor "Cattle and food"]])]
+                               :bullcatcher [[:labor "Cattle and food"]]
+                               :chapel [[:labor "3 bonus points"]]
+                               :forest-tallyman [[:labor "2 clay and 3 wood"]])]
             ^{:key action} [button label #(do (dispatch :select-action action) (draft! :card-space card)) "button secondary"
                             (or (not can-play?) busy? (boolean (card-game/card-space-error g pid card)))])
           (when-let [worker (get-in g [:occupied card])]
@@ -580,12 +582,23 @@
                        :resource (or (:effect-resource draft) (first (or (:choices effect) (if (= op :boat-painter) [:grain :food] [:grain :vegetable]))))
                        :plantings (when (and (= op :countryman) (some? (:cell draft))) [{:cell (:cell draft) :crop (or (:effect-resource draft) :grain)}])})
         choice (cond-> choice (and (= op :card-action) (:card choice)) (dissoc :improvement :upgrade :bake-grain))
+        choice (if (= op :take-pile-good)
+                 (merge (dissoc choice :resource) (select-keys effect [:space :resource])
+                        (when-let [[space resource] (:pile-choice draft)] {:space space :resource resource})) choice)
         ui @(rf/subscribe [:ui])
         reason (try (card-game/resolve-choice (with-private-hand g (:id p) ui) (:id p) choice) nil
                     (catch :default error (.-message error)))]
     [:div.card-decision
      [:div.eyebrow "RESOLVE A CARD EFFECT"] [:h3 (if (= op :ability-window) "After the harvest" (or (:name (cards/card (:card head))) "Make room for your animals"))]
      (when (= op :ability-window) [:p.small "You may use your card abilities before continuing to the next round or final scoring."])
+     (when (and (= op :take-pile-good) (nil? (:space effect)))
+       [field "Accumulation space"
+        [:select {:aria-label "Accumulation space" :value (if (:pile-choice draft) (pr-str (:pile-choice draft)) "")
+                  :on-change #(draft! :pile-choice (when (seq (.. % -target -value)) (reader/read-string (.. % -target -value))))}
+         [:option {:value ""} "Choose a good…"]
+         (for [{:keys [space resource]} (card-game/pile-good-options g effect)] ^{:key (str space resource)}
+           [:option {:value (pr-str [space resource])}
+            (str (:name (a/action-definition g space)) " · 1 " (labels resource))])]])
      (when (= op :choose)
        [field "Card effect" [:select {:value (if (some? (:option draft)) (:option draft) "")
                                       :on-change #(draft! :option (js/parseInt (.. % -target -value)))}
@@ -769,6 +782,8 @@
              [:div.card-crops (for [[animal n] (frequencies (map :animal (filter #(= :card (:kind %)) (a/animal-housing p))))] ^{:key animal}
                                [art/pile animal n])])
            (when-let [food (get-in p [:card-state cid :food])] [:span.card-food (str food " food saved")])
+           (when-let [stored (seq (get-in p [:card-state cid :stored-goods]))]
+             [:div.card-stored-goods {:aria-label "Stored goods"} [goods (into {} stored)]])
            (when (pos? (or (:count field) 0)) [:div.card-crops [art/pile (:crop field) (:count field)]])])])
      (when @exposed [:div.card-detail [:strong (:name (cards/card @exposed))] [:p.small (:text (cards/card @exposed))]])]))
 (defn played-cards [p]

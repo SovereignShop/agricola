@@ -125,6 +125,7 @@
         options (case (:op effect)
                   (:plow :stable :mini-pasture :corral-builder :amateur-fencer :plowsmith) (map #(hash-map :cell %) (range 15))
                   :choose (map #(hash-map :option %) (range (count (:options effect))))
+                  :take-pile-good (g/pile-good-options state effect)
                   :choose-good (map #(hash-map :resource %) (:choices effect))
                   :seasonal-crop [{:resource :grain} {:resource :vegetable}]
                   :bake (map #(hash-map :grain %) (range 1 (inc (min 8 (a/amount p :grain)))))
@@ -186,7 +187,7 @@
       (when-not (g/card-space-error state pid card)
         (case kind
           :substitute-teacher (for [bundle [:resources :crops]] {:type :card-action :card-space card :bundle bundle})
-          :bullcatcher [{:type :card-action :card-space card}]
+          (:bullcatcher :chapel :forest-tallyman) [{:type :card-action :card-space card}]
           (:greenhouse :fold-builder)
           (let [spaces (if (= kind :fold-builder) [:fences] (filter (set (:active state)) [:fences :renovate :vegetable]))]
             (map #(assoc % :type :card-action :card-space card :action (:space %))
