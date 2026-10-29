@@ -137,7 +137,9 @@
                            (throw (js/Error. "This browser save belongs to another host.")))
                          (swap! session assoc :table (:table saved) :seen (:seen saved)))
                        (if (:initialized message)
-                         (throw (js/Error. "This table has an existing host save. Reopen it in the original browser; no replacement game was created."))
+                         (do (when (.-EUROZONE_ACTIVITY js/window)
+                                 (rf/dispatch [:peer/missing-host-save (:room message)]))
+                               (throw (js/Error. "This table has an existing host save. Reopen it in the original browser, or create a new Activity table.")))
                          (persist! (create-table (:options message)))))))
             (.then (fn [_] (.initialized @runtime) (publish!) (rf/dispatch [:navigate (:room message)]))))
         (rf/dispatch [:peer/status "Waiting for the host's table"])))))
@@ -174,3 +176,29 @@
 (rf/reg-event-db :peer/status (fn [db [_ status]] (assoc db :peer-status status)))
 (rf/reg-fx :peer/create create!)
 (defonce clock-tick (js/setInterval schedule-bot! 250))
+
+(rf/reg-event-db :peer/missing-host-save (fn [db [_ room]] (assoc db :missing-host-save room)))
+(rf/reg-fx :activity/load
+  (fn [_]
+    (-> (.EUROZONE_ACTIVITY_TABLES js/window "list")
+        (.then (fn [result]
+                 (js/Promise.all
+                  (.map (.-tables result)
+                        (fn [table]
+                          (if (and (aget table "host?") (.-initialized table))
+                            (-> (.read js/EurozonePeer (.-room table))
+                                (.then (fn [saved] (aset table "saveAvailable?" (boolean saved)) table)))
+                            (js/Promise.resolve table)))))))
+        (.then #(rf/dispatch [:activity/tables (js->clj % :keywordize-keys true)]))
+        (.catch error!))))
+(rf/reg-event-fx :activity/load (fn [{:keys [db]} _] {:db (assoc db :activity-lobby? true :busy? true :error nil) :activity/load true}))
+(rf/reg-event-fx :activity/refresh (fn [_ _] {:activity/load true}))
+(rf/reg-event-db :activity/tables (fn [db [_ tables]] (cond-> (assoc db :activity-tables tables) (not (:activity-opening? db)) (assoc :busy? false))))
+(rf/reg-event-fx :activity/enter
+  (fn [{:keys [db]} [_ action room]]
+    {:db (assoc db :busy? true :activity-opening? true :error nil) :activity/enter {:action action :room room :request-id (str (random-uuid))}}))
+(rf/reg-fx :activity/enter
+  (fn [{:keys [action room request-id]}]
+    (-> (.EUROZONE_ACTIVITY_TABLES js/window action room request-id)
+        (.then #(.EUROZONE_ENTER_ACTIVITY_TABLE js/window %))
+        (.catch error!))))

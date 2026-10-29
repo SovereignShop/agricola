@@ -1,7 +1,7 @@
 (ns eurozone.browser.views
   (:require [reagent.core :as r] [re-frame.core :as rf] [clojure.string :as str]
             [cljs.reader :as reader] [agricola.recording :as recording] [eurozone.browser.table-controls :as controls]
-            [agricola.engine :as a] [agricola.five-player :as five] [agricola.card-game :as card-game] [eurozone.catalog :as catalog] [eurozone.browser.art :as art] [agricola.card-rules :as cards] [eurozone.browser.card-art :as card-art] [eurozone.browser.layout :as layout] [eurozone.browser.comms :as comms]))
+            [agricola.engine :as a] [agricola.five-player :as five] [agricola.card-game :as card-game] [eurozone.catalog :as catalog] [eurozone.browser.art :as art] [agricola.card-rules :as cards] [eurozone.browser.card-art :as card-art] [eurozone.browser.layout :as layout] [eurozone.browser.comms :as comms] [eurozone.store :as store]))
 
 (def glyph {:wood "▰" :clay "◆" :reed "≋" :stone "⬟" :grain "♧" :vegetable "●" :food "◉" :sheep "♧" :boar "◆" :cattle "⬢"})
 (def labels {:wood "Wood" :clay "Clay" :reed "Reed" :stone "Stone" :grain "Grain" :vegetable "Vegetables" :food "Food" :sheep "Sheep" :boar "Wild boar" :cattle "Cattle"})
@@ -40,8 +40,21 @@
                       (.catch #(dispatch :error (str "Could not replay recording: " (.-message %))))))))}]])
 (defn farmer-art [] [:img.farm-art {:src "/art/eurozone/farmstead.png" :alt "An illustrated farmstead, orchards and wheat fields"}])
 
+(defn pack-picker [n settings change disabled?]
+  (let [excluded (set (:excluded-packs settings)) pool (store/hand-pool n excluded)
+        counts (frequencies (map :kind pool)) problem (store/pool-error n settings)]
+    [:fieldset.pack-picker [:legend "Card packs"]
+     (for [{:keys [id label min-players]} store/card-packs] ^{:key id}
+       [:label.checkbox
+        [:input {:type "checkbox" :aria-label (str "Include " label) :checked (not (contains? excluded id))
+                 :disabled (or disabled? (< n min-players))
+                 :on-change #(change (assoc settings :excluded-packs
+                                           (vec (sort (if (contains? excluded id) (disj excluded id) (conj excluded id))))))}]
+        [:span label (when (< n min-players) [:small " · five players only"]) ]])
+     [:p.small (str (get counts :occupation 0) " occupations · " (get counts :minor 0) " minor improvements available. Only packs with implemented rules are listed.")]
+     (when problem [:p.warning {:role "status"} problem])]))
 (defn create-form []
-  (let [name (r/atom (or (.getItem js/sessionStorage "eurozone-name") (.getItem js/localStorage "eurozone-name") "")) title (r/atom "") mode (r/atom :local) setup (r/atom :beginner) extra (r/atom 2) count (r/atom 2) bots (r/atom 0) seconds (r/atom 0) others (r/atom ["Farmer 2" "Farmer 3" "Farmer 4" "Farmer 5"])]
+  (let [name (r/atom (or (.getItem js/sessionStorage "eurozone-name") (.getItem js/localStorage "eurozone-name") "")) title (r/atom "") mode (r/atom :local) setup (r/atom :beginner) extra (r/atom 2) count (r/atom 2) bots (r/atom 0) seconds (r/atom 0) excluded (r/atom []) others (r/atom ["Farmer 2" "Farmer 3" "Farmer 4" "Farmer 5"])]
     (fn []
       (let [ui @(rf/subscribe [:ui])]
         [:section.panel.create-panel
@@ -49,7 +62,7 @@
          [:p.muted "Play together on one screen, or invite friends to join from their browsers."]
          [:form {:on-submit (fn [e] (.preventDefault e) (.setItem js/sessionStorage "eurozone-name" @name) (.setItem js/localStorage "eurozone-name" @name)
                               (dispatch :send {:event :create :name @name :title (if (str/blank? @title) (str @name "'s farm") @title)
-                                               :mode @mode :expected-players @count :turn-seconds @seconds :bots (if (= @mode :peer) @bots 0) :setup {:mode @setup :extra @extra} :names (into [@name] (take (dec @count) @others))}))}
+                                               :mode @mode :expected-players @count :turn-seconds @seconds :bots (if (= @mode :peer) @bots 0) :setup {:mode @setup :extra @extra :excluded-packs @excluded} :names (into [@name] (take (dec @count) @others))}))}
           [:div.form-row [field "Your name" [input @name #(reset! name %) {:required true :max-length 40 :placeholder "Your name" :auto-complete "nickname"}]]
            [field "Table name" [input @title #(reset! title %) {:max-length 40 :placeholder "Sunday at the farm"}]]]
           [:div.segmented
@@ -75,10 +88,13 @@
           (when (= @setup :draw)
             [:div [field "Extra cards per packet (N)" [number-input @extra #(reset! extra %) 10]]
              [:p.small (str "Each player receives " (+ 14 @extra) " mixed cards. Pick one and pass left until you have 7 occupations and 7 minors. Packets with no legal pick pass automatically.")]])
+          (when (not= @setup :beginner)
+            [pack-picker @count {:mode @setup :extra @extra :excluded-packs @excluded}
+             #(reset! excluded (:excluded-packs %)) (:busy? ui)])
           [controls/limit-select @seconds #(reset! seconds %) (:busy? ui)]
           [:p.small (if (= @setup :beginner) "Revised Edition beginner game · 14 rounds and 10 major improvements."
                         (if (= @count 5) "Revised base cards + all 48 five-player occupations · linked action spaces and private hands." "Revised Edition base cards · private hands and card-effect decisions."))]
-          [:button.button.primary {:type "submit" :disabled (or (:busy? ui) (not (:connected? ui)))} "Create table →"]]]))))
+          [:button.button.primary {:type "submit" :disabled (or (:busy? ui) (not (:connected? ui)) (some? (store/pool-error @count {:mode @setup :extra @extra :excluded-packs @excluded})))} "Create table →"]]]))))
 (defn table-list []
   (let [rooms @(rf/subscribe [:games])]
     [:section.tables
@@ -114,7 +130,7 @@
             expected (let [n (:expected-players room)] (if (pos? (or n 0)) n (count (:seats room))))
             online (set (get-in ui [:presence (:id room)]))
             ready (:seat-readiness room) bot-seats (set (:bot-seats room)) bot-count (or (:bots room) 0)
-            startable? (and (= expected (count (:seats room))) (every? true? ready)
+            startable? (and (nil? (store/pool-error expected (:setup room))) (= expected (count (:seats room))) (every? true? ready)
                             (or (= :local (:mode room)) (= expected (count online))))]
         [:main.lobby
          [button "← All tables" #(dispatch :navigate nil) "text-button"]
@@ -152,9 +168,14 @@
                    (for [n (range expected)] ^{:key n}
                      [:option {:value n :disabled (> (+ n (- (count (:seats room)) bot-count)) expected)} n])]]
                  [:p.small (str (- expected bot-count) " human seats + " bot-count " bots = " expected " total players. Bots play automatically while the host is here.")]])
+              (when (not= :beginner (get-in room [:setup :mode]))
+                [pack-picker expected (:setup room)
+                 #(dispatch :send {:event :configure :expected-players expected :setup %}) (:busy? ui)])
               [controls/limit-select (get room :turn-seconds 0)
                #(dispatch :send {:event :configure :expected-players expected :setup (:setup room) :turn-seconds %}) (:busy? ui)]
               [:p.small "Settings save automatically. Seated guests need to mark themselves ready again after a change."]])
+           (when (and (not= :beginner (get-in room [:setup :mode])) (not (and (:host? permission) (= :online (:mode room)))))
+             [pack-picker expected (:setup room) identity true])
            [:div.seats (for [[i seat] (map-indexed vector (:seats room))] ^{:key i}
                          [:div.seat [:span.avatar {:style {:background (colors i)}} (subs (:name seat) 0 1)]
                           [:strong (:name seat)] [:span.muted (str (when (some #{i} (:seats permission)) "You · ")
@@ -967,17 +988,48 @@
          [played-cards p]]]
        (when (= :finished (:phase g)) [score-table g])])
     (finally (js/clearInterval timer))))
+(defn activity-lobby []
+  (r/with-let [refresh (js/setInterval #(dispatch :activity/refresh) 5000)]
+    (let [ui @(rf/subscribe [:ui])]
+      [:main.library.activity-lobby
+       [:div.section-heading
+        [:div [:div.eyebrow "AGRICOLA"] [:h1 "Activity tables"] [:p "Join a table or start a new game with people in this Activity."]]
+        [button "Create a new table" #(dispatch :activity/enter "create" nil) "button primary" (:busy? ui)]]
+       [:div.section-heading [:h2 "Tables"]
+        [button "Refresh tables" #(dispatch :activity/load) "text-button" (:busy? ui)]]
+       (if (seq (:activity-tables ui))
+         [:div.activity-table-list
+          (for [table (:activity-tables ui)
+                :let [unavailable? (and (:host? table) (:initialized table) (not (:saveAvailable? table)))]]
+            ^{:key (:room table)}
+            [:section.panel.activity-table
+             [:div [:h3 (:title table)]
+              [:p.small (str "Host: " (:hostName table) " · Created " (.toLocaleString (js/Date. (:created table))))]
+              [:p (cond unavailable? "Host save is in another browser. You can create a new table here."
+                        (:host? table) "Your table"
+                        (:hostOnline? table) "Host connected"
+                        :else "Waiting for the host to return")]]
+             [button (if (:host? table) "Open table" "Join table")
+              #(dispatch :activity/enter "join" (:room table)) "button" (or (:busy? ui) unavailable?)]])]
+         [:section.panel [:p (if (:busy? ui) "Loading tables…" "No tables yet. Create one to get started.")]])])
+    (finally (js/clearInterval refresh))))
 (defn app []
   (let [ui @(rf/subscribe [:ui]) room @(rf/subscribe [:game])
         playing? (or @replay-data (and (:state room) (not= :draw (:status room))))
         focused? (and playing? (:focus? (layout/layout ui (:id room))))]
     [:div.app {:aria-busy (boolean (:busy? ui)) :class (str (when playing? "playing ") (when focused? "table-focused"))}
      [:header.site-header [:button.wordmark {:on-click #(dispatch :navigate nil)} "eurozone" [:span "✳"]]
-      [:div.header-right [:span.connection {:class (when (:connected? ui) "online")} [:i] (or (:peer-status ui) (if (:connected? ui) "Connected" "Reconnecting…"))]]]
+      [:div.header-right [:span.connection {:class (when (:connected? ui) "online")} [:i] (if (:activity-lobby? ui) "Discord Activity" (or (:peer-status ui) (if (:connected? ui) "Connected" "Reconnecting…")))]]]
      (when (:error ui) [:div.toast {:role "alert"} [:span (:error ui)] [button "×" #(dispatch :dismiss-error) "text-button"]])
-     (cond @replay-data [replay-view]
+     (cond (:activity-lobby? ui) [activity-lobby]
+           (:missing-host-save ui)
+           [:main.panel.activity-recovery
+            [:h1 "Host save unavailable"]
+            [:p "Join another table or create a new one from the Activity lobby."]
+            [button "Back to Activity tables" #(.EUROZONE_ACTIVITY_HOME js/window) "button primary"]]
+           @replay-data [replay-view]
            room (cond (= :draw (:status room)) [draw-view room] (:state room) [game room] :else [lobby room])
            (and (:game-id ui) (:connected? ui)) [:main.panel.not-found [:h1 "Table not found"] [:p "This table may belong to another Eurozone server."] [button "Back to the library" #(dispatch :navigate nil) "button primary"]]
-           (comms/peer?) [:main.panel [:h1 "Connecting to your table"] [:p (or (:peer-status ui) "Waiting for the host…")]]
+           (comms/peer?) [:main.panel [button "← All tables" #(dispatch :navigate nil) "text-button"] [:h1 "Connecting to your table"] [:p (or (:peer-status ui) "Waiting for the host…")]]
            :else [library])
      [:footer [:span.wordmark.small-mark "eurozone"] [:span "Agricola · an unofficial implementation"]]]))

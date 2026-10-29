@@ -24,6 +24,7 @@
              :eurozone.game/takeback (or (:takeback room) {})
              :eurozone.game/takeback-result (or (:takeback-result room) {})
              :eurozone.game/can-takeback? (boolean (seq (:history room)))
+             :eurozone.game/takeback-players (set (map :player (filter #(= :move (:record %)) (:recording room))))
              :eurozone.game/last-move-player (or (:player (last (filter #(= :move (:record %)) (:recording room)))) 0)
              :eurozone.game/harvest-ready (into {} (for [[pid plan] (:harvest-plans room)]
                                                     [pid (vec (filter #(contains? plan %) [:feed :breed]))]))

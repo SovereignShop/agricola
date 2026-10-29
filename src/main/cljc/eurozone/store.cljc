@@ -28,11 +28,19 @@
 (defmulti apply-command (fn [game-type _ _ _] game-type))
 (defmethod new-state :agricola [_ names] (agricola/new-game names (vec (mapcat shuffle agricola/stages)) (rand-int (count names))))
 (defmethod apply-command :agricola [_ state pid command] ((if (= :cards (:variant state)) card-game/command agricola/command) state pid command))
+(def card-packs
+  [{:id "base-a" :label "Base game · A cards" :min-players 1}
+   {:id "base-b" :label "Base game · B cards" :min-players 1}
+   {:id "five-player" :label "5–6 Player Expansion" :min-players 5}])
+(defn card-pack [card]
+  (if (cards/five-card? (:id card)) "five-player" (str "base-" (str/lower-case (:deck card)))))
 (defn valid-setup [settings]
-  (let [{:keys [mode extra] :or {mode :beginner extra 2}} settings]
+  (let [{:keys [mode extra excluded-packs] :or {mode :beginner extra 2}} settings]
     (agricola/require! (#{:beginner :random :draw} mode) "Choose a valid hand setup.")
     (agricola/require! (and (integer? extra) (<= 0 extra 10)) "Choose 0–10 extra cards for the draw.")
-    {:mode mode :extra extra}))
+    (agricola/require! (and (or (nil? excluded-packs) (sequential? excluded-packs))
+                           (every? (set (map :id card-packs)) excluded-packs)) "Choose only supported card packs.")
+    (cond-> {:mode mode :extra extra} (seq excluded-packs) (assoc :excluded-packs (vec (sort (set excluded-packs)))))))
 (defn with-bots [room n]
   (let [humans (vec (remove :bot? (:seats room))) expected (or (:expected-players room) 5)]
     (agricola/require! (and (integer? n) (<= 0 n 4) (< n expected)) "Choose fewer bots than total players, leaving at least one human seat.")
@@ -44,32 +52,52 @@
               :let [base (str "Bot " (inc i)) names (set (map :name humans))
                     name (first (remove names (cons base (map #(str base " (" % ")") (range 2 8)))))] ]
           {:name name :owner (str "bot:" (:id room) ":" i) :bot? true :ready? true})))))
-(defn hand-pool [n]
-  (filterv #(<= (:min-players %) n) (vals cards/metadata)))
-(defn make-draw [n extra]
-  (let [pool (hand-pool n)
-        by-type (into {} (for [kind draw/kinds] [kind (vec (shuffle (filter #(= kind (:kind %)) pool)))]))
-        required (mapcat #(take (* 7 n) (by-type %)) draw/kinds)
-        remaining (shuffle (mapcat #(drop (* 7 n) (by-type %)) draw/kinds))
-        supply (vec (shuffle (concat required (take (* extra n) remaining))))]
-    (draw/new-draw n extra supply)))
-(defn deal-hands [state n]
-  (let [by-kind (into {} (for [kind draw/kinds]
-                         [kind (vec (shuffle (filter #(= kind (:kind %)) (hand-pool n))))]))]
-    (update state :players
-            (fn [players]
-              (mapv (fn [p]
-                      (assoc p :hand
-                             (into {} (for [kind draw/kinds]
-                                        [kind (mapv :id (take 7 (drop (* 7 (:id p)) (by-kind kind))))]))))
-                    players)))))
+(defn hand-pool
+  ([n] (hand-pool n []))
+  ([n excluded] (filterv #(and (<= (:min-players %) n) (not ((set excluded) (card-pack %)))) (vals cards/cards))))
+(defn pool-error [n settings]
+  (when (not= :beginner (:mode settings))
+    (let [pool (hand-pool n (:excluded-packs settings)) counts (frequencies (map :kind pool))
+          needed (* 7 n) total (* n (+ 14 (if (= :draw (:mode settings)) (:extra settings 2) 0)))]
+      (cond
+        (< (get counts :occupation 0) needed) (str "Include more packs: " needed " occupations are needed; " (get counts :occupation 0) " are available.")
+        (< (get counts :minor 0) needed) (str "Include more packs: " needed " minor improvements are needed; " (get counts :minor 0) " are available.")
+        (< (count pool) total) (str "Include more packs or reduce extra cards: the draw needs " total " cards; " (count pool) " are available.")))))
+(defn make-draw
+  ([n extra] (make-draw n extra []))
+  ([n extra excluded]
+   (let [settings {:mode :draw :extra extra :excluded-packs excluded}
+         _ (agricola/require! (nil? (pool-error n settings)) (pool-error n settings))
+         pool (hand-pool n excluded)
+         by-type (into {} (for [kind draw/kinds] [kind (vec (shuffle (filter #(= kind (:kind %)) pool)))]))
+         required (mapcat #(take (* 7 n) (by-type %)) draw/kinds)
+         remaining (shuffle (mapcat #(drop (* 7 n) (by-type %)) draw/kinds))
+         supply (vec (shuffle (concat required (take (* extra n) remaining))))]
+     (draw/new-draw n extra supply))))
+(defn deal-hands
+  ([state n] (deal-hands state n []))
+  ([state n excluded]
+   (let [settings {:mode :random :excluded-packs excluded}
+         _ (agricola/require! (nil? (pool-error n settings)) (pool-error n settings))
+         by-kind (into {} (for [kind draw/kinds]
+                          [kind (vec (shuffle (filter #(= kind (:kind %)) (hand-pool n excluded))))]))]
+     (update state :players
+             (fn [players]
+               (mapv (fn [p]
+                       (assoc p :hand
+                              (into {} (for [kind draw/kinds]
+                                         [kind (mapv :id (take 7 (drop (* 7 (:id p)) (by-kind kind))))]))))
+                     players))))))
 (defn start-state [names settings]
-  (let [n (count names) state (cond-> (new-state :agricola names)
-                              (= n 5) (assoc :minor-order (vec (shuffle (map :id (filter #(= :minor (:kind %)) (vals cards/cards)))))))
+  (let [settings (valid-setup settings) n (count names)
+        _ (agricola/require! (nil? (pool-error n settings)) (pool-error n settings))
+        excluded (:excluded-packs settings)
+        state (cond-> (new-state :agricola names)
+                (= n 5) (assoc :minor-order (vec (shuffle (map :id (filter #(= :minor (:kind %)) (hand-pool n excluded)))))))
         mode (:mode settings)]
     (case mode
-      :draw (assoc state :phase :draw :round 0 :variant :cards :active [] :piles {} :log [] :draw (make-draw n (:extra settings)))
-      :random (card-game/initialize (deal-hands state n))
+      :draw (assoc state :phase :draw :round 0 :variant :cards :active [] :piles {} :log [] :draw (make-draw n (:extra settings) excluded))
+      :random (card-game/initialize (deal-hands state n excluded))
       state)))
 (defn finish-draw [state]
   (if (= :complete (get-in state [:draw :status]))
@@ -126,7 +154,15 @@
            :harvest-plans {} :clocks {})))
 (defn settle-vote [room]
   (if-let [result (flow/verdict room)]
-    (cond-> (flow/finish-vote room result) (= result :approved) restore-previous)
+    (let [{:keys [history-index record-index]} (:takeback-target room)
+          finished (flow/finish-vote room result)]
+      (if (= result :approved)
+        (if (some? history-index)
+          (assoc finished :state (nth (:history room) history-index)
+                 :history (subvec (:history room) 0 history-index)
+                 :recording (subvec (:recording room) 0 record-index) :harvest-plans {} :clocks {})
+          (restore-previous finished))
+        finished))
     room))
 (defn drain-plans [room]
   (loop [room (flow/trim-plans room) n 0]

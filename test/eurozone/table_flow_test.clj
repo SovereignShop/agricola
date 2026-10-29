@@ -137,3 +137,33 @@
       (is (= 2 (:needed v)))
       (is (thrown? clojure.lang.ExceptionInfo
                    (send! s id "p2" {:event :takeback-vote :player 2 :vote-id (:id v) :approve? true}))))))
+
+(deftest takeback-rewinds-requesters-turn-through-intervening-bots
+  (let [initial (state 3) [s id] (fixture 3 initial 0)]
+    (swap! (:rooms s) #(-> % (assoc-in [id :seats 1 :bot?] true) (assoc-in [id :seats 2 :bot?] true)))
+    (send! s id "p0" {:event :command :command {:type :action :space :wood}})
+    (send! s id "p0" {:event :bot-command :player 1 :command {:type :action :space :clay}})
+    (send! s id "p0" {:event :bot-command :player 2 :command {:type :action :space :grain}})
+    (is (= 3 (:steps (flow/takeback-target (get @(:rooms s) id) 0))))
+    (send! s id "p0" {:event :request-takeback :player 0})
+    (let [room (get @(:rooms s) id)]
+      (is (= :approved (get-in room [:takeback-result :status])))
+      (is (= 3 (get-in room [:takeback-result :steps])))
+      (is (= initial (:state room)))
+      (is (empty? (:history room)))
+      (is (empty? (:moves (recording/timeline (:recording room))))))))
+
+(deftest takeback-target-is-requester-even-after-another-human-moves
+  (let [[s id] (fixture 3 (state 3) 0)]
+    (is (thrown? clojure.lang.ExceptionInfo (send! s id "p2" {:event :request-takeback :player 2})))
+    (send! s id "p0" {:event :command :command {:type :action :space :wood}})
+    (let [before-p1 (get-in @(:rooms s) [id :state])]
+      (send! s id "p1" {:event :command :command {:type :action :space :clay}})
+      (send! s id "p2" {:event :command :command {:type :action :space :grain}})
+      (send! s id "p1" {:event :request-takeback :player 1})
+      (let [vote (get-in @(:rooms s) [id :takeback])]
+        (is (= 1 (:player vote)))
+        (is (= 2 (:steps vote)))
+        (send! s id "p0" {:event :takeback-vote :player 0 :vote-id (:id vote) :approve? true}))
+      (is (= before-p1 (get-in @(:rooms s) [id :state])))
+      (is (= 1 (count (:moves (recording/timeline (get-in @(:rooms s) [id :recording])))))))))

@@ -68,18 +68,18 @@
   (r/with-let [request? (r/atom false) dismissed (r/atom (.getItem js/sessionStorage (str "eurozone-vote-dismissed:" (:id room))))]
     (let [ui @(rf/subscribe [:ui]) permission @(rf/subscribe [:permission]) owned (set (:seats permission))
           v (:takeback room) result (:takeback-result room) pending? (seq v)
-          pid (or (when (owned (:last-move-player room)) (:last-move-player room)) (first (:seats permission)))
+          pid (or (when (owned (:last-move-player room)) (:last-move-player room)) (first (filter (set (:takeback-players room)) (:seats permission))))
           waiting (filter #(and (owned %) (not (contains? (:yes v) %)) (not (contains? (:no v) %))) (:voters v))
           dismiss! #(do (reset! dismissed (:id result)) (.setItem js/sessionStorage (str "eurozone-vote-dismissed:" (:id room)) (:id result)))]
       [:div.takeback-controls
        (when (seq owned)
-         [:button.text-button {:disabled (or (:busy? ui) (not (:can-takeback? room)) pending?)
+         [:button.text-button {:disabled (or (:busy? ui) (not (:can-takeback? room)) (nil? pid) pending?)
                                :on-click #(reset! request? true)} "Request takeback"])
        (cond
          @request?
          [modal "Request a takeback"
-          [:div [:p (str "Undo the last decision by " (get-in room [:seats (:last-move-player room) :name]) "?")]
-           [:p.small "A majority of human players must approve. Your request counts as approval. Play and clocks pause for up to one minute while people vote."]
+          [:div [:p (str "Rewind to " (get-in room [:seats pid :name]) "’s last turn?")]
+           [:p.small "Any decisions made since your turn, including bot moves, will also be undone. A majority of human players must approve; your request counts as approval. Play and clocks pause while people vote."]
            (when (= :draw (get-in room [:state :phase])) [:p.small "Cards already seen cannot be unseen."])
            [:div.dialog-actions
             [:button.button {:on-click #(reset! request? false)} "Cancel"]
@@ -88,7 +88,7 @@
           #(reset! request? false)]
          (and pending? (seq owned))
          [modal "Takeback vote"
-          [:div [:p (str (get-in room [:seats (:requester v) :name]) " requests a takeback of the last decision.")]
+          [:div [:p (str (get-in room [:seats (:requester v) :name]) " requests a rewind to their turn in round " (:round v) ". " (:steps v 1) " decision(s) will be undone, including intervening moves.")]
            [:p.vote-count {:role "status"} (str (count (:yes v)) " / " (:needed v) " approvals needed")]
            [:ul.vote-roster (for [p (:voters v)] ^{:key p}
                               [:li [:span (get-in room [:seats p :name])]
@@ -103,7 +103,7 @@
          (and (seq result) (seq owned) (not= (:id result) @dismissed)
               (< (- (+ @wall-time (:server-offset ui 0)) (:at result 0)) 120000))
          [modal (case (:status result) :approved "Takeback approved" :declined "Takeback declined" :expired "Takeback vote expired" "Takeback cancelled")
-          [:div [:p (if (= :approved (:status result)) "The previous decision has been restored. Queued harvest plans have been cleared." "The game continues from the same position.")]
+          [:div [:p (if (= :approved (:status result)) "The requesting player’s turn has been restored. Later decisions and queued harvest plans have been cleared." "The game continues from the same position.")]
            [:button.button.primary {:on-click dismiss!} "Continue"]]
           dismiss!])])) )
 

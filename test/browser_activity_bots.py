@@ -39,6 +39,7 @@ def mixed_seats(browser,base,errors):
         ctx.route(base+'/discord-test-parent',lambda route,request,parent=parent:route.fulfill(content_type='text/html',body=parent))
         page=ctx.new_page();pages.append(page);page.on('pageerror',lambda e:errors.append(str(e)))
         page.goto(base+'/discord-test-parent');frame=page.frame_locator('iframe');frames.append(frame)
+        discord.enter_activity(frame,uid=='111')
         if uid=='111':
             frame.get_by_label('Players expected').select_option('5')
             frame.get_by_label('Bot players').select_option('3')
@@ -92,12 +93,13 @@ def check(base,cases=None,mixed=True):
             ctx.route(base+'/discord-test-parent',lambda route,request,parent=parent:route.fulfill(content_type='text/html',body=parent))
             page=ctx.new_page();page.on('pageerror',lambda e:errors.append(str(e)))
             page.goto(base+'/discord-test-parent');frame=page.frame_locator('iframe')
+            discord.enter_activity(frame,True)
             frame.get_by_label('Players expected').select_option(str(count))
             frame.get_by_label('Bot players').select_option(str(count-1))
             frame.get_by_label('Pre-game hand setup').select_option(mode)
             expect(frame.locator('.seat')).to_have_count(count)
             expect(frame.get_by_text('Bot · Ready',exact=True)).to_have_count(count-1)
-            page.reload()
+            page.frames[1].evaluate('location.reload()')
             expect(frame.get_by_label('Bot players')).to_have_value(str(count-1))
             frame.get_by_role('button',name='Start draw →' if mode=='draw' else 'Start the game →').click()
             expect(frame.locator('.game')).to_be_visible()
@@ -111,7 +113,7 @@ def check(base,cases=None,mixed=True):
                 if status['phase']=='finished':break
                 if not reloaded and status['round']>=3:
                     assert status['worker'],child.evaluate('botWorkerErrors')
-                    before=status['revision'];page.reload();child=page.frames[1]
+                    before=status['revision'];page.frames[1].evaluate('location.reload()');child=page.frames[1]
                     expect(frame.locator('.game')).to_be_visible()
                     assert child.evaluate(STATUS)['revision']>=before
                     reloaded=True

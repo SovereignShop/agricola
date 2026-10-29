@@ -237,3 +237,37 @@
           (is (= :field (get-in @(:rooms restored) [id :state :players 0 :farm 4 :type])))
           (is (= 1 (get-in @(:rooms restored) [id :state :turn])))))
       (finally (.delete (java.io.File. path))))))
+
+(deftest excluded-packs-filter-real-draws-and-deals
+  (is (= {:mode :draw :extra 2 :excluded-packs ["base-a" "five-player"]}
+         (s/valid-setup {:mode :draw :excluded-packs ["five-player" "base-a" "base-a"]})))
+  (is (thrown? clojure.lang.ExceptionInfo (s/valid-setup {:mode :draw :excluded-packs ["unimplemented-pack"]})))
+  (let [draft (s/make-draw 2 2 ["base-a"])
+        ids (mapcat identity (:packets draft))
+        game (s/start-state ["Ada" "Ben"] {:mode :random :excluded-packs ["base-a"]})
+        hands (mapcat #(concat (get-in % [:hand :minor]) (get-in % [:hand :occupation])) (:players game))]
+    (is (= 32 (count ids)))
+    (is (every? #(= "base-b" (s/card-pack (rules/card %))) ids))
+    (is (= 28 (count hands)))
+    (is (every? #(= "base-b" (s/card-pack (rules/card %))) hands)))
+  (let [draft (s/make-draw 5 2 ["five-player"])]
+    (is (= 80 (count (mapcat identity (:packets draft)))))
+    (is (not-any? rules/five-card? (mapcat identity (:packets draft)))))
+  (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Include more packs" (s/make-draw 4 2 ["base-a"])))
+  (is (thrown-with-msg? clojure.lang.ExceptionInfo #"reduce extra cards" (s/make-draw 2 10 ["base-a"])))
+  (is (thrown? clojure.lang.ExceptionInfo (s/start-state ["Ada"] {:mode :random :excluded-packs ["base-a" "base-b"]}))))
+
+(deftest pack-settings-are-host-only-and-reset-readiness
+  (let [store (s/make-store nil)
+        id (:id (s/transact! store "host" {:event :create :name "Ada" :mode :online :expected-players 2 :setup {:mode :draw}}))
+        send! (fn [token msg] (s/transact! store token (assoc msg :id id :revision (get-in @(:rooms store) [id :revision]))))
+        message {:event :configure :expected-players 2 :setup {:mode :draw :extra 2 :excluded-packs ["base-a"]}}]
+    (send! "guest" {:event :join :name "Ben"})
+    (is (thrown? clojure.lang.ExceptionInfo (send! "guest" message)))
+    (send! "host" message)
+    (is (= ["base-a"] (get-in (model/pull-game @(:conn store) id) [:setup :excluded-packs])))
+    (is (false? (get-in @(:rooms store) [id :seats 1 :ready?])))
+    (send! "guest" {:event :ready :ready? true})
+    (send! "host" {:event :start})
+    (is (every? #(= "base-b" (s/card-pack (rules/card %))) (mapcat identity (get-in @(:rooms store) [id :state :draw :packets]))))
+    (is (thrown? clojure.lang.ExceptionInfo (send! "host" message)))))

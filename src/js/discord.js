@@ -40,12 +40,34 @@ async function openDiscord() {
   const identity = await json('/discord/token', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({code:authorization.code})});
   await sdk.commands.authenticate({access_token:identity.access_token});
   remember(identity.session);
-  // Verify instance membership server-side using Discord's API, not a claimed channel ID.
-  const table = await json('/discord/activity', {method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer ' + identity.session.auth}, body:JSON.stringify({instance:sdk.instanceId})});
-  const url = new URL(location.href);
-  url.searchParams.set('peer', table.room); url.searchParams.set('key', table.invite);
-  url.searchParams.set('transport','relay'); url.hash = table.room;
-  history.replaceState(null,'',url);
+  // List/join/create all verify Activity membership with Discord on the server.
+  window.EUROZONE_ACTIVITY_TABLES = (action, room, requestId) => json('/discord/activity/tables', {method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer ' + identity.session.auth}, body:JSON.stringify({instance:sdk.instanceId,action,room,requestId})});
+  window.EUROZONE_ENTER_ACTIVITY_TABLE = table => {
+    const url=new URL(location.href);
+    url.searchParams.set('peer',table.room);url.searchParams.set('key',table.invite);
+    url.searchParams.set('transport','relay');url.hash=table.room;
+    location.replace(url);
+  };
+  window.EUROZONE_ACTIVITY_HOME = () => {
+    const url=new URL(location.href);
+    for (const key of ['peer','key','transport']) url.searchParams.delete(key);
+    url.hash='';location.replace(url);
+  };
+  window.EUROZONE_ACTIVITY_LOBBY = !params.get('peer');
+  if (!window.EUROZONE_ACTIVITY_LOBBY) {
+    const table=await window.EUROZONE_ACTIVITY_TABLES('join',params.get('peer'));
+    const unavailable=table['host?'] && table.initialized && !(await window.EurozonePeer.read(table.room));
+    if (unavailable) {
+      const url=new URL(location.href);
+      for (const key of ['peer','key','transport']) url.searchParams.delete(key);
+      url.hash='';history.replaceState(null,'',url);
+      window.EUROZONE_ACTIVITY_LOBBY=true;
+    } else {
+      const url=new URL(location.href);
+      url.searchParams.set('key',table.invite);url.searchParams.set('transport','relay');url.hash=table.room;
+      history.replaceState(null,'',url);
+    }
+  }
   // Discord controls its outer fullscreen window. The app uses the entire frame.
   window.EUROZONE_OPEN_BROWSER = () => sdk.commands.openExternalLink({url:config.publicUrl});
   window.EUROZONE_INVITE = () => sdk.commands.openInviteDialog();

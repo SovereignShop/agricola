@@ -454,10 +454,12 @@ required decision. The last ten seconds receive an urgent countdown. At expiry,
 the existing legal bot chooses that decision. Server tables use the server clock;
 peer tables use the host's clock and worker, so the host must remain open.
 
-Any human seat may request a takeback of the last decision. A popup collects a
+Any human seat may request a rewind to their own last turn, including decisions
+made by bots or other players afterward. A popup names the requester, round, and
+number of decisions that will be undone, then collects a
 strict majority of human seats, counting the requester's approval; bots do not
 vote. Play and clocks pause for up to one minute. Declines/expiry restore the
-remaining time. Approval restores the previous decision, truncates the recording,
+remaining time. Approval restores the requesting player’s turn, truncates the recording,
 and clears queued harvest plans. Already revealed information cannot be hidden
 from players' memories.
 
@@ -472,3 +474,18 @@ Additional browser integration coverage (after building and installing Playwrigh
 python test/browser_table_flow.py
 python test/browser_peer.py
 ```
+
+Discord Activities open to a shared lobby with **Join table** and **Create a new
+table**. The list is restricted to verified participants of that Activity and
+refreshes automatically. Any participant may create a separate table. Choosing
+**All tables** returns to the lobby; reloading a selected game resumes it.
+Host saves unavailable in this browser are clearly marked, with creation still
+available. Old tables and browser saves remain intact. Regression coverage:
+`test/browser_activity_recovery.py`.
+
+Table creators can include/exclude the implemented base A/B card groups and the
+5–6 Player Expansion before starting. Exclusions apply to actual draft packets,
+random hands and the five-player minor reserve. Guests see the selected packs
+and must confirm readiness after changes. Unsupported catalogue-only packs are
+not offered. The table cannot start until the pool contains seven cards of each
+kind per player plus all requested extra draft cards.

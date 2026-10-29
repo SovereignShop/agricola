@@ -67,3 +67,32 @@
     (with-redefs [discord/now (fn [] (+ 1000 (System/currentTimeMillis)))]
       (is (nil? (discord/verified config state "oauth"))))
     (is (thrown? clojure.lang.ExceptionInfo (discord/allow-user! (assoc config :allowed-users #{}) "111")))))
+
+(deftest activity-lobby-tables-are-independent-private-and-idempotent
+  (let [application (app)
+        host (discord/session-view config (discord/auth config {:id "111" :username "Ada"}))
+        guest (discord/session-view config (discord/auth config {:id "222" :username "Ben"}))
+        service (:peer-service application)
+        message {:instance "lobby" :action "create" :requestId "00000000-0000-0000-0000-000000000001"}]
+    (with-redefs [discord/*request* (fn [_ url & _] {:application_id "123" :instance_id (last (clojure.string/split url #"/")) :users ["111" "222"]})]
+      (is (= {:tables []} (discord/activity-lobby application config host (assoc message :action "list"))))
+      (is (empty? @(:tables service)))
+      (let [first-table (discord/activity-lobby application config host message)
+            old (get @(:tables service) (:room first-table))]
+        (is (= first-table (discord/activity-lobby application config host message)))
+        (is (:host? first-table))
+        (is (not (:host? (discord/activity-lobby application config guest (assoc message :action "join" :room (:room first-table))))))
+        (is (thrown? clojure.lang.ExceptionInfo (discord/activity-lobby application config guest (assoc message :instance "other" :action "join" :room (:room first-table)))))
+        (is (= [] (:tables (discord/activity-lobby application config guest (assoc message :instance "other" :action "list")))))
+        ;; The other participant can host a separate game without changing the first.
+        (let [second-table (discord/activity-lobby application config guest message)
+              listed (:tables (discord/activity-lobby application config host (assoc message :action "list")))]
+          (is (not= (:room first-table) (:room second-table)))
+          (is (= 2 (count listed)))
+          (is (every? #(not (contains? % :invite)) listed))
+          (is (= old (get @(:tables service) (:room first-table))))
+          (is (= (:invite-hash old) (peer/digest (:invite first-table))))
+          (is (= 2 (count @(:tables service)))))))
+    (with-redefs [discord/*request* (fn [& _] {:application_id "123" :instance_id "lobby" :users []})]
+      (doseq [action ["list" "create" "join"]]
+        (is (thrown? clojure.lang.ExceptionInfo (discord/activity-lobby application config host (assoc message :action action))))))))

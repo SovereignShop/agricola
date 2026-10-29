@@ -30,6 +30,11 @@ addEventListener('message', e => {
 });
 </script><iframe src="/?frame_id=frame-test&instance_id=instance-test&platform=desktop"></iframe>'''
 
+def enter_activity(frame, host=False):
+    expect(frame.get_by_role('heading',name='Activity tables',exact=True)).to_be_visible()
+    frame.get_by_role('button',name='Create a new table' if host else 'Join table',exact=True).click(timeout=15000)
+
+
 def check(base):
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=True, executable_path=os.environ['EUROZONE_BROWSER'])
@@ -81,8 +86,9 @@ def check(base):
             ctx.route(base+'/discord-test-parent',lambda route,request,uid=uid,name=name: route.fulfill(content_type='text/html',body=PARENT.replace('USER',json.dumps({'id':uid,'username':name}))))
             page=ctx.new_page();page.goto(base+'/discord-test-parent');pages.append(page)
             frame=page.frame_locator('iframe');frames.append(frame)
+            enter_activity(frame,uid=='111')
             if uid=='111':
-                expect(frame.get_by_role('heading',name='Agricola with friends')).to_be_visible()
+                expect(frame.get_by_label('Players expected')).to_be_visible()
             else:
                 frame.get_by_placeholder('Your name').fill(name)
                 frame.get_by_role('button',name='Take a seat',exact=True).click()
@@ -112,6 +118,7 @@ def check(base):
                 ctx.route(base+'/discord-test-parent',lambda route,request,parent=parent: route.fulfill(content_type='text/html',body=parent))
                 page=ctx.new_page();pages.append(page);page.goto(base+'/discord-test-parent')
                 frame=page.frame_locator('iframe');frames.append(frame)
+                enter_activity(frame,i==0)
                 if i==0:
                     expect(frame.get_by_label('Players expected')).to_have_value('2')
                 else:
@@ -130,7 +137,7 @@ def check(base):
                         expect(frame.get_by_text('Draw: 14 + 3 cards',exact=False)).to_be_visible()
                     frame.get_by_role('button',name="I'm ready",exact=True).click()
                     expect(frame.get_by_role('button',name='Mark not ready',exact=True)).to_be_visible()
-                    pages[0].reload()
+                    pages[0].frames[1].evaluate('location.reload()')
                     expect(host.get_by_label('Players expected')).to_have_value(str(count))
                     expect(frame.get_by_role('button',name='Mark not ready',exact=True)).to_be_visible()
             start=frames[0].get_by_role('button',name='Start draw →' if count==5 else 'Start the game →')

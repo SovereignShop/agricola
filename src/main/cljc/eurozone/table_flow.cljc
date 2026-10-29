@@ -1,7 +1,7 @@
 (ns eurozone.table-flow
   "Table-level clocks, private harvest plans and human takeback ballots.
    These do not alter Agricola's rules or command ordering."
-  (:require [agricola.engine :as a] [agricola.card-game :as game]))
+  (:require [agricola.engine :as a] [agricola.card-game :as game] [agricola.recording :as recording]))
 
 (defn now [] #?(:clj (System/currentTimeMillis) :cljs (.now js/Date)))
 (def limits [0 30 60 90 120 180 300])
@@ -43,14 +43,28 @@
 (defn owns? [room token pid]
   (and (integer? pid) (<= 0 pid) (< pid (count (:seats room)))
        (not (get-in room [:seats pid :bot?])) (= token (get-in room [:seats pid :owner]))))
+(defn takeback-target [room pid]
+  (let [records (:recording room)
+        mine (keep-indexed (fn [i record] (when (and (= :move (:record record)) (= pid (:player record))) [i record])) records)
+        primary #{:action :pick :feed :breed :house-animals}
+        [index move] (or (last (filter #(primary (get-in % [1 :command :type])) mine)) (last mine))
+        before-hash (when index (:hash (nth records (dec index))))
+        history-index (when before-hash
+                        (first (keep (fn [i] (when (= before-hash (recording/state-hash (nth (:history room) i))) i))
+                                     (reverse (range (count (:history room)))))))]
+    (when (some? history-index)
+      {:history-index history-index :record-index index :move move
+       :steps (count (filter #(= :move (:record %)) (drop index records)))})))
 (defn request-takeback [room token pid]
   (a/require! (owns? room token pid) "Only seated players can request a takeback.")
   (a/require! (and (:state room) (seq (:history room))) "There is no move to take back.")
   (a/require! (nil? (:takeback room)) "A takeback vote is already open.")
-  (let [voters (human-seats room) move (last (filter #(= :move (:record %)) (:recording room)))]
+  (let [voters (human-seats room) target (takeback-target room pid) move (:move target)]
+    (a/require! target "There is no saved turn of yours to take back.")
     (-> room pause-clocks
-        (assoc :takeback {:id (str (random-uuid)) :requester pid :player (:player move)
-                         :kind (get-in move [:command :type]) :round (:round move)
+        (assoc :takeback-target (select-keys target [:history-index :record-index])
+               :takeback {:id (str (random-uuid)) :requester pid :player (:player move)
+                         :kind (get-in move [:command :type]) :round (:round move) :steps (:steps target)
                          :voters voters :needed (inc (quot (count voters) 2))
                          :yes #{pid} :no #{} :expires-at (+ (now) 60000)})
         (dissoc :takeback-result))))
@@ -69,8 +83,8 @@
           (expired-vote? room) :expired)))
 (defn finish-vote [room result]
   (let [v (:takeback room)]
-    (-> room resume-clocks (dissoc :takeback)
-        (assoc :takeback-result (assoc (select-keys v [:id :requester :player :yes :no :needed]) :status result :at (now))))))
+    (-> room resume-clocks (dissoc :takeback :takeback-target)
+        (assoc :takeback-result (assoc (select-keys v [:id :requester :player :yes :no :needed :steps :round]) :status result :at (now))))))
 (defn feed-preview [s pid command]
   (a/feed (assoc s :phase :feeding :turn pid :fed #{} :effect-queue []) pid command))
 (defn plan [room token {:keys [player round feed breed]}]

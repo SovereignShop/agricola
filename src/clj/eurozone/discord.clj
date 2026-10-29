@@ -136,6 +136,40 @@
           {:room room :invite invite :token (if preset (user-token config (:host-user preset)) (:token session))
            :options (or (:options preset) (table-options (:name session) [])) :source :activity :instance instance})))
     {:room room :invite invite :relay true}))
+(defn activity-lobby [app config session {:keys [instance action room requestId]}]
+  (peer/require! (and (seq (:bot-token config)) (string? instance) (re-matches #"[a-zA-Z0-9_-]{1,200}" instance)) "Invalid Discord Activity.")
+  (let [verified (*request* "GET" (str "https://discord.com/api/v10/applications/" (:client-id config) "/activity-instances/" instance)
+                            {"Authorization" (str "Bot " (:bot-token config))} nil)
+        _ (peer/require! (and (= (:client-id config) (:application_id verified)) (= instance (:instance_id verified))
+                             (some #{(:userId session)} (:users verified))) "You are not a participant in this Discord Activity.")
+        service (:peer-service app)
+        root (str (UUID/nameUUIDFromBytes (utf8 (str (:client-id config) ":activity:" instance))))
+        invitation-for (fn [id] (peer/digest (b64 (hmac (:secret config)
+                                  (str "activity-invite:" instance (when (not= root id) (str ":" id)))))))
+        belongs? #(and (= :activity (:source %)) (= instance (:instance %)))
+        describe (fn [table]
+                   {:room (:room table) :title (get-in table [:options :title]) :hostName (get-in table [:options :name])
+                    :players (get-in table [:options :expected-players]) :created (:created table) :initialized (:initialized table)
+                    :host? (= (:host table) (peer/peer-id (:room table) (:token session)))
+                    :hostOnline? (boolean (some #(= (:host table) (:id (val %))) (peer/members service (:room table))))})]
+    (locking (:lock service)
+      (case action
+        "list" {:tables (mapv describe (sort-by :created > (filter belongs? (vals @(:tables service)))))}
+        "join" (let [table (get @(:tables service) room)]
+                 (peer/require! (belongs? table) "This table is not in your Activity.")
+                 (assoc (describe table) :invite (invitation-for room) :relay true))
+        "create" (do
+                   (peer/require! (and (string? requestId) (re-matches #"[a-f0-9-]{36}" requestId)) "Invalid new-table request.")
+                   (let [id (str (UUID/nameUUIDFromBytes (utf8 (str (:client-id config) ":activity:" instance ":" (:userId session) ":" requestId))))
+                         preset (get @(:activity-options app) (get-in verified [:location :channel_id]))
+                         preset (when (and preset (= (:userId session) (:host-user preset)) (< (- (now) (:time preset)) 600)) preset)]
+                     (when-not (get @(:tables service) id)
+                       (peer/create-table! service {:room id :invite (invitation-for id) :token (:token session)
+                                                    :options (assoc (or (:options preset) (table-options (:name session) []))
+                                                                    :title (str (subs (:name session) 0 (min 30 (count (:name session)))) "’s table"))
+                                                    :source :activity :instance instance}))
+                     (assoc (describe (get @(:tables service) id)) :invite (invitation-for id) :relay true)))
+        (throw (ex-info "Choose list, join or create." {}))))))
 (defn handler [app request]
   (let [config (:discord-config app) path (:uri request) method (:request-method request)]
     (try
@@ -167,6 +201,11 @@
                                               "eurozone_oauth_nonce=; HttpOnly; Secure; SameSite=Lax; Path=/discord; Max-Age=0"]} :body ""})
         (and (= path "/discord/token") (= method :post))
         (response 200 (exchange config (:code (json/read-str (slurp (:body request)) :key-fn keyword)) nil))
+        (and (= path "/discord/activity/tables") (= method :post))
+        (let [credential (some-> (get-in request [:headers "authorization"]) (str/replace #"^Bearer " ""))
+              session (session-view config credential)]
+          (peer/require! session "Discord sign-in is required.")
+          (response 200 (activity-lobby app config session (json/read-str (slurp (:body request)) :key-fn keyword))))
         (and (= path "/discord/activity") (= method :post))
         (let [credential (some-> (get-in request [:headers "authorization"]) (str/replace #"^Bearer " ""))
               session (session-view config credential)]

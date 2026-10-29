@@ -22,6 +22,7 @@ def check(base):
         parent = discord.PARENT.replace('USER', json.dumps({'id': '111', 'username': 'Parity host'})).replace('instance-test', 'value-parity')
         ctx.route(base + '/discord-test-parent', lambda route: route.fulfill(content_type='text/html', body=parent))
         page = ctx.new_page(); page.goto(base + '/discord-test-parent')
+        discord.enter_activity(page.frame_locator('iframe'),True)
         expect(page.frame_locator('iframe').get_by_label('Players expected')).to_be_visible()
         child = page.frames[1]
         with page.expect_worker() as created:

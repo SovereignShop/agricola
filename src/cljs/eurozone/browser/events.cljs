@@ -5,7 +5,7 @@
 (defn hash-id [] (let [h (subs (.-hash js/location) 1)] (when (seq h) h)))
 (rf/reg-event-db :initialize (fn [_ _] {:facts (d/empty-db model/schema) :permissions {} :layouts (layout/load-layouts) :connected? false :game-id (hash-id) :draft {} :panel :board}))
 (rf/reg-event-fx :connection (fn [{:keys [db]} [_ connected?]] {:db (assoc db :connected? connected? :busy? false) :dispatch (if connected? [:chat/sync] [:chat/disconnect])}))
-(rf/reg-event-db :error (fn [db [_ message]] (assoc db :error message :busy? false)))
+(rf/reg-event-db :error (fn [db [_ message]] (assoc db :error message :busy? false :activity-opening? false)))
 (rf/reg-event-db :dismiss-error (fn [db _] (dissoc db :error)))
 (rf/reg-event-db :panel (fn [db [_ panel]] (assoc db :panel panel)))
 (rf/reg-event-db :draft
@@ -15,7 +15,10 @@
       (= key :card) (update :draft dissoc :improvement :upgrade :bake-grain))))
 (rf/reg-event-db :select-action (fn [db [_ space]] (assoc db :draft {:space space :rooms [] :stables [] :fences [] :plantings [] :bake-grain 0} :error nil)))
 (rf/reg-event-db :inspect-player (fn [db [_ pid]] (assoc db :inspect-player pid)))
-(rf/reg-fx :navigate #(if (and (nil? %) (comms/peer?)) (set! (.-href js/location) "/") (set! (.-hash js/location) (or % ""))))
+(rf/reg-fx :navigate #(cond
+                         (and (nil? %) (.-EUROZONE_ACTIVITY js/window)) (.EUROZONE_ACTIVITY_HOME js/window)
+                         (and (nil? %) (comms/peer?)) (set! (.-href js/location) "/")
+                         :else (set! (.-hash js/location) (or % ""))))
 (rf/reg-event-fx :navigate
   (fn [{:keys [db]} [_ id]]
     {:db (assoc db :game-id id :draft {} :inspect-player nil :error nil

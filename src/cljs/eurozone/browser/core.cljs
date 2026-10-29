@@ -6,7 +6,9 @@
   (comms/session-token)
   (rf/dispatch-sync [:initialize])
   (set! (.-onhashchange js/window) #(rf/dispatch [:navigate (eurozone.browser.events/hash-id)]))
-  (when-not (peer/boot!) (comms/connect!))
+  (if (.-EUROZONE_ACTIVITY_LOBBY js/window)
+    (rf/dispatch [:activity/load])
+    (when-not (peer/boot!) (comms/connect!)))
   (when-let [path (.get (js/URLSearchParams. (.-search js/location)) "replay")]
     (views/load-linked-recording! path))
   (r/render [views/app] (.getElementById js/document "app")))

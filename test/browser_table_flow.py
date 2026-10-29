@@ -46,9 +46,10 @@ def check(base, fixture):
             p.get_by_role('dialog',name='Takeback approved',exact=True).get_by_role('button',name='Continue',exact=True).click()
             expect(p.locator('.round-heading')).to_contain_text('4')
         h.reload()
-        expect(h.locator('.harvest-planner')).to_have_count(0)
+        expect(h.locator('.harvest-planner')).to_have_count(1)
         expect(h.get_by_role('dialog')).to_have_count(0)
-        c.get_by_role('button',name='Complete breeding →').click()
+        for player in [h,b,c]:
+            player.get_by_role('button',name='Queue breeding',exact=True).click()
         expect(h.locator('.round-heading')).to_contain_text('5')
         for ctx in contexts:ctx.close()
         print('Three remote seats: private persistent queues, ordered harvest, majority popup vote, restoration and dismissal passed',flush=True)
@@ -93,10 +94,11 @@ def check(base, fixture):
             expect(host.locator('.action-card.occupied')).to_have_count(1)
             expect(host.locator('.turn-countdown')).to_be_visible()
             # Remote votes over the same authoritative transport.
-            host.get_by_role('button',name='Request takeback',exact=True).click()
-            host.get_by_role('button',name='Ask for takeback',exact=True).click()
-            expect(guest.get_by_role('dialog',name='Takeback vote',exact=True)).to_be_visible()
-            guest.get_by_role('button',name='Approve takeback',exact=True).click()
+            requester,other=(host,guest) if host.get_by_role('button',name='Request takeback',exact=True).is_enabled() else (guest,host)
+            requester.get_by_role('button',name='Request takeback',exact=True).click()
+            requester.get_by_role('button',name='Ask for takeback',exact=True).click()
+            expect(other.get_by_role('dialog',name='Takeback vote',exact=True)).to_be_visible()
+            other.get_by_role('button',name='Approve takeback',exact=True).click()
             for p in [host,guest]:
                 p.get_by_role('dialog',name='Takeback approved',exact=True).get_by_role('button',name='Continue',exact=True).click()
                 expect(p.locator('.action-card.occupied')).to_have_count(0)
