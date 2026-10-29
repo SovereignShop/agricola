@@ -238,21 +238,27 @@ only at five players. Their optional decisions, extra card action spaces, paymen
 one-use effects, and automatic triggers use the shared rules engine. Five online
 seats and mixed-packet draws are supported, including extra-card draws.
 
-**Artifex:** 77 of its 120 cards now have native definitions (40 minors and 37
+**Artifex:** 87 of its 120 cards now have native definitions (46 minors and 41
 occupations). Alternative printed payments and optional multi-option effects have
 explicit, saved workflows. Native rules cover conditional family capacity, boars
 on empty field tiles, discounts for building multiple rooms, free renovation,
 feeding choices, payments to the acting player, additional improvement and
 occupation actions, selected-field crop collection, and post-field-phase baking.
 Nested card actions retain their pending choices across saves and reconnects.
+Sowing decisions allow pre-sow gifts before planting; declining the only offered
+seed leaves the worker available. Card action spaces, goods stored on cards, and
+optional removal of goods from other piles use the same native rules.
 Field prerequisites include field cards; field-tile requirements count only
-tiles on the farm. Partial packs show implemented/total counts in table setup;
+tiles on the farm, including for scoring. Partial packs show implemented/total counts in table setup;
 only implemented cards enter hands. Hosts can exclude Artifex for base-only games.
-The resulting pool has 221 hand cards plus the ten base major improvements.
+The resulting pool has 231 hand cards plus the ten base major improvements.
 
-**Coverage limits:** the remaining 43 Artifex cards, other expansion decks,
+**Coverage limits:** the remaining 33 Artifex cards, other expansion decks,
 six-player games, Original Edition card rules, solo campaigns, and optional
 multiplayer action tiles are not enabled.
+One documented ruling question remains: whether Agricultural Fertilizers combines
+Farmland’s field with Moldboard Plow’s extra field. The current engine treats these
+as separate plow effects; see `resources/rules/sources.edn` for the open question.
 A headless bot and recording/replay harness are available below. The imported
 2,214-card catalogue is reference data, not a claim that all those cards execute.
 Generate the complete coverage ledger with
@@ -504,6 +510,8 @@ python test/browser_table_flow.py
 python test/browser_card_workflows.py
 python test/browser_artifex.py
 python test/browser_artifex_actions.py
+python test/browser_artifex_board.py
+python test/browser_artifex_sowing.py
 python test/browser_peer.py
 ```
 
