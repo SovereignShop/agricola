@@ -18,7 +18,7 @@
           :if (ev (if (ev x) (second args) (nth args 2)))
           :goods (a/amount p x)
           :house (:house p) :round (:round g) :family (:family p) :newborn (:newborn p 0) :remaining (:remaining p 0)
-          :rooms (count (a/tiles p :room)) :fields (count (a/tiles p :field))
+          :rooms (count (a/tiles p :room)) :fields (count (field-list p)) :field-tiles (count (a/tiles p :field))
           :grain-fields (count-crop p :grain) :vegetable-fields (count-crop p :vegetable)
           :planted-fields (count (filter #(pos? (:count % 0)) (field-list p)))
           :empty-fields (count (filter #(zero? (:count % 0)) (field-list p)))
@@ -60,7 +60,7 @@
   (into {} (for [[resource expression] goods] [resource (evaluate g pid context expression)])))
 (def count-subjects
   {"occupation" [:occupations] "improvement" [:improvements] "major improvement" [:majors]
-   "field" [:fields] "field tile" [:fields] "plowed field" [:fields] "planted field" [:planted-fields]
+   "field" [:fields] "field tile" [:field-tiles] "plowed field" [:field-tiles] "planted field" [:planted-fields]
    "grain field" [:grain-fields] "vegetable field" [:vegetable-fields] "empty field" [:empty-fields]
    "unplanted field" [:empty-fields] "pasture" [:pastures] "room" [:rooms] "stable" [:stables]
    "family member" [:family] "people" [:family] "animal" [:animals] "animal type" [:animal-types]

@@ -545,6 +545,29 @@
                  [:>= [:goods :cattle] 2]
                  3
                  [:if [:>= [:goods :cattle] 1] 2 0]]]]}}]},
+          :revised-artifex-expansion-a-58-asparagus-knife
+          {:triggers
+           [{:event :return-home,
+             :condition
+             [:test
+              [:or [:= [:round] 8] [:= [:round] 10] [:= [:round] 12]]],
+             :effect
+             {:op :take-field-crop,
+              :crop :vegetable,
+              :optional? true,
+              :exchange {:food 3, :points 1}}}]},
+          :revised-artifex-expansion-a-59-potato-ridger
+          {:triggers
+           [{:event :harvest-crops,
+             :condition
+             [:test [:> [:context :harvested-vegetable-fields] 0]],
+             :effect
+             {:op :threshold-exchange,
+              :resource :vegetable,
+              :minimum 3,
+              :mandatory-at 4,
+              :food 6,
+              :optional? true}}]},
           :revised-artifex-expansion-a-6-storage-barn
           {:play
            [{:op :gain,
@@ -553,6 +576,10 @@
               :wood [:if [:owns-major :joinery] 1 0],
               :clay [:if [:owns-major :pottery] 1 0],
               :reed [:if [:owns-major :basketry] 1 0]}}]},
+          :revised-artifex-expansion-a-61-winnowing-fan
+          {:triggers
+           [{:event :after-field-phase,
+             :effect {:op :bake-one, :optional? true}}]},
           :revised-artifex-expansion-a-62-beer-keg
           {:triggers
            [{:event :feeding-start,
@@ -605,6 +632,14 @@
            [{:op :gain,
              :goods
              {:food [:grain-fields], :grain [:vegetable-fields]}}]},
+          :revised-artifex-expansion-a-70-lifting-machine
+          {:triggers
+           [{:event :round-end,
+             :condition [:test [:not [:harvest-round]]],
+             :effect
+             {:op :take-field-crop,
+              :crop :vegetable,
+              :optional? true}}]},
           :revised-artifex-expansion-a-72-calcium-fertilizers
           {:triggers
            [{:event :use-space,

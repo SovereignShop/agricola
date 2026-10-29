@@ -573,7 +573,7 @@
 (defn card-decision [g p draft busy?]
   (let [head (first (:effect-queue g)) effect (:effect head) op (:op effect) options (card-game/order-options g)
         keep (get draft :keep (select-keys (:goods p) a/animals))
-        choice (merge (select-keys draft [:cell :frame? :brushwood? :renovate-to :paper-maker? :card :cook? :option :payment-option :improvement :upgrade :bake-grain])
+        choice (merge (select-keys draft [:cell :frame? :brushwood? :renovate-to :paper-maker? :card :cook? :option :payment-option :improvement :upgrade :bake-grain :exchange?])
                       (when (contains? draft :effect-fields) {:fields (:effect-fields draft)})
                       {:type :resolve :decision (:decision-id g) :keep keep :grain (get draft :effect-grain 1)
                        :action (or (:effect-action draft) (if (= op :young-artist) :draw :room))
@@ -611,6 +611,24 @@
                             [:option {:value ""} "Choose a space…"]
                             (for [i (range 15) :when (= :empty (get-in p [:farm i :type]))] ^{:key i} [:option {:value i} (str "Space " (inc i))])]])
      (when (= op :bake) [field "Grain to bake" [number-input (get draft :effect-grain 1) #(draft! :effect-grain %) (a/amount p :grain)]])
+     (when (= op :bake-one)
+       [field "Baking improvement" [:select {:value (if (:improvement draft) (name (:improvement draft)) "")
+                                            :on-change #(draft! :improvement (when (seq (.. % -target -value)) (keyword (.. % -target -value))))}
+                                   [:option {:value ""} "Choose a baking improvement…"]
+                                   (for [id (:improvements p) :when (get-in a/improvements [id :bake])] ^{:key id}
+                                     [:option {:value (name id)} (str (get-in a/improvements [id :name]) " · 1 grain → " (get-in a/improvements [id :bake]) " food")])]])
+     (when (= op :take-field-crop)
+       [:div
+        [field "Vegetable field" [:select {:value (if (some? (:cell draft)) (str (:cell draft)) "")
+                                          :on-change #(draft! :cell (when (seq (.. % -target -value)) (reader/read-string (.. % -target -value))))}
+                                  [:option {:value ""} "Choose a vegetable field…"]
+                                  (for [i (concat (a/tiles p :field) (keys (:card-fields p)))
+                                        :let [f (get-in p (a/field-path i))]
+                                        :when (and (= (:crop effect) (:crop f)) (pos? (get f :count 0)))]
+                                    ^{:key i} [:option {:value (str i)} (if (integer? i) (str "Field " (inc i)) (:name (cards/card i)))])]]
+        (when (:exchange effect)
+          [:label.checkbox [:input {:type "checkbox" :checked (boolean (:exchange? draft)) :on-change #(draft! :exchange? (.. % -target -checked))}]
+           "Exchange this vegetable for 3 food and 1 bonus point"])])
      (when (= op :extra-grain-harvest)
        (let [eligible (vec (for [i (concat (range 15) (keys (:card-fields p)))
                                 :let [field (get-in p (a/field-path i))]
@@ -663,7 +681,7 @@
      [:div.form-row
       (when-not (= op :sidekick) [button (if (= op :ability-window) "Finish harvest decisions →" "Resolve effect →")
        #(dispatch :command choice) "button primary" (or busy? (boolean reason))])
-      (when (:optional? effect) [button "Skip this effect" #(dispatch :command {:type :resolve :decision (:decision-id g) :skip? true}) "text-button" busy?])]]))
+      (when (card-game/optional-effect? g head) [button "Skip this effect" #(dispatch :command {:type :resolve :decision (:decision-id g) :skip? true}) "text-button" busy?])]]))
 
 (defn card-ability [g p cid]
   (r/with-let [selection (r/atom {:amount 2 :resource :boar})]

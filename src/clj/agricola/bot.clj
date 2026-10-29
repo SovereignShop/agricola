@@ -121,13 +121,16 @@
        (select-keys (:goods kept) a/animals)))))
 (declare ability-candidates)
 (defn decision-candidates [state pid]
-  (let [p (g/p state pid) effect (:effect (first (:effect-queue state)))
+  (let [p (g/p state pid) head (first (:effect-queue state)) effect (:effect head)
         options (case (:op effect)
                   (:plow :stable :mini-pasture :corral-builder :amateur-fencer :plowsmith) (map #(hash-map :cell %) (range 15))
                   :choose (map #(hash-map :option %) (range (count (:options effect))))
                   :choose-good (map #(hash-map :resource %) (:choices effect))
                   :seasonal-crop [{:resource :grain} {:resource :vegetable}]
                   :bake (map #(hash-map :grain %) (range 1 (inc (min 8 (a/amount p :grain)))))
+                  :bake-one (for [improvement (:improvements p) :when (get-in a/improvements [improvement :bake])] {:improvement improvement})
+                  :take-field-crop (for [cell (field-ids p) exchange? (if (:exchange effect) [false true] [false])]
+                                     {:cell cell :exchange? exchange?})
                   :housing (for [keep (housing-plans p) cook? [true false]] {:keep keep :cook? cook?})
                   :cottage (concat (for [cell (range 15) opts (payment-options p)] (assoc opts :action :room :cell cell))
                                    (map #(assoc % :action :renovate) (payment-options p)))
@@ -151,7 +154,7 @@
              :when (and (= :buy-stock (get-in (c/card cid) [:ability :op])) (seq (get-in p [:card-state cid :stock])))
              :let [goods (g/funding-conversion state pid {:food 1})] :when (seq goods)]
          {:type :convert :goods goods}))
-     (when (or (:optional? effect) (= :pay-or-beg (:op effect)))
+     (when (or (g/optional-effect? state head) (= :pay-or-beg (:op effect)))
        (let [context (get-in state [:effect-queue 0 :context])
              base (if (= :pay-or-beg (:op effect)) {:food (:food effect)}
                       (expression/quantities state pid context (:cost effect)))
@@ -164,7 +167,7 @@
          (for [cost costs :let [goods (g/funding-conversion state pid cost)] :when (seq goods)]
            {:type :convert :goods goods})))
      (map #(merge {:type :resolve :decision (:decision-id state)} %)
-         (cond-> options (:optional? effect) (concat [{:skip? true}]))))))
+         (cond-> options (g/optional-effect? state head) (concat [{:skip? true}]))))))
 (defn ability-candidates [state pid]
   (let [p (g/p state pid)]
     (mapcat
