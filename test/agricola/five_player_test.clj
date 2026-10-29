@@ -142,7 +142,7 @@
   (let [s (-> (game) (own 0 :c171) (g/queue-front [(g/task 0 (c/id :c171) {:op :young-artist :cost {:food 1} :optional? true} {})]))
         next (resolve-head s {:action :draw})]
     (is (= 2 (count (get-in next [:players 0 :hand :minor]))))
-    (is (= 46 (:minor-deck-count next)))
+    (is (= (- (:minor-deck-count s) 2) (:minor-deck-count next)))
     (is (= 1 (a/amount (g/p next 0) :food)))))
 
 (deftest five-player-automatic-effect-thresholds

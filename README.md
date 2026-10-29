@@ -214,6 +214,12 @@ leave the entire game unchanged. The UI uses the shared rules to disable illegal
 card choices and explain why. Mandatory effects run automatically. Optional
 exchanges and spatial choices wait for their owner, with decisions saved for
 reconnection. Simultaneous optional card effects can be reordered by their owner.
+Preparation
+decisions allow food conversion and retain temporarily unaffordable effects while
+another effect can fund them. Scholar can immediately trigger a newly played
+Plow Driver or Groom. Adoptive Parents can be used later in the same work phase.
+After breeding, available anytime card abilities receive a decision window before
+the next round or final scoring.
 
 Animal housing is computed automatically (including placement that maximizes
 Organic Farmer’s pasture bonus); overflow requires an explicit choice
@@ -232,11 +238,25 @@ only at five players. Their optional decisions, extra card action spaces, paymen
 one-use effects, and automatic triggers use the shared rules engine. Five online
 seats and mixed-packet draws are supported, including extra-card draws.
 
-**Coverage limits:** other expansion decks, six-player games, Original Edition
-card rules, solo campaigns, browser bot seats, and optional multiplayer action
-tiles are not enabled.
+**Artifex:** 42 of its 120 cards now have native definitions (23 minors and 19
+occupations). Alternative printed payments and optional multi-option effects have
+explicit, saved workflows. Partial packs show implemented/total counts in table
+setup; only implemented cards enter hands. Hosts can exclude Artifex for base-only
+games. The resulting pool has 186 hand cards plus the ten base major improvements.
+
+**Coverage limits:** the remaining 78 Artifex cards, other expansion decks,
+six-player games, Original Edition card rules, solo campaigns, and optional
+multiplayer action tiles are not enabled.
 A headless bot and recording/replay harness are available below. The imported
 2,214-card catalogue is reference data, not a claim that all those cards execute.
+Generate the complete coverage ledger with
+`clojure -M -m agricola.card-coverage data/card-coverage.json`. It distinguishes catalog metadata, native hand-card
+definitions, and the ten major improvements in the core engine. It also reports
+whether the retained AI weights match the current rules fingerprint. The existing
+82-card draft rankings and two-player value function retain their original
+training provenance: their prior strength benchmarks do not apply to these new
+rules or expanded decks, and unseen draft cards use heuristic estimates.
+
 Base-card regressions cover prerequisite boundaries and representative timing
 interactions; exhaustive card-combination validation remains ongoing. Five-player
 tests exercise all 48 occupation plays and representative interactions. The
@@ -475,6 +495,7 @@ Additional browser integration coverage (after building and installing Playwrigh
 
 ```sh
 python test/browser_table_flow.py
+python test/browser_card_workflows.py
 python test/browser_peer.py
 ```
 
@@ -486,9 +507,15 @@ Host saves unavailable in this browser are clearly marked, with creation still
 available. Old tables and browser saves remain intact. Regression coverage:
 `test/browser_activity_recovery.py`.
 
-Table creators can include/exclude the implemented base A/B card groups and the
-5–6 Player Expansion before starting. Exclusions apply to actual draft packets,
+Table creators can include/exclude the base A/B card groups, the
+5–6 Player Expansion, and the implemented Artifex subset before starting.
+Exclusions apply to actual draft packets,
 random hands and the five-player minor reserve. Guests see the selected packs
 and must confirm readiness after changes. Unsupported catalogue-only packs are
-not offered. The table cannot start until the pool contains seven cards of each
+not offered as selectable packs; their missing counts appear in Card coverage.
+The table cannot start until the pool contains seven cards of each
 kind per player plus all requested extra draft cards.
+
+Card rule upgrades change the replay/peer rules fingerprint. Existing peer host
+backups require their matching version; they are not silently reinterpreted or
+overwritten. Finish ongoing tables before switching the hosted build.

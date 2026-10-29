@@ -33,8 +33,8 @@
   (is (= {2 [{:player 0 :goods {:food 1} :cards [:well]}]}
          (g/future-round-resources (assoc-in (a/new-game ["Ada"] order 0) [:players 0 :well-rounds] #{2})))))
 (deftest all-base-hand-cards-have-explicit-definitions
-  (is (= 96 (count (remove c/five-card? (keys c/cards)))))
-  (is (= (set (keys c/metadata)) (set (keys c/cards))))
+  (is (= 96 (count (filter #(= "revised-base" (namespace %)) (keys c/cards)))))
+  (is (every? (set (keys c/metadata)) (keys c/cards)))
   (is (every? :name (vals c/cards))))
 (deftest occupations-have-costs-and-trigger-on-the-printed-space
   (let [s (hand (game) 0 [:a116])
@@ -134,7 +134,7 @@
 (defn occupation-count [s n]
   (assoc-in s [:players 0 :occupations] (mapv :id (take n (filter #(= :occupation (:kind %)) (vals c/cards))))))
 (deftest every-printed-prerequisite-has-a-boundary-check
-  (let [requirements (set (map :prerequisites (vals c/cards)))]
+  (let [requirements (set (map :prerequisites (filter #(= "revised-base" (namespace (:id %))) (vals c/cards))))]
     (is (= #{"" "1 Occupation" "2 Occupations" "3 Occupations" "Exactly 2 Occupations"
              "At Most 3 Occupations" "2 Grain Fields" "2 Vegetable Fields" "5 Sheep"
              "Clay or Stone House" "All Farmyard Spaces Used"} requirements)))
@@ -285,7 +285,7 @@
     (is (= :scholar (get-in pending [:effect-queue 0 :effect :op])))
     (is (= 0 (a/amount (g/p played 0) :food)))
     (is (some #{(c/id :b118)} (:occupations (g/p played 0))))
-    (is (= 0 (a/amount (g/p played 0) :wood)) "A newly played round-start trigger is not retroactive")
+    (is (= 0 (a/amount (g/p played 0) :wood)) "Small-scale Farmer does not get an immediate trigger; Plow Driver and Groom have separate rulings")
     (let [next-round (g/drain (g/begin-round played))]
       (is (= 1 (a/amount (g/p next-round 0) :wood)) "The trigger works starting next round"))))
 

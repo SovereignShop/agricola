@@ -12,7 +12,7 @@
   (fn [db [_ key value]]
     (cond-> (assoc-in db [:draft key] value)
       (= key :improvement) (update :draft dissoc :upgrade :bake-grain :card)
-      (= key :card) (update :draft dissoc :improvement :upgrade :bake-grain))))
+      (= key :card) (update :draft dissoc :improvement :upgrade :bake-grain :payment-option))))
 (rf/reg-event-db :select-action (fn [db [_ space]] (assoc db :draft {:space space :rooms [] :stables [] :fences [] :plantings [] :bake-grain 0} :error nil)))
 (rf/reg-event-db :inspect-player (fn [db [_ pid]] (assoc db :inspect-player pid)))
 (rf/reg-fx :navigate #(cond

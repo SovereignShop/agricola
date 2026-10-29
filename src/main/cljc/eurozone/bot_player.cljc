@@ -1,5 +1,6 @@
 (ns eurozone.bot-player
-  "Verified draft and move policies, run by the host browser."
+  "Draft and move policies run by the host browser. Learned weights retain
+   their original training provenance; unseen cards use heuristic estimates."
   (:require [agricola.bot :as bot] [agricola.draw :as draw] [agricola.engine :as engine]
             [agricola.card-game :as game] [agricola.card-rules :as cards]
             [clojure.string :as str] [eurozone.card-values :as card-values]

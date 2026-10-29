@@ -44,14 +44,18 @@
   (let [excluded (set (:excluded-packs settings)) pool (store/hand-pool n excluded)
         counts (frequencies (map :kind pool)) problem (store/pool-error n settings)]
     [:fieldset.pack-picker [:legend "Card packs"]
-     (for [{:keys [id label min-players]} store/card-packs] ^{:key id}
+     (for [{:keys [id label min-players implemented total]} store/card-packs] ^{:key id}
        [:label.checkbox
         [:input {:type "checkbox" :aria-label (str "Include " label) :checked (not (contains? excluded id))
                  :disabled (or disabled? (< n min-players))
                  :on-change #(change (assoc settings :excluded-packs
                                            (vec (sort (if (contains? excluded id) (disj excluded id) (conj excluded id))))))}]
-        [:span label (when (< n min-players) [:small " · five players only"]) ]])
-     [:p.small (str (get counts :occupation 0) " occupations · " (get counts :minor 0) " minor improvements available. Only packs with implemented rules are listed.")]
+        [:span label (when (< implemented total) [:small (str " · " implemented "/" total " cards")]) (when (< n min-players) [:small " · five players only"]) ]])
+     [:p.small (str (get counts :occupation 0) " occupations · " (get counts :minor 0) " minor improvements in the eligible pool.")]
+     [:details [:summary "Card coverage"]
+      [:p.small "Only cards with native rules enter the draw. A partial pack includes the listed number of playable cards; the remaining cards are still being implemented."]
+      (for [{:keys [id label implemented total]} store/card-pack-coverage] ^{:key id}
+        [:p.small (str label ": " implemented " / " total)])]
      (when problem [:p.warning {:role "status"} problem])]))
 (defn create-form []
   (let [name (r/atom (or (.getItem js/sessionStorage "eurozone-name") (.getItem js/localStorage "eurozone-name") "")) title (r/atom "") mode (r/atom :local) setup (r/atom :beginner) extra (r/atom 2) count (r/atom 2) bots (r/atom 0) seconds (r/atom 0) excluded (r/atom []) others (r/atom ["Farmer 2" "Farmer 3" "Farmer 4" "Farmer 5"])]
@@ -222,7 +226,7 @@
             [:li "Harvest after rounds 4, 7, 9, 11, 13, and 14."] [:li "The best-developed farm wins after the final harvest."]]
            [:p.small (if (= :beginner (get-in room [:setup :mode]))
                        "Beginner variant: no hand cards. Meeting Place accumulates food; Side Job lets you build a stable or bake bread."
-                       "Base occupations and minor improvements are enabled. Prerequisites and payment are enforced; card effects trigger automatically and pause when you have a choice.")]]]]))))
+                       "Occupations and minor improvements from the selected packs are enabled. Prerequisites and payment are enforced; card effects trigger automatically and pause when you have a choice.")]]]]))))
 
 (defn select-cell! [draft i]
   (let [space (:space draft) tool (or (:tool draft) (case space (:build :house-building) :room :side-job :stable (:sow-bake) :grain :field))]
@@ -450,14 +454,21 @@
     (catch :default error (.-message error))))
 (defn hand-select [g p kind draft & [optional?]]
   (let [pid (:id p) ui @(rf/subscribe [:ui]) hand (get-in ui [:private-hands (:game-id ui) pid kind])]
-    [field (if (= kind :occupation) "Occupation" "Minor improvement")
+    [:div [field (if (= kind :occupation) "Occupation" "Minor improvement")
      [:select {:aria-label (if (= kind :occupation) "Occupation" "Minor improvement")
                :value (or (some-> (:card draft) str) "")
                :on-change #(draft! :card (let [value (.. % -target -value)] (when (seq value) (keyword (subs value 1)))))}
       [:option {:value ""} (if optional? "None / use a major improvement" "Choose a card…")]
-      (for [id hand :let [reason (card-action-error g pid (-> draft (assoc :card id) (dissoc :improvement :upgrade :bake-grain)) ui)]] ^{:key id}
+      (for [id hand :let [reason (card-action-error g pid (-> draft (assoc :card id) (dissoc :improvement :upgrade :bake-grain :payment-option)) ui)]] ^{:key id}
         [:option {:value (str id) :disabled (boolean reason)}
-         (str (:name (cards/card id)) (when reason (str " — " reason)))])]]))
+         (str (:name (cards/card id)) (when reason (str " — " reason)))])]]
+     (when-let [costs (:cost-options (cards/card (:card draft)))]
+       [field "Card payment"
+        [:select {:aria-label "Card payment" :value (if (some? (:payment-option draft)) (:payment-option draft) "")
+                  :on-change #(draft! :payment-option (when (seq (.. % -target -value)) (js/parseInt (.. % -target -value))))}
+         [:option {:value ""} "First affordable payment"]
+         (for [[index cost] (map-indexed vector costs)] ^{:key index}
+           [:option {:value index} (str/join ", " (for [[resource n] cost] (str n " " (labels resource))))])]])]))
 (defn payment-options [p draft]
   [:div
    (when (cards/has? p :a123) [:label.checkbox [:input {:type "checkbox" :checked (boolean (:frame? draft)) :on-change #(draft! :frame? (.. % -target -checked))}] "Frame Builder: replace 2 clay/stone with 1 wood"])
@@ -562,7 +573,7 @@
 (defn card-decision [g p draft busy?]
   (let [head (first (:effect-queue g)) effect (:effect head) op (:op effect) options (card-game/order-options g)
         keep (get draft :keep (select-keys (:goods p) a/animals))
-        choice (merge (select-keys draft [:cell :frame? :brushwood? :renovate-to :paper-maker? :card :cook?])
+        choice (merge (select-keys draft [:cell :frame? :brushwood? :renovate-to :paper-maker? :card :cook? :option :payment-option])
                       (when (contains? draft :effect-fields) {:fields (:effect-fields draft)})
                       {:type :resolve :decision (:decision-id g) :keep keep :grain (get draft :effect-grain 1)
                        :action (or (:effect-action draft) (if (= op :young-artist) :draw :room))
@@ -572,7 +583,17 @@
         reason (try (card-game/resolve-choice (with-private-hand g (:id p) ui) (:id p) choice) nil
                     (catch :default error (.-message error)))]
     [:div.card-decision
-     [:div.eyebrow "RESOLVE A CARD EFFECT"] [:h3 (or (:name (cards/card (:card head))) "Make room for your animals")]
+     [:div.eyebrow "RESOLVE A CARD EFFECT"] [:h3 (if (= op :ability-window) "After the harvest" (or (:name (cards/card (:card head))) "Make room for your animals"))]
+     (when (= op :ability-window) [:p.small "You may use your card abilities before continuing to the next round or final scoring."])
+     (when (= op :choose)
+       [field "Card effect" [:select {:value (if (some? (:option draft)) (:option draft) "")
+                                      :on-change #(draft! :option (js/parseInt (.. % -target -value)))}
+                             [:option {:value ""} "Choose an effect…"]
+                             (for [[index option] (map-indexed vector (:options effect))] ^{:key index}
+                               [:option {:value index} (:label option)])]])
+     (when (#{:preparation :work :return-home :field-harvest :feeding :finish-round} (:phase g))
+       [:details [:summary "Convert goods to food"] [conversion-controls p draft :convert]
+        [button "Convert to food" #(dispatch :command {:type :convert :goods (or (:convert draft) {})}) "button secondary" busy?]])
      (when (:card head) [:p.small (:text (cards/card (:card head)))])
      (when (> (count options) 1)
        [field "Resolve effects in your chosen order"
@@ -627,7 +648,7 @@
         [:label.checkbox [:input {:type "checkbox" :checked (boolean (:cook? draft)) :on-change #(draft! :cook? (.. % -target -checked))}] "Cook surplus (requires a cooking improvement)"]])
      (when (and reason (not= op :sidekick)) [:p.card-unavailable {:role "status"} reason])
      [:div.form-row
-      (when-not (= op :sidekick) [button "Resolve effect →"
+      (when-not (= op :sidekick) [button (if (= op :ability-window) "Finish harvest decisions →" "Resolve effect →")
        #(dispatch :command choice) "button primary" (or busy? (boolean reason))])
       (when (:optional? effect) [button "Skip this effect" #(dispatch :command {:type :resolve :decision (:decision-id g) :skip? true}) "text-button" busy?])]]))
 
@@ -641,6 +662,7 @@
       [:details.card-ability [:summary (:name card)] [:p.small (:text card)]
        (case op
          :free-placement-fences [farm p {:space :fences :fences (:fences @selection)} true #(swap! selection assoc %1 %2)]
+         :adopt [:p.small "Pay 1 food to let a newborn take an action this work phase. That child will need adult feeding."]
          :cash-card [:p.small (str "Collect " (get-in p [:card-state cid :food] 0) " food and turn this card face down.")]
          :reed-food [:p.small "Exchange 1 reed for 2 food."]
          :buy-stock [:p.small (str "Next good: " (or (some-> (get-in p [:card-state cid :stock]) peek labels) "sold out") " · 1 food")]
@@ -658,7 +680,7 @@
         (or (:busy? ui) (not (:connected? ui)) (boolean reason))]])))
 (defn card-abilities [g p]
   (let [permission @(rf/subscribe [:permission]) abilities (filter #(get-in (cards/card %) [:ability]) (cards/active-owned p))]
-    (when (and (seq abilities) (some #{(:id p)} (:seats permission)) (#{:work :feeding :breeding :housing} (:phase g)))
+    (when (and (seq abilities) (some #{(:id p)} (:seats permission)) (#{:preparation :work :return-home :field-harvest :feeding :breeding :housing :finish-round} (:phase g)))
       [:div.panel [:div.eyebrow "CARD ABILITIES"]
        (for [cid abilities] ^{:key cid} [card-ability g p cid])])))
 
@@ -785,7 +807,7 @@
        [:tr [:td "Building resources"] (for [[i score] (map-indexed vector scores)] ^{:key i} [:td (:tiebreak score)])]]]]]))
 (defn improvement-library [g]
   [:section.panel [:div.eyebrow "TOOLS FOR A BETTER FARM"] [:h2 "Major improvements"]
-   [:p.small "All 10 base-game major improvements are available here. Original Korean card scans accompany the English effects enforced by the game. In card mode, private occupations and minor improvements appear in your hand panel. Expansion decks are not enabled."]
+   [:p.small "All 10 base-game major improvements are available here. Original Korean card scans accompany the English effects enforced by the game. In card mode, private occupations and minor improvements appear in your hand panel. Pack coverage is shown in table setup."]
    [:div.improvement-grid
     (for [[id card] (sort-by (comp :name val) a/improvements)] ^{:key id}
       [:div.improvement-card {:class (when-not ((:available-improvements g) id) "built")}
@@ -803,7 +825,7 @@
     [:div [:h3 "Feed and breed"] [:p "Harvest after rounds 4, 7, 9, 11, 13, and 14. Adults need two food (three in solo); newborns need one. Each missing food costs a begging mark worth −3 points. After feeding, each pair breeds one animal if it fits."]]
     [:div [:h3 "Make it count"] [:p "Score fields, pastures, crops, animals, rooms, family, improvements and fenced stables. Empty land and missing categories lose points. The game ends after round 14’s harvest."]]]
    [:p.small (if (= :cards (:variant g))
-               "This table uses Revised Edition base occupations and minor improvements. Use Lessons for occupations and Meeting Place or an improvement action for minor improvements. Card prerequisites and costs are enforced. Effects trigger automatically; optional effects and choices wait for their owner. Cards can change the basic costs and rules above. Expansion decks are not enabled."
+               "This table uses occupations and minor improvements from the selected packs. Use Lessons for occupations and Meeting Place or an improvement action for minor improvements. Card prerequisites and costs are enforced. Effects trigger automatically; optional effects and choices wait for their owner. Cards can change the basic costs and rules above. Pack coverage is shown in table setup."
                "This table uses the official beginner variant without hand cards. Meeting Place accumulates one food each round. Side Job offers one stable for one wood and/or baking bread.")]
    [:p.small "Animal placement is automatically arranged to fit your herd. Drag panel titles to dock them and drag dividers to resize. Use Show all farms to see every player’s board, or Focus table for more room."]
    [:div.form-row [:a.button.secondary {:href (:rules (first catalog/games)) :target "_blank" :rel "noreferrer"} "Official rulebook ↗"]

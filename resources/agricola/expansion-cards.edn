@@ -1,0 +1,353 @@
+#:catalog{:revised-artifex-expansion-a-101-cookery-outfitter
+          {:score {:type :expression, :value [:cooking-improvements]}},
+          :revised-artifex-expansion-a-104-wood-harvester
+          {:triggers
+           [{:event :field-phase,
+             :effect
+             {:op :gain,
+              :goods
+              {:wood [:space-pile-count :wood := 2],
+               :food [:space-pile-count :wood :>= 3]}}}]},
+          :revised-artifex-expansion-a-105-barrow-pusher
+          {:triggers
+           [{:event :plow,
+             :effect
+             {:op :gain,
+              :goods
+              {:clay [:context :fields-plowed],
+               :food [:context :fields-plowed]}}}]},
+          :revised-artifex-expansion-a-117-wood-carrier
+          {:play [{:op :gain, :goods {:wood [:improvements]}}]},
+          :revised-artifex-expansion-a-118-treegardener
+          {:triggers
+           [{:event :field-phase,
+             :effects
+             [{:op :gain, :goods {:wood 1}}
+              {:op :choose,
+               :optional? true,
+               :options
+               [{:label "Buy 1 wood for 1 food",
+                 :cost {:food 1},
+                 :effects [{:op :gain, :goods {:wood 1}}]}
+                {:label "Buy 2 wood for 2 food",
+                 :cost {:food 2},
+                 :effects [{:op :gain, :goods {:wood 2}}]}]}]}]},
+          :revised-artifex-expansion-a-121-clay-puncher
+          {:play [{:op :gain, :goods {:clay 1}}],
+           :triggers
+           [{:event :after-use-space,
+             :spaces
+             #{:clay
+               :lessons-extra
+               :lessons-copse
+               :lessons-growth
+               :lessons},
+             :effect {:op :gain, :goods {:clay 1}}}]},
+          :revised-artifex-expansion-a-122-pan-baker
+          {:triggers
+           [{:event :use-space,
+             :spaces #{:sow-bake},
+             :effect {:op :gain, :goods {:clay 2, :wood 1}}}]},
+          :revised-artifex-expansion-a-135-animal-reeve
+          {:play [{:op :house-steward}],
+           :global-score? true,
+           :score
+           {:type :expression,
+            :value
+            [:if
+             [:and
+              [:>= [:goods :sheep] 4]
+              [:>= [:goods :boar] 4]
+              [:>= [:goods :cattle] 4]]
+             5
+             [:if
+              [:and
+               [:>= [:goods :sheep] 3]
+               [:>= [:goods :boar] 3]
+               [:>= [:goods :cattle] 3]]
+              3
+              [:if
+               [:and
+                [:>= [:goods :sheep] 2]
+                [:>= [:goods :boar] 2]
+                [:>= [:goods :cattle] 2]]
+               1
+               0]]]}},
+          :revised-artifex-expansion-a-136-drudgery-reeve
+          {:play [{:op :house-steward}],
+           :global-score? true,
+           :score
+           {:type :expression,
+            :value
+            [:if
+             [:and
+              [:>= [:goods :wood] 3]
+              [:>= [:goods :clay] 3]
+              [:>= [:goods :reed] 3]
+              [:>= [:goods :stone] 3]]
+             5
+             [:if
+              [:and
+               [:>= [:goods :wood] 2]
+               [:>= [:goods :clay] 2]
+               [:>= [:goods :reed] 2]
+               [:>= [:goods :stone] 2]]
+              3
+              [:if
+               [:and
+                [:>= [:goods :wood] 1]
+                [:>= [:goods :clay] 1]
+                [:>= [:goods :reed] 1]
+                [:>= [:goods :stone] 1]]
+               1
+               0]]]}},
+          :revised-artifex-expansion-a-140-shovel-bearer
+          {:triggers
+           [{:event :use-space,
+             :spaces #{:clay :hollow},
+             :effect
+             {:op :gain,
+              :goods
+              {:food
+               [:if
+                [:= [:context :space] :clay]
+                [:pile :hollow :clay]
+                [:pile :clay :clay]]}}}]},
+          :revised-artifex-expansion-a-141-turnip-farmer
+          {:triggers
+           [{:event :return-home,
+             :condition
+             [:test [:and [:occupied :labor] [:occupied :grain]]],
+             :effect {:op :gain, :goods {:vegetable 1}}}]},
+          :revised-artifex-expansion-a-145-ropemaker
+          {:triggers
+           [{:event :harvest-end,
+             :effect {:op :gain, :goods {:reed 1}}}]},
+          :revised-artifex-expansion-a-146-storehouse-steward
+          {:triggers
+           [{:event :use-space,
+             :spaces #{:fishing :traveling},
+             :effect
+             {:op :gain,
+              :goods
+              {:stone [:if [:= [:taken :food] 2] 1 0],
+               :reed [:if [:= [:taken :food] 3] 1 0],
+               :clay [:if [:= [:taken :food] 4] 1 0],
+               :wood [:if [:= [:taken :food] 5] 1 0]}}}]},
+          :revised-artifex-expansion-a-153-pig-owner
+          {:triggers
+           [{:event :check-state,
+             :condition [:test [:>= [:goods :boar] 5]],
+             :once? true,
+             :effect {:op :points, :amount 3}}]},
+          :revised-artifex-expansion-a-164-wood-worker
+          {:triggers
+           [{:event :after-use-space,
+             :spaces #{:copse :grove :wood},
+             :effect
+             {:op :return-goods,
+              :optional? true,
+              :cost {:wood 1},
+              :goods {:sheep 1}}}]},
+          :revised-artifex-expansion-a-166-haydryer
+          {:triggers
+           [{:event :before-field-phase,
+             :effect
+             {:op :exchange,
+              :optional? true,
+              :cost {:food [:max 0 [:- 4 [:pastures]]]},
+              :goods {:cattle 1}}}]},
+          :revised-artifex-expansion-a-168-animal-teacher
+          {:triggers
+           [{:event :after-use-space,
+             :spaces
+             #{:lessons-extra :lessons-copse :lessons-growth :lessons},
+             :effect
+             {:op :choose,
+              :optional? true,
+              :options
+              [{:label "Take 1 sheep",
+                :cost {},
+                :effects [{:op :gain, :goods {:sheep 1}}]}
+               {:label "Buy 1 wild boar for 1 food",
+                :cost {:food 1},
+                :effects [{:op :gain, :goods {:boar 1}}]}
+               {:label "Buy 1 cattle for 2 food",
+                :cost {:food 2},
+                :effects [{:op :gain, :goods {:cattle 1}}]}]}}]},
+          :revised-artifex-expansion-a-29-ale-benches
+          {:triggers
+           [{:event :return-home,
+             :effect
+             {:op :sequence,
+              :optional? true,
+              :cost {:grain 1},
+              :effects
+              [{:op :points, :amount 1}
+               {:op :all-gain, :owner {}, :others {:food 1}}]}}]},
+          :revised-artifex-expansion-a-31-debt-security
+          {:score
+           {:type :expression, :value [:min [:majors] [:unused]]}},
+          :revised-artifex-expansion-a-37-bucksaw
+          {:triggers
+           [{:event :renovate,
+             :effect
+             {:op :sequence,
+              :optional? true,
+              :cost {:wood 1},
+              :effects
+              [{:op :gain, :goods {:grain 1}}
+               {:op :points, :amount 1}]}}]},
+          :revised-artifex-expansion-a-4-baseboards
+          {:cost-options [{:food 2} {:grain 1}],
+           :play
+           [{:op :gain,
+             :goods
+             {:wood
+              [:+ [:rooms] [:if [:> [:rooms] [:family]] 1 0]]}}]},
+          :revised-artifex-expansion-a-42-forest-lake-hut
+          {:triggers
+           [{:event :use-space,
+             :spaces #{:fishing},
+             :effect {:op :gain, :goods {:wood 1}}}
+            {:event :use-space,
+             :spaces #{:wood},
+             :effect {:op :gain, :goods {:food 1}}}]},
+          :revised-artifex-expansion-a-43-farmyard-manure
+          {:triggers
+           [{:event :build-stables,
+             :effect
+             {:op :schedule, :offsets [1 2 3], :goods {:food 1}}}]},
+          :revised-artifex-expansion-a-45-fire-protection-pond
+          {:triggers
+           [{:event :check-state,
+             :condition [:not-house :wood],
+             :once? true,
+             :effect
+             {:op :schedule,
+              :offsets [1 2 3 4 5 6],
+              :goods {:food 1}}}]},
+          :revised-artifex-expansion-a-46-claw-knife
+          {:triggers
+           [{:event :use-space,
+             :spaces #{:sheep},
+             :effect
+             {:op :schedule, :offsets [1 2], :goods {:food 1}}}]},
+          :revised-artifex-expansion-a-47-trellises
+          {:play
+           [{:op :schedule,
+             :offset-count [:fences],
+             :goods {:food 1}}]},
+          :revised-artifex-expansion-a-51-drift-net-boat
+          {:triggers
+           [{:event :use-space,
+             :spaces #{:fishing},
+             :effect {:op :gain, :goods {:food 2}}}]},
+          :revised-artifex-expansion-a-52-throwing-axe
+          {:triggers
+           [{:event :use-space,
+             :spaces #{:copse :grove :wood},
+             :condition [:test [:> [:pile :boar :boar] 0]],
+             :effect {:op :gain, :goods {:food 2}}}]},
+          :revised-artifex-expansion-a-54-credit
+          {:play [{:op :gain, :goods {:food 5}}],
+           :triggers
+           [{:event :round-end,
+             :condition [:test [:not [:harvest-round]]],
+             :effect {:op :pay-or-beg, :food 1}}]},
+          :revised-artifex-expansion-a-57-milking-parlor
+          {:play
+           [{:op :gain,
+             :goods
+             {:food
+              [:+
+               [:if
+                [:>= [:goods :sheep] 4]
+                4
+                [:if
+                 [:>= [:goods :sheep] 3]
+                 3
+                 [:if [:>= [:goods :sheep] 1] 2 0]]]
+               [:if
+                [:>= [:goods :cattle] 3]
+                4
+                [:if
+                 [:>= [:goods :cattle] 2]
+                 3
+                 [:if [:>= [:goods :cattle] 1] 2 0]]]]}}]},
+          :revised-artifex-expansion-a-6-storage-barn
+          {:play
+           [{:op :gain,
+             :goods
+             {:stone [:if [:owns-major :well] 1 0],
+              :wood [:if [:owns-major :joinery] 1 0],
+              :clay [:if [:owns-major :pottery] 1 0],
+              :reed [:if [:owns-major :basketry] 1 0]}}]},
+          :revised-artifex-expansion-a-64-barley-mill
+          {:cost-options [{:wood 1, :clay 4} {:wood 1, :stone 2}],
+           :triggers
+           [{:event :field-phase,
+             :effect
+             {:op :gain,
+              :goods {:food [:context :harvested-grain-fields]}}}]},
+          :revised-artifex-expansion-a-66-feeding-dish
+          {:triggers
+           [{:event :use-space,
+             :spaces #{:sheep},
+             :condition [:test [:> [:before-goods :sheep] 0]],
+             :effect {:op :gain, :goods {:grain 1}}}
+            {:event :use-space,
+             :spaces #{:boar},
+             :condition [:test [:> [:before-goods :boar] 0]],
+             :effect {:op :gain, :goods {:grain 1}}}
+            {:event :use-space,
+             :spaces #{:cattle},
+             :condition [:test [:> [:before-goods :cattle] 0]],
+             :effect {:op :gain, :goods {:grain 1}}}]},
+          :revised-artifex-expansion-a-68-asparagus-gift
+          {:triggers
+           [{:event :fence,
+             :condition
+             [:test [:>= [:context :fences-built] [:round]]],
+             :effect {:op :gain, :goods {:vegetable 1}}}]},
+          :revised-artifex-expansion-a-7-gardener-s-knife
+          {:play
+           [{:op :gain,
+             :goods
+             {:food [:grain-fields], :grain [:vegetable-fields]}}]},
+          :revised-artifex-expansion-a-72-calcium-fertilizers
+          {:triggers
+           [{:event :use-space,
+             :spaces #{:stone-west :stone-east},
+             :effect {:op :add-field-crops, :amount 1}}]},
+          :revised-artifex-expansion-a-74-stable-tree
+          {:triggers
+           [{:event :build-stables,
+             :effect
+             {:op :schedule, :offsets [1 2 3], :goods {:wood 1}}}]},
+          :revised-artifex-expansion-a-76-cob
+          {:triggers
+           [{:event :work-start,
+             :condition [:test [:> [:goods :clay] 0]],
+             :effect
+             {:op :exchange,
+              :optional? true,
+              :cost {:grain 1},
+              :goods {:clay 2, :food 1}}}]},
+          :revised-artifex-expansion-a-77-hod
+          {:play [{:op :gain, :goods {:clay 1}}],
+           :triggers
+           [{:event :use-space,
+             :scope :all,
+             :spaces #{:boar},
+             :effect {:op :gain, :goods {:clay 2}}}]},
+          :revised-artifex-expansion-a-8-food-basket
+          {:play [{:op :gain, :goods {:grain 1, :vegetable 1}}]},
+          :revised-artifex-expansion-a-91-shifting-cultivator
+          {:triggers
+           [{:event :use-space,
+             :spaces #{:copse :grove :wood},
+             :effect {:op :plow, :optional? true, :cost {:food 3}}}]},
+          :revised-artifex-expansion-a-99-fellow-grazer
+          {:score
+           {:type :expression, :value [:* 2 [:pastures-at-least 3]]}}}

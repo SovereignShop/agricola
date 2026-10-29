@@ -45,7 +45,8 @@
           public (:state (model/pull-game @(:conn store) id))
           deck (set (:minor-deck state))
           dealt (set (mapcat #(get-in % [:hand :minor]) (:players state)))]
-      (is (= 13 (count deck) (:minor-deck-count public)))
+      (is (= (- (count (filter #(= :minor (:kind %)) (s/hand-pool 5))) 35)
+             (count deck) (:minor-deck-count public)))
       (is (not-any? dealt deck))
       (is (nil? (:minor-order public)))
       (is (nil? (:minor-deck public)))
@@ -238,13 +239,15 @@
           (is (= 1 (get-in @(:rooms restored) [id :state :turn])))))
       (finally (.delete (java.io.File. path))))))
 
+(def non-base-b-packs (mapv :id (remove #(= "base-b" (:id %)) s/card-packs)))
+
 (deftest excluded-packs-filter-real-draws-and-deals
   (is (= {:mode :draw :extra 2 :excluded-packs ["base-a" "five-player"]}
          (s/valid-setup {:mode :draw :excluded-packs ["five-player" "base-a" "base-a"]})))
   (is (thrown? clojure.lang.ExceptionInfo (s/valid-setup {:mode :draw :excluded-packs ["unimplemented-pack"]})))
-  (let [draft (s/make-draw 2 2 ["base-a"])
+  (let [draft (s/make-draw 2 2 non-base-b-packs)
         ids (mapcat identity (:packets draft))
-        game (s/start-state ["Ada" "Ben"] {:mode :random :excluded-packs ["base-a"]})
+        game (s/start-state ["Ada" "Ben"] {:mode :random :excluded-packs non-base-b-packs})
         hands (mapcat #(concat (get-in % [:hand :minor]) (get-in % [:hand :occupation])) (:players game))]
     (is (= 32 (count ids)))
     (is (every? #(= "base-b" (s/card-pack (rules/card %))) ids))
@@ -253,9 +256,9 @@
   (let [draft (s/make-draw 5 2 ["five-player"])]
     (is (= 80 (count (mapcat identity (:packets draft)))))
     (is (not-any? rules/five-card? (mapcat identity (:packets draft)))))
-  (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Include more packs" (s/make-draw 4 2 ["base-a"])))
-  (is (thrown-with-msg? clojure.lang.ExceptionInfo #"reduce extra cards" (s/make-draw 2 10 ["base-a"])))
-  (is (thrown? clojure.lang.ExceptionInfo (s/start-state ["Ada"] {:mode :random :excluded-packs ["base-a" "base-b"]}))))
+  (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Include more packs" (s/make-draw 4 2 non-base-b-packs)))
+  (is (thrown-with-msg? clojure.lang.ExceptionInfo #"reduce extra cards" (s/make-draw 2 10 non-base-b-packs)))
+  (is (thrown? clojure.lang.ExceptionInfo (s/start-state ["Ada"] {:mode :random :excluded-packs (mapv :id s/card-packs)}))))
 
 (deftest pack-settings-are-host-only-and-reset-readiness
   (let [store (s/make-store nil)
@@ -269,5 +272,5 @@
     (is (false? (get-in @(:rooms store) [id :seats 1 :ready?])))
     (send! "guest" {:event :ready :ready? true})
     (send! "host" {:event :start})
-    (is (every? #(= "base-b" (s/card-pack (rules/card %))) (mapcat identity (get-in @(:rooms store) [id :state :draw :packets]))))
+    (is (not-any? #(= "base-a" (s/card-pack (rules/card %))) (mapcat identity (get-in @(:rooms store) [id :state :draw :packets]))))
     (is (thrown? clojure.lang.ExceptionInfo (send! "host" message)))))

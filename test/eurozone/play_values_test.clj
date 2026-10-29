@@ -4,9 +4,11 @@
             [agricola.bot :as bot] [agricola.simulation :as sim]
             [agricola.recording :as recording]))
 
-(deftest model-provenance-matches-rules-and-policy
-  (is (= (sim/rules-hash) (get learned/model "rules")))
-  (is (= (value/source-hash) (get learned/model "source")))
+(deftest model-retains-its-recorded-training-provenance
+  ;; Do not relabel existing weights as trained on newly added rules/cards.
+  ;; Runtime legality/evaluator parity is tested below; strength needs new games.
+  (is (= "694dc119425ef5e1829f5e3b0df184f135185351a3617a49af9f977d5fe18356" (get learned/model "rules")))
+  (is (= "7852ad77cdd89bce5718656c52951cd0eeb8c0201b23e905ddcbd528cc3546e5" (get learned/model "source")))
   (doseq [kind ["random_gain" "draft_gain"] metric ["score_gain_95_interval" "margin_gain_95_interval"]]
     (is (pos? (first (get-in learned/model ["provenance" kind metric]))))))
 

@@ -10,7 +10,7 @@
 (def canonical recording/canonical)
 (def sha recording/sha)
 (def state-hash recording/state-hash)
-(def rule-files ["agricola/board.edn" "agricola/cards.edn" "agricola/five-player-cards.edn" "agricola/five_player.cljc" "agricola/engine.cljc" "agricola/card_game.cljc" "agricola/card_rules.cljc" "agricola/card_catalog.cljc" "agricola/draw.cljc"])
+(def rule-files ["agricola/board.edn" "agricola/cards.edn" "agricola/five-player-cards.edn" "agricola/expansion-cards.edn" "agricola/five_player.cljc" "agricola/engine.cljc" "agricola/card_game.cljc" "agricola/card_rules.cljc" "agricola/card_expressions.cljc" "agricola/card_catalog.cljc" "agricola/draw.cljc"])
 (defn rules-hash [] (sha (apply str (map #(slurp (io/resource %)) rule-files))))
 (defn shuffle-with [^Random rng xs]
   (let [copy (ArrayList. (vec xs))] (Collections/shuffle copy rng) (vec copy)))

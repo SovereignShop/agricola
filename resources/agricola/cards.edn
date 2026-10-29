@@ -37,7 +37,7 @@
      :goods {:food 3},
      :op :return-goods,
      :optional? true},
-    :event :use-space,
+    :event :after-use-space,
     :spaces #{:copse :grove :wood}}]},
  :a063
  {:triggers
@@ -70,12 +70,14 @@
  :a087 {:passive {:direct-stone true}},
  :a088 {:passive {:free-fences 3}},
  :a090
- {:triggers
+ {:scholar-round-start? true :triggers
   [{:condition [:house :stone],
     :effect {:cost {:food 1}, :op :plow, :optional? true},
     :event :round-start}]},
  :a092
- {:triggers
+ {:ability {:op :adopt}
+  :play [{:cost {:food 1}, :op :adopt, :optional? true}]
+  :triggers
   [{:effect {:cost {:food 1}, :op :adopt, :optional? true},
     :event :grow}]},
  :a098 {:score {:type :unfenced-stables}},
@@ -92,7 +94,7 @@
      :goods {:food 2},
      :op :return-goods,
      :optional? true},
-    :event :use-space,
+    :event :after-use-space,
     :spaces #{:copse :grove :wood}}]},
  :a110
  {:triggers
@@ -128,7 +130,7 @@
  :a119
  {:triggers
   [{:effect {:goods {:wood 1}, :op :gain},
-    :event :use-space,
+    :event :turn-end,
     :spaces #{:cultivation :grain :plow :sow-bake}}]},
  :a120
  {:triggers
@@ -256,7 +258,7 @@
     :event :use-space,
     :spaces #{:labor}}]},
  :b089
- {:play [{:goods {:wood 1}, :op :gain}],
+ {:scholar-round-start? true :play [{:goods {:wood 1}, :op :gain}],
   :triggers
   [{:condition [:house :stone],
     :effect {:cost {:wood 1}, :op :stable, :optional? true},

@@ -1,5 +1,6 @@
 (ns eurozone.play-values
-  "Independently tested expected-score evaluator for two-player card games."
+  "Expected-score evaluator transferred from the recorded two-player training
+   rules. Its old benchmark does not establish strength on new decks."
   (:require [agricola.afterstate-value :as value]
             #?(:clj [agricola.data :refer [read-edn]]))
   #?(:cljs (:require-macros [agricola.data :refer [read-edn]])))

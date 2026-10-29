@@ -1,5 +1,6 @@
 (ns eurozone.card-values
-  "Validated two-player draft rankings, independent of the game rules."
+  "Two-player base-deck draft rankings. Unknown cards use the caller fallback;
+   the stored training fingerprint is preserved when the live rules change."
   #?(:clj (:require [agricola.data :refer [read-edn]]))
   #?(:cljs (:require-macros [agricola.data :refer [read-edn]])))
 (def model (read-edn "eurozone/draft-values.edn"))

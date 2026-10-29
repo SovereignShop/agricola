@@ -1,5 +1,5 @@
 {:edition :revised-2016
- :reviewed "2026-10-27"
+ :reviewed "2026-10-28"
  :sources
  [{:id :printed-rules :authority :publisher
    :url "https://www.lookout-spiele.de/upload/en_agricolare.html_Rules_Agricola-RE_EN.pdf"}
@@ -16,12 +16,17 @@
    :url "http://playagricola.com/forums/index.php?board=23.0"
    :note "Check card edition and printing. Separate expansion boards are linked from the forum index."}]
  :regressions
- [{:id :scholar-start-of-round :cards [:revised-base/b097]
+ [{:id :scholar-immediate-plow-driver-and-groom :cards [:revised-base/a090 :revised-base/b089]
+   :source "https://docs.google.com/document/d/1WUl0HlzX6Yx0ume75UmpaIMhoHukx9XufM_LbV1oZ6E/edit"
+   :authority :unofficial-compilation
+   :rule "Plow Driver and Groom played by Scholar can be used immediately in that preparation phase."
+   :test agricola.card-timing-test/newly-played-scholar-effects-use-the-current-round-window}
+  {:id :scholar-start-of-round :cards [:revised-base/b097]
    :source "https://boardgamegeek.com/thread/2505218/b097-scholar"
    :cross-reference "https://docs.google.com/document/d/1WUl0HlzX6Yx0ume75UmpaIMhoHukx9XufM_LbV1oZ6E/edit"
    :authority :community-clarification-of-printed-text
    :rule "Scholar acts at round start; Well income is available."
-   :limitation "The test's blanket assertion about newly played round-start triggers is not a verified general ruling. The compendium explicitly allows newly played Plow Driver immediately; see open_issues.edn. Remaining-round schedules such as Manservant are a separate case."
+   :limitation "The Small-scale Farmer test is specific to that card. Plow Driver and Groom have separately tested same-window exceptions. Manservant schedules only future rounds."
    :test agricola.card-game-test/scholar-uses-current-printing-round-start-timing}
   {:id :scholar-manservant :cards [:revised-base/b097 :revised-base/b107]
    :source "https://docs.google.com/document/d/1WUl0HlzX6Yx0ume75UmpaIMhoHukx9XufM_LbV1oZ6E/edit"

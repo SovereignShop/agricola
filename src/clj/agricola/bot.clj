@@ -3,7 +3,7 @@
    the same rules as human commands. The policy sees public information and its
    own hand only; previews stop before advancing the turn or revealing a round."
   (:require [agricola.engine :as a] [agricola.card-game :as g]
-            [agricola.card-rules :as c] [agricola.five-player :as five] [clojure.set :as set]))
+            [agricola.card-rules :as c] [agricola.five-player :as five] [agricola.card-expressions :as expression] [clojure.set :as set]))
 
 (def version 1)
 (defn attempt [f]
@@ -24,6 +24,7 @@
       :action (g/drain (without-continuations (g/take-action state pid cmd)))
       :resolve (g/drain (without-continuations (g/resolve-choice state pid cmd)))
       :ability (g/drain (g/with-housing (g/ability state pid cmd)))
+      :convert (g/command (without-continuations state) pid cmd)
       :feed (a/feed state pid cmd)
       :breed (a/breed state pid cmd)))))
 (defn subsets [xs]
@@ -37,8 +38,9 @@
             stone? (assoc :renovate-to :stone))))
 (defn hand-options [p kind]
   (for [cid (get-in p [:hand kind])
-        paper? (if (and (= kind :occupation) (c/has? p :b109)) [false true] [false])]
-    (cond-> {:card cid} paper? (assoc :paper-maker? true))))
+        paper? (if (and (= kind :occupation) (c/has? p :b109)) [false true] [false])
+        payment (if-let [costs (:cost-options (c/card cid))] (range (count costs)) [nil])]
+    (cond-> {:card cid} paper? (assoc :paper-maker? true) (some? payment) (assoc :payment-option payment))))
 (defn sow-plans [p]
   (distinct
    (cons []
@@ -117,10 +119,12 @@
                    (mapcat #(repeat (a/amount p %) %) order))
            kept (reduce (fn [p animal] (let [next (a/gain p {animal 1})] (if (a/animal-housing next) next p))) empty units)]
        (select-keys (:goods kept) a/animals)))))
+(declare ability-candidates)
 (defn decision-candidates [state pid]
   (let [p (g/p state pid) effect (:effect (first (:effect-queue state)))
         options (case (:op effect)
                   (:plow :stable :mini-pasture :corral-builder :amateur-fencer :plowsmith) (map #(hash-map :cell %) (range 15))
+                  :choose (map #(hash-map :option %) (range (count (:options effect))))
                   :choose-good (map #(hash-map :resource %) (:choices effect))
                   :seasonal-crop [{:resource :grain} {:resource :vegetable}]
                   :bake (map #(hash-map :grain %) (range 1 (inc (min 8 (a/amount p :grain)))))
@@ -137,15 +141,31 @@
                   :extra-grain-harvest (map #(hash-map :fields %) (reductions conj [] (filter #(let [f (get-in p (a/field-path %))]
                                                                                                    (and (= :grain (:crop f)) (pos? (get f :count 0)))) (field-ids p))))
                   [{}])]
-    (map #(merge {:type :resolve :decision (:decision-id state)} %)
-         (cond-> options (:optional? effect) (concat [{:skip? true}])))))
+    (concat (when (= :ability-window (:op effect)) (ability-candidates state pid))
+     (when (= :ability-window (:op effect))
+       (for [cid (c/active-owned p)
+             :when (and (= :buy-stock (get-in (c/card cid) [:ability :op])) (seq (get-in p [:card-state cid :stock])))
+             :let [goods (g/funding-conversion state pid {:food 1})] :when (seq goods)]
+         {:type :convert :goods goods}))
+     (when (or (:optional? effect) (= :pay-or-beg (:op effect)))
+       (let [context (get-in state [:effect-queue 0 :context])
+             base (if (= :pay-or-beg (:op effect)) {:food (:food effect)}
+                      (expression/quantities state pid context (:cost effect)))
+             costs (if (= :choose (:op effect))
+                     (for [option (:options effect)
+                           :when (expression/evaluate state pid context (get option :when true))]
+                       (merge-with + base (expression/quantities state pid context (:cost option)))) [base])]
+         (for [cost costs :let [goods (g/funding-conversion state pid cost)] :when (seq goods)]
+           {:type :convert :goods goods})))
+     (map #(merge {:type :resolve :decision (:decision-id state)} %)
+         (cond-> options (:optional? effect) (concat [{:skip? true}]))))))
 (defn ability-candidates [state pid]
   (let [p (g/p state pid)]
     (mapcat
      (fn [cid]
        (map #(merge {:type :ability :card cid} %)
             (case (get-in (c/card cid) [:ability :op])
-              (:buy-stock :cash-card :reed-food) [{}]
+              (:adopt :buy-stock :cash-card :reed-food) [{}]
               :free-placement-fences (map #(hash-map :fences %) (fence-plans p))
               :porcelain (map #(hash-map :amount %) [2 3 4])
               :sheep-exchange (map #(hash-map :resource %) [:boar :vegetable :stone])

@@ -1,34 +1,34 @@
-{:reviewed "2026-10-27"
+{:reviewed "2026-10-28"
  :edition :revised-2016
  :reproducer "clojure -M scripts/audit_card_timing.clj"
  :issues
  [{:id :sheep-walker-post-breeding
-   :status :reproduced-implementation-gap
+   :status :fixed-with-regression
    :cards [:revised-base/b104]
    :authority :unofficial-compilation
    :source "https://docs.google.com/document/d/1WUl0HlzX6Yx0ume75UmpaIMhoHukx9XufM_LbV1oZ6E/edit"
    :expected "The B104 entry permits sheep exchanges immediately after breeding, before scoring or the next round."
-   :actual "Final breeding goes directly to :finished. An exchange is rejected as game finished. Anytime abilities also reject :breeding."
-   :follow-up "Add the appropriate between-phase decision opportunity; audit the other anytime abilities and distinguish animal exchange from cooking restrictions."}
+   :actual "After breeding, an owner with an available anytime ability receives a persistent decision window before next round or final scoring."
+   :test agricola.card-timing-test/post-breeding-abilities-persist-and-precede-final-scoring}
   {:id :round-start-affordability-order
-   :status :reproduced-order-dependent-behavior
+   :status :fixed-with-regression
    :cards [:revised-base/a090 :revised-base/b097 :revised-base/b016]
    :authority :engine-invariant-and-card-text
    :expected "At round start, Scholar can play Mining Hammer for 1 wood, gaining 1 food, which can then pay Plow Driver. Both round-start occupations were already in play."
-   :actual "At 0 food, drain discards Plow Driver before the player can choose Scholar first. With occupation order reversed the same sequence works."
-   :follow-up "Do not permanently discard a temporarily unaffordable optional effect before the owner can order other effects in that timing window. Add a regression for both card orders."}
+   :actual "Temporarily unaffordable effects are retained while another card in the same owner/timing window can fund them. Food conversion is also available in preparation."
+   :test agricola.card-timing-test/unaffordable-effect-survives-another-card-in-its-window}
   {:id :scholar-new-plow-driver
-   :status :reproduced-implementation-gap
+   :status :fixed-with-regression
    :cards [:revised-base/b097 :revised-base/a090]
    :authority :unofficial-compilation
    :source "https://docs.google.com/document/d/1WUl0HlzX6Yx0ume75UmpaIMhoHukx9XufM_LbV1oZ6E/edit"
    :expected "The A090 entry explicitly permits immediate use when Plow Driver is played by Scholar."
-   :actual "With a stone house and 2 food, Scholar plays Plow Driver for 1 food, but no plow decision is queued although 1 food remains."
+   :actual "Scholar queues the newly played Plow Driver or Groom in the same preparation window. Ordinary plays cannot forge this timing."
    :evidence "data/analysis/rule-review-20261027/reproductions.edn"
-   :follow-up "Support this same-window trigger and audit newly played start-of-round cards individually. Do not generalize Manservant's remaining-round schedule to every start-of-round effect."}]
+   :test agricola.card-timing-test/newly-played-scholar-effects-use-the-current-round-window}]
  :audit-questions
  [{:id :use-space-before-versus-after
    :status :needs-targeted-ruling-and-combination-audit
    :source "https://docs.google.com/document/d/1WUl0HlzX6Yx0ume75UmpaIMhoHukx9XufM_LbV1oZ6E/edit"
-   :note "The compendium distinguishes use-space triggers from immediately-after triggers. The engine currently queues use-space events after applying the base action. Audit payment/food/baking combinations before claiming full timing coverage."}]
+   :note "The compendium distinguishes use-space triggers from immediately-after triggers. Basket and Mushroom Collector now resolve after use-space effects, and Firewood Collector at turn end. The base action still precedes use-space triggers; cards requiring before-action interruption need additional infrastructure before being enabled."}]
  :training-note "cards-deep-v1 remains on its original rules fingerprint. These findings came from targeted audit, not runtime/replay failures. Replays establish consistency, not independent rules correctness."}

@@ -5,23 +5,54 @@
             #?(:clj [agricola.data :refer [read-edn]]))
   #?(:cljs (:require-macros [agricola.data :refer [read-edn]])))
 
-(def expansion-codes (set (for [deck ["a" "b" "c" "d"] number (range 169 181)] (str deck number))))
-(defn id [code] (let [code (str/lower-case (name code))] (keyword (if (expansion-codes code) "revised-five" "revised-base") code)))
-(defn five-card? [cid] (= "revised-five" (namespace cid)))
+(defn catalogue-id [card]
+  (let [code (str (str/lower-case (:deck card))
+                  (apply str (repeat (max 0 (- 3 (count (:number card)))) "0")) (:number card))]
+    (cond
+      (and (= "Revised" (:edition card)) (= "Base (Revised)" (:pack card)) (seq (:deck card))) (keyword "revised-base" code)
+      (and (= "5-6 Player Expansion" (:pack card)) (= "Occupation" (:type card))) (keyword "revised-five" code)
+      :else (keyword "catalog" (:id card)))))
+(defn pack-id [card]
+  (cond
+    (= "revised-base" (namespace (catalogue-id card))) (str "base-" (str/lower-case (:deck card)))
+    (= "revised-five" (namespace (catalogue-id card))) "five-player"
+    :else (str/lower-case (str (:edition card) " · " (:pack card)
+                              (when (= "Original" (:edition card)) (str " · " (:deck card)))))))
 (def metadata
-  (into {} (for [c (concat catalog/revised-base (filter #(and (= "5-6 Player Expansion" (:pack %)) (= "Occupation" (:type %))) catalog/cards)) :when (not= "Major Improvement" (:type c))
-                 :let [code (str (str/lower-case (:deck c)) (apply str (repeat (- 3 (count (:number c))) "0")) (:number c))]]
-             [(id code) (assoc c :id (id code) :kind (if (= "Occupation" (:type c)) :occupation :minor)
-                              :points (if (seq (:points-text c)) #?(:clj (Integer/parseInt (:points-text c)) :cljs (js/parseInt (:points-text c))) 0))])))
+  (into {} (for [card catalog/cards
+                 :let [cid (catalogue-id card) points (:points-text card)]]
+             [cid (assoc card :id cid :catalogue-id (:id card) :pack-id (pack-id card)
+                         :kind (case (:type card)
+                                 "Occupation" :occupation
+                                 ("Minor Improvement" "Minor" "Minor/Major Improvement") :minor
+                                 "Major Improvement" :major
+                                 "Parent (Mother)" :mother "Parent (Father)" :father
+                                 :other)
+                         :points (if (re-matches #"-?[0-9]+" points)
+                                   #?(:clj (Integer/parseInt points) :cljs (js/parseInt points)) 0))])))
+(def revised-code-ids
+  ;; Keep legacy identifiers and distinguish printing variants. Short codes are
+  ;; convenience aliases for the canonical Revised printing, never Original cards.
+  (into {} (for [card (sort-by #(if (str/starts-with? (:pack %) "WizKids") 0 1) catalog/cards)
+                 :when (and (= "Revised" (:edition card)) (re-matches #"[A-E]" (:deck card)))
+                 :let [code (keyword (str (str/lower-case (:deck card))
+                                          (apply str (repeat (max 0 (- 3 (count (:number card)))) "0")) (:number card)))]]
+             [code (catalogue-id card)])))
+(defn id [code]
+  (if (and (keyword? code) (namespace code)) code
+    (let [code (keyword (str/lower-case (name code)))]
+      (get revised-code-ids code (keyword "revised-base" (name code))))))
+(defn five-card? [cid] (= "revised-five" (namespace cid)))
 (defn gain [goods] {:op :gain :goods goods})
 (defn schedule [offsets goods] {:op :schedule :offsets offsets :goods goods})
 (defn on-space [spaces effect] {:event :use-space :spaces (set spaces) :effect effect})
 
 ;; These definitions describe timing as well as outcomes. Optional actions stay
 ;; in the decision queue until their owner resolves them; they never auto-spend.
-(def definitions (merge (read-edn "agricola/cards.edn") (read-edn "agricola/five-player-cards.edn")))
-
-(def cards (into {} (for [[code definition] definitions :let [cid (id code)]] [cid (merge (metadata cid) definition)])))
+(def legacy-definitions (merge (read-edn "agricola/cards.edn") (read-edn "agricola/five-player-cards.edn")))
+(def expansion-definitions (read-edn "agricola/expansion-cards.edn"))
+(def definitions (merge (into {} (map (fn [[code rule]] [(id code) rule]) legacy-definitions)) expansion-definitions))
+(def cards (into {} (for [[cid definition] definitions] [cid (merge (metadata cid) definition)])))
 (defn card [cid] (get cards cid))
 (defn owned [p] (concat (:occupations p) (:minors p)))
 (defn has? [p code] (boolean (some #{(id code)} (owned p))))

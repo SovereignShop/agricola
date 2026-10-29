@@ -28,12 +28,16 @@
 (defmulti apply-command (fn [game-type _ _ _] game-type))
 (defmethod new-state :agricola [_ names] (agricola/new-game names (vec (mapcat shuffle agricola/stages)) (rand-int (count names))))
 (defmethod apply-command :agricola [_ state pid command] ((if (= :cards (:variant state)) card-game/command agricola/command) state pid command))
-(def card-packs
-  [{:id "base-a" :label "Base game · A cards" :min-players 1}
-   {:id "base-b" :label "Base game · B cards" :min-players 1}
-   {:id "five-player" :label "5–6 Player Expansion" :min-players 5}])
-(defn card-pack [card]
-  (if (cards/five-card? (:id card)) "five-player" (str "base-" (str/lower-case (:deck card)))))
+(defn card-pack [card] (:pack-id card))
+(def card-pack-coverage
+  (vec (for [[id all] (sort-by key (group-by :pack-id (filter #(#{:minor :occupation} (:kind %)) (vals cards/metadata))))
+             :let [implemented (filter #(contains? cards/cards (:id %)) all) card (first all)]]
+         {:id id :label (case id "base-a" "Base game · A cards" "base-b" "Base game · B cards"
+                                  "five-player" "5–6 Player Expansion"
+                                  (str (:pack card) (when (= "Original" (:edition card)) (str " · " (:deck card) " (Original)"))))
+          :min-players (apply min (map :min-players all))
+          :implemented (count implemented) :total (count all)})))
+(def card-packs (filterv #(pos? (:implemented %)) card-pack-coverage))
 (defn valid-setup [settings]
   (let [{:keys [mode extra excluded-packs] :or {mode :beginner extra 2}} settings]
     (agricola/require! (#{:beginner :random :draw} mode) "Choose a valid hand setup.")
@@ -54,7 +58,7 @@
           {:name name :owner (str "bot:" (:id room) ":" i) :bot? true :ready? true})))))
 (defn hand-pool
   ([n] (hand-pool n []))
-  ([n excluded] (filterv #(and (<= (:min-players %) n) (not ((set excluded) (card-pack %)))) (vals cards/cards))))
+  ([n excluded] (filterv #(and (#{:minor :occupation} (:kind %)) (<= (:min-players %) n) (not ((set excluded) (card-pack %)))) (vals cards/cards))))
 (defn pool-error [n settings]
   (when (not= :beginner (:mode settings))
     (let [pool (hand-pool n (:excluded-packs settings)) counts (frequencies (map :kind pool))
