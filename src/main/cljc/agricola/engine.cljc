@@ -209,20 +209,26 @@
   (require! (< (:family p) 5) "Your family already has five people.")
   (require! (or (not room-required?) (> (family-capacity p) (:family p))) "Family growth needs an empty room.")
   (-> p (update :family inc) (update :newborn inc)))
-(defn build-improvement [g pid {:keys [improvement upgrade bake-grain]}]
-  (let [card (improvements improvement) p (get-in g [:players pid])]
-    (require! (and card ((:available-improvements g) improvement)) "That improvement is not available.")
-    (when upgrade (require! (and (:upgrade card) (#{:fireplace-2 :fireplace-3} upgrade) ((:improvements p) upgrade)) "Only your Fireplace can be exchanged for a Cooking Hearth."))
-    (when (and (pos? (or bake-grain 0)) (not (:oven card))) (require! false "Only a new oven grants an immediate Bake Bread action."))
-    (let [p' (-> (if upgrade p (pay p (discounted (:cost card)
-                                     {:wood (if (cards/has? p :a075) 1 0)
-                                      :stone (+ (if (cards/has? p :a143) 1 0)
-                                                (if (cards/has? p :b095) (max 0 (- (count (tiles p :room)) 2)) 0))})))
-                 (update :improvements #(cond-> (conj % improvement) upgrade (disj upgrade)))
-                 (cond-> (= improvement :well) (assoc :well-rounds (set (range (inc (:round g)) (min 15 (+ 6 (:round g))))))))
-          p' (if (:oven card) (bake p' (or bake-grain 0)) p')]
-      (-> g (assoc-in [:players pid] p')
-          (update :available-improvements #(cond-> (disj % improvement) upgrade (conj upgrade)))))))
+(defn improvement-cost
+  ([p improvement upgrade] (improvement-cost p improvement upgrade {}))
+  ([p improvement upgrade modifiers]
+   (if upgrade {} (discounted (or (:cost modifiers) (:cost (improvements improvement)))
+                              {:wood (if (cards/has? p :a075) 1 0)
+                               :stone (+ (if (cards/has? p :a143) 1 0)
+                                         (if (cards/has? p :b095) (max 0 (- (count (tiles p :room)) 2)) 0))}))))
+(defn build-improvement
+  ([g pid options] (build-improvement g pid options {}))
+  ([g pid {:keys [improvement upgrade bake-grain]} modifiers]
+   (let [card (improvements improvement) p (get-in g [:players pid])]
+     (require! (and card ((:available-improvements g) improvement)) "That improvement is not available.")
+     (when upgrade (require! (and (:upgrade card) (#{:fireplace-2 :fireplace-3} upgrade) ((:improvements p) upgrade)) "Only your Fireplace can be exchanged for a Cooking Hearth."))
+     (when (and (pos? (or bake-grain 0)) (not (:oven card))) (require! false "Only a new oven grants an immediate Bake Bread action."))
+     (let [p' (-> (pay p (improvement-cost p improvement upgrade modifiers))
+                  (update :improvements #(cond-> (conj % improvement) upgrade (disj upgrade)))
+                  (cond-> (= improvement :well) (assoc :well-rounds (set (range (inc (:round g)) (min 15 (+ 6 (:round g))))))))
+           p' (if (:oven card) (bake p' (or bake-grain 0)) p')]
+       (-> g (assoc-in [:players pid] p')
+           (update :available-improvements #(cond-> (disj % improvement) upgrade (conj upgrade))))))))
 
 (defn player [id name food]
   {:id id :name name :family 2 :newborn 0 :remaining 2 :house :wood

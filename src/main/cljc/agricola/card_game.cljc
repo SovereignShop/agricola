@@ -139,13 +139,36 @@
                    (get-in card [:passive :lone-occupation]) (assoc-in [:hand :occupation] [])
                    (get-in card [:passive :card-field]) (assoc-in [:card-fields cid] {:type :field :allowed-crop (get-in card [:passive :card-field]) :count 0}))
           g (assoc-in g [:players pid] player)
-          after (cond-> [(event (if (= kind :occupation) :occupation :build-improvement) pid {:card cid})
+          after (cond-> [(event (if (= kind :occupation) :occupation :build-improvement) pid {:card cid :major-or-minor? (boolean (:major-or-minor? timing))})
                           (event :check-state pid)]
                   (and (= :round-start (:event timing)) (:scholar-round-start? card))
                   (conj (event :round-start pid {:only-card cid :existing-window (:window timing)}))
                   (:passing? card) (conj {:kind :pass-card :player pid :card cid}))]
       (-> g (queue-front (concat (map #(task pid cid % {}) (:play card)) after))
           (a/log-event (str (:name player) " played " (:name card))))))))
+(defn granted-action-cost [g pid effect choice]
+  (if (:card choice)
+    (card-cost g pid (c/card (:card choice)) (get effect :occupation-cost 0) choice)
+    (a/improvement-cost (p g pid) (:improvement choice) (:upgrade choice) {:cost (:major-cost effect)})))
+(defn granted-card-action [g pid effect choice]
+  (let [cid (:card choice) major (:improvement choice) kinds (:kinds effect)
+        kind (if cid (:kind (c/card cid)) :major)
+        _ (a/require! (and (not (and cid major)) (or cid major) (contains? kinds kind)) "Choose a card allowed by this action.")
+        _ (when (and major (:major-ids effect))
+            (a/require! (contains? (:major-ids effect) major) "That major improvement is not allowed by this card."))
+        cost (granted-action-cost g pid effect choice)
+        _ (a/require! (every? (fn [[resource n]] (>= (get cost resource 0) n)) (:minimum-paid effect))
+                      "This improvement action requires the specified resources to actually be paid.")
+        both? (= #{:major :minor} kinds)]
+    (if cid
+      (play-card g pid cid (get effect :occupation-cost 0) choice {:major-action? (contains? kinds :major) :major-or-minor? both?})
+      (let [context {:improvement major :paid cost :upgraded-fireplace? (boolean (:upgrade choice))}
+            after (a/build-improvement g pid choice {:cost (:major-cost effect)})]
+        (-> (cond-> after (= 5 (count (:players g))) (update-in [:major-builds pid] (fnil inc 0)))
+            (queue-front (concat [(event :build-improvement pid context)]
+                                 (when (= 5 (count (:players g))) [(event :major-built pid context)])
+                                 (when (pos? (get choice :bake-grain 0)) [(event :bake pid context)])
+                                 [(event :check-state pid)])))))))
 (defn needs-input? [g {:keys [player effect]}]
   (or (:optional? effect)
       (and (= :pay-or-beg (:op effect)) (< (a/amount (p g player) :food) (:food effect)))
@@ -158,6 +181,7 @@
       (let [g (update-in g [:players pid] a/pay cost)]
         (case op
           :ability-window g
+          :card-action (granted-card-action g pid effect choice)
           :gain (update-in g [:players pid] a/gain (expr/quantities g pid context (:goods effect)))
           :exchange (update-in g [:players pid] a/gain (expr/quantities g pid context (:goods effect)))
           :proportional-gain (update-in g [:players pid] a/gain {(:resource effect) (quot (a/amount current (:resource effect)) (:divisor effect))})
@@ -439,7 +463,7 @@
         arrivals (mapcat (fn [p]
                            (for [{:keys [card goods]} (get-in p [:schedule r]) :when (some #{card} (c/owned p))]
                              (task (:id p) card (if (:field goods) {:op :plow :optional? true} {:op :gain :goods goods}) {}))) (:players g))]
-    (queue-front g (concat arrivals (map #(event :round-start (:id %) {:reed-replenished-on-nonempty? replenished?}) (:players g)) [(step :check-all) (step :work)]))))
+    (queue-front g (concat arrivals (map #(event :round-start (:id %) {:reed-replenished-on-nonempty? replenished? :revealed-space (nth (:round-order g) (dec r))}) (:players g)) [(step :check-all) (step :work)]))))
 (defn initialize [g]
   (let [used (set (mapcat #(concat (get-in % [:hand :minor]) (:minors %)) (:players g)))
         reserve (vec (remove used (or (:minor-order g) (sort (map :id (filter #(= :minor (:kind %)) (vals c/cards)))))))]
@@ -494,6 +518,8 @@
                  :placed-person (- (:family p1) (:newborn p1 0) (:remaining p1))
                  :building-pile-size (reduce + (map #(get-in before [:piles space %] 0) [:wood :clay :reed :stone]))
                  :upgraded-fireplace? (boolean (:upgrade cmd))
+                 :improvement (:improvement cmd)
+                 :pile-food (get-in before [:piles space :food] 0)
                  :rooms-built (- (count (a/tiles p1 :room)) (count (a/tiles p0 :room)))
                  :stables-built (- (count (filter :stable (:farm p1))) (count (filter :stable (:farm p0))))
                  :fences-built (- (count (:fences p1)) (count (:fences p0)))
@@ -564,7 +590,7 @@
                                         (queue-front [(event :lessons-paid pid {:space space})]))]
                       (play-card after pid card cost cmd)))
                 (and card (#{:meeting :growth :renovate :improvement} space))
-                (do (a/require! minor? "This action allows a minor improvement from your hand.") (play-card after pid card 0 cmd {:major-action? (boolean (#{:improvement :renovate} space))}))
+                (do (a/require! minor? "This action allows a minor improvement from your hand.") (play-card after pid card 0 cmd {:major-action? (boolean (#{:improvement :renovate} space)) :major-or-minor? (boolean (#{:improvement :renovate} space))}))
                 card (throw (ex-info "That action does not allow playing a hand card." {}))
                 :else after)]
     (with-housing after)))
@@ -597,7 +623,7 @@
               (let [shadow (-> base (update :occupied dissoc action))
                     next (a/apply-action shadow pid (assoc cmd :space action))]
                 (cond-> (assoc next :occupied (assoc (:occupied base) card-space pid))
-                  (and (= action :renovate) (:card cmd)) (play-card pid (:card cmd) 0 cmd {:major-action? true}))))
+                  (and (= action :renovate) (:card cmd)) (play-card pid (:card cmd) 0 cmd {:major-action? true :major-or-minor? true}))))
           :fold-builder
           (let [base (if (= pid owner) base (-> base (update-in [:players pid] a/pay {:food 1}) (update-in [:players owner] a/gain {:food 1})))]
             (-> base (update-in [:players pid] a/build-fences (:fences cmd) (select-keys cmd [:fence-material]))

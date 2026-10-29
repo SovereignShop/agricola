@@ -41,6 +41,7 @@
           :harvest-round (boolean (a/harvest-rounds (:round g)))
           :occupied (contains? (:occupied g) x)
           :owns-space (let [owner (get-in g [:occupied x])] (if (vector? owner) (boolean (some #{pid} owner)) (= pid owner)))
+          :lessons-used (boolean (some #(contains? (:occupied g) %) [:lessons :lessons-extra :lessons-copse :lessons-growth]))
           :unoccupied-lessons (boolean (some #(and (some #{%} (:active g)) (not (contains? (:occupied g) %)))
                                              [:lessons :lessons-extra :lessons-copse :lessons-growth]))
           :accumulation-workers (reduce + 0 (for [[space owners] (:occupied g)
@@ -93,6 +94,7 @@
         "at least 1 fence in supply" [:>= [:fences-left] 1]
         "have more rooms than people" [:> [:rooms] [:family]]
         "more rooms than people" [:> [:rooms] [:family]]
+        "both fireplace and cooking hearth" [:and [:or [:owns-major :fireplace-2] [:owns-major :fireplace-3]] [:or [:owns-major :hearth-4] [:owns-major :hearth-5]]]
         "baking improvement" [:>= [:baking-improvements] 1]
         "cooking improvement" [:>= [:cooking-improvements] 1]
         ("1 oven" "return 1 oven of your choice") nil

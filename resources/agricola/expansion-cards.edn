@@ -61,6 +61,11 @@
                 [:context :building-pile-size]
                 [:- 6 [:context :placed-person]]]]],
              :effect {:op :gain, :goods {:food 1}}}]},
+          :revised-artifex-expansion-a-109-small-trader
+          {:triggers
+           [{:event :build-improvement,
+             :condition [:test [:= [:context :major-or-minor?] true]],
+             :effect {:op :gain, :goods {:food 3}}}]},
           :revised-artifex-expansion-a-11-mud-patch
           {:play [{:op :gain, :goods {:boar 1}}],
            :passive {:boar-on-empty-fields true}},
@@ -100,6 +105,24 @@
           {:play
            [{:op :gain, :goods {:clay 3}}
             {:op :renovate, :optional? true, :free? true}]},
+          :revised-artifex-expansion-a-131-craft-teacher
+          {:triggers
+           [{:event :build-improvement,
+             :condition
+             [:test
+              [:or
+               [:= [:context :improvement] :joinery]
+               [:= [:context :improvement] :pottery]
+               [:= [:context :improvement] :basketry]]],
+             :effects
+             [{:op :card-action,
+               :optional? true,
+               :kinds #{:occupation},
+               :occupation-cost 0}
+              {:op :card-action,
+               :optional? true,
+               :kinds #{:occupation},
+               :occupation-cost 0}]}]},
           :revised-artifex-expansion-a-135-animal-reeve
           {:play [{:op :house-steward}],
            :global-score? true,
@@ -153,6 +176,16 @@
                 [:>= [:goods :stone] 1]]
                1
                0]]]}},
+          :revised-artifex-expansion-a-139-hollow-warden
+          {:play
+           [{:op :card-action,
+             :optional? true,
+             :kinds #{:major},
+             :major-ids #{:fireplace-3 :fireplace-2}}],
+           :triggers
+           [{:event :use-space,
+             :spaces #{:hollow},
+             :effect {:op :gain, :goods {:food 1}}}]},
           :revised-artifex-expansion-a-14-carpenter-s-hammer
           {:passive {:batch-room-discount true}},
           :revised-artifex-expansion-a-140-shovel-bearer
@@ -210,6 +243,15 @@
              :condition [:test [:>= [:goods :wood] 7]],
              :effect
              {:op :stable, :optional? true, :cost {:wood 1}}}]},
+          :revised-artifex-expansion-a-152-night-school-student
+          {:triggers
+           [{:event :return-home,
+             :condition [:test [:not [:lessons-used]]],
+             :effect
+             {:op :card-action,
+              :optional? true,
+              :kinds #{:occupation},
+              :occupation-cost 1}}]},
           :revised-artifex-expansion-a-153-pig-owner
           {:triggers
            [{:event :check-state,
@@ -335,6 +377,27 @@
                {:label "Buy 1 cattle for 2 food",
                 :cost {:food 2},
                 :effects [{:op :gain, :goods {:cattle 1}}]}]}}]},
+          :revised-artifex-expansion-a-23-stone-company
+          {:triggers
+           [{:event :after-use-space,
+             :spaces #{:stone-west :stone-east},
+             :effect
+             {:op :card-action,
+              :optional? true,
+              :kinds #{:major :minor},
+              :minimum-paid {:stone 1}}}]},
+          :revised-artifex-expansion-a-27-oven-site
+          {:requires
+           [:and
+            [:or [:owns-major :fireplace-2] [:owns-major :fireplace-3]]
+            [:or [:owns-major :hearth-4] [:owns-major :hearth-5]]],
+           :play
+           [{:op :gain, :goods {:wood 2}}
+            {:op :card-action,
+             :optional? true,
+             :kinds #{:major},
+             :major-ids #{:clay-oven :stone-oven},
+             :major-cost {:clay 1, :stone 1}}]},
           :revised-artifex-expansion-a-29-ale-benches
           {:triggers
            [{:event :return-home,
@@ -577,6 +640,31 @@
            [{:event :use-space,
              :spaces #{:copse :grove :wood :riverbank},
              :effect {:op :plow, :optional? true, :cost {:food 3}}}]},
+          :revised-artifex-expansion-a-95-angler
+          {:triggers
+           [{:event :after-use-space,
+             :spaces #{:fishing},
+             :condition [:test [:<= [:context :pile-food] 2]],
+             :effect
+             {:op :card-action,
+              :optional? true,
+              :kinds #{:major :minor}}}]},
+          :revised-artifex-expansion-a-96-task-artisan
+          {:play
+           [{:op :gain, :goods {:wood 1}}
+            {:op :card-action, :optional? true, :kinds #{:minor}}],
+           :triggers
+           [{:event :round-start,
+             :condition
+             [:test
+              [:or
+               [:= [:context :revealed-space] :stone-east]
+               [:= [:context :revealed-space] :stone-west]]],
+             :effects
+             [{:op :gain, :goods {:wood 1}}
+              {:op :card-action,
+               :optional? true,
+               :kinds #{:minor}}]}]},
           :revised-artifex-expansion-a-99-fellow-grazer
           {:score
            {:type :expression, :value [:* 2 [:pastures-at-least 3]]}}}

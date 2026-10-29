@@ -137,6 +137,10 @@
                   :young-artist (cons {:action :draw} (map #(assoc % :action :play) (hand-options p :minor)))
                   :sidekick (let [space (five/stage-left state (get-in state [:effect-queue 0 :context :space]))]
                               (map #(hash-map :action-command %) (action-candidates (assoc state :active [space] :turn pid) pid)))
+                  :card-action (concat (when (contains? (:kinds effect) :minor) (hand-options p :minor))
+                                       (when (contains? (:kinds effect) :occupation) (hand-options p :occupation))
+                                       (when (contains? (:kinds effect) :major)
+                                         (filter #(or (nil? (:major-ids effect)) (contains? (:major-ids effect) (:improvement %))) (major-options state p))))
                   :scholar (concat (hand-options p :minor) (hand-options p :occupation))
                   :extra-grain-harvest (map #(hash-map :fields %) (reductions conj [] (filter #(let [f (get-in p (a/field-path %))]
                                                                                                    (and (= :grain (:crop f)) (pos? (get f :count 0)))) (field-ids p))))
@@ -151,10 +155,12 @@
        (let [context (get-in state [:effect-queue 0 :context])
              base (if (= :pay-or-beg (:op effect)) {:food (:food effect)}
                       (expression/quantities state pid context (:cost effect)))
-             costs (if (= :choose (:op effect))
+             costs (cond
+                     (= :card-action (:op effect)) (keep #(attempt (fn [] (merge-with + base (g/granted-action-cost state pid effect %)))) options)
+                     (= :choose (:op effect))
                      (for [option (:options effect)
                            :when (expression/evaluate state pid context (get option :when true))]
-                       (merge-with + base (expression/quantities state pid context (:cost option)))) [base])]
+                       (merge-with + base (expression/quantities state pid context (:cost option)))) :else [base])]
          (for [cost costs :let [goods (g/funding-conversion state pid cost)] :when (seq goods)]
            {:type :convert :goods goods})))
      (map #(merge {:type :resolve :decision (:decision-id state)} %)
