@@ -294,7 +294,7 @@
   (let [crops (merge-with + (select-keys (:goods p) [:grain :vegetable])
                           (reduce (fn [m f] (if (:crop f) (update m (:crop f) (fnil + 0) (:count f)) m)) {} (concat (:farm p) (vals (:card-fields p)))))
         fenced (pasture-cells p)
-        breakdown {:fields (threshold-score (+ (count (tiles p :field)) (count (:card-fields p))) [2 3 4 5])
+        breakdown {:fields (threshold-score (count (tiles p :field)) [2 3 4 5])
                    :pastures (threshold-score (count (pastures p)) [1 2 3 4])
                    :grain (threshold-score (:grain crops) [1 4 6 8])
                    :vegetables (threshold-score (:vegetable crops) [1 2 3 4])

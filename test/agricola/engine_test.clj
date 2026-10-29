@@ -5,6 +5,17 @@
 (defn rich [g] (update g :players #(mapv (fn [p] (a/gain p {:wood 50 :clay 30 :reed 20 :stone 20 :grain 10 :vegetable 5 :food 100})) %)))
 (defn take-action [g space & [params]] (a/command g (:turn g) (merge {:type :action :space space} params)))
 (defn throws? [f] (try (f) false (catch clojure.lang.ExceptionInfo _ true)))
+(deftest field-cards-score-crops-but-not-field-tile-points
+  (let [player (-> (first (:players (game)))
+                   (a/place-tile :field 0) (a/place-tile :field 1))
+        beanfield (assoc player :card-fields {:revised-base/b068 {:type :field :crop :vegetable :count 2}})
+        empty-card (assoc-in beanfield [:card-fields :revised-base/b068 :count] 0)]
+    (is (= 1 (get-in (a/score player) [:breakdown :fields])))
+    (is (= 1 (get-in (a/score beanfield) [:breakdown :fields])))
+    (is (= 2 (get-in (a/score beanfield) [:breakdown :vegetables])))
+    (is (= -1 (get-in (a/score empty-card) [:breakdown :vegetables])))
+    (is (= (get-in (a/score player) [:breakdown :unused])
+           (get-in (a/score beanfield) [:breakdown :unused])))))
 (deftest setup-and-turns
   (let [g (game)]
     (is (= [2 3] (mapv #(a/amount % :food) (:players g))))

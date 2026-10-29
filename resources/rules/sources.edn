@@ -16,7 +16,12 @@
    :url "http://playagricola.com/forums/index.php?board=23.0"
    :note "Check card edition and printing. Separate expansion boards are linked from the forum index."}]
  :regressions
- [{:id :fields-and-field-tiles :cards [:revised-base/b068 :catalog/revised-artifex-expansion-a-70-lifting-machine :catalog/revised-artifex-expansion-a-72-calcium-fertilizers]
+ [{:id :field-cards-scoring :cards [:revised-base/b068]
+   :source "https://www.lookout-spiele.de/upload/de_agricolare.html_Appendix_Agricola-RE_EN.pdf"
+   :authority :publisher :page 11
+   :rule "Only farmyard field tiles earn field-tile points. Crops on field cards still contribute to crop scoring."
+   :test agricola.engine-test/field-cards-score-crops-but-not-field-tile-points}
+  {:id :fields-and-field-tiles :cards [:revised-base/b068 :catalog/revised-artifex-expansion-a-70-lifting-machine :catalog/revised-artifex-expansion-a-72-calcium-fertilizers]
    :source "https://www.lookout-spiele.de/upload/de_agricolare.html_Appendix_Agricola-RE_EN.pdf"
    :authority :publisher :page 3
    :rule "Field prerequisites include cards that identify themselves as fields. Field-tile prerequisites count only tiles on the farmyard board."
