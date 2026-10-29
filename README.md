@@ -178,7 +178,10 @@ To develop the UI with incremental compilation:
 clojure -M:cljs -w src/cljs:src/main/cljc -c eurozone.browser.core
 ```
 
-Reload the browser after compilation. `build.cljs.edn` uses simple optimization;
+Reload the browser after compilation. Both browser and bot worker builds use
+Closure advanced optimization. The Discord SDK bundle is minified with esbuild;
+`resources/externs/eurozone.js` preserves the JavaScript integration boundaries.
+The server compresses text assets and revalidates cached files with ETags.
 `resources/public/js/` is generated and ignored. The previous HumbleUI code and
 card catalogue are retained; its dependencies are isolated under `:desktop` and
 are not loaded by the browser application.

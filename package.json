@@ -2,7 +2,7 @@
   "name": "eurozone-discord",
   "private": true,
   "scripts": {
-    "build:discord": "esbuild src/js/discord.js --alias:zod=zod/v3 --bundle --format=iife --target=es2020 --outfile=resources/public/js/discord.js"
+    "build:discord": "esbuild src/js/discord.js --alias:zod=zod/v3 --bundle --minify --format=iife --target=es2020 --outfile=resources/public/js/discord.js"
   },
   "dependencies": {
     "@discord/embedded-app-sdk": "2.5.0"

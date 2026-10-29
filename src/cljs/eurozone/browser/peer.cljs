@@ -6,6 +6,7 @@
 (defonce session (atom {}))
 (defonce serial (atom (js/Promise.resolve nil)))
 (defonce bot-job (atom nil))
+(defonce connection-generation (atom 0))
 (defn error! [e] (rf/dispatch [:error (or (.-message e) (str e))]))
 (defn enqueue! [f] (swap! serial #(.catch (.then % (fn [_] (f))) error!)))
 (defn host? [] (and (:self @session) (= (:self @session) (:host @session))))
@@ -41,7 +42,7 @@
                    (.catch (fn [e] (reset! bot-job nil) (error! e)))))
              (catch :default e (reset! bot-job nil) (error! e)))))))))
 (defn schedule-bot! []
-  (when (and (host?) (nil? @bot-job))
+  (when (and @runtime (host?) (nil? @bot-job))
     (let [room (:table @session) expired? (flow/expired-vote? room)
           timed (flow/due room) automated (when-not (:takeback room) (bot/actor room))
           player (or automated (:player timed))
@@ -120,8 +121,9 @@
     (.send @runtime (:host @session) (packet message))
     (catch :default e (error! e))))
 (defn deliver! [id message]
-  (if (= id (:self @session)) (rf/dispatch [:server-message message])
-      (.send @runtime id (packet message))))
+  (when @runtime
+    (if (= id (:self @session)) (rf/dispatch [:server-message message])
+        (.send @runtime id (packet message)))))
 (defn welcome! [message]
   (enqueue!
    #(do
@@ -141,7 +143,7 @@
                                  (rf/dispatch [:peer/missing-host-save (:room message)]))
                                (throw (js/Error. "This table has an existing host save. Reopen it in the original browser, or create a new Activity table.")))
                          (persist! (create-table (:options message)))))))
-            (.then (fn [_] (.initialized @runtime) (publish!) (rf/dispatch [:navigate (:room message)]))))
+            (.then (fn [_] (when @runtime (.initialized @runtime) (publish!) (rf/dispatch [:navigate (:room message)])))))
         (rf/dispatch [:peer/status "Waiting for the host's table"])))))
 (defn roster! [message]
   (enqueue!
@@ -150,18 +152,28 @@
             (if (some (fn [p] (= (:host @session) (:id p))) (:peers message))
               (send! {:event :sync})
               (rf/dispatch [:connection false]))))))
-(defn start! [{:keys [room invite options relay]}]
+(defn stop! []
+  (swap! connection-generation inc)
   (when @runtime (.close @runtime))
-  (bots/close!) (reset! bot-job nil)
-  (comms/use-peer! send!)
-  (reset! session {:room room :seen []})
-  (reset! runtime
-    (.start js/EurozonePeer
-            (clj->js {:room room :invite invite :createOptions options :relay relay :token (comms/session-token)
-                      :onPacket receive! :onWelcome #(welcome! (js->clj % :keywordize-keys true))
-                      :onRoster #(roster! (js->clj % :keywordize-keys true))
-                      :onStatus #(rf/dispatch [:peer/status %]) :onError #(error! (js/Error. %))
-                      :onDirect (fn [_] (when-not (host?) (send! {:event :sync})))}))))
+  (reset! runtime nil) (bots/close!) (reset! bot-job nil)
+  ;; Let accepted host commands finish their durable save before leaving.
+  (enqueue! #(do (reset! session {}) (reset! comms/peer-sender nil))))
+(defn start! [{:keys [room invite options relay]}]
+  (let [generation (swap! connection-generation inc)
+        current? #(= generation @connection-generation)]
+    (when @runtime (.close @runtime))
+    (bots/close!) (reset! bot-job nil)
+    (comms/use-peer! send!)
+    (reset! session {:room room :seen []})
+    (reset! runtime
+      (.start js/EurozonePeer
+              (clj->js {:room room :invite invite :createOptions options :relay relay :token (comms/session-token)
+                        :onPacket #(when (current?) (receive! %1 %2))
+                        :onWelcome #(when (current?) (welcome! (js->clj % :keywordize-keys true)))
+                        :onRoster #(when (current?) (roster! (js->clj % :keywordize-keys true)))
+                        :onStatus #(when (current?) (rf/dispatch [:peer/status %]))
+                        :onError #(when (current?) (error! (js/Error. %)))
+                        :onDirect (fn [_] (when (and (current?) (not (host?))) (send! {:event :sync})))})))))
 (defn boot! []
   (let [params (js/URLSearchParams. (.-search js/location)) room (.get params "peer") invite (.get params "key")]
     (when (and room invite)
@@ -202,3 +214,21 @@
     (-> (.EUROZONE_ACTIVITY_TABLES js/window action room request-id)
         (.then #(.EUROZONE_ENTER_ACTIVITY_TABLE js/window %))
         (.catch error!))))
+
+(rf/reg-event-fx :activity/change
+  (fn [{:keys [db]} [_ table]] {:db (assoc db :busy? true) :dispatch [:chat/disconnect] :activity/change table}))
+(rf/reg-fx :activity/change
+  (fn [table]
+    (-> (stop!)
+        (.then (fn [_]
+                 (.EUROZONE_SET_ACTIVITY_URL js/window (when table (clj->js table)))
+                 (rf/dispatch [:activity/selected table])))
+        (.catch error!))))
+(rf/reg-event-fx :activity/selected
+  (fn [{:keys [db]} [_ table]]
+    {:db {:facts (d/empty-db model/schema) :permissions {} :layouts (:layouts db) :connected? false
+          :game-id (:room table) :draft {} :panel :board :activity-lobby? (nil? table)}
+     :activity/connect table}))
+(rf/reg-fx :activity/connect
+  (fn [table] (if table (start! {:room (:room table) :invite (:invite table) :relay true})
+                          (rf/dispatch [:activity/load]))))

@@ -31,6 +31,7 @@ subprocess.run(["python3", "scripts/build_discord.py"], cwd=ROOT, check=True)
 # rules-hash is a macro too. A source change must refresh the embedded identity.
 data = sorted((ROOT / "resources/agricola").glob("*.edn")) + sorted((ROOT / "src/main/cljc/agricola").glob("*.cljc"))
 data += sorted((ROOT / "resources/eurozone").glob("*.edn"))
+data += [ROOT / "build.cljs.edn", ROOT / "build.bot.cljs.edn", ROOT / "resources/externs/eurozone.js"]
 digest = hashlib.sha256()
 for path in data:
     digest.update(path.name.encode())

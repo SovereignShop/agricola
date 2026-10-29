@@ -11,4 +11,4 @@ binary = ROOT / "node_modules/@esbuild" / f"{system}-{arch}" / ("esbuild.exe" if
 if not binary.exists():
     raise SystemExit("Install Node.js 20+ and run npm ci before make build.")
 subprocess.run([str(binary), "src/js/discord.js", "--alias:zod=zod/v3", "--bundle",
-                "--format=iife", "--target=es2020", "--outfile=resources/public/js/discord.js"], cwd=ROOT, check=True)
+                "--format=iife", "--minify", "--target=es2020", "--outfile=resources/public/js/discord.js"], cwd=ROOT, check=True)

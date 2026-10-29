@@ -3,6 +3,7 @@
             [eurozone.browser.events] [eurozone.browser.subs]
             [eurozone.browser.peer :as peer] [eurozone.browser.views :as views] [eurozone.browser.comms :as comms]))
 (defn ^:export init []
+  (set! (.-EUROZONE_ACTIVITY_CHANGED js/window) #(rf/dispatch [:activity/change (when % (js->clj % :keywordize-keys true))]))
   (comms/session-token)
   (rf/dispatch-sync [:initialize])
   (set! (.-onhashchange js/window) #(rf/dispatch [:navigate (eurozone.browser.events/hash-id)]))

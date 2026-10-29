@@ -2,6 +2,7 @@
   (:require [org.httpkit.server :as http] [eurozone.store :as store] [eurozone.chat :as chat] [eurozone.peer :as peer] [eurozone.discord :as discord]
             [eurozone.table-flow :as flow] [eurozone.bot-player :as bot]
             [clojure.edn :as edn] [clojure.java.io :as io] [clojure.string :as str])
+  (:import [java.io ByteArrayOutputStream] [java.security MessageDigest] [java.util.zip GZIPOutputStream])
   (:gen-class))
 
 (defn send! [channel message] (http/send! channel (pr-str message)))
@@ -63,6 +64,41 @@
       (binding [*out* *err*] (println "Eurozone request failed:" (.getMessage e)))
       (send! channel {:event :error :message "The request could not be saved. Please try again."}))))
 (def content-types {"html" "text/html; charset=utf-8" "css" "text/css; charset=utf-8" "js" "text/javascript; charset=utf-8" "map" "application/json" "json" "application/json" "svg" "image/svg+xml" "png" "image/png" "jpg" "image/jpeg" "jpeg" "image/jpeg" "webp" "image/webp"})
+(defonce asset-cache (atom {}))
+(defn accepts-gzip? [header]
+  (let [encodings (into {} (for [part (str/split (or header "") #",")
+                                 :let [[coding & params] (str/split (str/lower-case part) #";")
+                                       quality (some #(second (re-matches #"\s*q\s*=\s*([0-9.]+)\s*" %)) params)]]
+                             [(str/trim coding) (if quality (try (Double/parseDouble quality) (catch Exception _ 0)) 1)]))]
+    (pos? (get encodings "gzip" (get encodings "*" 0)))))
+(defn asset [path resource]
+  (let [connection (.openConnection resource)
+        version [(.getLastModified connection) (.getContentLengthLong connection)]
+        cached (get @asset-cache path)]
+    (if (= version (:version cached)) cached
+      (let [out (ByteArrayOutputStream.)
+            _ (with-open [in (io/input-stream resource)] (io/copy in out))
+            raw (.toByteArray out) extension (last (str/split path #"\."))
+            packed (when (and (> (alength raw) 512) (#{"js" "css" "html" "json" "map" "svg" "edn"} extension))
+                     (let [out (ByteArrayOutputStream.)]
+                       (with-open [zip (GZIPOutputStream. out)] (.write zip raw))
+                       (.toByteArray out)))
+            digest (apply str (map #(format "%02x" (bit-and 255 %)) (.digest (MessageDigest/getInstance "SHA-256") raw)))
+            entry {:version version :raw raw :gzip packed :digest digest :type (get content-types extension "application/octet-stream")}]
+        (swap! asset-cache assoc path entry) entry))))
+(defn static-response [request path resource]
+  (let [{:keys [raw gzip digest type]} (asset path resource)
+        zipped? (and gzip (accepts-gzip? (get-in request [:headers "accept-encoding"])))
+        body (if zipped? gzip raw)
+        etag (str "\"" digest (when zipped? "-gzip") "\"")
+        matches? (some #(or (= "*" %) (= etag (str/replace % #"^W/" "")))
+                       (map str/trim (str/split (get-in request [:headers "if-none-match"] "") #",")))
+        headers (cond-> {"Content-Type" type "X-Content-Type-Options" "nosniff" "Referrer-Policy" "same-origin"
+                         "Cache-Control" "no-cache" "ETag" etag "Vary" "Accept-Encoding"}
+                  zipped? (assoc "Content-Encoding" "gzip")
+                  (not matches?) (assoc "Content-Length" (str (alength body))))]
+    {:status (if matches? 304 200) :headers headers
+     :body (when (and (not matches?) (not= :head (:request-method request))) body)}))
 (defn handler [app request]
   (let [uri (:uri request)]
     (cond
@@ -89,9 +125,7 @@
       (let [path (if (= uri "/") "index.html" (subs uri 1))
             resource (when (and (not (str/includes? path "..")) (re-matches #"[a-zA-Z0-9_./-]+" path)) (io/resource (str "public/" path)))]
         (if resource
-          {:status 200 :headers {"Content-Type" (get content-types (last (str/split path #"\.")) "application/octet-stream")
-                                "X-Content-Type-Options" "nosniff" "Referrer-Policy" "same-origin" "Cache-Control" "no-cache"}
-           :body (io/input-stream resource)}
+          (static-response request path resource)
           {:status 404 :body "Page not found"})))))
 (defn tick! [app]
   (doseq [[id room] @(:rooms (:store app))

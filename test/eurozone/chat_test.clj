@@ -38,4 +38,4 @@
     (let [response (server/handler {} {:uri path :request-method :get})]
       (is (= 200 (:status response)))
       (is (= content-type (get-in response [:headers "Content-Type"])))
-      (.close (:body response)))))
+      (is (pos? (alength ^bytes (:body response)))))))
