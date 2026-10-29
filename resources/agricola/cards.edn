@@ -38,7 +38,7 @@
      :op :return-goods,
      :optional? true},
     :event :after-use-space,
-    :spaces #{:copse :grove :wood}}]},
+    :spaces #{:copse :grove :wood :riverbank}}]},
  :a063
  {:triggers
   [{:condition [:after-harvest],
@@ -95,7 +95,7 @@
      :op :return-goods,
      :optional? true},
     :event :after-use-space,
-    :spaces #{:copse :grove :wood}}]},
+    :spaces #{:copse :grove :wood :riverbank}}]},
  :a110
  {:triggers
   [{:condition [:house :clay],
@@ -126,7 +126,7 @@
  {:triggers
   [{:effect {:goods {:wood 1}, :op :gain},
     :event :use-space,
-    :spaces #{:copse :grove :wood}}]},
+    :spaces #{:copse :grove :wood :riverbank}}]},
  :a119
  {:triggers
   [{:effect {:goods {:wood 1}, :op :gain},
@@ -291,7 +291,7 @@
  {:triggers
   [{:effect {:op :bake, :optional? true},
     :event :use-space,
-    :spaces #{:copse :grove :wood}}]},
+    :spaces #{:copse :grove :wood :riverbank}}]},
  :b109 {:passive {:paper-maker true}},
  :b114
  {:triggers

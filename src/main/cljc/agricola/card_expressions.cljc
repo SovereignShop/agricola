@@ -40,6 +40,12 @@
           :completed-harvests (count (filter #(< % (:round g)) a/harvest-rounds))
           :harvest-round (boolean (a/harvest-rounds (:round g)))
           :occupied (contains? (:occupied g) x)
+          :owns-space (let [owner (get-in g [:occupied x])] (if (vector? owner) (boolean (some #{pid} owner)) (= pid owner)))
+          :unoccupied-lessons (boolean (some #(and (some #{%} (:active g)) (not (contains? (:occupied g) %)))
+                                             [:lessons :lessons-extra :lessons-copse :lessons-growth]))
+          :accumulation-workers (reduce + 0 (for [[space owners] (:occupied g)
+                                                 :when (:accumulate (a/action-definition g space))]
+                                             (count (filter #{pid} (if (vector? owners) owners [owners])))))
           :taken (get-in context [:taken x] 0)
           :before-goods (get-in context [:before-goods x] 0)
           :context (get context x 0)

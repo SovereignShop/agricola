@@ -78,7 +78,10 @@
 (defn build-rooms
   ([p cells] (build-rooms p cells {}))
   ([p cells options]
-   (reduce (fn [p i] (place-tile (pay p (room-cost p (get-in options [:room-options i] options))) :room i)) p cells)))
+   (let [cost (apply merge-with + {} (map #(room-cost p (get-in options [:room-options %] options)) cells))
+         reductions (when (and (>= (count cells) 2) (some true? (cards/passives p :batch-room-discount)))
+                      {:reed 2 (:house p) ({:wood 2 :clay 3 :stone 4} (:house p))})]
+     (reduce #(place-tile %1 :room %2) (pay p (discounted cost reductions)) cells))))
 (defn build-stables [p cells cost]
   (reduce (fn [p i]
             (require! (and (cell? i) (= :empty (get-in p [:farm i :type])) (not (get-in p [:farm i :stable]))) "A stable needs an empty space or pasture without another stable.")
@@ -107,6 +110,9 @@
              {:cells region :capacity (+ (* 2 (count region) (reduce * 1 (repeat stables 2))) (if (cards/has? p :a012) 2 0)) :kind :pasture})
            (for [i (range 15) :when (and (get-in p [:farm i :stable]) (not (fenced i)))]
              {:cells [i] :capacity 1 :kind :stable})
+           (when (some true? (cards/passives p :boar-on-empty-fields))
+             (for [i (tiles p :field) :when (zero? (get-in p [:farm i :count] 0))]
+               {:cells [i] :capacity 1 :kind :field :allowed-animals #{:boar}}))
            (for [_ (range (get p :card-animal-capacity 0))]
              {:cells [] :capacity 1 :kind :card :card (cards/id :b169)})))))
 (defn organic-housing
@@ -127,6 +133,7 @@
                                 candidates
                                 (cons (fit (inc index) remaining)
                                       (for [animal-index (range 3)
+                                            :when ((get space :allowed-animals (set animals)) (nth animals animal-index))
                                             n (range 1 (inc (min (:capacity space) (remaining animal-index))))
                                             :let [tail (fit (inc index) (update remaining animal-index - n))]
                                             :when tail]
@@ -144,7 +151,7 @@
             (if (every? zero? (vals remaining)) result
                 (when-let [space (first spaces)]
                   (or (some (fn [a]
-                              (when (pos? (get remaining a 0))
+                              (when (and (pos? (get remaining a 0)) ((get space :allowed-animals (set animals)) a))
                                 (let [n (min (:capacity space) (remaining a))]
                                   (fit (rest spaces) (update remaining a - n)
                                        (conj result (assoc space :animal a :count n)))))) animals)
@@ -180,9 +187,10 @@
               (assoc-in (pay p {crop 1}) path (assoc field :crop crop :count (if (= crop :grain) 3 2))))) p plantings))
 (defn renovate
   ([p] (renovate p {}))
-  ([p options]
+  ([p options] (renovate p options {}))
+  ([p options modifiers]
    (let [material (if (and (= :wood (:house p)) (cards/has? p :a087) (= :stone (:renovate-to options))) :stone ({:wood :clay :clay :stone} (:house p)))
-         _ (require! (not (cards/has? p :b033)) "Mantlepiece prevents further renovation.")
+         _ (require! (not (some true? (cards/passives p :no-renovation))) "An improvement prevents further renovation.")
          _ (require! material "Your house is already stone.")
          cost {material (count (tiles p :room)) :reed 1}
          cost (if (and (:frame? options) (cards/has? p :a123) (>= (get cost material) 2))
@@ -190,10 +198,16 @@
          cost (if (and (:brushwood? options) (cards/has? p :b145))
                 (-> cost (assoc :reed 0) (update :wood (fnil inc 0))) cost)
          cost (discounted cost (if (cards/has? p :a143) {:stone 1} {}))]
-     (assoc (pay p cost) :house material))))
+     (assoc (pay p (if (:free? modifiers) {} cost)) :house material))))
+(defn family-capacity [p]
+  (let [field-cells (set (tiles p :field)) pasture-cells (pasture-cells p)
+        homekeeper? (and (some true? (cards/passives p :homekeeper)) (#{:clay :stone} (:house p))
+                         (some #(and (some field-cells (neighbors %)) (some pasture-cells (neighbors %))) (tiles p :room)))]
+    (+ (count (tiles p :room)) (reduce + 0 (cards/passives p :extra-room))
+       (if (:off-site-room p) 1 0) (if homekeeper? 1 0))))
 (defn grow [p room-required?]
   (require! (< (:family p) 5) "Your family already has five people.")
-  (require! (or (not room-required?) (> (+ (count (tiles p :room)) (if (cards/has? p :b010) 1 0) (if (:off-site-room p) 1 0)) (:family p))) "Family growth needs an empty room.")
+  (require! (or (not room-required?) (> (family-capacity p) (:family p))) "Family growth needs an empty room.")
   (-> p (update :family inc) (update :newborn inc)))
 (defn build-improvement [g pid {:keys [improvement upgrade bake-grain]}]
   (let [card (improvements improvement) p (get-in g [:players pid])]

@@ -1,5 +1,5 @@
 {:edition :revised-2016
- :reviewed "2026-10-28"
+ :reviewed "2026-10-29"
  :sources
  [{:id :printed-rules :authority :publisher
    :url "https://www.lookout-spiele.de/upload/en_agricolare.html_Rules_Agricola-RE_EN.pdf"}
@@ -16,7 +16,22 @@
    :url "http://playagricola.com/forums/index.php?board=23.0"
    :note "Check card edition and printing. Separate expansion boards are linked from the forum index."}]
  :regressions
- [{:id :scholar-immediate-plow-driver-and-groom :cards [:revised-base/a090 :revised-base/b089]
+ [{:id :wood-worker-funds-cultivator :cards [:catalog/revised-artifex-expansion-a-164-wood-worker :catalog/revised-artifex-expansion-a-91-shifting-cultivator]
+   :source "https://docs.google.com/document/d/1WUl0HlzX6Yx0ume75UmpaIMhoHukx9XufM_LbV1oZ6E/edit"
+   :authority :unofficial-compilation
+   :rule "Wood Worker resolves during use; its sheep may be cooked to fund Shifting Cultivator. Basket and Mushroom Collector resolve later."
+   :test agricola.artifex-interactions-test/wood-worker-can-fund-shifting-cultivator-with-cooked-sheep}
+  {:id :wooden-shed-major-action :cards [:catalog/revised-artifex-expansion-a-10-wooden-shed]
+   :source "https://docs.google.com/document/d/1WUl0HlzX6Yx0ume75UmpaIMhoHukx9XufM_LbV1oZ6E/edit"
+   :authority :unofficial-compilation
+   :rule "Wooden Shed requires a major improvement action and a wooden house; mandatory renovation happens before an improvement on House Redevelopment."
+   :test agricola.artifex-interactions-test/wooden-shed-needs-an-authenticated-major-action}
+  {:id :homekeeper-adjacency :cards [:catalog/revised-artifex-expansion-a-85-homekeeper]
+   :source "https://docs.google.com/document/d/1WUl0HlzX6Yx0ume75UmpaIMhoHukx9XufM_LbV1oZ6E/edit"
+   :authority :unofficial-compilation
+   :rule "The same clay or stone room must border a field tile and a pasture; field cards cannot supply adjacency."
+   :test agricola.artifex-interactions-test/homekeeper-tests-one-rooms-actual-adjacency}
+  {:id :scholar-immediate-plow-driver-and-groom :cards [:revised-base/a090 :revised-base/b089]
    :source "https://docs.google.com/document/d/1WUl0HlzX6Yx0ume75UmpaIMhoHukx9XufM_LbV1oZ6E/edit"
    :authority :unofficial-compilation
    :rule "Plow Driver and Groom played by Scholar can be used immediately in that preparation phase."

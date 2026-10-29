@@ -1,5 +1,30 @@
-#:catalog{:revised-artifex-expansion-a-101-cookery-outfitter
+#:catalog{:revised-artifex-expansion-a-1-shelter
+          {:play
+           [{:op :stable, :optional? true, :single-pasture? true}]},
+          :revised-artifex-expansion-a-10-wooden-shed
+          {:major-action-only? true,
+           :passive {:extra-room 1, :no-renovation true}},
+          :revised-artifex-expansion-a-100-curator
+          {:triggers
+           [{:event :return-home,
+             :condition [:test [:>= [:accumulation-workers] 3]],
+             :effect
+             {:op :sequence,
+              :optional? true,
+              :cost {:food 1},
+              :effects [{:op :points, :amount 1}]}}]},
+          :revised-artifex-expansion-a-101-cookery-outfitter
           {:score {:type :expression, :value [:cooking-improvements]}},
+          :revised-artifex-expansion-a-103-portmonger
+          {:triggers
+           [{:event :use-space,
+             :spaces #{:fishing :traveling},
+             :effect
+             {:op :gain,
+              :goods
+              {:vegetable [:if [:= [:taken :food] 1] 1 0],
+               :grain [:if [:= [:taken :food] 2] 1 0],
+               :reed [:if [:>= [:taken :food] 3] 1 0]}}}]},
           :revised-artifex-expansion-a-104-wood-harvester
           {:triggers
            [{:event :field-phase,
@@ -16,6 +41,29 @@
               :goods
               {:clay [:context :fields-plowed],
                :food [:context :fields-plowed]}}}]},
+          :revised-artifex-expansion-a-106-slurry-spreader
+          {:triggers
+           [{:event :harvest-crop,
+             :condition [:test [:= [:context :last?] true]],
+             :effect
+             {:op :gain,
+              :goods
+              {:food [:if [:= [:context :crop] :grain] 2 1]}}}]},
+          :revised-artifex-expansion-a-107-catcher
+          {:triggers
+           [{:event :use-space,
+             :condition
+             [:test
+              [:and
+               [:>= [:context :placed-person] 1]
+               [:<= [:context :placed-person] 3]
+               [:=
+                [:context :building-pile-size]
+                [:- 6 [:context :placed-person]]]]],
+             :effect {:op :gain, :goods {:food 1}}}]},
+          :revised-artifex-expansion-a-11-mud-patch
+          {:play [{:op :gain, :goods {:boar 1}}],
+           :passive {:boar-on-empty-fields true}},
           :revised-artifex-expansion-a-117-wood-carrier
           {:play [{:op :gain, :goods {:wood [:improvements]}}]},
           :revised-artifex-expansion-a-118-treegardener
@@ -48,6 +96,10 @@
            [{:event :use-space,
              :spaces #{:sow-bake},
              :effect {:op :gain, :goods {:clay 2, :wood 1}}}]},
+          :revised-artifex-expansion-a-13-renovation-company
+          {:play
+           [{:op :gain, :goods {:clay 3}}
+            {:op :renovate, :optional? true, :free? true}]},
           :revised-artifex-expansion-a-135-animal-reeve
           {:play [{:op :house-steward}],
            :global-score? true,
@@ -101,6 +153,8 @@
                 [:>= [:goods :stone] 1]]
                1
                0]]]}},
+          :revised-artifex-expansion-a-14-carpenter-s-hammer
+          {:passive {:batch-room-discount true}},
           :revised-artifex-expansion-a-140-shovel-bearer
           {:triggers
            [{:event :use-space,
@@ -119,6 +173,21 @@
              :condition
              [:test [:and [:occupied :labor] [:occupied :grain]]],
              :effect {:op :gain, :goods {:vegetable 1}}}]},
+          :revised-artifex-expansion-a-142-cordmaker
+          {:triggers
+           [{:event :use-space,
+             :scope :all,
+             :spaces #{:reed},
+             :condition [:test [:>= [:taken :reed] 2]],
+             :effect
+             {:op :choose,
+              :optional? true,
+              :options
+              [{:label "Take 1 grain",
+                :effects [{:op :gain, :goods {:grain 1}}]}
+               {:label "Buy 1 vegetable for 2 food",
+                :cost {:food 2},
+                :effects [{:op :gain, :goods {:vegetable 1}}]}]}}]},
           :revised-artifex-expansion-a-145-ropemaker
           {:triggers
            [{:event :harvest-end,
@@ -134,16 +203,107 @@
                :reed [:if [:= [:taken :food] 3] 1 0],
                :clay [:if [:= [:taken :food] 4] 1 0],
                :wood [:if [:= [:taken :food] 5] 1 0]}}}]},
+          :revised-artifex-expansion-a-15-carpenter-s-axe
+          {:triggers
+           [{:event :after-use-space,
+             :spaces #{:copse :grove :wood :riverbank},
+             :condition [:test [:>= [:goods :wood] 7]],
+             :effect
+             {:op :stable, :optional? true, :cost {:wood 1}}}]},
           :revised-artifex-expansion-a-153-pig-owner
           {:triggers
            [{:event :check-state,
              :condition [:test [:>= [:goods :boar] 5]],
              :once? true,
              :effect {:op :points, :amount 3}}]},
+          :revised-artifex-expansion-a-154-paymaster
+          {:triggers
+           [{:event :use-space,
+             :scope :others,
+             :spaces #{:fishing :traveling},
+             :effect
+             {:op :sequence,
+              :optional? true,
+              :cost {:grain 1},
+              :effects
+              [{:op :give-to-actor, :goods {:grain 1}}
+               {:op :points, :amount 1}]}}]},
+          :revised-artifex-expansion-a-156-buyer
+          {:triggers
+           [{:event :use-space,
+             :scope :others,
+             :spaces #{:stone-west :boar :reed :sheep :stone-east},
+             :effect
+             {:op :sequence,
+              :optional? true,
+              :cost {:food 1},
+              :effects
+              [{:op :give-to-actor, :goods {:food 1}}
+               {:op :gain,
+                :goods
+                {:reed [:if [:= [:context :space] :reed] 1 0],
+                 :stone
+                 [:if
+                  [:or
+                   [:= [:context :space] :stone-east]
+                   [:= [:context :space] :stone-west]]
+                  1
+                  0],
+                 :sheep [:if [:= [:context :space] :sheep] 1 0],
+                 :boar [:if [:= [:context :space] :boar] 1 0]}}]}}]},
+          :revised-artifex-expansion-a-157-bohemian
+          {:triggers
+           [{:event :return-home,
+             :condition [:test [:unoccupied-lessons]],
+             :effect {:op :gain, :goods {:food 1}}}]},
+          :revised-artifex-expansion-a-158-culinary-artist
+          {:triggers
+           [{:event :use-space,
+             :scope :others,
+             :spaces #{:traveling},
+             :effect
+             {:op :choose,
+              :optional? true,
+              :options
+              [{:label "Exchange 1 grain for 4 food",
+                :cost {:grain 1},
+                :effects [{:op :gain, :goods {:food 4}}]}
+               {:label "Exchange 1 sheep for 5 food",
+                :cost {:sheep 1},
+                :effects [{:op :gain, :goods {:food 5}}]}
+               {:label "Exchange 1 vegetable for 7 food",
+                :cost {:vegetable 1},
+                :effects [{:op :gain, :goods {:food 7}}]}]}}]},
+          :revised-artifex-expansion-a-159-joiner-of-the-sea
+          {:triggers
+           [{:event :use-space,
+             :scope :others,
+             :spaces #{:fishing :reed},
+             :effect
+             {:op :sequence,
+              :optional? true,
+              :cost {:wood 1},
+              :effects
+              [{:op :give-to-actor, :goods {:wood 1}}
+               {:op :gain,
+                :goods
+                {:food
+                 [:if [:= [:context :space] :fishing] 2 3]}}]}}]},
+          :revised-artifex-expansion-a-163-building-expert
+          {:triggers
+           [{:event :use-space,
+             :spaces #{:market},
+             :effect
+             {:op :gain,
+              :goods
+              {:wood [:if [:= [:context :placed-person] 1] 1 0],
+               :clay [:if [:= [:context :placed-person] 2] 1 0],
+               :reed [:if [:= [:context :placed-person] 3] 1 0],
+               :stone [:if [:>= [:context :placed-person] 4] 1 0]}}}]},
           :revised-artifex-expansion-a-164-wood-worker
           {:triggers
-           [{:event :after-use-space,
-             :spaces #{:copse :grove :wood},
+           [{:event :use-space,
+             :spaces #{:copse :grove :wood :riverbank},
              :effect
              {:op :return-goods,
               :optional? true,
@@ -188,6 +348,40 @@
           :revised-artifex-expansion-a-31-debt-security
           {:score
            {:type :expression, :value [:min [:majors] [:unused]]}},
+          :revised-artifex-expansion-a-35-swimming-class
+          {:triggers
+           [{:event :return-home,
+             :condition [:test [:owns-space :fishing]],
+             :effect {:op :points, :amount [:* 2 [:newborn]]}}]},
+          :revised-artifex-expansion-a-36-facades-carving
+          {:play
+           [{:op :choose,
+             :optional? true,
+             :options
+             [{:label "Buy 1 bonus point for 1 food",
+               :when [:>= [:completed-harvests] 1],
+               :cost {:food 1},
+               :effects [{:op :points, :amount 1}]}
+              {:label "Buy 2 bonus points for 2 food",
+               :when [:>= [:completed-harvests] 2],
+               :cost {:food 2},
+               :effects [{:op :points, :amount 2}]}
+              {:label "Buy 3 bonus points for 3 food",
+               :when [:>= [:completed-harvests] 3],
+               :cost {:food 3},
+               :effects [{:op :points, :amount 3}]}
+              {:label "Buy 4 bonus points for 4 food",
+               :when [:>= [:completed-harvests] 4],
+               :cost {:food 4},
+               :effects [{:op :points, :amount 4}]}
+              {:label "Buy 5 bonus points for 5 food",
+               :when [:>= [:completed-harvests] 5],
+               :cost {:food 5},
+               :effects [{:op :points, :amount 5}]}
+              {:label "Buy 6 bonus points for 6 food",
+               :when [:>= [:completed-harvests] 6],
+               :cost {:food 6},
+               :effects [{:op :points, :amount 6}]}]}]},
           :revised-artifex-expansion-a-37-bucksaw
           {:triggers
            [{:event :renovate,
@@ -205,6 +399,12 @@
              :goods
              {:wood
               [:+ [:rooms] [:if [:> [:rooms] [:family]] 1 0]]}}]},
+          :revised-artifex-expansion-a-41-vegetable-slicer
+          {:triggers
+           [{:event :build-improvement,
+             :condition
+             [:test [:= [:context :upgraded-fireplace?] true]],
+             :effect {:op :gain, :goods {:wood 2, :vegetable 1}}}]},
           :revised-artifex-expansion-a-42-forest-lake-hut
           {:triggers
            [{:event :use-space,
@@ -238,6 +438,13 @@
            [{:op :schedule,
              :offset-count [:fences],
              :goods {:food 1}}]},
+          :revised-artifex-expansion-a-49-nest-site
+          {:triggers
+           [{:event :round-start,
+             :condition
+             [:test
+              [:= [:context :reed-replenished-on-nonempty?] true]],
+             :effect {:op :gain, :goods {:food 1}}}]},
           :revised-artifex-expansion-a-51-drift-net-boat
           {:triggers
            [{:event :use-space,
@@ -246,7 +453,7 @@
           :revised-artifex-expansion-a-52-throwing-axe
           {:triggers
            [{:event :use-space,
-             :spaces #{:copse :grove :wood},
+             :spaces #{:copse :grove :wood :riverbank},
              :condition [:test [:> [:pile :boar :boar] 0]],
              :effect {:op :gain, :goods {:food 2}}}]},
           :revised-artifex-expansion-a-54-credit
@@ -283,6 +490,26 @@
               :wood [:if [:owns-major :joinery] 1 0],
               :clay [:if [:owns-major :pottery] 1 0],
               :reed [:if [:owns-major :basketry] 1 0]}}]},
+          :revised-artifex-expansion-a-62-beer-keg
+          {:triggers
+           [{:event :feeding-start,
+             :effect
+             {:op :choose,
+              :optional? true,
+              :options
+              [{:label "Exchange 1 grain for 3 food",
+                :cost {:grain 1},
+                :effects [{:op :gain, :goods {:food 3}}]}
+               {:label "Exchange 2 grain for 3 food and 1 point",
+                :cost {:grain 2},
+                :effects
+                [{:op :gain, :goods {:food 3}}
+                 {:op :points, :amount 1}]}
+               {:label "Exchange 3 grain for 3 food and 2 points",
+                :cost {:grain 3},
+                :effects
+                [{:op :gain, :goods {:food 3}}
+                 {:op :points, :amount 2}]}]}}]},
           :revised-artifex-expansion-a-64-barley-mill
           {:cost-options [{:wood 1, :clay 4} {:wood 1, :stone 2}],
            :triggers
@@ -343,10 +570,12 @@
              :effect {:op :gain, :goods {:clay 2}}}]},
           :revised-artifex-expansion-a-8-food-basket
           {:play [{:op :gain, :goods {:grain 1, :vegetable 1}}]},
+          :revised-artifex-expansion-a-85-homekeeper
+          {:passive {:homekeeper true}},
           :revised-artifex-expansion-a-91-shifting-cultivator
           {:triggers
            [{:event :use-space,
-             :spaces #{:copse :grove :wood},
+             :spaces #{:copse :grove :wood :riverbank},
              :effect {:op :plow, :optional? true, :cost {:food 3}}}]},
           :revised-artifex-expansion-a-99-fellow-grazer
           {:score

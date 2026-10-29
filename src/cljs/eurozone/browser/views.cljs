@@ -620,7 +620,7 @@
             [:label.checkbox [:input {:type "checkbox" :checked (boolean (some #{i} selected))
                                        :on-change #(draft! :effect-fields (toggle-value selected i))}]
              (if (integer? i) (str "Field " (inc i)) (:name (cards/card i)))])]))
-     (when (#{:cottage :fast-mason} op) [payment-options p draft])
+     (when (#{:cottage :fast-mason :renovate} op) [payment-options p draft])
      (when (= op :countryman)
        [field "Field to sow" [:select {:value (if (some? (:cell draft)) (str (:cell draft)) "")
                                      :on-change #(draft! :cell (when (seq (.. % -target -value)) (reader/read-string (.. % -target -value))))}

@@ -133,7 +133,7 @@
                                    (map #(assoc % :action :renovate) (payment-options p)))
                   :boat-painter [{:resource :grain} {:resource :food}]
                   :countryman (for [cell (field-ids p) crop [:grain :vegetable]] {:plantings [{:cell cell :crop crop}]})
-                  :fast-mason (payment-options p)
+                  (:fast-mason :renovate) (payment-options p)
                   :young-artist (cons {:action :draw} (map #(assoc % :action :play) (hand-options p :minor)))
                   :sidekick (let [space (five/stage-left state (get-in state [:effect-queue 0 :context :space]))]
                               (map #(hash-map :action-command %) (action-candidates (assoc state :active [space] :turn pid) pid)))
@@ -226,7 +226,7 @@
         urgency (if (= r harvest) 1.6 (if (= 1 (- harvest r)) 1.1 0.65))
         fed-now? (and (#{:feeding :breeding :finish-round} (:phase state)) (contains? (:fed state) pid))
         hunger (if fed-now? 0 (* urgency (max 0 (- target food))))
-        growth-room? (and (< family 5) (> rooms family))
+        growth-room? (and (< family 5) (> (a/family-capacity p) family))
         wood-target (if (and (< family 5) (not growth-room?) (= :wood (:house p))) 5 0)
         reed-target (if (and (< family 5) (not growth-room?)) 2 1)
         material-values (+ (diminishing (a/amount p :wood) (repeat (max 5 wood-target) 0.72) 0.16)
