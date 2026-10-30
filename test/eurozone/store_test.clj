@@ -17,6 +17,23 @@
       (is (set? (:newborn-only projected)))
       (is (= (if (seq newborn-only) [] [0]) (cards/space-owners projected :growth)))
       (is (= 1 (a/amount (cards/p after 0) :grain))))))
+(deftest harvest-membership-and-cancelled-actions-survive-client-projection
+  (let [cancelled #{[2 :sow-bake 7]}
+        state (-> (cards/initialize (a/new-game ["Ada" "Ben" "Cara"] (vec (mapcat identity a/stages)) 0))
+                  (assoc :phase :feeding :fed #{2} :bred #{1} :cancelled-sowing cancelled))
+        room {:id "membership" :title "Membership" :mode :local :revision 0 :state state}
+        db (d/db-with (d/empty-db model/schema) (model/game-tx room))
+        projected (:state (model/pull-game db "membership"))]
+    (is (= #{2} (:fed projected)))
+    (is (= #{1} (:bred projected)))
+    (is (= cancelled (:cancelled-sowing projected)))
+    (is (not (contains? (:fed projected) 0)) "The first vector index is not an already-fed player")
+    (is (contains? (:fed projected) 2))
+    (is (not (contains? (:bred projected) 0)))
+    (is (contains? (:bred projected) 1))
+    (is (contains? (:cancelled-sowing projected) [2 :sow-bake 7]))
+    (is (= 1 (count (conj (:fed projected) 2))))
+    (is (= 1 (count (conj (:bred projected) 1))))))
 (deftest lobby-settings-are-authorized-and-persisted
   (doseq [n [3 4 5]]
     (let [store (s/make-store nil)

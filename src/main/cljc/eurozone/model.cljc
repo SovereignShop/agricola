@@ -49,6 +49,9 @@
                        (merge (unqualify "agricola.game" room)
                               {:available-improvements (set (:agricola.game/available-improvements room))
                                :newborn-only (set (:agricola.game/newborn-only room))
+                               :fed (set (:agricola.game/fed room))
+                               :bred (set (:agricola.game/bred room))
+                               :cancelled-sowing (set (:agricola.game/cancelled-sowing room))
                                :players
                                (mapv (fn [p]
                                        (-> (unqualify "agricola.player" p)
