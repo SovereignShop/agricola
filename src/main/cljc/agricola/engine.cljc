@@ -369,6 +369,9 @@
         extra (when (and (= pid (:player plan)) (= space (:space plan))) (:cells plan))]
     (reduce #(place-tile %1 :field %2) (get-in g [:players pid])
             (concat (when (some? cell) [cell]) extra))))
+(defn replaced-baking? [g pid space]
+  (let [plan (:freshman-plan g)]
+    (and (= pid (:player plan)) (= space (:space plan)) (some? (:card plan)))))
 (defn apply-action [g pid {:keys [space cell rooms stables fences plantings bake-grain choice] :as command}]
   (let [a (action-definition g space) p (get-in g [:players pid])]
     (require! (= :work (:phase g)) "Finish the harvest or animal housing first.")
@@ -394,9 +397,9 @@
                                    (update-in g [:players pid] #(-> % (pay (if (= choice :cattle) {:food 1} {}))
                                                                     (gain (merge {choice 1} (when (= choice :sheep) {:food 1}))))))
                 :fences (update-in g [:players pid] build-fences fences (select-keys command [:fence-material]))
-                :side-job (do (require! (and (<= (count stables) 1) (or (seq stables) (pos? (or bake-grain 0)))) "Build one stable and/or bake bread.")
+                :side-job (do (require! (and (<= (count stables) 1) (or (seq stables) (pos? (or bake-grain 0)) (replaced-baking? g pid space))) "Build one stable and/or bake bread.")
                               (update-in g [:players pid] #(-> % (build-stables stables 1) (bake (or bake-grain 0)))))
-                :sow-bake (do (require! (or (seq plantings) (pos? (or bake-grain 0))) "Sow at least one field or bake bread.")
+                :sow-bake (do (require! (or (seq plantings) (pos? (or bake-grain 0)) (replaced-baking? g pid space)) "Sow at least one field or bake bread.")
                              (update-in g [:players pid] #(-> % (sow plantings) (bake (or bake-grain 0)))))
                 :cultivation (do (require! (or (some? cell) (seq plantings) (and (= pid (get-in g [:plow-plan :player])) (= space (get-in g [:plow-plan :space])) (seq (get-in g [:plow-plan :cells])))) "Plow a field and/or sow.")
                                  (assoc-in g [:players pid] (sow (plow-action-player g pid space cell) plantings)))

@@ -3,6 +3,7 @@
           :revised-artifex-expansion-a-34-loppers {:play [{:op :watch-fences}]}
           :revised-artifex-expansion-a-40-potter-s-yard {:play [{:op :potters-yard}]}
           :revised-artifex-expansion-a-144-sequestrator {:play [{:op :sequestrator}]}
+          :revised-artifex-expansion-a-97-freshman {:passive {:bake-substitution true}},
           :revised-artifex-expansion-a-113-heresy-teacher
           {:triggers [{:event :use-space :spaces #{:lessons :lessons-extra :lessons-copse :lessons-growth}
                        :effect {:op :heresy-teacher}}]},

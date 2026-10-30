@@ -191,3 +191,119 @@
       (is (= 1 (delta state done :vegetable)))
       (is (= 1 (a/field-crop-count (get-in done [:players 0 :farm 2]) :grain)))
       (is (= 0 (a/field-crop-count (get-in done [:players 0 :farm 2]) :vegetable))))))
+
+(deftest freshman-substitution-makes-baking-action-spaces-legal-without-grain-or-an-oven
+  (doseq [space [:sow-bake :side-job]]
+    (let [state (-> (fresh) (own 0 :a097) (hand :a116) (update :active #(vec (distinct (conj % space)))))
+          offer (g/command state 0 {:type :action :space space})
+          done (resolve! (edn/read-string (pr-str offer)) {:card (c/id :a116)})]
+      (is (= :freshman-bake (get-in offer [:effect-queue 0 :effect :op])))
+      (is (= 2 (get-in offer [:players 0 :remaining])))
+      (is (not (c/has? (g/p offer 0) :a116)))
+      (is (c/has? (g/p done 0) :a116))
+      (is (= 0 (delta state done :food)))
+      (is (= 1 (get-in done [:players 0 :remaining])))
+      (is (= {space 0} (:occupied done)))
+      (is (= 1 (:turn done)))
+      (is (nil? (:freshman-plan done)))
+      (is (= [1 :work 0] (get-in done [:players 0 :card-state (c/id :a097) :used-turn]))))))
+
+(deftest freshman-does-not-trigger-baking-and-does-not-loop-with-baking-after-an-occupation
+  (let [state (-> (fresh) (own 0 :a097) (own 0 :b025) (own 0 :a063) (hand :a116) (hand :a117)
+                  (update :active conj :sow-bake) (assoc :round 5)
+                  (assoc-in [:players 0 :improvements] #{:fireplace-2})
+                  (update-in [:players 0] a/gain {:grain 1}))
+        offer (g/command state 0 {:type :action :space :sow-bake})
+        second-bake (resolve! offer {:card (c/id :a116)})
+        done (resolve! second-bake {:grain 1})]
+    (is (= :bake (get-in second-bake [:effect-queue 0 :effect :op])))
+    (is (= 0 (delta state second-bake :food)))
+    (is (false? (boolean (g/freshman-available? second-bake 0))))
+    (is (= 5 (delta state done :food)))
+    (is (not (c/has? (g/p done 0) :a117)))
+    (is (true? (boolean (g/freshman-available? done 0))))))
+
+(deftest freshman-plan-survives-before-sow-gifts-and-only-plays-card-on-commit
+  (let [state (-> (fresh) (own 0 :a097) (own 0 :a065) (hand :a116) (update :active conj :sow-bake)
+                  (assoc-in [:players 0 :farm 0] {:type :field :count 0}))
+        offer (g/command state 0 {:type :action :space :sow-bake})
+        sow-offer (resolve! offer {:card (c/id :a116) :sow-before? true})
+        sow (resolve! (edn/read-string (pr-str sow-offer)) {})
+        done (resolve! (edn/read-string (pr-str sow)) {:plantings [{:cell 0 :crop :grain}]})]
+    (is (= :sow-offer (get-in sow-offer [:effect-queue 0 :effect :op])))
+    (is (not (c/has? (g/p sow 0) :a116)))
+    (is (= 1 (delta state sow :grain)))
+    (is (c/has? (g/p done 0) :a116))
+    (is (= 0 (delta state done :grain)))
+    (is (= 3 (get-in done [:players 0 :farm 0 :count])))
+    (is (= 1 (get-in done [:players 0 :remaining])))))
+
+(deftest freshman-granted-baking-and-new-oven-opportunities-are-native
+  (let [state (-> (fresh) (own 0 :a097) (own 0 :a024) (hand :a116))
+        pending (g/command state 0 {:type :action :space :plow :cell 0})
+        done (resolve! (edn/read-string (pr-str pending)) {:card (c/id :a116)})]
+    (is (= :freshman-bake (get-in pending [:effect-queue 0 :effect :op])))
+    (is (c/has? (g/p done 0) :a116))
+    (is (= 1 (get-in done [:players 0 :remaining]))))
+  (let [state (-> (fresh) (own 0 :a097) (hand :a116) (update-in [:players 0] a/gain {:clay 3 :stone 1}))
+        pending (g/drain (g/granted-card-action state 0 {:kinds #{:major}} {:improvement :clay-oven}))
+        done (resolve! pending {:card (c/id :a116)})]
+    (is (= :freshman-bake (get-in pending [:effect-queue 0 :effect :op])))
+    (is (contains? (get-in done [:players 0 :improvements]) :clay-oven))
+    (is (c/has? (g/p done 0) :a116))
+    (is (= 2 (get-in done [:players 0 :remaining])))))
+
+(deftest freshman-declines-cancel-empty-placements-and-normal-baking-remains-available
+  (let [state (-> (fresh) (own 0 :a097) (hand :a116) (update :active conj :sow-bake))
+        pending (g/command state 0 {:type :action :space :sow-bake})
+        cancelled (resolve! pending {:skip? true})]
+    (is (empty? (:occupied cancelled)))
+    (is (empty? (:effect-queue cancelled)))
+    (is (nil? (:freshman-plan cancelled)))
+    (is (= 2 (get-in cancelled [:players 0 :remaining])))
+    (is (thrown? clojure.lang.ExceptionInfo (resolve! pending {:card (c/id :a004)}))))
+  (let [state (-> (fresh) (own 0 :a097) (hand :a116) (update :active conj :sow-bake)
+                  (assoc-in [:players 0 :improvements] #{:fireplace-2}) (update-in [:players 0] a/gain {:grain 2}))
+        done (resolve! (g/command state 0 {:type :action :space :sow-bake}) {:grain 2})]
+    (is (= 4 (delta state done :food)))
+    (is (= -2 (delta state done :grain)))
+    (is (not (c/has? (g/p done 0) :a116)))
+    (is (nil? (get-in done [:players 0 :card-state (c/id :a097) :used-turn])))))
+
+(deftest freshman-remains-used-during-the-lassos-second-placement
+  (let [state (-> (fresh) (own 0 :a097) (own 0 :b024) (hand :a116) (hand :a117)
+                  (update :active into [:sow-bake :sheep]) (assoc-in [:piles :sheep] {:sheep 1}))
+        first (resolve! (g/command state 0 {:type :action :space :sow-bake :lasso? true}) {:card (c/id :a116)})
+        done (g/command first 0 {:type :action :space :sheep})]
+    (is (true? (get-in first [:lasso :second?])))
+    (is (= 0 (:turn first)))
+    (is (not (g/freshman-available? first 0)))
+    (is (= 1 (:turn done)))
+    (is (= 1 (:turn-serial done)))))
+
+(deftest freshman-committed-occupation-cannot-be-invalidated-by-an-anytime-payment
+  (let [state (-> (fresh) (own 0 :a097) (own 0 :a065) (own 0 :b109) (hand :a116)
+                  (update :active conj :sow-bake) (update-in [:players 0] a/gain {:wood 1 :grain 1})
+                  (assoc-in [:players 0 :farm 0] {:type :field :count 0}))
+        pending (resolve! (g/command state 0 {:type :action :space :sow-bake}) {:card (c/id :a116) :paper-maker? true :sow-before? true})]
+    (is (g/committed-action? pending 0))
+    (is (thrown? clojure.lang.ExceptionInfo (g/command pending 0 {:type :convert :goods {:grain 1}})))
+    (let [done (resolve! pending {:skip? true})]
+      (is (c/has? (g/p done 0) :a116))
+      (is (= -1 (delta state done :wood)))
+      (is (= 2 (delta state done :food)))
+      (is (= 1 (:turn done))))))
+
+(deftest freshman-occupation-can-supply-the-seed-for-the-same-grain-utilization
+  (let [state (-> (fresh) (own 0 :a097) (hand :a112) (update :active conj :sow-bake)
+                  (assoc-in [:players 0 :farm 0] {:type :field :count 0}))
+        offer (g/command state 0 {:type :action :space :sow-bake})
+        sow-offer (resolve! (edn/read-string (pr-str offer)) {:card (c/id :a112)})
+        done (resolve! (resolve! (edn/read-string (pr-str sow-offer)) {}) {:plantings [{:cell 0 :crop :grain}]})]
+    (is (c/has? (g/p sow-offer 0) :a112))
+    (is (= 1 (get-in sow-offer [:players 0 :remaining])))
+    (is (= 1 (delta state sow-offer :grain)))
+    (is (= :sow-offer (get-in sow-offer [:effect-queue 0 :effect :op])))
+    (is (= 3 (get-in done [:players 0 :farm 0 :count])))
+    (is (= 0 (delta state done :grain)))
+    (is (= 1 (:turn done)))))
