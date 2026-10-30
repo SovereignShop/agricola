@@ -88,12 +88,13 @@
             (require! (and (cell? i) (= :empty (get-in p [:farm i :type])) (not (get-in p [:farm i :stable]))) "A stable needs an empty space or pasture without another stable.")
             (require! (< (count (filter :stable (:farm p))) 4) "You have only four stables.")
             (assoc-in (pay p {:wood cost}) [:farm i :stable] true)) p cells))
+(defn fences-available [p] (- 15 (count (:fences p)) (:discarded-fences p 0)))
 (defn build-fences
   ([p additions] (build-fences p additions {}))
   ([p additions options]
   (let [new (set additions) old (set (:fences p))]
     (require! (and (seq new) (= (count new) (count additions)) (set/subset? new all-edges) (empty? (set/intersection new old))) "Select new fence edges.")
-    (require! (<= (+ (count new) (count old)) 15) "You have only fifteen fences.")
+    (require! (<= (count new) (fences-available p)) "Not enough fence pieces remain in your supply.")
     (let [material (if (and (= :clay (:fence-material options)) (cards/has? p :a016)) :clay :wood)
           cost (max 0 (- (count new) (if (cards/has? p :a088) 3 0) (or (:free-fences options) 0)))
           p' (assoc (pay p {material cost}) :fences (set/union old new))
@@ -434,4 +435,4 @@
     (throw (ex-info "Unknown command." {:type :illegal-command}))))
 (defn public-state [g]
   ;; Future round order is private. Clients only see the cards already revealed.
-  (-> g (dissoc :round-order :deck-order :draw) (update :players #(mapv (fn [p] (dissoc p :hand)) %))))
+  (-> g (dissoc :round-order :deck-order :draw :card-rng) (update :players #(mapv (fn [p] (dissoc p :hand)) %))))

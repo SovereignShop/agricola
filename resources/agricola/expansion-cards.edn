@@ -1,4 +1,9 @@
-#:catalog{:revised-artifex-expansion-a-30-baking-sheet
+#:catalog{:revised-artifex-expansion-a-48-shaving-horse {:play [{:op :watch-wood}]}
+          :revised-artifex-expansion-a-3-paper-knife {:requires [:>= [:occupation-hand] 3] :play [{:op :paper-knife}]}
+          :revised-artifex-expansion-a-34-loppers {:play [{:op :watch-fences}]}
+          :revised-artifex-expansion-a-40-potter-s-yard {:play [{:op :potters-yard}]}
+          :revised-artifex-expansion-a-144-sequestrator {:play [{:op :sequestrator}]}
+          :revised-artifex-expansion-a-30-baking-sheet
           {:triggers
            [{:event :bake,
              :effect {:op :sequence, :optional? true, :cost {:grain 1},

@@ -263,6 +263,8 @@
           [:g {:aria-label (str (:remaining p) " family members at home")}
            (for [n (range (:remaining p))] ^{:key n}
              [:image {:data-piece-key (str "home:" (:id p) ":" n) :data-piece-type (str "worker:" (:id p)) :href (art/worker-url (:id p)) :x (+ x 6 (* 25 (mod n 3))) :y (+ y 5 (* 34 (quot n 3))) :width 32 :height 40}])])
+        (when (contains? (get-in p [:card-state (cards/id :a040) :clay-cells] #{}) i)
+          [:image {:aria-label "Potter's Yard clay" :href (art/piece-url :clay) :x (+ x 36) :y (+ y 40) :width 30 :height 30}])
         (when (:stable cell) [:g [:rect {:x (+ x 30) :y (+ y 38) :width 40 :height 30 :fill "#b07949"}]
                                 [:path {:d (str "M" (+ x 23) " " (+ y 38) "l27 -18 27 18Z") :fill "#6f563a"}]])
         (when (pos? (get cell :count 0))
@@ -575,7 +577,7 @@
 (defn card-decision [g p draft busy?]
   (let [head (first (:effect-queue g)) effect (:effect head) op (:op effect) options (card-game/order-options g)
         keep (get draft :keep (select-keys (:goods p) a/animals))
-        choice (merge (select-keys draft [:cell :cells :rooms :frame? :brushwood? :renovate-to :paper-maker? :card :cook? :option :payment-option :improvement :upgrade :bake-grain :exchange?])
+        choice (merge (select-keys draft [:cell :cells :rooms :cards :frame? :brushwood? :renovate-to :paper-maker? :card :cook? :option :payment-option :improvement :upgrade :bake-grain :exchange?])
                       (when (contains? draft :effect-fields) {:fields (:effect-fields draft)})
                       {:type :resolve :decision (:decision-id g) :keep keep :grain (get draft :effect-grain 1)
                        :action (or (:effect-action draft) (if (= op :young-artist) :draw :room))
@@ -592,6 +594,14 @@
                     (catch :default error (.-message error)))]
     [:div.card-decision
      [:div.eyebrow "RESOLVE A CARD EFFECT"] [:h3 (if (= op :ability-window) "After the harvest" (or (:name (cards/card (:card head))) (when (#{:sow :sow-offer} op) "Sow crops") "Make room for your animals"))]
+     (when (= op :paper-knife)
+       [:div [:p.small "Choose three occupations. One will be selected randomly and played for free."]
+        (for [cid (get-in (with-private-hand g (:id p) ui) [:players (:id p) :hand :occupation])]
+          ^{:key cid} [:label.checkbox
+                      [:input {:type "checkbox" :aria-label (str "Offer " (:name (cards/card cid)))
+                               :checked (boolean (some #{cid} (:cards draft)))
+                               :on-change #(dispatch :draft-card cid (.. % -target -checked))}]
+                      (:name (cards/card cid))])])
      (when (= op :ability-window) [:p.small "You may use your card abilities before continuing to the next round or final scoring."])
      (when (and (= op :take-pile-good) (nil? (:space effect)))
        [field "Accumulation space"

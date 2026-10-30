@@ -12,7 +12,7 @@
 (defn observation [state pid]
   (-> state
       (update :players #(mapv (fn [p] (if (= pid (:id p)) p (dissoc p :hand))) %))
-      (dissoc :minor-order :minor-deck)
+      (dissoc :minor-order :minor-deck :card-rng)
       (update :round-order #(vec (take (:round state) %)))
       (dissoc :draw :log)))
 (defn without-continuations [state]
@@ -127,6 +127,9 @@
                   (:plow :stable :mini-pasture :corral-builder :amateur-fencer :plowsmith) (map #(hash-map :cell %) (range 15))
                   (:plow-many :wheel-plow) (concat (map #(hash-map :cells [%]) (range 15))
                                                  (for [x (range 15) y (range 15) :when (not= x y)] {:cells [x y]}))
+                  :paper-knife (let [hand (vec (get-in p [:hand :occupation]))]
+                                 (for [i (range (count hand)) j (range (inc i) (count hand)) k (range (inc j) (count hand))]
+                                   {:cards [(hand i) (hand j) (hand k)]}))
                   :sow-offer [{}]
                   :build-rooms (for [rooms (g/room-plans p) opts (payment-options p)] (assoc opts :rooms rooms))
                   :sow (let [player (g/sowing-player state pid effect)

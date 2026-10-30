@@ -10,14 +10,15 @@
 (def canonical recording/canonical)
 (def sha recording/sha)
 (def state-hash recording/state-hash)
-(def rule-files ["agricola/board.edn" "agricola/cards.edn" "agricola/five-player-cards.edn" "agricola/expansion-cards.edn" "agricola/five_player.cljc" "agricola/engine.cljc" "agricola/card_game.cljc" "agricola/card_rules.cljc" "agricola/card_expressions.cljc" "agricola/card_catalog.cljc" "agricola/draw.cljc"])
+(def rule-files ["agricola/board.edn" "agricola/cards.edn" "agricola/five-player-cards.edn" "agricola/expansion-cards.edn" "agricola/five_player.cljc" "agricola/engine.cljc" "agricola/card_game.cljc" "agricola/card_reactive.cljc" "agricola/card_random.cljc" "agricola/card_rules.cljc" "agricola/card_expressions.cljc" "agricola/card_catalog.cljc" "agricola/draw.cljc"])
 (defn rules-hash [] (sha (apply str (map #(slurp (io/resource %)) rule-files))))
 (defn shuffle-with [^Random rng xs]
   (let [copy (ArrayList. (vec xs))] (Collections/shuffle copy rng) (vec copy)))
 (defn initial-state [{:keys [seed players mode extra] :or {seed 1 players 2 mode :random extra 2}}]
   (let [rng (Random. (long seed))
         order (vec (mapcat #(shuffle-with rng %) a/stages))
-        state (a/new-game (mapv #(str "Bot " (inc %)) (range players)) order (.nextInt rng players))
+        state (assoc (a/new-game (mapv #(str "Bot " (inc %)) (range players)) order (.nextInt rng players))
+                     :card-rng (inc (mod (long seed) 2147483646)))
         pool (filter #(<= (:min-players %) players) (sort-by :id (vals c/cards)))
         by-kind (into {} (for [kind draw/kinds] [kind (shuffle-with rng (filter #(= kind (:kind %)) pool))]))
         state (cond-> state (= players 5) (assoc :minor-order (mapv :id (by-kind :minor))))]

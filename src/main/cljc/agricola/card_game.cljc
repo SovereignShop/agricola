@@ -1,7 +1,7 @@
 (ns agricola.card-game
   "Card-game orchestration around the shared farm rules. Effects and decisions
    are data, so interrupted choices survive saves and reconnects."
-  (:require [agricola.engine :as a] [agricola.card-rules :as c] [agricola.five-player :as five] [agricola.card-expressions :as expr] [clojure.set :as set]))
+  (:require [agricola.engine :as a] [agricola.card-rules :as c] [agricola.five-player :as five] [agricola.card-expressions :as expr] [agricola.card-reactive :as reactive] [agricola.card-random :as random] [clojure.set :as set]))
 (declare drain run-effect play-card begin-round advance finish-game take-action take-action-complete staged-sowing? action-events take-action-with-sowing)
 (def ^:dynamic *effect-observer*
   "Optional diagnostic sink. It observes committed effects, never legality probes."
@@ -218,7 +218,7 @@
 (defn needs-input? [g {:keys [player effect] :as head}]
   (or (optional-effect? g head)
       (and (= :pay-or-beg (:op effect)) (< (a/amount (p g player) :food) (:food effect)))
-      (#{:ability-window :choose :plow :plow-many :wheel-plow :mini-pasture :stable :choose-good :bake :bake-one :take-field-crop :sow-offer :sow :housing :cottage :scholar} (:op effect))
+      (#{:paper-knife :ability-window :choose :plow :plow-many :wheel-plow :mini-pasture :stable :choose-good :bake :bake-one :take-field-crop :sow-offer :sow :housing :cottage :scholar} (:op effect))
       (and (= :seasonal-crop (:op effect)) (>= (:round g) 6))))
 (defn run-effect* [g {:keys [player card effect context window] :as head} choice]
   (let [pid player current (p g pid) op (:op effect) cost (expr/quantities g pid context (or (:cost effect) {}))]
@@ -237,6 +237,26 @@
             g (if deferred-sidekick? g (update-in g [:players pid] a/pay cost))]
         (case op
           :ability-window g
+          :paper-knife
+          (let [choices (:cards choice) hand (set (get-in current [:hand :occupation]))]
+            (a/require! (and (= 3 (count choices)) (= 3 (count (set choices))) (every? hand choices))
+                        "Choose exactly three distinct occupations from your hand.")
+            (let [[g selected] (random/choose g (vec (sort choices)))]
+              (try (play-card g pid selected 0 {})
+                   (catch #?(:clj clojure.lang.ExceptionInfo :cljs :default) error
+                     (if (= :illegal-command (:type (ex-data error)))
+                       (-> g (update-in [:players pid :hand :occupation] #(vec (remove #{selected} %)))
+                           (update :removed-cards (fnil conj []) selected)
+                           (a/log-event (str (:name current) " could not play the randomly selected " (:name (c/card selected)) "; it leaves the game.")))
+                       (throw error))))))
+          :watch-wood (reactive/watch-wood g pid)
+          :watch-fences (reactive/watch-fences g pid)
+          :potters-yard (reactive/potters-yard g pid)
+          :sequestrator (reactive/sequestrator g pid)
+          :loppers (do (a/require! (pos? (a/fences-available current)) "No fence piece remains to exchange.")
+                       (-> g (update-in [:players pid :discarded-fences] (fnil inc 0))
+                           (update-in [:players pid] a/gain {:food 2})
+                           (update-in [:players pid :bonus-points] (fnil inc 0))))
           :card-action (granted-card-action g pid effect choice)
           :grow (-> g (update-in [:players pid] a/grow (:room-required? effect))
                     (queue-front [(event :grow pid) (event :check-state pid)]))
@@ -492,6 +512,7 @@
                   (#{:plow :mini-pasture :stable} op) (map #(hash-map :cell %) (range 15))
                   (= :plow-many op) (map #(hash-map :cells [%]) (range 15))
                   (= :wheel-plow op) (cons {:skip? true} (map #(hash-map :cells [%]) (range 15)))
+                  (= :loppers op) [{}]
                   (= :bake op) [{:grain 1}]
                   (= :grow op) [{}]
                   (= :build-rooms op) (for [rooms (room-plans (p g player)) frame? [false true] brushwood? [false true]]
@@ -522,7 +543,7 @@
                         (some (fn [[resource rate]] (and (pos? rate) (pos? (a/amount player resource)))) (a/cook-rates player))))
     :reed-food (pos? (a/amount player :reed))
     :cash-card (pos? (get-in player [:card-state cid :food] 0))
-    :free-placement-fences (and (< (count (:fences player)) 15) (pos? (a/amount player :wood)))
+    :free-placement-fences (and (pos? (a/fences-available player)) (pos? (a/amount player :wood)))
     :move-crop (and (some #(>= (:count % 0) 2) (fields player)) (some #(zero? (:count % 0)) (fields player)))
     false))
 (defn anytime-tasks [g]
@@ -573,6 +594,7 @@
     g)))
 (defn drain [g]
   (loop [g g steps 0]
+   (let [g (-> g reactive/sync-farm-cards reactive/sync-shaving reactive/flush-shaving)]
     (a/require! (< steps 1000) "Card effects did not settle.")
     (if-let [head (first (:effect-queue g))]
       (let [rest-state (update g :effect-queue #(vec (rest %)))]
@@ -599,7 +621,7 @@
                             _ (observe-effect! head {})
                             g (cond-> g (:once? head) (assoc-in [:players (:player head) :card-state (:card head) :triggered?] true))]
                         (recur (with-housing g) (inc steps))))))
-      g)))
+      g))))
 (defn order-options [g]
   (let [head (first (:effect-queue g))]
     (when (:window head)
@@ -642,6 +664,7 @@
         reserve (vec (remove used (or (:minor-order g) (sort (map :id (filter #(= :minor (:kind %)) (vals c/cards)))))))]
   (-> (cond-> g (= 5 (count (:players g)))
               (assoc :minor-deck reserve :minor-deck-count (count reserve) :major-builds {}))
+      (assoc :card-rng (or (:card-rng g) (random/seed g)))
       (assoc :variant :cards :defer-advance? true :effect-queue [] :decision-id 0 :round 0
              :active (a/base-actions (count (:players g)) :cards) :piles {} :occupied {} :log [])
       (update :players #(mapv (fn [p] (merge {:occupations [] :minors [] :card-state {} :schedule {} :card-fields {} :bonus-points 0} p)) %))

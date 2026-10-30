@@ -96,7 +96,7 @@
   (let [settings (valid-setup settings) n (count names)
         _ (agricola/require! (nil? (pool-error n settings)) (pool-error n settings))
         excluded (:excluded-packs settings)
-        state (cond-> (new-state :agricola names)
+        state (cond-> (assoc (new-state :agricola names) :card-rng (inc (rand-int 2147483646)))
                 (= n 5) (assoc :minor-order (vec (shuffle (map :id (filter #(= :minor (:kind %)) (hand-pool n excluded)))))))
         mode (:mode settings)]
     (case mode

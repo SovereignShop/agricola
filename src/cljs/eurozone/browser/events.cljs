@@ -21,6 +21,10 @@
                (fn [plantings]
                  (let [others (vec (remove #(= cell (:cell %)) plantings))]
                    (cond-> others crop (conj {:cell cell :crop crop})))))))
+(rf/reg-event-db :draft-card
+  (fn [db [_ card selected?]]
+    (update-in db [:draft :cards]
+               (fn [cards] (cond-> (vec (remove #{card} cards)) selected? (conj card))))))
 (rf/reg-event-db :draft-room
   (fn [db [_ cell selected?]]
     (update-in db [:draft :rooms]
