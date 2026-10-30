@@ -175,6 +175,40 @@
     (is (empty? (:effect-queue done)))
     (is (= 3 (get-in done [:players 0 :farm 0 :count])))))
 
+(deftest minstrel-cannot-apply-placement-only-command-bonuses
+  (let [state (-> (fresh) (own 0 :a151) (own 0 :d180)
+                  (assoc :phase :return-home) (assoc-in [:players 0 :remaining] 0)
+                  (assoc-in [:piles :sheep] {:sheep 2}))
+        pending (g/drain (g/queue-front state [(g/event :return-home 0)]))]
+    (doseq [modifier [:part-time? :master-hora? :animal-brander? :shaving-horse? :lasso?]]
+      (is (thrown? clojure.lang.ExceptionInfo
+                   (resolve! pending {:action-command {:space :sheep modifier true}}))))))
+
+(deftest minstrel-runs-after-temporary-family-and-lodger-cleanup
+  (doseq [kind [:telegram :lodger]]
+    (let [state (cond-> (-> (fresh) (own 0 :a151)
+                           (assoc :phase :return-home :turn 3 :occupied {:labor 0})
+                           (assoc-in [:players 0 :family] 3)
+                           (assoc-in [:players 0 :remaining] 0)
+                           (assoc-in [:players 0 :worker-spaces] [:labor])
+                           (assoc-in [:piles :sheep] {:sheep 1}))
+                  (= kind :telegram) (assoc-in [:players 0 :temporary-family] 1)
+                  (= kind :lodger) (own 0 :a127)
+                  (= kind :lodger) (assoc :round 9)
+                  (= kind :lodger) (assoc-in [:players 0 :card-state (c/id :a127) :room-active?] true))
+          pending (-> state g/prepare-return-home
+                      (g/queue-front [(g/event :return-home 0)]) g/drain)
+          done (resolve! (edn/read-string (pr-str pending)) {:action-command {:space :sheep}})]
+      (is (= :minstrel (get-in pending [:effect-queue 0 :effect :mode])))
+      (is (= 2 (get-in pending [:players 0 :family])))
+      (is (= 2 (get-in done [:players 0 :family])))
+      (is (= 0 (get-in done [:players 0 :remaining])))
+      (is (= {:labor 0} (:occupied done)) "Previously used spaces remain occupied throughout returning home")
+      (is (= [:labor] (get-in done [:players 0 :worker-spaces])))
+      (is (= :return-home (:phase done)))
+      (is (= 1 (delta pending done :sheep)))
+      (is (= (if (= kind :lodger) 4 5) (a/family-limit (g/p done 0)))))))
+
 (deftest swagman-room-growth-is-not-duplicated-and-the-newborn-stays-on-the-source
   (let [state (-> (fresh) (own 0 :a129) (own 0 :a021)
                   (assoc-in [:players 0 :farm 0] {:type :room})

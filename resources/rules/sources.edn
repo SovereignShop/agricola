@@ -16,7 +16,17 @@
    :url "http://playagricola.com/forums/index.php?board=23.0"
    :note "Check card edition and printing. Separate expansion boards are linked from the forum index."}]
  :open-questions
- [{:id :fertilizers-and-moldboard-action-boundary
+ [{:id :lazy-sowman-empty-sow-action
+   :cards [:catalog/revised-artifex-expansion-a-94-lazy-sowman]
+   :question "May Lazy Sowman use Grain Utilization solely to decline Sow, without sowing or baking, including when no sowing plan is possible?"
+   :current-behavior "A board placement must still perform a legal action. Declining Sow completes Cultivation when a field is plowed, or Grain Utilization when bread is baked; otherwise the uncommitted placement is cancelled. Generic Sow offers without sowing potential are omitted."
+   :status :unresolved
+   :sources ["https://docs.google.com/document/d/1WUl0HlzX6Yx0ume75UmpaIMhoHukx9XufM_LbV1oZ6E/edit"
+             "https://boardgamegeek.com/thread/2108049/article/30659621#30659621"
+             "https://boardgamegeek.com/thread/2323856/about-decline-an-action-instead-an-action-or-some"
+             "https://www.reedstonefood.com/agricola/compendium"]
+   :note "The older mixed-edition compendium permits an empty Bake/Sow action, while community discussion conflicts. The Revised compendium cites Uwe via Ponton for repeated Cultivation, but the linked primary post could not be retrieved. Existing behavior is an interpretation, not a verified designer ruling on empty Sow actions."}
+  {:id :fertilizers-and-moldboard-action-boundary
    :cards [:catalog/revised-artifex-expansion-a-73-agricultural-fertilizers :revised-base/b019]
    :question "Does Farmland's field plus Moldboard Plow's additional field count as one action for Agricultural Fertilizers?"
    :current-behavior "The two plow effects are treated separately; one field from each does not grant a Sow action."

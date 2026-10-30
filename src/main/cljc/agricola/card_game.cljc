@@ -1157,6 +1157,9 @@
         allowed (set (extra-action-spaces g pid effect context))]
     (a/require! (and (map? command) (contains? allowed space)) "Choose an action allowed by this card.")
     (a/require! (or (= :lazy-sowman (:mode effect)) (not (:lasso? command))) "This card effect does not place a new person for Lasso.")
+    (when (= :minstrel (:mode effect))
+      (a/require! (not-any? #(get command %) [:part-time? :master-hora? :animal-brander? :shaving-horse?])
+                  "Minstrel takes only the action effect, without placement bonuses."))
     (let [state (extra-action-state g pid effect context)]
       (if (:card-space command) (card-action state pid command) (take-action state pid command)))))
 (defn record-newborn [g pid]
