@@ -805,4 +805,19 @@
                :kinds #{:minor}}]}]},
           :revised-artifex-expansion-a-99-fellow-grazer
           {:score
-           {:type :expression, :value [:* 2 [:pastures-at-least 3]]}}}
+           {:type :expression, :value [:* 2 [:pastures-at-least 3]]}}
+ :revised-artifex-expansion-a-21-family-friend-home
+ {:triggers [{:event :build-rooms
+              :condition [:test [:> [:context :rooms-before] [:context :family-before]]]
+              :effects [{:op :gain :goods {:food 1}}
+                        {:op :grow :optional? true :room-required? true}]}]}
+ :revised-artifex-expansion-a-93-bed-maker
+ {:triggers [{:event :build-rooms
+              :effect {:op :grow :optional? true :room-required? true :cost {:wood 1 :grain 1}}}]}
+ :revised-artifex-expansion-a-149-house-artist
+ {:triggers [{:event :use-space :spaces #{:traveling}
+              :effect {:op :build-rooms :optional? true :room-discount {:reed 1}}}]}
+ :revised-artifex-expansion-a-167-breeder-buyer
+ {:triggers [{:event :build-rooms :effect {:op :breeder-buyer}}
+             {:event :build-stables :effect {:op :breeder-buyer}}]}
+}

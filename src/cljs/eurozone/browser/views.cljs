@@ -575,7 +575,7 @@
 (defn card-decision [g p draft busy?]
   (let [head (first (:effect-queue g)) effect (:effect head) op (:op effect) options (card-game/order-options g)
         keep (get draft :keep (select-keys (:goods p) a/animals))
-        choice (merge (select-keys draft [:cell :frame? :brushwood? :renovate-to :paper-maker? :card :cook? :option :payment-option :improvement :upgrade :bake-grain :exchange?])
+        choice (merge (select-keys draft [:cell :rooms :frame? :brushwood? :renovate-to :paper-maker? :card :cook? :option :payment-option :improvement :upgrade :bake-grain :exchange?])
                       (when (contains? draft :effect-fields) {:fields (:effect-fields draft)})
                       {:type :resolve :decision (:decision-id g) :keep keep :grain (get draft :effect-grain 1)
                        :action (or (:effect-action draft) (if (= op :young-artist) :draw :room))
@@ -637,6 +637,13 @@
        [field "Resource" [:select {:value (name (or (:effect-resource draft) (first (or (:choices effect) (if (= op :boat-painter) [:grain :food] [:grain :vegetable])))))
                                    :on-change #(draft! :effect-resource (keyword (.. % -target -value)))}
                           (for [r (or (:choices effect) (if (= op :boat-painter) [:grain :food] [:grain :vegetable]))] ^{:key r} [:option {:value (name r)} (labels r)])]])
+     (when (= op :build-rooms)
+       [:div [:p.small "Choose rooms in the order to build them."]
+        (for [i (range 15) :when (a/empty-cell? p i)]
+          ^{:key i} [:label.checkbox [:input {:type "checkbox" :aria-label (str "Build room " (inc i))
+                                             :checked (boolean (some #{i} (:rooms draft)))
+                                             :on-change #(draft! :rooms (toggle-value (:rooms draft) i))}]
+                     (str "Space " (inc i))])])
      (when (= op :cottage)
        [field "Cottager action" [:select {:value (name (or (:effect-action draft) :room)) :on-change #(draft! :effect-action (keyword (.. % -target -value)))} [:option {:value "room"} "Build one room"] [:option {:value "renovate"} "Renovate"]]])
      (when (or (#{:plow :mini-pasture :stable :corral-builder :amateur-fencer :plowsmith} op) (and (= op :cottage) (not= :renovate (:effect-action draft))))
@@ -672,7 +679,7 @@
             [:label.checkbox [:input {:type "checkbox" :checked (boolean (some #{i} selected))
                                        :on-change #(draft! :effect-fields (toggle-value selected i))}]
              (if (integer? i) (str "Field " (inc i)) (:name (cards/card i)))])]))
-     (when (#{:cottage :fast-mason :renovate} op) [payment-options p draft])
+     (when (#{:cottage :fast-mason :renovate :build-rooms} op) [payment-options p draft])
      (when (= op :countryman)
        [field "Field to sow" [:select {:value (if (some? (:cell draft)) (str (:cell draft)) "")
                                      :on-change #(draft! :cell (when (seq (.. % -target -value)) (reader/read-string (.. % -target -value))))}

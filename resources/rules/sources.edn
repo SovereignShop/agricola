@@ -23,7 +23,13 @@
    :status :unresolved
    :note "No explicit publisher or designer clarification was found. Do not present either interpretation as a verified ruling."}]
  :regressions
- [{:id :work-certificate-immediate-use :cards [:catalog/revised-artifex-expansion-a-82-work-certificate]
+ [{:id :construction-family-growth-once
+   :cards [:catalog/revised-artifex-expansion-a-21-family-friend-home :catalog/revised-artifex-expansion-a-93-bed-maker]
+   :source "https://docs.google.com/document/d/1WUl0HlzX6Yx0ume75UmpaIMhoHukx9XufM_LbV1oZ6E/edit"
+   :authority :unofficial-compilation
+   :rule "Family Friend Home and Bed Maker each offer one family growth action per room-building action, regardless of room count. Family Friend Home requires spare rooms before construction."
+   :test agricola.artifex-construction-test/bed-maker-is-one-paid-growth-per-room-action}
+  {:id :work-certificate-immediate-use :cards [:catalog/revised-artifex-expansion-a-82-work-certificate]
    :source "https://docs.google.com/document/d/1WUl0HlzX6Yx0ume75UmpaIMhoHukx9XufM_LbV1oZ6E/edit"
    :authority :unofficial-compilation
    :rule "Work Certificate may trigger on the action used to play it. The specific card entry and 2022 revision supersede the compendium's older generic timing example."

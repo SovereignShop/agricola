@@ -77,8 +77,9 @@
     (discounted cost (if (cards/has? p :a143) {:stone 1} {}))))
 (defn build-rooms
   ([p cells] (build-rooms p cells {}))
-  ([p cells options]
-   (let [cost (apply merge-with + {} (map #(room-cost p (get-in options [:room-options %] options)) cells))
+  ([p cells options] (build-rooms p cells options {}))
+  ([p cells options {:keys [room-discount]}]
+   (let [cost (apply merge-with + {} (map #(discounted (room-cost p (get-in options [:room-options %] options)) room-discount) cells))
          reductions (when (and (>= (count cells) 2) (some true? (cards/passives p :batch-room-discount)))
                       {:reed 2 (:house p) ({:wood 2 :clay 3 :stone 4} (:house p))})]
      (reduce #(place-tile %1 :room %2) (pay p (discounted cost reductions)) cells))))

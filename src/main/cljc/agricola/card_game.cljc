@@ -229,6 +229,17 @@
         (case op
           :ability-window g
           :card-action (granted-card-action g pid effect choice)
+          :grow (-> g (update-in [:players pid] a/grow (:room-required? effect))
+                    (queue-front [(event :grow pid) (event :check-state pid)]))
+          :build-rooms
+          (let [rooms (:rooms choice)]
+            (a/require! (and (sequential? rooms) (seq rooms)) "Choose at least one room to build.")
+            (update-in g [:players pid] a/build-rooms rooms choice {:room-discount (:room-discount effect)}))
+          :breeder-buyer
+          (let [{:keys [rooms stables rewarded?]} (get-in g [:turn-construction pid])]
+            (if (and (seq rooms) (pos? (or stables 0)) (not rewarded?))
+              (-> g (update-in [:players pid] a/gain {({:wood :sheep :clay :boar :stone :cattle} (last rooms)) 1})
+                    (assoc-in [:turn-construction pid :rewarded?] true)) g))
           :sow-offer
           (do
             (a/require! (can-pay? current (or (:placement-cost effect) {})) "Pay the extra placement cost before starting this Sow action.")
@@ -366,7 +377,7 @@
                      (assoc-in g [:players pid] next))
           :cottage (do (a/require! (#{:room :renovate} (:action choice)) "Choose building a room or renovating.")
                     (if (= :room (:action choice))
-                     (queue-front (update-in g [:players pid] a/build-rooms [(:cell choice)] choice) [(event :build-rooms pid (when (= 5 (count (:players g))) {:rooms-built 1}))])
+                     (update-in g [:players pid] a/build-rooms [(:cell choice)] choice)
                      (queue-front (update-in g [:players pid] a/renovate choice) [(event :renovate pid {:previous-house (:house current)}) (event :check-state pid)])))
           :scholar (play-card g pid (:card choice) 1 choice {:event (:trigger-event context) :window window})
           :boat-painter (do (a/require! (#{:grain :food} (:resource choice)) "Choose grain or food.")
@@ -411,9 +422,15 @@
   (let [before (count (a/tiles (p g player) :field)) after (run-effect* g head choice)
         plowed (- (count (a/tiles (p after player) :field)) before)
         fenced? (not= (:fences (p g player)) (:fences (p after player)))
-        stables (- (count (filter :stable (:farm (p after player)))) (count (filter :stable (:farm (p g player)))))]
+        stables (- (count (filter :stable (:farm (p after player)))) (count (filter :stable (:farm (p g player)))))
+        rooms (- (count (a/tiles (p after player) :room)) (count (a/tiles (p g player) :room)))
+        room-context {:rooms-built rooms :rooms-before (count (a/tiles (p g player) :room))
+                      :family-before (:family (p g player)) :previous-house (:house (p g player))}]
     (cond-> after
-      (and (not (:source-command effect)) (pos? stables) (= :work (:phase g)) (= player (:turn g)))
+      (and (not (:source-command effect)) (not= :sidekick (:op effect)) (pos? rooms))
+      (queue-front (concat (when (>= rooms 2) [(event :use-farm-spaces player {:used-spaces rooms :action :room})])
+                           [(event :build-rooms player room-context) (event :check-state player)]))
+      (and (not (:source-command effect)) (not= :sidekick (:op effect)) (pos? stables) (= :work (:phase g)))
       (queue-front [(event :build-stables player {:stables-built stables})])
       (and (not (:source-command effect)) (pos? plowed) (not (#{:plowsmith :corral-builder :amateur-fencer :sidekick} (:op effect))))
       (queue-front [(event :plow player {:fields-plowed plowed})])
@@ -435,6 +452,16 @@
                 [{} missing] [:grain :vegetable :sheep :boar :cattle])]
     (when (and (or (empty? goods) (conversion-phases (:phase g))) (<= deficit 0)
                (can-pay? (a/convert-food player goods) cost)) goods)))
+(defn room-plans [player]
+  ;; Two-room plans matter for batch discounts: a player can afford two rooms
+  ;; while lacking the reed required for a single room.
+  (let [cells (filter #(a/empty-cell? player %) (range 15))
+        attached? (fn [rooms cell] (some (set rooms) (a/neighbors cell)))
+        rooms (a/tiles player :room)]
+    (concat (for [cell cells :when (attached? rooms cell)] [cell])
+            (for [one cells :when (attached? rooms one) two cells
+                  :when (and (not= one two) (attached? (conj (vec rooms) one) two))]
+              [one two]))))
 (defn possible-effect? [g {:keys [player effect] :as head}]
   (let [op (:op effect) cost (expr/quantities g player (:context head) (:cost effect))
         conversion (when (optional-effect? g head) (funding-conversion g player cost))
@@ -442,6 +469,9 @@
         choices (cond
                   (#{:plow :mini-pasture :stable} op) (map #(hash-map :cell %) (range 15))
                   (= :bake op) [{:grain 1}]
+                  (= :grow op) [{}]
+                  (= :build-rooms op) (for [rooms (room-plans (p g player)) frame? [false true] brushwood? [false true]]
+                                       {:rooms rooms :frame? frame? :brushwood? brushwood?})
                   (= :take-pile-good op) (pile-good-options g effect)
                   (= :renovate op) [{} {:renovate-to :stone}]
                   (= :bake-one op) (map #(hash-map :improvement %) (:improvements (p g player)))
@@ -509,13 +539,22 @@
                  (queue-front (map #(event :feeding-start (:id %)) (:players g))))
     :check-all (queue-front g (map #(event :check-state (:id %)) (:players g)))
     g))
+(defn record-construction [g {:keys [event player context]}]
+  ;; Record committed construction events, including nested card actions. This
+  ;; survives reloads and is reset only for the next external worker placement.
+  (case event
+    :build-rooms (update-in g [:turn-construction player :rooms] (fnil conj []) (:previous-house context))
+    :build-stables (update-in g [:turn-construction player :stables] (fnil + 0) (:stables-built context 0))
+    g))
 (defn drain [g]
   (loop [g g steps 0]
     (a/require! (< steps 1000) "Card effects did not settle.")
     (if-let [head (first (:effect-queue g))]
       (let [rest-state (update g :effect-queue #(vec (rest %)))]
         (case (:kind head)
-          :event (let [window (or (get-in head [:context :existing-window]) (inc (get g :effect-window 0)))
+          :event (let [g (record-construction g head)
+                       rest-state (record-construction rest-state head)
+                       window (or (get-in head [:context :existing-window]) (inc (get g :effect-window 0)))
                        tasks (trigger-tasks g head)
                        ;; Taking goods happens before optional exchanges that say
                        ;; "immediately after" using the space.
@@ -656,6 +695,7 @@
                  :upgraded-fireplace? (boolean (:upgrade cmd))
                  :improvement (:improvement cmd)
                  :pile-food (get-in before [:piles space :food] 0)
+                 :rooms-before (count (a/tiles p0 :room)) :family-before (:family p0)
                  :rooms-built (- (count (a/tiles p1 :room)) (count (a/tiles p0 :room)))
                  :stables-built (- (count (filter :stable (:farm p1))) (count (filter :stable (:farm p0))))
                  :fences-built (- (count (:fences p1)) (count (:fences p0)))
@@ -852,8 +892,8 @@
         (case type
           :order-effect (reorder-effect g pid (:card cmd))
           :resolve (resolve-choice g pid cmd)
-          :action (take-action g pid cmd)
-          :card-action (card-action g pid cmd)
+          :action (take-action (assoc g :turn-construction {}) pid cmd)
+          :card-action (card-action (assoc g :turn-construction {}) pid cmd)
           ;; Hayward places fences without taking a fencing action. Check state
           ;; milestones here, but do not synthesize action triggers from deltas.
           :ability (-> (ability g pid cmd) (queue-front [(step :check-all)]) with-housing)

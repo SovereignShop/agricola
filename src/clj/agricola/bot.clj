@@ -21,7 +21,7 @@
   (binding [g/*effect-observer* nil]
     (attempt
      #(case (:type cmd)
-      :action (g/drain (without-continuations (g/take-action state pid cmd)))
+      :action (g/drain (without-continuations (g/take-action (assoc state :turn-construction {}) pid cmd)))
       :resolve (g/drain (without-continuations (g/resolve-choice state pid cmd)))
       :ability (g/drain (g/with-housing (g/ability state pid cmd)))
       :convert (g/command (without-continuations state) pid cmd)
@@ -126,6 +126,7 @@
         options (case (:op effect)
                   (:plow :stable :mini-pasture :corral-builder :amateur-fencer :plowsmith) (map #(hash-map :cell %) (range 15))
                   :sow-offer [{}]
+                  :build-rooms (for [rooms (g/room-plans p) opts (payment-options p)] (assoc opts :rooms rooms))
                   :sow (let [player (g/sowing-player state pid effect)
                              plans (if (:max-fields effect)
                                      (for [cell (field-ids player) crop [:grain :vegetable]] [{:cell cell :crop crop}])
