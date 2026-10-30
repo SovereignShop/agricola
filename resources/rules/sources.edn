@@ -23,7 +23,19 @@
    :status :unresolved
    :note "No explicit publisher or designer clarification was found. Do not present either interpretation as a verified ruling."}]
  :regressions
- [{:id :construction-family-growth-once
+ [{:id :woolgrower-completed-feeding
+   :cards [:catalog/revised-artifex-expansion-a-148-woolgrower]
+   :source "https://docs.google.com/document/d/1WUl0HlzX6Yx0ume75UmpaIMhoHukx9XufM_LbV1oZ6E/edit"
+   :authority :unofficial-compilation
+   :rule "Woolgrower counts completed shared feeding phases, including those before it was played; the new sheep space is available for the following breeding phase."
+   :test agricola.woolgrower-test/woolgrower-new-capacity-is-usable-during-the-same-harvest}
+  {:id :baking-sheet-requires-normal-baking
+   :cards [:catalog/revised-artifex-expansion-a-30-baking-sheet]
+   :source "https://docs.google.com/document/d/1WUl0HlzX6Yx0ume75UmpaIMhoHukx9XufM_LbV1oZ6E/edit"
+   :authority :unofficial-compilation
+   :rule "Baking Sheet permits one optional extra grain exchange after normal baking; it cannot supply the required baking itself."
+   :test agricola.baking-sheet-test/baking-sheet-triggers-once-per-bake-and-after-an-ovens-granted-bake}
+  {:id :construction-family-growth-once
    :cards [:catalog/revised-artifex-expansion-a-21-family-friend-home :catalog/revised-artifex-expansion-a-93-bed-maker]
    :source "https://docs.google.com/document/d/1WUl0HlzX6Yx0ume75UmpaIMhoHukx9XufM_LbV1oZ6E/edit"
    :authority :unofficial-compilation

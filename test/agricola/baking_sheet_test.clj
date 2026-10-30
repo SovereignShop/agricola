@@ -47,3 +47,20 @@
     (is (= -1 (delta state done :grain)))
     (is (= 2 (delta state done :food)))
     (is (empty? (:effect-queue done)))))
+
+(deftest baking-sheet-triggers-once-per-bake-and-after-an-ovens-granted-bake
+  (let [state (ready 3)
+        pending (g/command state 0 {:type :action :space :sow-bake :bake-grain 2})
+        done (resolve! pending {})]
+    (is (= 6 (delta state done :food)))
+    (is (= 1 (get-in done [:players 0 :bonus-points])))
+    (is (empty? (:effect-queue done))))
+  (let [state (-> (ready 2) (update :active conj :improvement)
+                  (update-in [:players 0] a/gain {:clay 3 :stone 1}))
+        sheet (g/command state 0 {:type :action :space :improvement :improvement :clay-oven :bake-grain 1})
+        done (resolve! (edn/read-string (pr-str sheet)) {})]
+    (is (= (c/id :a030) (get-in sheet [:effect-queue 0 :card])))
+    (is (= 7 (delta state done :food)))
+    (is (= 1 (get-in done [:players 0 :bonus-points])))
+    (is (= 1 (get-in done [:players 0 :remaining])))
+    (is (= 1 (:turn done)))))
