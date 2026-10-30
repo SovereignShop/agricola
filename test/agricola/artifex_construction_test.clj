@@ -99,7 +99,7 @@
         with-stable (resolve! stable {:cell 2})
         done (resolve! (reload with-stable) {:rooms [0]})]
     (is (= 1 (delta state done :sheep)))
-    (is (true? (get-in done [:turn-construction 0 :rewarded?])))
+    (is (nil? (:turn-construction done)) "Construction clears when the turn advances")
     (let [again (g/drain (g/queue-front done [(g/task 0 nil {:op :stable :optional? true} {})]))
           after (resolve! again {:cell 3})]
       (is (= 0 (delta done after :sheep)))))
@@ -136,3 +136,25 @@
     (is (= 0 (a/amount (g/p done 0) :wood)))
     (is (= 0 (a/amount (g/p done 0) :reed)))
     (is (some #(= [0 1] (:rooms %)) (bot/decision-candidates pending 0)))))
+
+(deftest breeder-buyer-retains-construction-across-lassos-two-placements
+  (let [state (-> (fresh) rich (own 0 :a167) (own 0 :b024)
+                  (update :active #(vec (distinct (conj % :sheep))))
+                  (assoc-in [:piles :sheep] {:sheep 1}))
+        first-placement (g/take-action state 0 {:type :action :space :sheep :lasso? true})
+        stable-offer (g/drain (g/queue-front first-placement [(g/task 0 nil {:op :stable :optional? true} {})]))
+        second-placement (resolve! stable-offer {:cell 2})
+        done (g/command (reload second-placement) 0 {:type :action :space :build :rooms [0]})]
+    (is (true? (get-in second-placement [:lasso :second?])))
+    (is (= 1 (get-in second-placement [:turn-construction 0 :stables])))
+    (is (= 2 (a/amount (g/p done 0) :sheep)))
+    (is (nil? (:turn-construction done)))
+    (is (= 0 (get-in done [:players 0 :remaining])))))
+
+(deftest breeder-buyer-does-not-combine-preparation-with-the-previous-turn
+  (let [state (-> (fresh) rich (own 0 :a167) (assoc :phase :preparation)
+                  (assoc :turn-construction {0 {:rooms [:wood]}}))
+        pending (g/drain (g/queue-front state [(g/task 0 nil {:op :stable :optional? true} {})]))
+        done (resolve! pending {:cell 2})]
+    (is (= 0 (a/amount (g/p done 0) :sheep)))
+    (is (nil? (:turn-construction (g/begin-round done))))))

@@ -541,11 +541,12 @@
     g))
 (defn record-construction [g {:keys [event player context]}]
   ;; Record committed construction events, including nested card actions. This
-  ;; survives reloads and is reset only for the next external worker placement.
-  (case event
+  ;; survives reloads and both Lasso placements, but never crosses a turn or phase.
+  (if (not= :work (:phase g)) g
+   (case event
     :build-rooms (update-in g [:turn-construction player :rooms] (fnil conj []) (:previous-house context))
     :build-stables (update-in g [:turn-construction player :stables] (fnil + 0) (:stables-built context 0))
-    g))
+    g)))
 (defn drain [g]
   (loop [g g steps 0]
     (a/require! (< steps 1000) "Card effects did not settle.")
@@ -603,11 +604,11 @@
         next (first (filter #(pos? (get-in g [:players % :remaining])) (map #(mod (+ pid %) n) (range 1 (inc n)))))]
     (cond
       (and lasso (not (:second? lasso)) (pos? (get-in g [:players pid :remaining]))) (assoc-in g [:lasso :second?] true)
-      (some? next) (-> g (assoc :turn next) (dissoc :lasso))
-      :else (-> g (dissoc :lasso) (queue-front [(step :return-home)])))))
+      (some? next) (-> g (assoc :turn next) (dissoc :lasso :turn-construction))
+      :else (-> g (dissoc :lasso :turn-construction) (queue-front [(step :return-home)])))))
 (defn begin-round [g]
   (let [replenished? (and (pos? (get-in g [:piles :reed :reed] 0)) (= 1 (get-in (a/action-definition g :reed) [:gain :reed])))
-        g (assoc (a/begin-round g) :phase :preparation) r (:round g)
+        g (assoc (a/begin-round (dissoc g :turn-construction)) :phase :preparation) r (:round g)
         arrivals (mapcat (fn [p]
                            (for [{:keys [card goods]} (get-in p [:schedule r]) :when (some #{card} (c/owned p))]
                              (task (:id p) card (if (:field goods) {:op :plow :optional? true} {:op :gain :goods goods}) {}))) (:players g))]
@@ -882,6 +883,8 @@
                    (-> g (update-in (into [:players pid] (conj source-path :count)) dec)
                        (assoc-in (into [:players pid] target-path) (assoc target :crop (:crop source) :count 1))))
       (throw (ex-info "This card has no anytime ability." {})))))
+(defn prepare-placement [g]
+  (if (get-in g [:lasso :second?]) g (dissoc g :turn-construction)))
 (defn command [g pid {:keys [type] :as cmd}]
   (a/require! (not= :finished (:phase g)) "This game has finished.")
   (a/require! (not= :draw (:phase g)) "Complete the draw first.")
@@ -892,8 +895,8 @@
         (case type
           :order-effect (reorder-effect g pid (:card cmd))
           :resolve (resolve-choice g pid cmd)
-          :action (take-action (assoc g :turn-construction {}) pid cmd)
-          :card-action (card-action (assoc g :turn-construction {}) pid cmd)
+          :action (take-action (prepare-placement g) pid cmd)
+          :card-action (card-action (prepare-placement g) pid cmd)
           ;; Hayward places fences without taking a fencing action. Check state
           ;; milestones here, but do not synthesize action triggers from deltas.
           :ability (-> (ability g pid cmd) (queue-front [(step :check-all)]) with-housing)

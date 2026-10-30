@@ -21,7 +21,7 @@
   (binding [g/*effect-observer* nil]
     (attempt
      #(case (:type cmd)
-      :action (g/drain (without-continuations (g/take-action (assoc state :turn-construction {}) pid cmd)))
+      :action (g/drain (without-continuations (g/take-action (g/prepare-placement state) pid cmd)))
       :resolve (g/drain (without-continuations (g/resolve-choice state pid cmd)))
       :ability (g/drain (g/with-housing (g/ability state pid cmd)))
       :convert (g/command (without-continuations state) pid cmd)
