@@ -238,7 +238,7 @@ only at five players. Their optional decisions, extra card action spaces, paymen
 one-use effects, and automatic triggers use the shared rules engine. Five online
 seats and mixed-packet draws are supported, including extra-card draws.
 
-**Artifex:** 87 of its 120 cards now have native definitions (46 minors and 41
+**Artifex:** 98 of its 120 cards now have native definitions (50 minors and 48
 occupations). Alternative printed payments and optional multi-option effects have
 explicit, saved workflows. Native rules cover conditional family capacity, boars
 on empty field tiles, discounts for building multiple rooms, free renovation,
@@ -247,13 +247,18 @@ occupation actions, selected-field crop collection, and post-field-phase baking.
 Nested card actions retain their pending choices across saves and reconnects.
 Sowing decisions allow pre-sow gifts before planting; declining the only offered
 seed leaves the worker available. Card action spaces, goods stored on cards, and
-optional removal of goods from other piles use the same native rules.
+optional removal of goods from other piles use the same native rules. Multi-field
+plows prepare fields before sowing. Room-building effects can offer paid family
+growth; construction history spans Lasso placements. Round-card bonuses arrive
+before payment, repeated accumulation visits earn Patch Caretaker vegetables, and
+Woolgrower sheep housing expands after each completed feeding phase. Baking Sheet
+offers one optional extra exchange after actual baking.
 Field prerequisites include field cards; field-tile requirements count only
 tiles on the farm, including for scoring. Partial packs show implemented/total counts in table setup;
 only implemented cards enter hands. Hosts can exclude Artifex for base-only games.
-The resulting pool has 231 hand cards plus the ten base major improvements.
+The resulting pool has 242 hand cards plus the ten base major improvements.
 
-**Coverage limits:** the remaining 33 Artifex cards, other expansion decks,
+**Coverage limits:** the remaining 22 Artifex cards, other expansion decks,
 six-player games, Original Edition card rules, solo campaigns, and optional
 multiplayer action tiles are not enabled.
 One documented ruling question remains: whether Agricultural Fertilizers combines
@@ -288,14 +293,13 @@ distinguishes current round-start timing from an older preview image. A linked
 regression checks Well income and the timing of newly played round-start cards.
 A second checks that Scholar/Manservant schedules food from the following round.
 The compendium explicitly permits immediate Plow Driver use when Scholar plays
-it; the engine currently misses that opportunity. The existing test's blanket
-assumption about newly played round-start triggers is therefore not a verified
-general ruling. Remaining-round schedules and same-window abilities need separate handling.
+it; a regression now verifies that preparation window. Remaining-round schedules
+and same-window abilities have separate rules and tests.
 The source index records individual checks; it does not claim all forum edge
 cases have been audited.
-[Open timing issues](resources/rules/open_issues.edn) include the missing
-post-breeding Sheep Walker window and an order-dependent Scholar/Plow Driver
-interaction. Reproduce them with `clojure -M scripts/audit_card_timing.clj`.
+[Timing audit records](resources/rules/open_issues.edn) document the fixed
+post-breeding Sheep Walker window and Scholar/Plow Driver ordering cases.
+Run their reproductions with `clojure -M scripts/audit_card_timing.clj`.
 
 ## The draw
 
@@ -512,6 +516,9 @@ python test/browser_artifex.py
 python test/browser_artifex_actions.py
 python test/browser_artifex_board.py
 python test/browser_artifex_sowing.py
+python test/browser_artifex_construction.py
+python test/browser_artifex_plows.py
+python test/browser_woolgrower.py
 python test/browser_peer.py
 ```
 
