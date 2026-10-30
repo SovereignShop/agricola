@@ -209,7 +209,7 @@
       (try (queue-front (complete-sow-placement g pid effect (assoc command :plantings []))
                         [(event :sow-declined pid {:unconditional? true})])
            (catch #?(:clj clojure.lang.ExceptionInfo :cljs :default) _
-             (update g :cancelled-sowing (fnil conj #{}) [pid (:space command) (:round g)])))
+             (update (dissoc g :plow-plan) :cancelled-sowing (fnil conj #{}) [pid (:space command) (:round g)])))
       (queue-front g [(event :sow-declined pid {:unconditional? (:unconditional? effect)})]))))
 (defn optional-effect? [g {:keys [player effect]}]
   (and (:optional? effect)
@@ -227,13 +227,11 @@
           (case op
             :sow-offer (finish-without-sowing g pid effect)
              :wheel-plow (try (take-action (assoc g :plow-plan {:player pid :space (get-in effect [:source-command :space]) :cells []}) pid (:source-command effect))
-                             (catch #?(:clj clojure.lang.ExceptionInfo :cljs :default) error
-                               ;; With neither a base field nor crops, declining the
-                               ;; extra plow cancels this uncommitted placement.
-                               (if (and (= :cultivation (get-in effect [:source-command :space]))
-                                        (nil? (get-in effect [:source-command :cell]))
-                                        (empty? (get-in effect [:source-command :plantings])))
-                                 g (throw error))))
+                             (catch #?(:clj clojure.lang.ExceptionInfo :cljs :default) _
+                               ;; An anytime construction may invalidate the plan.
+                               ;; Declining then cancels the uncommitted placement.
+                               (update (dissoc g :plow-plan) :cancelled-sowing (fnil conj #{})
+                                       [pid (get-in effect [:source-command :space]) (:round g)])))
             g))
       (let [deferred-sidekick? (and (= op :sidekick) (staged-sowing? g pid (five/stage-left g (:space context))))
             g (if deferred-sidekick? g (update-in g [:players pid] a/pay cost))]
@@ -809,7 +807,9 @@
                 card (throw (ex-info "That action does not allow playing a hand card." {}))
                 :else after)]
     (with-housing (cond-> (dissoc after :cancelled-sowing :plow-plan)
-                    (seq (get-in g [:plow-plan :cells])) (update-in [:players pid :card-state (c/id :a018) :uses] dec)))))
+                    (and (= pid (get-in g [:plow-plan :player])) (= space (get-in g [:plow-plan :space]))
+                         (#{:plow :cultivation} space) (seq (get-in g [:plow-plan :cells])))
+                    (update-in [:players pid :card-state (c/id :a018) :uses] dec)))))
 (defn staged-sowing? [g pid space]
   (and (#{:sow-bake :cultivation} space)
        (or (seq (get-in g [:plow-plan :cells])) (owned? g pid :a065) (owned? g pid :a079)

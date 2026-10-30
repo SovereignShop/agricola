@@ -365,7 +365,7 @@
                               (update-in g [:players pid] #(-> % (build-stables stables 1) (bake (or bake-grain 0)))))
                 :sow-bake (do (require! (or (seq plantings) (pos? (or bake-grain 0))) "Sow at least one field or bake bread.")
                              (update-in g [:players pid] #(-> % (sow plantings) (bake (or bake-grain 0)))))
-                :cultivation (do (require! (or (some? cell) (seq plantings) (seq (:cells (:plow-plan g)))) "Plow a field and/or sow.")
+                :cultivation (do (require! (or (some? cell) (seq plantings) (and (= pid (get-in g [:plow-plan :player])) (= space (get-in g [:plow-plan :space])) (seq (get-in g [:plow-plan :cells])))) "Plow a field and/or sow.")
                                  (assoc-in g [:players pid] (sow (plow-action-player g pid space cell) plantings)))
                 :growth (update-in g [:players pid] grow true)
                 :modest-growth (update-in g [:players pid] grow true)

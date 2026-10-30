@@ -142,3 +142,21 @@
     (is (= 15 (count (fields done))))
     (is (= 1 (:turn done)))
     (is (= 1 (get-in done [:players 0 :card-state (c/id :a018) :uses])))))
+
+(deftest invalidated-wheel-plans-cancel-without-consuming-use-or-leaking-to-other-actions
+  (doseq [after-wheel-choice? [false true]]
+    (let [state (-> (g/initialize (a/new-game ["A" "B" "C" "D" "E"] (vec (mapcat identity a/stages)) 0))
+                    wheel (own 0 :a170) (update-in [:players 0] a/gain {:wood 4})
+                    (update :active conj :cultivation))
+          pending (g/command state 0 {:type :action :space :cultivation :cell 0})
+          pending (if after-wheel-choice? (resolve! pending {:cells [1]}) pending)
+          fenced (g/command pending 0 {:type :ability :card (c/id :a170) :fences (vec (a/edges (if after-wheel-choice? 1 0)))})
+          cancelled (resolve! (edn/read-string (pr-str fenced)) {:skip? true})
+          done (g/command cancelled 0 {:type :action :space :grain})]
+      (is (nil? (:plow-plan cancelled)))
+      (is (empty? (:effect-queue cancelled)))
+      (is (= 2 (get-in cancelled [:players 0 :remaining])))
+      (is (= 1 (get-in cancelled [:players 0 :card-state (c/id :a018) :uses])))
+      (is (empty? (fields done)))
+      (is (= 1 (get-in done [:players 0 :card-state (c/id :a018) :uses])))
+      (is (= {:grain 0} (:occupied done))))))
