@@ -577,7 +577,7 @@
 (defn card-decision [g p draft busy?]
   (let [head (first (:effect-queue g)) effect (:effect head) op (:op effect) options (card-game/order-options g)
         keep (get draft :keep (select-keys (:goods p) a/animals))
-        choice (merge (select-keys draft [:cell :cells :rooms :cards :frame? :brushwood? :renovate-to :paper-maker? :card :cook? :option :payment-option :improvement :upgrade :bake-grain :exchange?])
+        choice (merge (select-keys draft [:accommodate-taken? :grain-source :animal :cell :cells :rooms :cards :frame? :brushwood? :renovate-to :paper-maker? :card :cook? :option :payment-option :improvement :upgrade :bake-grain :exchange?])
                       (when (contains? draft :effect-fields) {:fields (:effect-fields draft)})
                       {:type :resolve :decision (:decision-id g) :keep keep :grain (get draft :effect-grain 1)
                        :action (or (:effect-action draft) (if (= op :young-artist) :draw :room))
@@ -672,6 +672,22 @@
             [:option {:value ""} "No field"]
             (for [i (range 15) :when (and (a/empty-cell? p i) (not= i (get-in effect [:source-command :cell])))] ^{:key i}
               [:option {:value i} (str "Space " (inc i))])]])])
+     (when (and (= op :housing) (get-in head [:context :reclamation?]))
+       [:label.checkbox [:input {:type "checkbox" :checked (get draft :accommodate-taken? true)
+                                 :on-change #(draft! :accommodate-taken? (.. % -target -checked))}]
+        "Keep all newly taken animals (cooked animals may come from your previous stock)"])
+     (when (= op :silage)
+       [:div
+        [field "Grain source" [:select {:aria-label "Grain source" :value (if (contains? draft :grain-source) (pr-str (:grain-source draft)) "")
+                                       :on-change #(draft! :grain-source (when (seq (.. % -target -value)) (reader/read-string (.. % -target -value))))}
+                               [:option {:value ""} "Choose one grain…"]
+                               (for [source (card-game/silage-grain-sources p)] ^{:key source}
+                                 [:option {:value (pr-str source)} (cond (= source :supply) "Supply" (integer? source) (str "Field " (inc source)) :else (:name (cards/card source)))])]]
+        [field "Species to breed" [:select {:aria-label "Species to breed" :value (if (:animal draft) (name (:animal draft)) "")
+                                            :on-change #(draft! :animal (when (seq (.. % -target -value)) (keyword (.. % -target -value))))}
+                                    [:option {:value ""} "Choose a species…"]
+                                    (for [animal a/animals :when (>= (a/amount p animal) 2)] ^{:key animal}
+                                      [:option {:value (name animal)} (labels animal)])]]])
      (when (= op :bake) [field "Grain to bake" [number-input (get draft :effect-grain 1) #(draft! :effect-grain %) (a/amount p :grain)]])
      (when (= op :bake-one)
        [field "Baking improvement" [:select {:value (if (:improvement draft) (name (:improvement draft)) "")

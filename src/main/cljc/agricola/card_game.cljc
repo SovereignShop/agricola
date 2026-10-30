@@ -36,6 +36,9 @@
       :after-harvest (boolean (a/harvest-rounds (dec (:round g))))
       :players-at-least (>= (count (:players g)) x)
       :occupied (contains? (:occupied g) x)
+      :accommodated-taken (let [taken (select-keys (:taken context) a/animals)]
+                            (and (not (get-in p [:card-state (c/id :a017) :declined-pile?])) (some pos? (vals taken)) (some? (a/animal-housing p))
+                                 (every? (fn [[animal n]] (>= (a/amount p animal) n)) taken)))
       :childless (and (>= (count (a/tiles p :room)) 3) (= 2 (:family p)))
       :only-two-rooms (and (= 2 (count (a/tiles p :room))) (every? #(or (= pid (:id %)) (> (count (a/tiles % :room)) 2)) (:players g)))
       :building-resources (>= (reduce + (for [r [:wood :clay :reed :stone]] (- (get-in p [:received r] 0) (get-in p [:work-baseline r] 0)))) x)
@@ -45,6 +48,12 @@
   (let [requirement (if (contains? card :requires) (:requires card) (expr/requirement (:prerequisites card)))]
     (and (some? requirement) (boolean (expr/evaluate g pid {} requirement)))))
 (defn can-pay? [p cost] (every? (fn [[r n]] (>= (a/amount p r) n)) cost))
+(defn animal-accommodation-tasks [g pid context]
+  (when (some pos? (vals (select-keys (:taken context) a/animals)))
+    (concat
+     (when (and (owned? g pid :a017) (not (get-in g [:players pid :card-state (c/id :a017) :triggered?])))
+       [(task pid (c/id :a017) {:op :housing} (assoc context :reclamation? true))])
+     [(event :animals-accommodated pid context)])))
 (defn trigger-tasks [g {:keys [event player context]}]
   (vec
    (mapcat
@@ -181,6 +190,14 @@
                         (or (not (:building-only? effect)) (building-resources resource))
                         (or (nil? (:resource effect)) (= resource (:resource effect))))]
          {:space space :resource resource})))
+(defn silage-grain-sources [player]
+  (concat (when (pos? (a/amount player :grain)) [:supply])
+          (for [cell (concat (a/tiles player :field) (keys (:card-fields player)))
+                :let [field (get-in player (a/field-path cell))]
+                :when (and (= :grain (:crop field)) (pos? (:count field 0)))] cell)))
+(defn silage-choices [player]
+  (for [source (silage-grain-sources player) animal a/animals :when (>= (a/amount player animal) 2)]
+    {:grain-source source :animal animal}))
 (defn sowing-player [g pid effect]
   (let [player (p g pid) command (:source-command effect)]
     (if (= :cultivation (:space command))
@@ -301,7 +318,8 @@
           (let [selection (merge (select-keys effect [:space :resource]) (select-keys choice [:space :resource]))
                 {:keys [space resource]} selection]
             (a/require! (some #{selection} (pile-good-options g effect)) "Choose an eligible good from an accumulation space.")
-            (-> g (update-in [:piles space resource] dec) (update-in [:players pid] a/gain {resource 1})))
+            (-> g (update-in [:piles space resource] dec) (update-in [:players pid] a/gain {resource 1})
+                (queue-front (animal-accommodation-tasks g pid {:space space :taken {resource 1}}))))
           :exchange (update-in g [:players pid] a/gain (expr/quantities g pid context (:goods effect)))
           :threshold-exchange
           (do (a/require! (>= (a/amount current (:resource effect)) (:minimum effect)) "You do not have enough crops for this exchange.")
@@ -406,6 +424,15 @@
             (queue-front (reduce (fn [g i] (-> g (update-in (into [:players pid] (conj (a/field-path i) :count)) dec)
                                                 (update-in [:players pid] a/gain {:grain 1}))) g chosen)
                          (harvested-crop-events current chosen)))
+          :silage
+          (let [source (:grain-source choice) animal (:animal choice)]
+            (a/require! (some #{source} (silage-grain-sources current)) "Choose one grain from your supply or a grain field.")
+            (a/require! (and ((set a/animals) animal) (>= (a/amount current animal) 2)) "Choose one species with at least two animals.")
+            (let [paid (if (= source :supply) (a/pay current {:grain 1})
+                           (update-in current (conj (a/field-path source) :count) dec))
+                  next (a/gain paid {animal 1})]
+              (a/require! (a/animal-housing next) "You must be able to accommodate this offspring.")
+              (-> g (assoc-in [:players pid] next) (queue-front [(event :check-state pid)]))))
           :breed-boar (let [next (a/gain current {:boar 1})]
                         (if (and (>= (a/amount current :boar) 2) (a/animal-housing next)) (assoc-in g [:players pid] next) g))
           :housing (let [keep (:keep choice) _ (a/quantities! keep a/animals)
@@ -414,7 +441,12 @@
                          _ (a/quantities! surplus a/animals)
                          next (if (:cook? choice) (a/convert-food current surplus) (a/pay current surplus))]
                      (a/require! (a/animal-housing next) "Those animals do not fit on your farm.")
-                     (assoc-in g [:players pid] next))
+                     (when (and (:reclamation? context) (false? (:accommodate-taken? choice)))
+                       (a/require! (some (fn [[animal n]] (and (pos? n) (pos? (get surplus animal 0)))) (:taken context))
+                                   "To decline accommodation, cook or release at least one animal of a newly taken species."))
+                     (cond-> (assoc-in g [:players pid] next)
+                       (:reclamation? context) (assoc-in [:players pid :card-state (c/id :a017) :declined-pile?]
+                                                        (false? (:accommodate-taken? choice)))))
           :cottage (do (a/require! (#{:room :renovate} (:action choice)) "Choose building a room or renovating.")
                     (if (= :room (:action choice))
                      (update-in g [:players pid] a/build-rooms [(:cell choice)] choice)
@@ -513,6 +545,7 @@
                   (= :plow-many op) (map #(hash-map :cells [%]) (range 15))
                   (= :wheel-plow op) (cons {:skip? true} (map #(hash-map :cells [%]) (range 15)))
                   (= :loppers op) [{}]
+                  (= :silage op) (silage-choices (p g player))
                   (= :bake op) [{:grain 1}]
                   (= :grow op) [{}]
                   (= :build-rooms op) (for [rooms (room-plans (p g player)) frame? [false true] brushwood? [false true]]
@@ -681,6 +714,7 @@
       :animals (quot (a/amount p resource) divisor)
       :tutor (- (count (:occupations p)) (get-in p [:card-state cid :occupations-before] (count (:occupations p))))
       :most-rooms (if (= (count (a/tiles p :room)) (apply max (map #(count (a/tiles % :room)) (:players g)))) 3 0)
+      :full-pastures (count (filter #(and (= :pasture (:kind %)) (= (:capacity %) (:count %))) (a/animal-housing p)))
       :organic-pastures (count (filter #(and (= :pasture (:kind %)) (pos? (:count %)) (>= (- (:capacity %) (:count %)) 3)) (a/animal-housing p)))
       0)))
 (defn score [g pid]
@@ -752,6 +786,10 @@
                           (let [pile (get-in before [:piles space])]
                             (if (:part-time? cmd) (into {} (map (fn [[r n]] [r (quot n 2)]) pile)) pile)))}]
     (concat
+     ;; Resolve housing before card triggers can add more animals. Existing
+     ;; animals may be cooked instead: retaining at least the newly taken pile
+     ;; is enough to accommodate every animal from that pile.
+     (animal-accommodation-tasks before pid context)
      (mapcat (fn [type]
                (let [before-cells (set (case type :room (a/tiles p0 :room) :field (a/tiles p0 :field)
                                              :stable (keep-indexed #(when (:stable %2) %1) (:farm p0))

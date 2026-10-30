@@ -130,6 +130,7 @@
                   :paper-knife (let [hand (vec (get-in p [:hand :occupation]))]
                                  (for [i (range (count hand)) j (range (inc i) (count hand)) k (range (inc j) (count hand))]
                                    {:cards [(hand i) (hand j) (hand k)]}))
+                  :silage (g/silage-choices p)
                   :sow-offer [{}]
                   :build-rooms (for [rooms (g/room-plans p) opts (payment-options p)] (assoc opts :rooms rooms))
                   :sow (let [player (g/sowing-player state pid effect)
@@ -147,7 +148,9 @@
                   :bake-one (for [improvement (:improvements p) :when (get-in a/improvements [improvement :bake])] {:improvement improvement})
                   :take-field-crop (for [cell (field-ids p) exchange? (if (:exchange effect) [false true] [false])]
                                      {:cell cell :exchange? exchange?})
-                  :housing (for [keep (housing-plans p) cook? [true false]] {:keep keep :cook? cook?})
+                  :housing (for [keep (housing-plans p) cook? [true false]
+                                 accommodate? (if (get-in head [:context :reclamation?]) [true false] [true])]
+                             {:keep keep :cook? cook? :accommodate-taken? accommodate?})
                   :cottage (concat (for [cell (range 15) opts (payment-options p)] (assoc opts :action :room :cell cell))
                                    (map #(assoc % :action :renovate) (payment-options p)))
                   :boat-painter [{:resource :grain} {:resource :food}]

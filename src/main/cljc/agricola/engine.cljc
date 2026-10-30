@@ -121,7 +121,7 @@
              [{:cells [] :capacity (:completed-feeding-phases p) :kind :card
                :card (cards/id :a148) :allowed-animals #{:sheep}}])))))
 (defn organic-housing
-  "Choose a legal arrangement that maximizes Organic Farmer's pasture bonus.
+  "Choose a legal arrangement maximizing the combined pasture card bonuses.
    Memoization is local to this calculation; no game state is retained."
   [p]
   (let [spaces (vec (sort-by :capacity > (accommodations p))) cache (atom {})]
@@ -143,7 +143,8 @@
                                             :let [tail (fit (inc index) (update remaining animal-index - n))]
                                             :when tail]
                                         (-> tail
-                                            (update :points + (if (and (= :pasture (:kind space)) (>= (- (:capacity space) n) 3)) 1 0))
+                                            (update :points + (+ (if (and (cards/has? p :b098) (= :pasture (:kind space)) (>= (- (:capacity space) n) 3)) 1 0)
+                                                                 (if (and (cards/has? p :a134) (= :pasture (:kind space)) (= (:capacity space) n)) 1 0)))
                                             (update :placement conj (assoc space :animal (nth animals animal-index) :count n)))))]
                             (reduce (fn [best candidate] (if (and candidate (or (nil? best) (> (:points candidate) (:points best)))) candidate best)) nil candidates)))]
                     (swap! cache assoc key result)
@@ -161,7 +162,7 @@
                                   (fit (rest spaces) (update remaining a - n)
                                        (conj result (assoc space :animal a :count n)))))) animals)
                       (fit (rest spaces) remaining result)))))]
-    (if (cards/has? p :b098) (organic-housing p)
+    (if (or (cards/has? p :b098) (cards/has? p :a134)) (organic-housing p)
         (fit (sort-by :capacity > (accommodations p)) (select-keys (:goods p) animals) []))))
 (defn cook-rates [p]
   (apply merge-with max {:grain 1 :vegetable 1} (map #(get-in improvements [% :cook] {}) (:improvements p))))

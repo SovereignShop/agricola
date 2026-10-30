@@ -3,6 +3,14 @@
           :revised-artifex-expansion-a-34-loppers {:play [{:op :watch-fences}]}
           :revised-artifex-expansion-a-40-potter-s-yard {:play [{:op :potters-yard}]}
           :revised-artifex-expansion-a-144-sequestrator {:play [{:op :sequestrator}]}
+          :revised-artifex-expansion-a-17-reclamation-plow
+          {:triggers [{:event :animals-accommodated :once? true :condition [:accommodated-taken]
+                       :effect {:op :sequence :effects [{:op :plow :optional? true}]}}]},
+          :revised-artifex-expansion-a-84-silage
+          {:triggers [{:event :return-home :condition [:test [:not [:harvest-round]]]
+                       :effect {:op :silage :optional? true}}]},
+          :revised-artifex-expansion-a-134-full-farmer
+          {:play [{:op :gain :goods {:wood 1 :clay 1}}] :score {:type :full-pastures}},
           :revised-artifex-expansion-a-30-baking-sheet
           {:triggers
            [{:event :bake,
