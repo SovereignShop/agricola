@@ -103,7 +103,11 @@
    (let [p (p g pid)
          discount #(a/discounted % {:wood (if (c/has? p :a075) 1 0) :stone (if (c/has? p :a143) 1 0)})]
      (cond
-       (= :occupation (:kind card)) {:food occupation-cost}
+       (= :occupation (:kind card))
+       (let [wood (get options :occupation-wood 0)]
+         (a/require! (and (a/natural? wood) (<= wood occupation-cost)
+                          (or (zero? wood) (c/has? p :a028))) "Forest School can replace each occupation-cost food with one wood.")
+         {:food (- occupation-cost wood) :wood wood})
        (:cost-options card)
        (let [costs (mapv discount (:cost-options card))
              index (if (some? (:payment-option options)) (:payment-option options)
@@ -600,7 +604,7 @@
     :after-harvest (queue-front g (concat (anytime-tasks g) [(step :finish-round)]))
     :finish-round (queue-front g (concat (map #(event :round-end (:id %)) (:players g)) [(step :next-round)]))
     :next-round (if (= 14 (:round g)) (finish-game g) (begin-round g))
-    :work (-> g (assoc :phase :work) (update :players #(mapv (fn [p] (assoc p :work-baseline (:received p) :used-accumulations {:round (:round g) :by-good {}})) %))
+    :work (-> g (assoc :phase :work :first-nonaccumulation nil :newborn-spaces {}) (update :players #(mapv (fn [p] (assoc p :worker-spaces [] :work-baseline (:received p) :used-accumulations {:round (:round g) :by-good {}})) %))
               (queue-front (map #(event :work-start (:id %)) (:players g))))
     :return-home (queue-front (assoc g :phase :return-home) (concat (map #(event :return-home (:id %)) (:players g)) [(step :harvest-or-round)]))
     :harvest-or-round (if (a/harvest-rounds (:round g))
@@ -683,8 +687,8 @@
         next (first (filter #(pos? (get-in g [:players % :remaining])) (map #(mod (+ pid %) n) (range 1 (inc n)))))]
     (cond
       (and lasso (not (:second? lasso)) (pos? (get-in g [:players pid :remaining]))) (assoc-in g [:lasso :second?] true)
-      (some? next) (-> g (assoc :turn next) (dissoc :lasso :turn-construction))
-      :else (-> g (dissoc :lasso :turn-construction) (queue-front [(step :return-home)])))))
+      (some? next) (-> g (assoc :turn next) (update :turn-serial (fnil inc 0)) (dissoc :lasso :turn-construction))
+      :else (-> g (update :turn-serial (fnil inc 0)) (dissoc :lasso :turn-construction) (queue-front [(step :return-home)])))))
 (defn begin-round [g]
   (let [replenished? (and (pos? (get-in g [:piles :reed :reed] 0)) (= 1 (get-in (a/action-definition g :reed) [:gain :reed])))
         g (assoc (a/begin-round (dissoc g :turn-construction)) :phase :preparation) r (:round g)
@@ -729,13 +733,34 @@
   (let [scores (mapv #(score g (:id %)) (:players g)) best (last (sort (map (juxt :total :tiebreak) scores)))
         winners (vec (keep-indexed #(when (= best ((juxt :total :tiebreak) %2)) %1) scores))]
     (-> g (assoc :phase :finished :scores scores :winners winners) (a/log-event "The final harvest is complete."))))
+(defn space-owners [g space]
+  (let [owner (get-in g [:occupied space])] (if (sequential? owner) (vec owner) (if (some? owner) [owner] []))))
+(defn space-people [g space]
+  (+ (count (space-owners g space))
+     (count (get-in g [:newborn-spaces space]))))
+(defn occupied-permission [g pid space]
+  (when (and (not= space :meeting) (seq (space-owners g space)))
+    (let [player (p g pid) workers (:worker-spaces player)]
+      (cond
+        (and (owned? g pid :a028) (#{:lessons :lessons-extra :lessons-copse :lessons-growth} space)) :forest-school
+        (and (owned? g pid :a025) (= space (:first-nonaccumulation g)) (= 1 (space-people g space))) :bassinet
+        (and (owned? g pid :a130) (>= (count workers) 2) (= space (second workers))
+             (some #{pid} (space-owners g space)) (not= (:round g) (:mummy-used-round player))) :mummys-boy
+        (and (owned? g pid :a026) (#{:growth :urgent-growth :modest-growth} space)
+             (= 1 (count (space-owners g space))) (not= pid (first (space-owners g space)))) :sleeping-corner))))
+(defn record-placement [before after pid space]
+  (let [newborns (max 0 (- (:newborn (p after pid) 0) (:newborn (p before pid) 0)))]
+    (cond-> (update-in after [:players pid :worker-spaces] (fnil conj []) space)
+      (and (nil? (:first-nonaccumulation before)) (not (:accumulate (a/action-definition before space)))) (assoc :first-nonaccumulation space)
+      (= :mummys-boy (occupied-permission before pid space)) (assoc-in [:players pid :mummy-used-round] (:round before))
+      (pos? newborns) (update-in [:newborn-spaces space] (fnil into []) (repeat newborns pid)))))
 (defn validate-space [g pid space]
   (a/require! (= :work (:phase g)) "Finish the current phase first.")
   (a/require! (= pid (:turn g)) "It is another player's turn.")
   (a/require! (a/available-space? g space) "That space is not available yet or its linked space is occupied.")
   (a/require! (pos? (:remaining (p g pid))) "No family members remain at home.")
   (let [owner (get-in g [:occupied space])]
-    (a/require! (or (nil? owner) (and (owned? g pid :a026) (#{:growth :urgent-growth :modest-growth} space) (integer? owner) (not= pid owner))) "That action space is occupied."))
+    (a/require! (or (nil? owner) (occupied-permission g pid space)) "That action space is occupied."))
   (when (and (:second? (:lasso g)) (:must-animal? (:lasso g)))
     (a/require! (#{:sheep :boar :cattle :animal-market} space) "The second Lasso action must use an animal market.")))
 (defn mark-worker [g pid space]
@@ -850,9 +875,9 @@
                 (:part-time? cmd) (assoc-in [:piles space] (into {} (map (fn [[r n]] [r (quot n 2)]) pile)))
                 (:part-time? cmd) (update-in [:players pid] a/gain {({2 :sheep 4 :boar 6 :cattle} total) 1})
                 (and (= 5 (count (:players g))) (seq (set/difference (:improvements (p after pid)) (:improvements (p g pid))))) (update-in [:major-builds pid] (fnil inc 0)))
-        after (cond-> after occupied (assoc-in [:occupied space] [occupied pid])
+        after (cond-> after occupied (assoc-in [:occupied space] (conj (space-owners g space) pid))
                       lasso? (assoc :lasso {:player pid :must-animal? (not (#{:sheep :boar :cattle :animal-market} space)) :second? false}))
-        after (queue-front (record-accumulation after pid space) (action-events g after pid cmd))
+        after (queue-front (record-placement g (record-accumulation after pid space) pid space) (action-events g after pid cmd))
         count-occ (count (:occupations (p g pid)))
         after (cond
                 (#{:lessons :lessons-extra :lessons-copse :lessons-growth} space)
@@ -923,14 +948,14 @@
 (defn card-spaces [g pid]
   (vec (for [owner (:players g) cid (c/active-owned owner)
              :let [kind (:action-space (c/card cid))]
-             :when (and kind (or (= pid (:id owner)) (#{:fold-builder :chapel} kind)))]
+             :when (and kind (or (= pid (:id owner)) (#{:fold-builder :chapel} kind) (occupied-permission g pid cid)))]
          {:card cid :owner (:id owner) :kind kind})))
 (defn card-space-error [g pid cid]
   (let [{:keys [kind owner]} (first (filter #(= cid (:card %)) (card-spaces g pid)))
         rounds (vec (drop (count (a/base-actions (count (:players g)) (:variant g))) (:active g)))]
     (cond
       (nil? kind) "You cannot use this card action space."
-      (contains? (:occupied g) cid) "This card action space is occupied."
+      (and (contains? (:occupied g) cid) (not (occupied-permission g pid cid))) "This card action space is occupied."
       (and (= kind :chapel) (not= pid owner) (zero? (a/amount (p g pid) :grain))) "Pay the Chapel owner one grain to use this space."
       (and (= kind :forest-tallyman) (not-every? #(contains? (:occupied g) %) [:wood :clay])) "Forest and Clay Pit must both be occupied."
       (and (= kind :greenhouse) (not-any? (set (:active g)) [:fences :renovate :vegetable])) "None of this card's actions have been revealed."
@@ -965,7 +990,9 @@
                       (update-in [:players pid :bonus-points] (fnil + 0) 3) (mark-worker pid card-space))
           :forest-tallyman (-> base (update-in [:players pid] a/gain {:clay 2 :wood 3}) (mark-worker pid card-space)))
         after (cond-> after (seq (set/difference (:improvements (p after pid)) (:improvements (p g pid)))) (update-in [:major-builds pid] (fnil inc 0)))]
-    (-> after (dissoc :cancelled-sowing) (queue-front (action-events g after pid (assoc cmd :space card-space))) with-housing)))
+    (-> (cond-> (record-placement g after pid card-space)
+          (contains? (:occupied g) card-space) (assoc-in [:occupied card-space] (conj (space-owners g card-space) pid)))
+        (dissoc :cancelled-sowing) (queue-front (action-events g after pid (assoc cmd :space card-space))) with-housing)))
 (defn ability [g pid {:keys [card resource amount from to] :as cmd}]
   (let [player (p g pid) op (get-in (c/card card) [:ability :op])]
     (a/require! (some #{card} (c/active-owned player)) "You do not own that card.")

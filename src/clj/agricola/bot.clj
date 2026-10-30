@@ -39,8 +39,9 @@
 (defn hand-options [p kind]
   (for [cid (get-in p [:hand kind])
         paper? (if (and (= kind :occupation) (c/has? p :b109)) [false true] [false])
-        payment (if-let [costs (:cost-options (c/card cid))] (range (count costs)) [nil])]
-    (cond-> {:card cid} paper? (assoc :paper-maker? true) (some? payment) (assoc :payment-option payment))))
+        payment (if-let [costs (:cost-options (c/card cid))] (range (count costs)) [nil])
+        wood (if (and (= kind :occupation) (c/has? p :a028)) (range 4) [0])]
+    (cond-> {:card cid} paper? (assoc :paper-maker? true) (some? payment) (assoc :payment-option payment) (pos? wood) (assoc :occupation-wood wood))))
 (defn sow-plans [p]
   (distinct
    (cons []
@@ -107,7 +108,7 @@
            (cond-> (merge {:type :action :space space} option) hora (assoc :master-hora? true) double (assoc :animal-brander? true) part (assoc :part-time? true)))))
      ;; Sleeping Corner can share Growth; validate-space decides whether it can.
      (filter #(and (not (contains? (:cancelled-sowing state) [pid % (:round state)]))
-                   (or (not (contains? (:occupied state) %)) (and (#{:growth :urgent-growth} %) (c/has? p :a026)))) (:active state)))))
+                   (or (not (contains? (:occupied state) %)) (g/occupied-permission state pid %))) (:active state)))))
 (def animal-orders [[:sheep :boar :cattle] [:sheep :cattle :boar] [:boar :sheep :cattle]
                     [:boar :cattle :sheep] [:cattle :sheep :boar] [:cattle :boar :sheep]])
 (defn housing-plans [p]

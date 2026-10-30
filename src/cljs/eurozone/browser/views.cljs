@@ -343,7 +343,7 @@
     {:left (str (/ x 10) "%") :top (str (/ y 8) "%") :width (str (/ w 10) "%") :height (str (/ h 8) "%")}))
 (defn board-action [g id can-play? draft busy? round & [extension?]]
   (let [action (a/action-definition g id) placement (get-in g [:occupied id]) owners (if (vector? placement) placement (when (some? placement) [placement])) owner (first owners) occupied? (some? owner)
-                              share? (and (= :cards (:variant g)) (cards/has? (get-in g [:players (:turn g)]) :a026) (#{:growth :urgent-growth :modest-growth} id) (= 1 (count owners)) (not= owner (:turn g)))
+                              share? (and (= :cards (:variant g)) (card-game/occupied-permission g (:turn g) id))
                               gain (if (:accumulate action) (get-in g [:piles id]) (:gain action))]
       [:button.action-card {:class (str (name (:group action)) (when round " round-action") (when extension? " extension-action") (when occupied? " occupied") (when (= id (:space draft)) " chosen"))
                             :style (when-not (or round extension?) (board-position g id)) :disabled (or (not (a/available-space? g id)) (and occupied? (not share?)) (not can-play?) busy?) :on-click #(dispatch :select-action id)
@@ -359,8 +359,8 @@
            [:span.action-description (:description action)])
        (when (:bonus action) [:small.accumulation "+1 reed from supply"])
        (when (:accumulate action) [:small.accumulation (str "+" (str/join ", " (map (fn [[r n]] (str n " " (str/lower-case (labels r)))) (:gain action))) " each round")])
-       (for [[i pid] (map-indexed vector owners)] ^{:key (str "worker-" pid)}
-         [:img.placed-worker {:data-piece-key (str "worker:" id ":" pid) :data-piece-type (str "worker:" pid) :src (art/worker-url pid)
+       (for [[i pid] (map-indexed vector owners)] ^{:key (str "worker-" pid "-" i)}
+         [:img.placed-worker {:data-piece-key (str "worker:" id ":" pid ":" i) :data-piece-type (str "worker:" pid) :src (art/worker-url pid)
                               :style (when (pos? i) {:margin-right (str (* i 22) "px")}) :alt (str (get-in g [:players pid :name]) "’s family member")}])
        (when (and occupied? (#{:growth :urgent-growth :modest-growth} id)) [:img.placed-worker.newborn-worker {:data-piece-key (str "newborn:" id) :data-piece-type (str "worker:" owner) :src (art/worker-url owner) :alt "Newborn family member"}])
        (when occupied? [:span.occupant {:style {:background (colors owner)}} (str (str/join " & " (map #(get-in g [:players % :name]) owners)) " · placed")])]))
@@ -402,9 +402,9 @@
                                :forest-tallyman [[:labor "2 clay and 3 wood"]])]
             ^{:key action} [button label #(do (dispatch :select-action action) (draft! :card-space card)) "button secondary"
                             (or (not can-play?) busy? (boolean (card-game/card-space-error g pid card)))])
-          (when-let [worker (get-in g [:occupied card])]
+          (for [[index worker] (map-indexed vector (card-game/space-owners g card))] ^{:key index}
             [:img.card-action-worker {:src (art/worker-url worker) :alt (str (get-in g [:players worker :name]) "’s family member")
-                                      :data-piece-key (str "worker:" card ":" worker) :data-piece-type (str "worker:" worker)}])
+                                      :data-piece-key (str "worker:" card ":" worker ":" index) :data-piece-type (str "worker:" worker)}])
           (when-let [reason (card-game/card-space-error g pid card)] [:p.small reason])])])))
 (defn action-board [g can-play? draft busy?]
   (let [base (a/base-actions (count (:players g)) (:variant g))
@@ -458,7 +458,10 @@
     (catch :default error (.-message error))))
 (defn hand-select [g p kind draft & [optional?]]
   (let [pid (:id p) ui @(rf/subscribe [:ui]) hand (get-in ui [:private-hands (:game-id ui) pid kind])]
-    [:div [field (if (= kind :occupation) "Occupation" "Minor improvement")
+    [:div
+     (when (and (= kind :occupation) (cards/has? p :a028))
+       [field "Wood for occupation cost" [number-input (get draft :occupation-wood 0) #(draft! :occupation-wood %) 3]])
+     [field (if (= kind :occupation) "Occupation" "Minor improvement")
      [:select {:aria-label (if (= kind :occupation) "Occupation" "Minor improvement")
                :value (or (some-> (:card draft) str) "")
                :on-change #(draft! :card (let [value (.. % -target -value)] (when (seq value) (keyword (subs value 1)))))}
@@ -577,7 +580,7 @@
 (defn card-decision [g p draft busy?]
   (let [head (first (:effect-queue g)) effect (:effect head) op (:op effect) options (card-game/order-options g)
         keep (get draft :keep (select-keys (:goods p) a/animals))
-        choice (merge (select-keys draft [:accommodate-taken? :grain-source :animal :cell :cells :rooms :cards :frame? :brushwood? :renovate-to :paper-maker? :card :cook? :option :payment-option :improvement :upgrade :bake-grain :exchange?])
+        choice (merge (select-keys draft [:accommodate-taken? :grain-source :animal :cell :cells :rooms :cards :frame? :brushwood? :renovate-to :paper-maker? :occupation-wood :card :cook? :option :payment-option :improvement :upgrade :bake-grain :exchange?])
                       (when (contains? draft :effect-fields) {:fields (:effect-fields draft)})
                       {:type :resolve :decision (:decision-id g) :keep keep :grain (get draft :effect-grain 1)
                        :action (or (:effect-action draft) (if (= op :young-artist) :draw :room))

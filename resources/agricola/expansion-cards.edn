@@ -11,6 +11,9 @@
                        :effect {:op :silage :optional? true}}]},
           :revised-artifex-expansion-a-134-full-farmer
           {:play [{:op :gain :goods {:wood 1 :clay 1}}] :score {:type :full-pastures}},
+          :revised-artifex-expansion-a-25-bassinet {:passive {:bassinet true}},
+          :revised-artifex-expansion-a-28-forest-school {:passive {:forest-school true}},
+          :revised-artifex-expansion-a-130-mummy-s-boy {:passive {:mummys-boy true}},
           :revised-artifex-expansion-a-30-baking-sheet
           {:triggers
            [{:event :bake,
