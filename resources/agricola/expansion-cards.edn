@@ -1,4 +1,9 @@
-#:catalog{:revised-artifex-expansion-a-148-woolgrower
+#:catalog{:revised-artifex-expansion-a-30-baking-sheet
+          {:triggers
+           [{:event :bake,
+             :effect {:op :sequence, :optional? true, :cost {:grain 1},
+                      :effects [{:op :gain, :goods {:food 2}} {:op :points, :amount 1}]}}]},
+          :revised-artifex-expansion-a-148-woolgrower
           {:passive {:sheep-per-completed-feeding true}},
           :revised-artifex-expansion-a-1-shelter
           {:play
