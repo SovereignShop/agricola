@@ -492,7 +492,7 @@
     :after-harvest (queue-front g (concat (anytime-tasks g) [(step :finish-round)]))
     :finish-round (queue-front g (concat (map #(event :round-end (:id %)) (:players g)) [(step :next-round)]))
     :next-round (if (= 14 (:round g)) (finish-game g) (begin-round g))
-    :work (-> g (assoc :phase :work) (update :players #(mapv (fn [p] (assoc p :work-baseline (:received p))) %))
+    :work (-> g (assoc :phase :work) (update :players #(mapv (fn [p] (assoc p :work-baseline (:received p) :used-accumulations {:round (:round g) :by-good {}})) %))
               (queue-front (map #(event :work-start (:id %)) (:players g))))
     :return-home (queue-front (assoc g :phase :return-home) (concat (map #(event :return-home (:id %)) (:players g)) [(step :harvest-or-round)]))
     :harvest-or-round (if (a/harvest-rounds (:round g))
@@ -620,9 +620,36 @@
 (defn mark-worker [g pid space]
   (-> g (update-in [:players pid :remaining] dec) (assoc-in [:occupied space] pid)
       (a/log-event (str (:name (p g pid)) " · " (or (:name (a/action-definition g space)) (:name (c/card space)))))))
+(defn round-space-number
+  "Revealed round-card position, independent of the current round and without
+   needing the hidden future round order. Card-created action spaces have none."
+  [g space]
+  (first (keep-indexed (fn [index id] (when (= space id) (inc index)))
+                      (drop (count (a/base-actions (count (:players g)) (:variant g))) (:active g)))))
+(defn before-use-player [g pid space]
+  (let [round-space (round-space-number g space)]
+    (reduce (fn [player cid]
+              (if-let [goods (get-in (c/card cid) [:passive :before-use-round-goods round-space])]
+                (a/gain player goods) player))
+            (p g pid) (c/active-owned (p g pid)))))
+(defn accumulation-goods [g space]
+  (let [definition (a/action-definition g space)]
+    (when (:accumulate definition) (set (keys (:gain definition))))))
+(defn accumulation-history [g pid]
+  (let [history (:used-accumulations (p g pid))]
+    (if (= (:round g) (:round history)) (:by-good history) {})))
+(defn repeated-accumulation? [g pid space]
+  (boolean (some #(seq (disj (get (accumulation-history g pid) % #{}) space))
+                 (accumulation-goods g space))))
+(defn record-accumulation [g pid space]
+  (if-let [goods (seq (accumulation-goods g space))]
+    (assoc-in g [:players pid :used-accumulations]
+              {:round (:round g)
+               :by-good (reduce #(update %1 %2 (fnil conj #{}) space)
+                                (accumulation-history g pid) goods)}) g))
 (defn action-events [before after pid cmd]
   (let [p0 (p before pid) p1 (p after pid) space (:space cmd)
-        context {:space space :previous-house (:house p0) :old-pastures (a/pastures p0)
+        context {:space space :repeated-accumulation? (repeated-accumulation? before pid space) :previous-house (:house p0) :old-pastures (a/pastures p0)
                  :before-goods (:goods p0)
                  :placed-person (- (:family p1) (:newborn p1 0) (:remaining p1))
                  :building-pile-size (reduce + (map #(get-in before [:piles space %] 0) [:wood :clay :reed :stone]))
@@ -674,7 +701,8 @@
                     (some #(and (some #{%} (:active g)) (not (contains? (:occupied g) %))) [:sheep :boar :cattle :animal-market]))
                 "There is no free animal market for the Lasso's second action."))
   (let [occupied (get-in g [:occupied space])
-        base (cond-> (five/refresh g) occupied (update :occupied dissoc space))
+        base (five/refresh g)
+        base (cond-> (assoc-in base [:players pid] (before-use-player base pid space)) occupied (update :occupied dissoc space))
         base (if (:master-hora? cmd)
                (do (a/require! (and (owned? g pid :a174) (five/linked-groups space)) "Master Hora needs a linked extension space.")
                    (update-in base [:players pid] #(-> % (a/pay {:food 1}) (a/gain {:vegetable 1})))) base)
@@ -698,7 +726,7 @@
                 (and (= 5 (count (:players g))) (seq (set/difference (:improvements (p after pid)) (:improvements (p g pid))))) (update-in [:major-builds pid] (fnil inc 0)))
         after (cond-> after occupied (assoc-in [:occupied space] [occupied pid])
                       lasso? (assoc :lasso {:player pid :must-animal? (not (#{:sheep :boar :cattle :animal-market} space)) :second? false}))
-        after (queue-front after (action-events g after pid cmd))
+        after (queue-front (record-accumulation after pid space) (action-events g after pid cmd))
         count-occ (count (:occupations (p g pid)))
         after (cond
                 (#{:lessons :lessons-extra :lessons-copse :lessons-growth} space)

@@ -375,6 +375,15 @@
                 :goods
                 {:food
                  [:if [:= [:context :space] :fishing] 2 3]}}]}}]},
+          :revised-artifex-expansion-a-124-knapper
+          {:passive {:before-use-round-goods {5 {:stone 1}, 6 {:stone 1}, 7 {:stone 1}}}},
+          :revised-artifex-expansion-a-126-master-workman
+          {:passive {:before-use-round-goods {1 {:wood 1}, 2 {:clay 1}, 3 {:reed 1}, 4 {:stone 1}}}},
+          :revised-artifex-expansion-a-161-patch-caretaker
+          {:triggers
+           [{:event :use-space,
+             :condition [:test [:= [:context :repeated-accumulation?] true]],
+             :effect {:op :gain, :goods {:vegetable 1}}}]},
           :revised-artifex-expansion-a-162-forest-tallyman
           {:action-space :forest-tallyman},
           :revised-artifex-expansion-a-163-building-expert
