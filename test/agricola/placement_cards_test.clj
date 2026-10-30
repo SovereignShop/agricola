@@ -250,3 +250,56 @@
     (is (= #{:player :mode :phase :turn :remaining :occupied :worker-index} (set (keys (:action-context staged)))))
     (is (not-any? #(and (map? %) (or (contains? % :hand) (contains? % :round-order)))
                   (tree-seq coll? seq (:action-context (a/public-state staged)))))))
+
+(deftest freshman-delayed-sow-decline-allows-lazy-sowman-and-advances-once
+  (let [state (-> (fresh) (own 0 :a097) (own 0 :a094) (hand :a116) (update :active conj :sow-bake))
+        freshman (g/command state 0 {:type :action :space :sow-bake})
+        sow-offer (resolve! freshman {:card (c/id :a116)})
+        lazy (resolve! (edn/read-string (pr-str sow-offer)) {:skip? true})
+        done (resolve! lazy {:action-command {:space :grain}})]
+    (is (= :sow-offer (get-in sow-offer [:effect-queue 0 :effect :op])))
+    (is (= :lazy-sowman (get-in lazy [:effect-queue 0 :effect :mode])))
+    (is (= {:sow-bake 0 :grain 0} (:occupied done)))
+    (is (= 0 (get-in done [:players 0 :remaining])))
+    (is (= 1 (:turn done)))
+    (is (= 1 (:turn-serial done)))
+    (is (nil? (:action-context done)))
+    (is (nil? (:freshman-plan done)))))
+
+(defn minstrel-freshman-state []
+  (let [order (vec (concat [:sow-bake :sheep :improvement :fences] (drop 4 (mapcat identity a/stages))))]
+    (-> (g/initialize (a/new-game ["A" "B" "C" "D"] order 0))
+        (own 0 :a151) (own 0 :a097) (hand :a116)
+        (assoc :phase :return-home :turn 3) (assoc-in [:players 0 :remaining] 0))))
+
+(deftest minstrel-freshman-cancellation-restores-saved-return-home-context
+  (let [state (minstrel-freshman-state)
+        minstrel (g/drain (g/queue-front state [(g/event :return-home 0)]))
+        freshman (resolve! minstrel {:action-command {:space :sow-bake}})
+        done (resolve! (edn/read-string (pr-str freshman)) {:skip? true})]
+    (is (= :freshman-bake (get-in freshman [:effect-queue 0 :effect :op])))
+    (is (= :return-home (:phase done)))
+    (is (= 3 (:turn done)))
+    (is (= 0 (get-in done [:players 0 :remaining])))
+    (is (empty? (:occupied done)))
+    (is (empty? (:effect-queue done)))
+    (is (nil? (:action-context done)))
+    (is (nil? (:freshman-plan done)))))
+
+(deftest minstrel-freshman-keeps-one-use-through-followup-baking
+  (let [state (-> (minstrel-freshman-state) (own 0 :b025) (hand :a117)
+                  (assoc-in [:players 0 :improvements] #{:fireplace-2})
+                  (update-in [:players 0] a/gain {:grain 1}))
+        minstrel (g/drain (g/queue-front state [(g/event :return-home 0)]))
+        freshman (resolve! minstrel {:action-command {:space :sow-bake}})
+        bake (resolve! (edn/read-string (pr-str freshman)) {:card (c/id :a116)})
+        done (resolve! (edn/read-string (pr-str bake)) {:grain 1})]
+    (is (= :bake (get-in bake [:effect-queue 0 :effect :op])))
+    (is (not (g/freshman-available? bake 0)))
+    (is (not (g/freshman-available? done 0)))
+    (is (= :return-home (:phase done)))
+    (is (= 3 (:turn done)))
+    (is (= 0 (get-in done [:players 0 :remaining])))
+    (is (empty? (:occupied done)))
+    (is (c/has? (g/p done 0) :a116))
+    (is (not (c/has? (g/p done 0) :a117)))))

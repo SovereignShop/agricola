@@ -176,7 +176,8 @@
                   (:passing? card) (conj {:kind :pass-card :player pid :card cid}))]
       (-> g (queue-front (concat (map #(task pid cid % {}) (:play card)) after))
           (a/log-event (str (:name player) " played " (:name card))))))))
-(defn freshman-turn-key [g] [(:round g) (:phase g) (:turn-serial g 0)])
+(defn freshman-turn-key [g]
+  [(:round g) (or (get-in g [:action-context :phase]) (:phase g)) (:turn-serial g 0)])
 (defn freshman-available? [g pid]
   (and (owned? g pid :a097)
        (not= (freshman-turn-key g) (get-in g [:players pid :card-state (c/id :a097) :used-turn]))
@@ -1118,7 +1119,7 @@
            (take-action-with-plowing planned pid command))
          (catch #?(:clj clojure.lang.ExceptionInfo :cljs :default) error
            (if (and (nil? cid) (zero? grain))
-             (update (dissoc g :freshman-plan) :cancelled-sowing (fnil conj #{}) [pid (:space source) (:round g)])
+             (update (dissoc (finish-action-context g false) :freshman-plan) :cancelled-sowing (fnil conj #{}) [pid (:space source) (:round g)])
              (throw error))))))
 (defn take-action [g pid {:keys [space] :as command}]
   (if (and (nil? (:freshman-plan g)) (freshman-source? g pid command))
