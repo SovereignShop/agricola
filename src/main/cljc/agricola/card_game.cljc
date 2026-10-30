@@ -125,7 +125,7 @@
        :else (discount (case (:cost card)
                          :double-turn-plow (cond-> {:grain 1} (> (:round g) 3) (assoc :food 1))
                          :bottles {:clay (:family p) :food (:family p)}
-                         (:fishing-person :clay-supply) {}
+                         (:fishing-person :clay-supply :return-cooking) {}
                          (:printed-cost card)))))))
 (defn paid-card-player
   "Shared validation/payment for every route that plays a hand card. Pure: a
@@ -144,7 +144,11 @@
       (a/require! (= pid (get-in g [:occupied :fishing])) "Brook requires one of your people on Fishing."))
     (when (= :clay-supply (:cost card))
       (a/require! (>= (a/amount player :clay) 5) "Thick Forest requires five clay in your supply; it does not spend them."))
-    (let [player (if (and (= :occupation (:kind card)) (:paper-maker? options))
+    (let [player (if (= :return-cooking (:cost card))
+                   (let [returned (or (:return-improvement options) (first (a/returnable-cooking player)))]
+                     (a/require! (some #{returned} (a/returnable-cooking player)) "Return one of your Fireplaces or Cooking Hearths.")
+                     (update player :improvements disj returned)) player)
+          player (if (and (= :occupation (:kind card)) (:paper-maker? options))
                    (do (a/require! (c/has? player :b109) "You do not own Paper Maker.")
                        (-> player (a/pay {:wood 1}) (a/gain {:food (count (:occupations player))}))) player)]
       (a/pay player (card-cost g pid card occupation-cost options)))))
@@ -160,9 +164,13 @@
           player (cond-> player
                    (get-in card [:passive :lone-occupation]) (assoc-in [:hand :occupation] [])
                    (get-in card [:passive :card-field]) (assoc-in [:card-fields cid] {:type :field :allowed-crop (get-in card [:passive :card-field]) :count 0}))
-          g (assoc-in g [:players pid] player)
+          returned (when (= :return-cooking (:cost card)) (or (:return-improvement options) (first (a/returnable-cooking before))))
+          major? (and (get-in card [:passive :major-or-minor]) (or (:as-major? options) (:major-only? timing)))
+          g (cond-> (assoc-in g [:players pid] player) returned (update :available-improvements conj returned)
+                    (and major? (= 5 (count (:players g)))) (update-in [:major-builds pid] (fnil inc 0)))
           after (cond-> [(event (if (= kind :occupation) :occupation :build-improvement) pid {:card cid :major-or-minor? (boolean (:major-or-minor? timing))})
                           (event :check-state pid)]
+                  (and major? (= 5 (count (:players g)))) (conj (event :major-built pid {:card cid :improvement cid}))
                   (and (= :round-start (:event timing)) (:scholar-round-start? card))
                   (conj (event :round-start pid {:only-card cid :existing-window (:window timing)}))
                   (:passing? card) (conj {:kind :pass-card :player pid :card cid}))]
@@ -175,15 +183,17 @@
 (defn granted-card-action [g pid effect choice]
   (let [cid (:card choice) major (:improvement choice) kinds (:kinds effect)
         kind (if cid (:kind (c/card cid)) :major)
-        _ (a/require! (and (not (and cid major)) (or cid major) (contains? kinds kind)) "Choose a card allowed by this action.")
-        _ (when (and major (:major-ids effect))
-            (a/require! (contains? (:major-ids effect) major) "That major improvement is not allowed by this card."))
+        _ (a/require! (and (not (and cid major)) (or cid major) (or (contains? kinds kind) (and cid (get-in (c/card cid) [:passive :major-or-minor]) (contains? kinds :major)))) "Choose a card allowed by this action.")
+        _ (when (:major-ids effect)
+            (a/require! (or (contains? (:major-ids effect) (or major cid))
+                            (and cid (get-in (c/card cid) [:passive :fireplace])
+                                 (seq (set/intersection (:major-ids effect) #{:fireplace-2 :fireplace-3})))) "That major improvement is not allowed by this card."))
         cost (granted-action-cost g pid effect choice)
         _ (a/require! (every? (fn [[resource n]] (>= (get cost resource 0) n)) (:minimum-paid effect))
                       "This improvement action requires the specified resources to actually be paid.")
         both? (= #{:major :minor} kinds)]
     (if cid
-      (play-card g pid cid (get effect :occupation-cost 0) choice {:major-action? (contains? kinds :major) :major-or-minor? both?})
+      (play-card g pid cid (get effect :occupation-cost 0) choice {:major-action? (contains? kinds :major) :major-only? (= #{:major} kinds) :major-or-minor? both?})
       (let [context {:improvement major :paid cost :upgraded-fireplace? (boolean (:upgrade choice))}
             after (a/build-improvement g pid choice {:cost (:major-cost effect)})]
         (-> (cond-> after (= 5 (count (:players g))) (update-in [:major-builds pid] (fnil inc 0)))
@@ -428,8 +438,8 @@
           :bake (do (a/require! (and (integer? (:grain choice)) (pos? (:grain choice))) "Bake at least one grain, or skip this effect.")
                     (-> g (update-in [:players pid] a/bake (:grain choice)) (queue-front [(event :bake pid)])))
           :bake-one
-          (let [improvement (:improvement choice) rate (get-in a/improvements [improvement :bake])]
-            (a/require! (and (contains? (:improvements current) improvement) (pos? (or rate 0))) "Choose one of your baking improvements.")
+          (let [improvement (:improvement choice) rate (:bake (a/improvement-definition improvement))]
+            (a/require! (and (some #{improvement} (a/baking-improvement-ids current)) (pos? (or rate 0))) "Choose one of your baking improvements.")
             (a/require! (= 1 (get choice :grain 1)) "This effect converts exactly one grain.")
             ;; Winnowing Fan uses a baking rate, but grants no Bake Bread action.
             (update-in g [:players pid] #(-> % (a/pay {:grain 1}) (a/gain {:food rate}))))
@@ -604,7 +614,7 @@
                                        {:rooms rooms :frame? frame? :brushwood? brushwood?})
                   (= :take-pile-good op) (pile-good-options g effect)
                   (= :renovate op) [{} {:renovate-to :stone}]
-                  (= :bake-one op) (map #(hash-map :improvement %) (:improvements (p g player)))
+                  (= :bake-one op) (map #(hash-map :improvement %) (a/baking-improvement-ids (p g player)))
                   (= :take-field-crop op) (map #(hash-map :cell %) (concat (a/tiles (p g player) :field) (keys (:card-fields (p g player)))))
                   :else nil)]
     (and (five/eligible? g player op (:context head))

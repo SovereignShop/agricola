@@ -439,9 +439,9 @@
      (for [id (sort (:available-improvements g)) :when (or (nil? (:major-ids effect)) (contains? (:major-ids effect) id)) :let [card (a/improvements id) cost (a/improvement-cost p id nil {:cost (:major-cost effect)})]] ^{:key id}
        [:option {:value (name id)} (str (:name card) " · " (str/join ", " (for [[r n] cost] (str n " " (name r)))) " · " (:points card) " VP")])]]
    (when (:upgrade (a/improvements (:improvement draft)))
-     [field "Payment" [:select {:value (or (some-> (:upgrade draft) name) "") :on-change #(draft! :upgrade (when (seq (.. % -target -value)) (keyword (.. % -target -value))))}
+     [field "Payment" [:select {:value (if (:upgrade draft) (subs (str (:upgrade draft)) 1) "") :on-change #(draft! :upgrade (when (seq (.. % -target -value)) (keyword (.. % -target -value))))}
                        [:option {:value ""} "Pay clay"]
-                       (for [id [:fireplace-2 :fireplace-3] :when ((:improvements p) id)] ^{:key id} [:option {:value (name id)} "Return a Fireplace"])]] )])
+                       (for [id (a/fireplace-upgrades p)] ^{:key id} [:option {:value (subs (str id) 1)} (str "Return " (:name (a/improvement-definition id)))])]] )])
 (defn with-private-hand [g pid ui]
   (assoc-in g [:players pid :hand] (get-in ui [:private-hands (:game-id ui) pid])))
 (defn action-command [draft]
@@ -461,7 +461,9 @@
     nil
     (catch :default error (.-message error))))
 (defn hand-select [g p kind draft & [optional?]]
-  (let [pid (:id p) ui @(rf/subscribe [:ui]) hand (get-in ui [:private-hands (:game-id ui) pid kind])]
+  (let [pid (:id p) ui @(rf/subscribe [:ui]) hand (get-in ui [:private-hands (:game-id ui) pid kind])
+        hand (if (and (= kind :minor) (= #{:major} (get-in g [:effect-queue 0 :effect :kinds])))
+               (filter #(get-in (cards/card %) [:passive :major-or-minor]) hand) hand)]
     [:div
      (when (and (= kind :occupation) (cards/has? p :a028))
        [field "Wood for occupation cost" [number-input (get draft :occupation-wood 0) #(draft! :occupation-wood %) 3]])
@@ -473,6 +475,16 @@
       (for [id hand :let [reason (card-action-error g pid (-> draft (assoc :card id) (dissoc :improvement :upgrade :bake-grain :payment-option)) ui)]] ^{:key id}
         [:option {:value (str id) :disabled (boolean reason)}
          (str (:name (cards/card id)) (when reason (str " — " reason)))])]]
+     (when (= :return-cooking (:cost (cards/card (:card draft))))
+       [:div
+        [field "Return cooking improvement"
+         [:select {:aria-label "Return cooking improvement" :value (name (or (:return-improvement draft) (first (a/returnable-cooking p)) :none))
+                   :on-change #(draft! :return-improvement (keyword (.. % -target -value)))}
+          (for [id (a/returnable-cooking p)] ^{:key id} [:option {:value (name id)} (:name (a/improvements id))])]]
+        (when-not (= #{:major} (get-in g [:effect-queue 0 :effect :kinds]))
+          [:label.checkbox [:input {:type "checkbox" :checked (boolean (:as-major? draft))
+                                    :on-change #(draft! :as-major? (.. % -target -checked))}]
+           "Count this play as a major improvement for build effects"])])
      (when-let [costs (:cost-options (cards/card (:card draft)))]
        [field "Card payment"
         [:select {:aria-label "Card payment" :value (if (some? (:payment-option draft)) (:payment-option draft) "")
@@ -584,7 +596,7 @@
 (defn card-decision [g p draft busy?]
   (let [head (first (:effect-queue g)) effect (:effect head) op (:op effect) options (card-game/order-options g)
         keep (get draft :keep (select-keys (:goods p) a/animals))
-        choice (merge (select-keys draft [:accommodate-taken? :grain-source :animal :cell :cells :rooms :stables :fences :fence-material :rounds :person-kind :cards :frame? :brushwood? :renovate-to :paper-maker? :occupation-wood :card :cook? :option :payment-option :improvement :upgrade :bake-grain :exchange?])
+        choice (merge (select-keys draft [:return-improvement :as-major? :accommodate-taken? :grain-source :animal :cell :cells :rooms :stables :fences :fence-material :rounds :person-kind :cards :frame? :brushwood? :renovate-to :paper-maker? :occupation-wood :card :cook? :option :payment-option :improvement :upgrade :bake-grain :exchange?])
                       (when (contains? draft :effect-fields) {:fields (:effect-fields draft)})
                       {:type :resolve :decision (:decision-id g) :keep keep :grain (get draft :effect-grain 1)
                        :action (or (:effect-action draft) (if (= op :young-artist) :draw :room))
@@ -724,11 +736,11 @@
                                       [:option {:value (name animal)} (labels animal)])]]])
      (when (= op :bake) [field "Grain to bake" [number-input (get draft :effect-grain 1) #(draft! :effect-grain %) (a/amount p :grain)]])
      (when (= op :bake-one)
-       [field "Baking improvement" [:select {:value (if (:improvement draft) (name (:improvement draft)) "")
+       [field "Baking improvement" [:select {:value (if (:improvement draft) (subs (str (:improvement draft)) 1) "")
                                             :on-change #(draft! :improvement (when (seq (.. % -target -value)) (keyword (.. % -target -value))))}
                                    [:option {:value ""} "Choose a baking improvement…"]
-                                   (for [id (:improvements p) :when (get-in a/improvements [id :bake])] ^{:key id}
-                                     [:option {:value (name id)} (str (get-in a/improvements [id :name]) " · 1 grain → " (get-in a/improvements [id :bake]) " food")])]])
+                                   (for [id (a/baking-improvement-ids p)] ^{:key id}
+                                     [:option {:value (subs (str id) 1)} (str (:name (a/improvement-definition id)) " · 1 grain → " (:bake (a/improvement-definition id)) " food")])]])
      (when (= op :take-field-crop)
        [:div
         [field "Vegetable field" [:select {:value (if (some? (:cell draft)) (str (:cell draft)) "")
@@ -770,7 +782,7 @@
      (when (= op :card-action)
        [:div
         (when (contains? (:kinds effect) :occupation) [hand-select g p :occupation draft])
-        (when (contains? (:kinds effect) :minor) [hand-select g p :minor draft (contains? (:kinds effect) :major)])
+        (when (or (contains? (:kinds effect) :minor) (contains? (:kinds effect) :major)) [hand-select g p :minor draft (contains? (:kinds effect) :major)])
         (when (and (contains? (:kinds effect) :major) (not (:card draft)))
           [:div [improvement-select g p draft effect]
            (when (:oven (a/improvements (:improvement draft)))

@@ -40,8 +40,10 @@
   (for [cid (get-in p [:hand kind])
         paper? (if (and (= kind :occupation) (c/has? p :b109)) [false true] [false])
         payment (if-let [costs (:cost-options (c/card cid))] (range (count costs)) [nil])
-        wood (if (and (= kind :occupation) (c/has? p :a028)) (range 4) [0])]
-    (cond-> {:card cid} paper? (assoc :paper-maker? true) (some? payment) (assoc :payment-option payment) (pos? wood) (assoc :occupation-wood wood))))
+        wood (if (and (= kind :occupation) (c/has? p :a028)) (range 4) [0])
+        returned (if (= :return-cooking (:cost (c/card cid))) (a/returnable-cooking p) [nil])
+        major? (if (get-in (c/card cid) [:passive :major-or-minor]) [false true] [false])]
+    (cond-> {:card cid} paper? (assoc :paper-maker? true) (some? payment) (assoc :payment-option payment) returned (assoc :return-improvement returned) major? (assoc :as-major? true) (pos? wood) (assoc :occupation-wood wood))))
 (defn sow-plans [p]
   (distinct
    (cons []
@@ -67,7 +69,7 @@
 (defn major-options [state p]
   (for [cid (sort (:available-improvements state))
         upgrade (if (:upgrade (a/improvements cid))
-                  (cons nil (sort (set/intersection (:improvements p) #{:fireplace-2 :fireplace-3}))) [nil])
+                  (cons nil (a/fireplace-upgrades p)) [nil])
         grain (if (:oven (a/improvements cid)) (range (inc (min 3 (a/amount p :grain)))) [0])]
     (cond-> {:improvement cid} upgrade (assoc :upgrade upgrade) (pos? grain) (assoc :bake-grain grain))))
 (defn action-candidates [state pid]
@@ -154,7 +156,7 @@
                   :choose-good (map #(hash-map :resource %) (:choices effect))
                   :seasonal-crop [{:resource :grain} {:resource :vegetable}]
                   :bake (map #(hash-map :grain %) (range 1 (inc (min 8 (a/amount p :grain)))))
-                  :bake-one (for [improvement (:improvements p) :when (get-in a/improvements [improvement :bake])] {:improvement improvement})
+                  :bake-one (for [improvement (a/baking-improvement-ids p)] {:improvement improvement})
                   :take-field-crop (for [cell (field-ids p) exchange? (if (:exchange effect) [false true] [false])]
                                      {:cell cell :exchange? exchange?})
                   :housing (for [keep (housing-plans p) cook? [true false]
@@ -169,6 +171,8 @@
                   :sidekick (let [space (five/stage-left state (get-in state [:effect-queue 0 :context :space]))]
                               (map #(hash-map :action-command %) (action-candidates (assoc state :active [space] :turn pid) pid)))
                   :card-action (concat (when (contains? (:kinds effect) :minor) (hand-options p :minor))
+                                       (when (and (contains? (:kinds effect) :major) (not (contains? (:kinds effect) :minor)))
+                                         (filter #(get-in (c/card (:card %)) [:passive :major-or-minor]) (hand-options p :minor)))
                                        (when (contains? (:kinds effect) :occupation) (hand-options p :occupation))
                                        (when (contains? (:kinds effect) :major)
                                          (filter #(or (nil? (:major-ids effect)) (contains? (:major-ids effect) (:improvement %))) (major-options state p))))

@@ -91,3 +91,44 @@
     (is (= :housing (get-in housing [:effect-queue 0 :effect :op])))
     (is (= :plow (get-in plow [:effect-queue 0 :effect :op])))
     (is (= {:reed 0} (:occupied (resolve! plow {:cell 0}))))))
+
+(deftest oriental-fireplace-exchanges-and-returns-the-physical-cooking-improvement
+  (doseq [returned [:fireplace-2 :fireplace-3 :hearth-4 :hearth-5]]
+    (let [state (-> (fresh) (hand :a060) (assoc-in [:players 0 :improvements] #{returned})
+                    (update :available-improvements disj returned))
+          done (g/drain (g/play-card state 0 (c/id :a060) 0 {:return-improvement returned}))]
+      (is (c/has? (g/p done 0) :a060))
+      (is (empty? (get-in done [:players 0 :improvements])))
+      (is (contains? (:available-improvements done) returned))
+      (is (= {:grain 1 :vegetable 4 :sheep 3 :cattle 5} (a/cook-rates (g/p done 0))))
+      (is (= 12 (:food (:goods (a/convert-food (assoc (g/p done 0) :goods {:vegetable 1 :sheep 1 :cattle 1}) {:vegetable 1 :sheep 1 :cattle 1})))))))
+  (is (thrown? clojure.lang.ExceptionInfo (g/play-card (hand (fresh) :a060) 0 (c/id :a060) 0 {})))
+  (let [state (-> (fresh) (own 0 :a060) (update-in [:players 0] a/gain {:grain 2}))]
+    (is (= 4 (- (a/amount (a/bake (g/p state 0) 2) :food) (a/amount (g/p state 0) :food))))
+    (is (thrown? clojure.lang.ExceptionInfo (a/convert-food (a/gain (g/p state 0) {:boar 1}) {:boar 1})))
+    (let [done (a/build-improvement state 0 {:improvement :hearth-4 :upgrade (c/id :a060)})]
+      (is (not (c/has? (g/p done 0) :a060)))
+      (is (contains? (get-in done [:players 0 :improvements]) :hearth-4))
+      (is (not (contains? (:available-improvements done) (c/id :a060)))))))
+
+(deftest oriental-counts-once-and-can-use-major-only-grants
+  (let [state (-> (fresh) (own 0 :a060) (own 0 :a101))
+        p (g/p state 0)]
+    (is (= 1 (g/card-bonus state 0 (c/id :a101))))
+    (is (= 1 (count (a/baking-improvement-ids p))))
+    (is (= 1 (get-in (g/score state 0) [:breakdown :improvements]))))
+  (let [state (-> (fresh) (hand :a060) (assoc-in [:players 0 :improvements] #{:hearth-5}))
+        head (g/task 0 nil {:op :card-action :kinds #{:major} :optional? true} {})
+        pending (g/drain (g/queue-front state [head]))
+        done (resolve! pending {:card (c/id :a060)})]
+    (is (c/has? (g/p done 0) :a060))
+    (is (some #(= (c/id :a060) (:card %)) (bot/decision-candidates pending 0)))
+    (is (thrown? clojure.lang.ExceptionInfo
+                 (g/granted-card-action state 0 {:kinds #{:major} :major-ids #{:clay-oven :stone-oven}} {:card (c/id :a060)})))))
+
+(deftest oriental-is-a-baking-improvement-for-winnowing-fan
+  (let [state (-> (fresh) (own 0 :a060) (own 0 :a061) (update-in [:players 0] a/gain {:grain 1}))
+        pending (g/drain (g/queue-front state [(g/event :after-field-phase 0)]))
+        done (resolve! pending {:improvement (c/id :a060)})]
+    (is (= -1 (delta state done :grain)))
+    (is (= 2 (delta state done :food)))))

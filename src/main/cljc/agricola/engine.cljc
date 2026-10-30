@@ -167,8 +167,16 @@
                       (fit (rest spaces) remaining result)))))]
     (if (or (cards/has? p :b098) (cards/has? p :a134)) (organic-housing p)
         (fit (sort-by :capacity > (accommodations p)) (select-keys (:goods p) animals) []))))
+(defn improvement-definition [id]
+  (or (improvements id) (when-let [card (cards/card id)] (merge card (:passive card)))))
+(defn owned-improvement-ids [p] (concat (:improvements p) (:minors p)))
+(defn baking-improvement-ids [p] (filter #(pos? (:bake (improvement-definition %) 0)) (owned-improvement-ids p)))
+(defn fireplace-upgrades [p]
+  (concat (sort (set/intersection (:improvements p) #{:fireplace-2 :fireplace-3}))
+          (filter #(get-in (cards/card %) [:passive :fireplace]) (:minors p))))
+(defn returnable-cooking [p] (sort (set/intersection (:improvements p) #{:fireplace-2 :fireplace-3 :hearth-4 :hearth-5})))
 (defn cook-rates [p]
-  (apply merge-with max {:grain 1 :vegetable 1} (map #(get-in improvements [% :cook] {}) (:improvements p))))
+  (apply merge-with max {:grain 1 :vegetable 1} (map #(get (improvement-definition %) :cook {}) (owned-improvement-ids p))))
 (defn convert-food [p goods]
   (quantities! goods (concat animals [:grain :vegetable]))
   (let [rates (cook-rates p)]
@@ -177,7 +185,7 @@
 (defn bake [p n]
   (require! (natural? n) "Choose a whole number of grain to bake.")
   (if (zero? n) p
-      (let [ovens (sort-by :bake > (keep #(when (:bake (improvements %)) (improvements %)) (:improvements p)))
+      (let [ovens (sort-by :bake > (map improvement-definition (baking-improvement-ids p)))
             food (loop [left n ovens ovens food 0]
                    (if (zero? left) food
                        (let [oven (first ovens)]
@@ -231,14 +239,16 @@
   ([g pid {:keys [improvement upgrade bake-grain]} modifiers]
    (let [card (improvements improvement) p (get-in g [:players pid])]
      (require! (and card ((:available-improvements g) improvement)) "That improvement is not available.")
-     (when upgrade (require! (and (:upgrade card) (#{:fireplace-2 :fireplace-3} upgrade) ((:improvements p) upgrade)) "Only your Fireplace can be exchanged for a Cooking Hearth."))
+     (when upgrade (require! (and (:upgrade card) (some #{upgrade} (fireplace-upgrades p))) "Only your Fireplace can be exchanged for a Cooking Hearth."))
      (when (and (pos? (or bake-grain 0)) (not (:oven card))) (require! false "Only a new oven grants an immediate Bake Bread action."))
      (let [p' (-> (pay p (improvement-cost p improvement upgrade modifiers))
                   (update :improvements #(cond-> (conj % improvement) upgrade (disj upgrade)))
+                  (cond-> (and upgrade (not (improvements upgrade)))
+                    (update :minors #(vec (remove #{upgrade} %))))
                   (cond-> (= improvement :well) (assoc :well-rounds (set (range (inc (:round g)) (min 15 (+ 6 (:round g))))))))
            p' (if (:oven card) (bake p' (or bake-grain 0)) p')]
        (-> g (assoc-in [:players pid] p')
-           (update :available-improvements #(cond-> (disj % improvement) upgrade (conj upgrade))))))))
+           (update :available-improvements #(cond-> (disj % improvement) (and upgrade (improvements upgrade)) (conj upgrade))))))))
 
 (defn player [id name food]
   {:id id :name name :family 2 :newborn 0 :remaining 2 :house :wood
