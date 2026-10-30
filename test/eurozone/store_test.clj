@@ -274,3 +274,32 @@
     (send! "host" {:event :start})
     (is (not-any? #(= "base-a" (s/card-pack (rules/card %))) (mapcat identity (get-in @(:rooms store) [id :state :draw :packets]))))
     (is (thrown? clojure.lang.ExceptionInfo (send! "host" message)))))
+
+(deftest paper-knife-random-stream-never-enters-live-projections
+  (let [store (s/make-store nil)
+        id (:id (s/transact! store "host" {:event :create :mode :local :name "Ada" :names ["Ada" "Ben"]
+                                           :setup {:mode :random}}))]
+    (s/transact! store "host" {:event :start :id id :revision 0})
+    (is (pos? (get-in @(:rooms store) [id :state :card-rng])) "The authoritative game persists its random stream")
+    (doseq [token ["host" "guest" "spectator"]]
+      (let [datoms (:datoms (s/snapshot store token))
+            client (d/db-with (d/empty-db model/schema) (model/datoms->tx datoms))]
+        (is (not-any? #(= :agricola.game/card-rng (second %)) datoms))
+        (is (nil? (get-in (model/pull-game client id) [:state :card-rng])))))
+    (let [occupations (mapv rules/id [:a103 :a104 :a116])
+          state (-> (get-in @(:rooms store) [id :state])
+                    (assoc :card-rng 13 :turn 0)
+                    (assoc-in [:players 0 :hand] {:minor [(rules/id :a003)] :occupation occupations})
+                    (update-in [:players 0] a/gain {:wood 1}))
+          room (-> (get @(:rooms store) id) (assoc :state state) (dissoc :recording))]
+      (swap! (:rooms store) assoc id room)
+      (d/transact! (:conn store) (model/game-tx room))
+      (let [play (s/transact! store "host" {:event :command :id id :revision 1
+                                           :command {:type :action :space :meeting :card (rules/id :a003)}})
+            decision (get-in @(:rooms store) [id :state :decision-id])
+            resolve (s/transact! store "host" {:event :command :id id :revision 2
+                                              :command {:type :resolve :decision decision :cards occupations}})]
+        (is (not= 13 (get-in @(:rooms store) [id :state :card-rng])))
+        (doseq [update [play resolve (s/snapshot store "spectator")]]
+          (is (not-any? #(= :agricola.game/card-rng (second %)) (:datoms update))))
+        (is (nil? (get-in (model/pull-game @(:conn store) id) [:state :card-rng])))))))
