@@ -97,7 +97,7 @@ def check(base, fixtures):
         pack.click()
         expect(pack).not_to_be_checked()
         expect(page.locator(".pack-picker")).to_contain_text("48 minor improvements in the eligible pool")
-        print("Partial-pack counts and base-only pool selection: passed", flush=True)
+        print("Complete Artifex coverage and base-only pool selection: passed", flush=True)
         assert errors == [], errors
         browser.close()
 
