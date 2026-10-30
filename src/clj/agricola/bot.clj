@@ -123,7 +123,7 @@
                    (mapcat #(repeat (a/amount p %) %) order))
            kept (reduce (fn [p animal] (let [next (a/gain p {animal 1})] (if (a/animal-housing next) next p))) empty units)]
        (select-keys (:goods kept) a/animals)))))
-(declare ability-candidates)
+(declare ability-candidates card-action-candidates)
 (defn decision-candidates [state pid]
   (let [p (g/p state pid) head (first (:effect-queue state)) effect (:effect head)
         options (case (:op effect)
@@ -168,6 +168,12 @@
                   :countryman (for [cell (field-ids p) crop [:grain :vegetable]] {:plantings [{:cell cell :crop crop}]})
                   (:fast-mason :renovate) (payment-options p)
                   :young-artist (cons {:action :draw} (map #(assoc % :action :play) (hand-options p :minor)))
+                  :extra-action (let [context (:context head)
+                                      allowed (set (g/extra-action-spaces state pid effect context))
+                                      ready (g/extra-action-state state pid effect context)]
+                                  (map #(hash-map :action-command %)
+                                       (filter #(allowed (or (:card-space %) (:space %)))
+                                               (concat (action-candidates ready pid) (card-action-candidates ready pid)))))
                   :sidekick (let [space (five/stage-left state (get-in state [:effect-queue 0 :context :space]))]
                               (map #(hash-map :action-command %) (action-candidates (assoc state :active [space] :turn pid) pid)))
                   :card-action (concat (when (contains? (:kinds effect) :minor) (hand-options p :minor))

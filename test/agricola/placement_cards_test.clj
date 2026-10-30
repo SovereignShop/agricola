@@ -83,3 +83,136 @@
   (let [state (-> (fresh) (own 0 :a130) (assoc-in [:players 0 :family] 3) (assoc-in [:players 0 :remaining] 3))
         ready (-> state (act 0 {:space :grain}) (act 0 {:space :meeting}))]
     (is (thrown? clojure.lang.ExceptionInfo (act ready 0 {:space :meeting})))))
+
+(deftest swagman-moves-the-same-worker-and-never-bounces-back
+  (let [state (-> (fresh) (own 0 :a129) (update-in [:players 0] a/gain {:wood 5 :reed 2}))
+        pending (g/command state 0 {:type :action :space :grain})
+        done (resolve! (edn/read-string (pr-str pending)) {:action-command {:type :action :space :build :rooms [0]}})]
+    (is (= :extra-action (get-in pending [:effect-queue 0 :effect :op])))
+    (is (= 1 (get-in done [:players 0 :remaining])))
+    (is (= [:build] (get-in done [:players 0 :worker-spaces])))
+    (is (not (contains? (:occupied done) :grain)))
+    (is (= [0] (g/space-owners done :build)))
+    (is (= 1 (:turn done)))
+    (is (= 1 (:turn-serial done)))
+    (is (empty? (:effect-queue done)))
+    (is (thrown? clojure.lang.ExceptionInfo (resolve! pending {:action-command {:space :wood}}))))
+  (let [state (-> (fresh) (own 0 :a129) (assoc :occupied {:grain [1 2]})
+                  (update-in [:players 0] a/gain {:wood 2}))
+        pending (g/command state 0 {:type :action :space :build :stables [0]})
+        done (resolve! pending {:action-command {:space :grain}})]
+    (is (= 1 (delta pending done :grain)))
+    (is (= [1 2 0] (g/space-owners done :grain)))
+    (is (= [:grain] (get-in done [:players 0 :worker-spaces])))))
+
+(deftest lazy-sowman-can-chain-occupied-cultivation-with-a-worker-each-time
+  (let [state (-> (fresh) (own 0 :a094) (update :active conj :cultivation)
+                  (assoc-in [:players 0 :family] 3) (assoc-in [:players 0 :remaining] 3))
+        sow1 (g/command state 0 {:type :action :space :cultivation :cell 0})
+        lazy1 (resolve! sow1 {:skip? true})
+        sow2 (resolve! lazy1 {:action-command {:space :cultivation :cell 1}})
+        lazy2 (resolve! (edn/read-string (pr-str sow2)) {:skip? true})
+        done (resolve! lazy2 {:action-command {:space :grain}})]
+    (is (= :lazy-sowman (get-in lazy1 [:effect-queue 0 :effect :mode])))
+    (is (= 2 (get-in lazy1 [:players 0 :remaining])))
+    (is (= :sow-offer (get-in sow2 [:effect-queue 0 :effect :op])))
+    (is (= 1 (get-in lazy2 [:players 0 :remaining])))
+    (is (= 0 (get-in done [:players 0 :remaining])))
+    (is (= [0 0] (g/space-owners done :cultivation)))
+    (is (= #{0 1} (set (a/tiles (g/p done 0) :field))))
+    (is (= 1 (:turn done)))
+    (is (= 1 (:turn-serial done)))
+    (is (empty? (:effect-queue done)))
+    (is (nil? (:action-context done)))))
+
+(deftest lazy-sowman-cannot-reuse-meeting-or-trigger-from-cancelled-or-off-turn-sowing
+  (let [state (-> (fresh) (own 0 :a094) (update :active conj :cultivation) (assoc :occupied {:meeting 1}))
+        lazy (resolve! (g/command state 0 {:type :action :space :cultivation :cell 0}) {:skip? true})]
+    (is (thrown? clojure.lang.ExceptionInfo (resolve! lazy {:action-command {:space :meeting}})))
+    (is (= 1 (:turn (resolve! lazy {:skip? true})))))
+  (let [state (-> (fresh) (own 0 :a094) (assoc :turn 1))
+        done (g/drain (g/queue-front state [(g/event :sow-declined 0 {:unconditional? true})]))]
+    (is (empty? (:effect-queue done))))
+  (let [state (-> (fresh) (own 0 :a094) (own 1 :a132) (update :active conj :sow-bake)
+                  (assoc-in [:players 0 :farm 0] {:type :field :count 0})
+                  (update-in [:players 1] a/gain {:grain 1}))
+        publican (resolve! (g/command state 0 {:type :action :space :sow-bake}) {})
+        cancelled (g/command publican 1 {:type :resolve :decision (:decision-id publican) :skip? true})]
+    (is (empty? (:effect-queue cancelled))) (is (= 2 (get-in cancelled [:players 0 :remaining])))))
+
+(deftest minstrel-uses-a-revealed-card-effect-without-a-person-or-use-space-triggers
+  (let [state (-> (fresh) (own 0 :a151) (own 0 :a126) (own 0 :a147)
+                  (assoc :phase :return-home :turn 3)
+                  (assoc-in [:players 0 :remaining] 0) (assoc-in [:piles :sheep] {:sheep 1}))
+        pending (g/drain (g/queue-front state [(g/event :return-home 0)]))
+        done (resolve! (edn/read-string (pr-str pending)) {:action-command {:space :sheep}})]
+    (is (= :minstrel (get-in pending [:effect-queue 0 :effect :mode])))
+    (is (= 1 (delta state done :sheep)))
+    (is (= 0 (delta state done :wood)) "Master Workman is not triggered")
+    (is (= 0 (get-in done [:players 0 :remaining])))
+    (is (= :return-home (:phase done)))
+    (is (= 3 (:turn done)))
+    (is (empty? (:occupied done)))
+    (is (empty? (:effect-queue done)) "Animal Dealer is not triggered")
+    (is (empty? (get-in done [:players 0 :worker-spaces]))))
+  (let [state (-> (fresh) (own 0 :a151) (update :active conj :improvement) (assoc :phase :return-home))]
+    (is (empty? (:effect-queue (g/drain (g/queue-front state [(g/event :return-home 0)])))))))
+
+(deftest minstrel-saved-sow-restores-return-home-and-does-not-trigger-lazy-sowman
+  (let [order (vec (concat [:sow-bake :sheep :improvement :fences] (drop 4 (mapcat identity a/stages))))
+        state (-> (g/initialize (a/new-game ["A" "B" "C" "D"] order 0)) (own 0 :a151) (own 0 :a065) (own 0 :a094)
+                  (assoc :phase :return-home :turn 2) (assoc-in [:players 0 :remaining] 0)
+                  (assoc-in [:players 0 :farm 0] {:type :field :count 0}))
+        pending (g/drain (g/queue-front state [(g/event :return-home 0)]))
+        offer (resolve! pending {:action-command {:space :sow-bake}})
+        sow (resolve! offer {})
+        done (resolve! (edn/read-string (pr-str sow)) {:plantings [{:cell 0 :crop :grain}]})]
+    (is (= :sow-offer (get-in offer [:effect-queue 0 :effect :op])))
+    (is (= :return-home (:phase done)))
+    (is (= 2 (:turn done)))
+    (is (= 0 (get-in done [:players 0 :remaining])))
+    (is (empty? (:occupied done)))
+    (is (empty? (:effect-queue done)))
+    (is (= 3 (get-in done [:players 0 :farm 0 :count])))))
+
+(deftest swagman-room-growth-is-not-duplicated-and-the-newborn-stays-on-the-source
+  (let [state (-> (fresh) (own 0 :a129) (own 0 :a021)
+                  (assoc-in [:players 0 :farm 0] {:type :room})
+                  (update-in [:players 0] a/gain {:wood 5 :reed 2}))
+        growth (g/command state 0 {:type :action :space :build :rooms [1]})
+        pending (resolve! growth {})
+        done (resolve! pending {:action-command {:space :grain}})]
+    (is (= 3 (get-in pending [:players 0 :family])))
+    (is (= 1 (delta state pending :food)))
+    (is (= 3 (get-in done [:players 0 :family])))
+    (is (= 1 (g/space-people done :build)))
+    (is (empty? (g/space-owners done :build)))
+    (is (contains? (:occupied done) :build))
+    (is (= [0] (get-in done [:newborn-spaces :build])))
+    (is (= [:grain] (get-in done [:players 0 :worker-spaces])))))
+
+(deftest lazy-cancelled-child-sowing-preserves-one-parent-turn-advance
+  (let [state (-> (fresh) (own 0 :a094) (own 1 :a132) (update :active conj :cultivation :sow-bake)
+                  (update-in [:players 1] a/gain {:grain 1}))
+        lazy (resolve! (g/command state 0 {:type :action :space :cultivation :cell 0}) {:skip? true})
+        offer (resolve! lazy {:action-command {:space :sow-bake}})
+        publican (resolve! offer {})
+        done (g/command publican 1 {:type :resolve :decision (:decision-id publican) :skip? true})]
+    (is (= 1 (get-in done [:players 0 :remaining])))
+    (is (= 1 (:turn done)))
+    (is (= 1 (:turn-serial done)))
+    (is (= {:cultivation 0} (:occupied done)))
+    (is (nil? (:action-context done)))
+    (is (empty? (:effect-queue done)))))
+
+(deftest nested-placement-bots-have-real-commands-and-context-has-no-hidden-snapshot
+  (let [state (-> (fresh) (own 0 :a094) (update :active conj :cultivation))
+        pending (resolve! (g/command state 0 {:type :action :space :cultivation :cell 0}) {:skip? true})
+        candidates (bot/decision-candidates (bot/observation pending 0) 0)
+        choose (first (filter #(= :grain (get-in % [:action-command :space])) candidates))
+        staged (resolve! pending {:action-command {:space :cultivation :cell 1}})]
+    (is (some? choose))
+    (is (= 1 (:turn (g/command pending 0 choose))))
+    (is (= #{:player :mode :phase :turn :remaining :occupied :worker-index} (set (keys (:action-context staged)))))
+    (is (not-any? #(and (map? %) (or (contains? % :hand) (contains? % :round-order)))
+                  (tree-seq coll? seq (:action-context (a/public-state staged)))))))

@@ -2,7 +2,7 @@
   "Card-game orchestration around the shared farm rules. Effects and decisions
    are data, so interrupted choices survive saves and reconnects."
   (:require [agricola.engine :as a] [agricola.card-rules :as c] [agricola.five-player :as five] [agricola.card-expressions :as expr] [agricola.card-reactive :as reactive] [agricola.card-random :as random] [clojure.set :as set]))
-(declare drain run-effect play-card begin-round advance finish-game take-action take-action-complete staged-sowing? action-events take-action-with-sowing)
+(declare drain run-effect play-card begin-round advance finish-game take-action take-action-complete staged-sowing? action-events take-action-with-sowing extra-action-spaces execute-extra-action finish-action-context card-spaces card-action record-newborn adopt-newborn)
 (def ^:dynamic *effect-observer*
   "Optional diagnostic sink. It observes committed effects, never legality probes."
   nil)
@@ -248,7 +248,7 @@
       (try (queue-front (complete-sow-placement g pid effect (assoc command :plantings []))
                         [(event :sow-declined pid {:unconditional? true})])
            (catch #?(:clj clojure.lang.ExceptionInfo :cljs :default) _
-             (update (dissoc g :plow-plan) :cancelled-sowing (fnil conj #{}) [pid (:space command) (:round g)])))
+             (update (dissoc (finish-action-context g false) :plow-plan) :cancelled-sowing (fnil conj #{}) [pid (:space command) (:round g)])))
       (queue-front g [(event :sow-declined pid {:unconditional? (:unconditional? effect)})]))))
 (defn optional-effect? [g {:keys [player effect]}]
   (and (:optional? effect)
@@ -269,7 +269,7 @@
                              (catch #?(:clj clojure.lang.ExceptionInfo :cljs :default) _
                                ;; An anytime construction may invalidate the plan.
                                ;; Declining then cancels the uncommitted placement.
-                               (update (dissoc g :plow-plan) :cancelled-sowing (fnil conj #{})
+                               (update (dissoc (finish-action-context g false) :plow-plan) :cancelled-sowing (fnil conj #{})
                                        [pid (get-in effect [:source-command :space]) (:round g)])))
             g))
       (let [deferred-sidekick? (and (= op :sidekick) (staged-sowing? g pid (five/stage-left g (:space context))))
@@ -320,7 +320,8 @@
           :stable-arrival
           (-> g (update-in [:players pid :reserved-stables] dissoc (:round g))
               (queue-front [(task pid card {:op :stable :optional? true} context)]))
-          :grow (-> g (update-in [:players pid] a/grow (:room-required? effect))
+          :extra-action (execute-extra-action g pid effect context (:action-command choice))
+          :grow (-> g (update-in [:players pid] a/grow (:room-required? effect)) (record-newborn pid)
                     (queue-front [(event :grow pid) (event :check-state pid)]))
           :build-rooms
           (let [rooms (:rooms choice)]
@@ -454,7 +455,7 @@
               (:exchange? choice) (update-in [:players pid] #(-> % (a/pay {crop 1}) (a/gain {:food (:food exchange)})))
               (:exchange? choice) (update-in [:players pid :bonus-points] (fnil + 0) (:points exchange))))
           :adopt (do (a/require! (and (= :work (:phase g)) (pos? (:newborn current 0))) "Adopt a newborn during the work phase.")
-                     (-> g (update-in [:players pid :remaining] inc) (update-in [:players pid :newborn] dec)))
+                     (-> g (update-in [:players pid :remaining] inc) (update-in [:players pid :newborn] dec) (adopt-newborn pid)))
           :pay-or-beg (let [owed (:food effect) available (min owed (a/amount current :food))]
                         (-> g (update-in [:players pid] a/pay {:food available})
                               (update-in [:players pid :begging] + (- owed available))))
@@ -550,10 +551,10 @@
         room-context {:rooms-built rooms :rooms-before (count (a/tiles (p g player) :room))
                       :family-before (:family (p g player)) :previous-house (:house (p g player))}]
     (cond-> after
-      (and (not (:source-command effect)) (not= :sidekick (:op effect)) (pos? rooms))
+      (and (not (:source-command effect)) (not (#{:sidekick :extra-action} (:op effect))) (pos? rooms))
       (queue-front (concat (when (>= rooms 2) [(event :use-farm-spaces player {:used-spaces rooms :action :room})])
                            [(event :build-rooms player room-context) (event :check-state player)]))
-      (and (not (:source-command effect)) (not= :sidekick (:op effect)) (pos? stables) (= :work (:phase g)))
+      (and (not (:source-command effect)) (not (#{:sidekick :extra-action} (:op effect))) (pos? stables) (= :work (:phase g)))
       (queue-front [(event :build-stables player {:stables-built stables})])
       (and (= :build-stables (:op effect))
            (>= (count (filter #(and (:stable (get-in (p after player) [:farm %]))
@@ -564,7 +565,7 @@
       (queue-front [(event :use-farm-spaces player {:used-spaces (count (filter #(a/empty-cell? (p g player) %) (a/pasture-cells (p after player)))) :action :pasture})])
       (and (= :plow-many (:op effect)) (>= plowed 2))
       (queue-front [(event :use-farm-spaces player {:used-spaces plowed :action :field})])
-      (and (not (:source-command effect)) (pos? plowed) (not (#{:plowsmith :corral-builder :amateur-fencer :sidekick} (:op effect))))
+      (and (not (:source-command effect)) (pos? plowed) (not (#{:plowsmith :corral-builder :amateur-fencer :sidekick :extra-action} (:op effect))))
       (queue-front [(event :plow player {:fields-plowed plowed})])
       (and (not (:source-command effect)) fenced? (#{:mini-pasture :build-fences} (:op effect)))
       (queue-front [(event :fence player {:old-pastures (a/pastures (p g player)) :fences-built (- (count (:fences (p after player))) (count (:fences (p g player))))})]))))
@@ -620,6 +621,7 @@
     (and (five/eligible? g player op (:context head))
          (or (not= :adopt op) (and (= :work (:phase g)) (pos? (:newborn (p g player) 0))))
          (or (not (optional-effect? g head)) (some? conversion))
+         (or (not= :extra-action op) (seq (extra-action-spaces g player effect (:context head))))
          (or (not= :threshold-exchange op) (>= (a/amount (p g player) (:resource effect)) (:minimum effect)))
          (or (not= :sow-offer op) (:source-command effect)
              (sowing-potential? g player effect))
@@ -675,7 +677,7 @@
     :after-harvest (queue-front g (concat (anytime-tasks g) [(step :finish-round)]))
     :finish-round (queue-front g (concat (map #(event :round-end (:id %)) (:players g)) [(step :next-round)]))
     :next-round (if (= 14 (:round g)) (finish-game g) (begin-round g))
-    :work (-> g (assoc :phase :work :first-nonaccumulation nil :newborn-spaces {}) (update :players #(mapv (fn [p] (assoc p :worker-spaces [] :work-baseline (:received p) :used-accumulations {:round (:round g) :by-good {}})) %))
+    :work (-> g (assoc :phase :work :first-nonaccumulation nil :newborn-spaces {} :newborn-only #{}) (update :players #(mapv (fn [p] (assoc p :worker-spaces [] :tracked-newborns 0 :work-baseline (:received p) :used-accumulations {:round (:round g) :by-good {}})) %))
               (queue-front (map #(event :work-start (:id %)) (:players g))))
     :return-home (prepare-return-home (queue-front (assoc g :phase :return-home) (concat (map #(event :return-home (:id %)) (:players g)) [(step :harvest-or-round)])))
     :harvest-or-round (if (a/harvest-rounds (:round g))
@@ -806,14 +808,16 @@
         winners (vec (keep-indexed #(when (= best ((juxt :total :tiebreak) %2)) %1) scores))]
     (-> g (assoc :phase :finished :scores scores :winners winners) (a/log-event "The final harvest is complete."))))
 (defn space-owners [g space]
-  (let [owner (get-in g [:occupied space])] (if (sequential? owner) (vec owner) (if (some? owner) [owner] []))))
+  (let [owner (when-not (contains? (:newborn-only g) space) (get-in g [:occupied space]))] (if (sequential? owner) (vec owner) (if (some? owner) [owner] []))))
 (defn space-people [g space]
   (+ (count (space-owners g space))
      (count (get-in g [:newborn-spaces space]))))
 (defn occupied-permission [g pid space]
-  (when (and (not= space :meeting) (seq (space-owners g space)))
+  (when (and (not= space :meeting) (contains? (:occupied g) space))
     (let [player (p g pid) workers (:worker-spaces player)]
       (cond
+        (and (= pid (get-in g [:action-context :player]))
+             (#{:lazy-sowman :swagman} (get-in g [:action-context :mode]))) :extra-action
         (and (owned? g pid :a028) (#{:lessons :lessons-extra :lessons-copse :lessons-growth} space)) :forest-school
         (and (owned? g pid :a025) (= space (:first-nonaccumulation g)) (= 1 (space-people g space))) :bassinet
         (and (owned? g pid :a130) (>= (count workers) 2) (= space (second workers))
@@ -821,9 +825,14 @@
         (and (owned? g pid :a026) (#{:growth :urgent-growth :modest-growth} space)
              (= 1 (count (space-owners g space))) (not= pid (first (space-owners g space)))) :sleeping-corner))))
 (defn record-placement [before after pid space]
-  (let [newborns (max 0 (- (:newborn (p after pid) 0) (:newborn (p before pid) 0)))]
-    (cond-> (update-in after [:players pid :worker-spaces] (fnil conj []) space)
-      (and (nil? (:first-nonaccumulation before)) (not (:accumulate (a/action-definition before space)))) (assoc :first-nonaccumulation space)
+  (let [mode (get-in before [:action-context :mode])
+        newborns (max 0 (- (:newborn (p after pid) 0) (:newborn (p before pid) 0)))
+        after (case mode
+                :minstrel after
+                :swagman (assoc-in after [:players pid :worker-spaces (get-in before [:action-context :worker-index])] space)
+                (update-in after [:players pid :worker-spaces] (fnil conj []) space))]
+    (cond-> (-> after (update :newborn-only disj space) (assoc-in [:players pid :tracked-newborns] (:newborn (p after pid) 0)))
+      (and (not= mode :minstrel) (nil? (:first-nonaccumulation before)) (not (:accumulate (a/action-definition before space)))) (assoc :first-nonaccumulation space)
       (= :mummys-boy (occupied-permission before pid space)) (assoc-in [:players pid :mummy-used-round] (:round before))
       (pos? newborns) (update-in [:newborn-spaces space] (fnil into []) (repeat newborns pid)))))
 (defn validate-space [g pid space]
@@ -869,6 +878,7 @@
   (let [p0 (p before pid) p1 (p after pid) space (:space cmd)
         context {:space space :repeated-accumulation? (repeated-accumulation? before pid space) :previous-house (:house p0) :old-pastures (a/pastures p0)
                  :before-goods (:goods p0)
+                 :worker-index (or (get-in before [:action-context :worker-index]) (count (:worker-spaces p0)))
                  :placed-person (- (:family p1) (:newborn p1 0) (:remaining p1))
                  :building-pile-size (reduce + (map #(get-in before [:piles space %] 0) [:wood :clay :reed :stone]))
                  :upgraded-fireplace? (boolean (:upgrade cmd))
@@ -912,8 +922,10 @@
                          (:oven (a/improvements (:improvement cmd)))
                          (contains? (:improvements p1) (:improvement cmd)))))
        [(event :bake pid context)])
-     [(event :use-space pid context) (event :after-use-space pid context)
-      (event :turn-end pid context) (step :check-all) (step :advance)])))
+     (when-not (= :minstrel (get-in before [:action-context :mode]))
+       [(event :use-space pid context) (event :after-use-space pid context) (event :turn-end pid context)])
+     [(step :check-all)]
+     (when-not (:action-context before) [(step :advance)]))))
 (defn take-action-complete [g pid {:keys [space card lasso?] :as cmd}]
   (validate-space g pid space)
   (a/require! (not (and card (:improvement cmd))) "Choose one major or minor improvement, not both.")
@@ -925,7 +937,7 @@
                 "There is no free animal market for the Lasso's second action."))
   (let [occupied (get-in g [:occupied space])
         base (five/refresh g)
-        base (cond-> (assoc-in base [:players pid] (before-use-player base pid space)) occupied (update :occupied dissoc space))
+        base (cond-> (assoc-in base [:players pid] (if (= :minstrel (get-in g [:action-context :mode])) (p base pid) (before-use-player base pid space))) occupied (update :occupied dissoc space))
         base (if (:master-hora? cmd)
                (do (a/require! (and (owned? g pid :a174) (five/linked-groups space)) "Master Hora needs a linked extension space.")
                    (update-in base [:players pid] #(-> % (a/pay {:food 1}) (a/gain {:vegetable 1})))) base)
@@ -949,7 +961,7 @@
                 (and (= 5 (count (:players g))) (seq (set/difference (:improvements (p after pid)) (:improvements (p g pid))))) (update-in [:major-builds pid] (fnil inc 0)))
         after (cond-> after occupied (assoc-in [:occupied space] (conj (space-owners g space) pid))
                       lasso? (assoc :lasso {:player pid :must-animal? (not (#{:sheep :boar :cattle :animal-market} space)) :second? false}))
-        after (queue-front (record-placement g (record-accumulation after pid space) pid space) (action-events g after pid cmd))
+        after (queue-front (record-placement g (if (= :minstrel (get-in g [:action-context :mode])) after (record-accumulation after pid space)) pid space) (action-events g after pid cmd))
         count-occ (count (:occupations (p g pid)))
         after (cond
                 (#{:lessons :lessons-extra :lessons-copse :lessons-growth} space)
@@ -964,13 +976,13 @@
                 (do (a/require! minor? "This action allows a minor improvement from your hand.") (play-card after pid card 0 cmd {:major-action? (boolean (#{:improvement :renovate} space)) :major-or-minor? (boolean (#{:improvement :renovate} space))}))
                 card (throw (ex-info "That action does not allow playing a hand card." {}))
                 :else after)]
-    (with-housing (cond-> (dissoc after :cancelled-sowing :plow-plan)
+    (with-housing (finish-action-context (cond-> (dissoc after :cancelled-sowing :plow-plan)
                     (and (= pid (get-in g [:plow-plan :player])) (= space (get-in g [:plow-plan :space]))
                          (#{:plow :cultivation} space) (seq (get-in g [:plow-plan :cells])))
-                    (update-in [:players pid :card-state (c/id :a018) :uses] dec)))))
+                    (update-in [:players pid :card-state (c/id :a018) :uses] dec)) true))))
 (defn staged-sowing? [g pid space]
   (and (#{:sow-bake :cultivation} space)
-       (or (seq (get-in g [:plow-plan :cells])) (owned? g pid :a065) (owned? g pid :a079)
+       (or (seq (get-in g [:plow-plan :cells])) (owned? g pid :a094) (owned? g pid :a065) (owned? g pid :a079)
            (some #(and (not= pid (:id %)) (c/has? % :a132)) (:players g)))))
 (defn take-action-with-sowing [g pid {:keys [space] :as command}]
   (if-not (staged-sowing? g pid space) (take-action-complete g pid command)
@@ -1064,7 +1076,71 @@
         after (cond-> after (seq (set/difference (:improvements (p after pid)) (:improvements (p g pid)))) (update-in [:major-builds pid] (fnil inc 0)))]
     (-> (cond-> (record-placement g after pid card-space)
           (contains? (:occupied g) card-space) (assoc-in [:occupied card-space] (conj (space-owners g card-space) pid)))
-        (dissoc :cancelled-sowing) (queue-front (action-events g after pid (assoc cmd :space card-space))) with-housing)))
+        (dissoc :cancelled-sowing) (queue-front (action-events g after pid (assoc cmd :space card-space)))
+        (finish-action-context true) with-housing)))
+(defn extra-action-spaces [g pid effect context]
+  (case (:mode effect)
+    :lazy-sowman
+    (when (and (= :work (:phase g)) (= pid (:turn g)) (pos? (:remaining (p g pid))))
+      (vec (concat (filter #(and (a/available-space? g %) (not (and (= % :meeting) (contains? (:occupied g) %)))) (:active g))
+                   (map :card (card-spaces (assoc g :action-context {:player pid :mode :lazy-sowman}) pid)))))
+    :swagman
+    (let [target ({:grain :build :build :grain} (:space context))]
+      (when (and target (= :work (:phase g)) (= pid (:turn g))
+                 (not= [(:round g) (:turn-serial g 0)] (:swagman-used-turn (p g pid)))
+                 (a/available-space? g target) (some #{pid} (space-owners g (:space context)))) [target]))
+    :minstrel
+    (let [rounds (take 4 (drop (count (a/base-actions (count (:players g)) (:variant g))) (:active g)))
+          free (vec (remove #(contains? (:occupied g) %) rounds))]
+      (when (and (= :return-home (:phase g)) (= 1 (count free))) free))
+    []))
+(defn remove-worker [g pid space]
+  (let [owners (space-owners g space) index (first (keep-indexed #(when (= pid %2) %1) owners))
+        remaining (vec (concat (take index owners) (drop (inc index) owners)))]
+    (cond (seq remaining) (assoc-in g [:occupied space] remaining)
+          (seq (get-in g [:newborn-spaces space])) (-> g (assoc-in [:occupied space] (first (get-in g [:newborn-spaces space])))
+                                                        (update :newborn-only (fnil conj #{}) space))
+          :else (update g :occupied dissoc space))))
+(defn extra-action-state [g pid effect context]
+  (let [mode (:mode effect) saved {:player pid :mode mode :phase (:phase g) :turn (:turn g)
+                                 :remaining (:remaining (p g pid)) :occupied (:occupied g)
+                                 :worker-index (:worker-index context)}
+        g (assoc g :action-context saved :phase :work :turn pid)]
+    (case mode
+      :swagman (-> g (remove-worker pid (:space context)) (update-in [:players pid :remaining] inc)
+                   (assoc-in [:players pid :swagman-used-turn] [(:round g) (:turn-serial g 0)]))
+      :minstrel (update-in g [:players pid :remaining] inc)
+      g)))
+(defn finish-action-context [g committed?]
+  (if-let [{:keys [player mode phase turn remaining occupied]} (:action-context g)]
+    (cond-> (dissoc g :action-context)
+      (or (= mode :minstrel) (and (not committed?) (= mode :swagman)))
+      (assoc :phase phase :turn turn :occupied occupied)
+      (or (= mode :minstrel) (and (not committed?) (= mode :swagman)))
+      (assoc-in [:players player :remaining] remaining)) g))
+(defn execute-extra-action [g pid effect context command]
+  (let [space (or (:card-space command) (:space command))
+        allowed (set (extra-action-spaces g pid effect context))]
+    (a/require! (and (map? command) (contains? allowed space)) "Choose an action allowed by this card.")
+    (a/require! (or (= :lazy-sowman (:mode effect)) (not (:lasso? command))) "This card effect does not place a new person for Lasso.")
+    (let [state (extra-action-state g pid effect context)]
+      (if (:card-space command) (card-action state pid command) (take-action state pid command)))))
+(defn record-newborn [g pid]
+  (let [player (p g pid) added (- (:newborn player 0) (:tracked-newborns player 0))
+        space (peek (:worker-spaces player))]
+    (cond-> (assoc-in g [:players pid :tracked-newborns] (:newborn player 0))
+      (and (pos? added) space (= :work (:phase g)) (= pid (:turn g)))
+      (update-in [:newborn-spaces space] (fnil into []) (repeat added pid)))))
+(defn adopt-newborn [g pid]
+  (let [space (first (sort (for [[space children] (:newborn-spaces g) :when (some #{pid} children)] space)))
+        children (get-in g [:newborn-spaces space])
+        index (first (keep-indexed #(when (= pid %2) %1) children))
+        g (assoc-in g [:players pid :tracked-newborns] (:newborn (p g pid) 0))]
+    (if (some? index)
+      (let [left (vec (concat (take index children) (drop (inc index) children)))
+            g (assoc-in g [:newborn-spaces space] left)]
+        (if (and (empty? left) (contains? (:newborn-only g) space))
+          (-> g (update :newborn-only disj space) (update :occupied dissoc space)) g)) g)))
 (defn ability [g pid {:keys [card resource amount from to] :as cmd}]
   (let [player (p g pid) op (get-in (c/card card) [:ability :op])]
     (a/require! (some #{card} (c/active-owned player)) "You do not own that card.")
@@ -1072,7 +1148,7 @@
     (case op
       :adopt (do (a/require! (and (= :work (:phase g)) (pos? (:newborn player 0))) "Adopt a newborn during the work phase.")
                  (-> g (update-in [:players pid] a/pay {:food 1})
-                       (update-in [:players pid :remaining] inc) (update-in [:players pid :newborn] dec)))
+                       (update-in [:players pid :remaining] inc) (update-in [:players pid :newborn] dec) (adopt-newborn pid)))
       :cash-card (-> g (update-in [:players pid] a/gain {:food (get-in player [:card-state card :food] 0)})
                       (assoc-in [:players pid :card-state card :food] 0)
                       (assoc-in [:players pid :card-state card :face-down?] true))

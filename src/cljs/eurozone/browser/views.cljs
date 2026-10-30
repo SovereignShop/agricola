@@ -346,7 +346,7 @@
         [x y w h] (or (board-spaces id) (let [[x y] (nth round-spaces round-index)] [x y 147 146]))]
     {:left (str (/ x 10) "%") :top (str (/ y 8) "%") :width (str (/ w 10) "%") :height (str (/ h 8) "%")}))
 (defn board-action [g id can-play? draft busy? round & [extension?]]
-  (let [action (a/action-definition g id) placement (get-in g [:occupied id]) owners (if (vector? placement) placement (when (some? placement) [placement])) owner (first owners) occupied? (some? owner)
+  (let [action (a/action-definition g id) placement (get-in g [:occupied id]) owners (card-game/space-owners g id) owner (or (first owners) (first (get-in g [:newborn-spaces id]))) occupied? (some? placement)
                               share? (and (= :cards (:variant g)) (card-game/occupied-permission g (:turn g) id))
                               gain (if (:accumulate action) (get-in g [:piles id]) (:gain action))]
       [:button.action-card {:class (str (name (:group action)) (when round " round-action") (when extension? " extension-action") (when occupied? " occupied") (when (= id (:space draft)) " chosen"))
@@ -366,7 +366,9 @@
        (for [[i pid] (map-indexed vector owners)] ^{:key (str "worker-" pid "-" i)}
          [:img.placed-worker {:data-piece-key (str "worker:" id ":" pid ":" i) :data-piece-type (str "worker:" pid) :src (art/worker-url pid)
                               :style (when (pos? i) {:margin-right (str (* i 22) "px")}) :alt (str (get-in g [:players pid :name]) "’s family member")}])
-       (when (and occupied? (#{:growth :urgent-growth :modest-growth} id)) [:img.placed-worker.newborn-worker {:data-piece-key (str "newborn:" id) :data-piece-type (str "worker:" owner) :src (art/worker-url owner) :alt "Newborn family member"}])
+       (for [[index child] (map-indexed vector (if (contains? g :newborn-spaces) (get-in g [:newborn-spaces id])
+                                                   (when (and occupied? (#{:growth :urgent-growth :modest-growth} id)) [owner])))] ^{:key (str "newborn-" index)}
+         [:img.placed-worker.newborn-worker {:data-piece-key (str "newborn:" id ":" index) :data-piece-type (str "worker:" child) :src (art/worker-url child) :alt "Newborn family member"}])
        (when occupied? [:span.occupant {:style {:background (colors owner)}} (str (str/join " & " (map #(get-in g [:players % :name]) owners)) " · placed")])]))
 
 (defn round-card [g round id can-play? draft busy?]
@@ -444,6 +446,18 @@
                        (for [id (a/fireplace-upgrades p)] ^{:key id} [:option {:value (subs (str id) 1)} (str "Return " (:name (a/improvement-definition id)))])]] )])
 (defn with-private-hand [g pid ui]
   (assoc-in g [:players pid :hand] (get-in ui [:private-hands (:game-id ui) pid])))
+(defn extra-action-options [g]
+  (let [{:keys [player effect context]} (first (:effect-queue g))
+        allowed (card-game/extra-action-spaces g player effect context)
+        card-spaces (into {} (map (juxt :card identity) (card-game/card-spaces (assoc g :action-context {:player player :mode :lazy-sowman}) player)))]
+    (vec (mapcat (fn [space]
+                   (if-let [{:keys [kind]} (get card-spaces space)]
+                     (for [action (case kind :greenhouse (filter (set (:active g)) [:fences :renovate :vegetable])
+                                           :fold-builder [:fences] :substitute-teacher [:market] [:labor])]
+                       {:space action :card-space space})
+                     [{:space space}])) allowed))))
+(defn extra-action-draft [g draft]
+  (merge draft (or (:extra-space draft) (first (extra-action-options g)))))
 (defn action-command [draft]
   (cond-> (merge {:type :action :choice (if (= :animal-market (:space draft)) :sheep :reed)} (dissoc draft :tool))
     (:card-space draft) (assoc :type :card-action :action (:space draft) :bundle (or (:bundle draft) :resources))))
@@ -453,7 +467,7 @@
   (try
     (let [g (with-private-hand g pid ui)]
       (cond
-        (= :sidekick (get-in g [:effect-queue 0 :effect :op])) (card-game/resolve-choice g pid {:decision (:decision-id g) :action-command (action-command draft)})
+        (#{:sidekick :extra-action} (get-in g [:effect-queue 0 :effect :op])) (card-game/resolve-choice g pid {:decision (:decision-id g) :action-command (action-command draft)})
         (= :young-artist (get-in g [:effect-queue 0 :effect :op])) (card-game/resolve-choice g pid {:decision (:decision-id g) :action :play :card (:card draft)})
         (#{:scholar :card-action} (get-in g [:effect-queue 0 :effect :op]))
         (card-game/resolve-choice g pid (assoc draft :decision (:decision-id g)))
@@ -549,7 +563,7 @@
        [:label.checkbox [:input {:type "checkbox" :checked (boolean (get draft key)) :on-change #(draft! key (.. % -target -checked))}] label])
      (when bake? [field "Grain to bake" [number-input (:bake-grain draft) #(draft! :bake-grain %) (a/amount p :grain)]])
      (when reason [:p.card-unavailable {:role "status"} reason])
-     [:div.form-row [button "Place family member →" #(if submit (submit (action-command draft)) (dispatch :command (action-command draft))) "button primary" (or disabled? (boolean reason))]
+     [:div.form-row [button (case (get-in g [:effect-queue 0 :effect :mode]) :swagman "Move family member →" :minstrel "Take card action →" "Place family member →") #(if submit (submit (action-command draft)) (dispatch :command (action-command draft))) "button primary" (or disabled? (boolean reason))]
       [button "Cancel" #(dispatch :select-action nil) "text-button"]]]))
 
 (defn conversion-controls [p draft key]
@@ -776,6 +790,19 @@
                                            [:option {:value "draw"} (str "Draw up to 2 minor improvements (" (:minor-deck-count g) " left)")]
                                            [:option {:value "play"} "Play a minor improvement"]]]
         (when (= :play (:effect-action draft)) [hand-select g p :minor draft])])
+     (when (= op :extra-action)
+       (let [options (extra-action-options g) selected (extra-action-draft g draft)]
+         [:div
+          [field "Action for card"
+           [:select {:aria-label "Action for card" :value (pr-str (select-keys selected [:space :card-space]))
+                     :on-change #(let [option (reader/read-string (.. % -target -value))]
+                                   (dispatch :select-action (:space option)) (draft! :extra-space option))}
+            (for [option options] ^{:key (pr-str option)}
+              [:option {:value (pr-str option)}
+               (str (when (:card-space option) (str (:name (cards/card (:card-space option))) " · "))
+                    (:name (a/action-definition g (:space option))))])]]
+          [action-editor g p selected busy?
+           #(dispatch :command {:type :resolve :decision (:decision-id g) :action-command %})]]))
      (when (= op :sidekick)
        [action-editor g p (assoc draft :space (five/stage-left g (get-in head [:context :space]))) busy?
         #(dispatch :command {:type :resolve :decision (:decision-id g) :action-command %})])
@@ -801,9 +828,9 @@
        [:div (for [animal a/animals] ^{:key animal}
                [field (str (labels animal) " to keep") [number-input (get keep animal 0) #(draft! :keep (assoc keep animal %)) (a/amount p animal)]])
         [:label.checkbox [:input {:type "checkbox" :checked (boolean (:cook? draft)) :on-change #(draft! :cook? (.. % -target -checked))}] "Cook surplus (requires a cooking improvement)"]])
-     (when (and reason (not= op :sidekick)) [:p.card-unavailable {:role "status"} reason])
+     (when (and reason (not (#{:sidekick :extra-action} op))) [:p.card-unavailable {:role "status"} reason])
      [:div.form-row
-      (when-not (= op :sidekick) [button (case op :ability-window "Finish harvest decisions →" :sow-offer "Take Sow action" "Resolve effect →")
+      (when-not (#{:sidekick :extra-action} op) [button (case op :ability-window "Finish harvest decisions →" :sow-offer "Take Sow action" "Resolve effect →")
        #(dispatch :command choice) "button primary" (or busy? (boolean reason))])
       (when (card-game/optional-effect? g head) [button "Skip this effect" #(dispatch :command {:type :resolve :decision (:decision-id g) :skip? true}) "text-button" busy?])]]))
 
@@ -845,10 +872,12 @@
     [:div.section-heading [:div [:h2 (str (:name p) "'s farm")]]
      [:span.player-dot {:style {:background (colors (:id p))}}]]
     [:div.farm-info [:span (str (:family p) " family members")] [:span (str (count (a/tiles p :room)) " " (name (:house p)) " rooms")]]
-    [farm p (if (= :sidekick (get-in g [:effect-queue 0 :effect :op]))
-              (assoc draft :space (five/stage-left g (get-in g [:effect-queue 0 :context :space])))
+    [farm p (case (get-in g [:effect-queue 0 :effect :op])
+              :sidekick (assoc draft :space (five/stage-left g (get-in g [:effect-queue 0 :context :space])))
+              :extra-action (extra-action-draft g draft)
               draft)
-     (and can-play? (= (:id p) (card-game/acting-player g)) (= :work (:phase g)))]
+     (and can-play? (= (:id p) (card-game/acting-player g))
+          (or (= :work (:phase g)) (= :extra-action (get-in g [:effect-queue 0 :effect :op]))))]
     [:div.farm-stats [:span (str (count (:fences p)) "/15 fences")] [:span (str (count (filter :stable (:farm p))) "/4 stables" (when (seq (:reserved-stables p)) (str " · " (reduce + (vals (:reserved-stables p))) " reserved")))]
      [:span (str "Pet: " (or (some #(when (= :pet (:kind %)) (labels (:animal %))) (a/animal-housing p)) "none"))]]
     [:div.inventory (for [resource a/resources] ^{:key resource} [badge resource (a/amount p resource) (:id p)])]

@@ -13,6 +13,15 @@
                        :effect {:op :silage :optional? true}}]},
           :revised-artifex-expansion-a-134-full-farmer
           {:play [{:op :gain :goods {:wood 1 :clay 1}}] :score {:type :full-pastures}},
+          :revised-artifex-expansion-a-94-lazy-sowman
+          {:triggers [{:event :sow-declined
+                       :condition [:test [:and [:= [:context :unconditional?] true] [:own-work-turn] [:> [:remaining] 0]]]
+                       :effect {:op :extra-action :mode :lazy-sowman :optional? true}}]},
+          :revised-artifex-expansion-a-129-swagman
+          {:triggers [{:event :after-use-space :spaces #{:build :grain}
+                       :effect {:op :extra-action :mode :swagman :optional? true}}]},
+          :revised-artifex-expansion-a-151-minstrel
+          {:triggers [{:event :return-home :effect {:op :extra-action :mode :minstrel :optional? true}}]},
           :revised-artifex-expansion-a-25-bassinet {:passive {:bassinet true}},
           :revised-artifex-expansion-a-28-forest-school {:passive {:forest-school true}},
           :revised-artifex-expansion-a-130-mummy-s-boy {:passive {:mummys-boy true}},

@@ -17,6 +17,7 @@
           :and (every? ev args) :or (boolean (some ev args)) :not (not (ev x))
           :if (ev (if (ev x) (second args) (nth args 2)))
           :goods (a/amount p x)
+          :own-work-turn (and (= :work (:phase g)) (= pid (:turn g)))
           :house (:house p) :round (:round g) :family (:family p) :newborn (:newborn p 0) :remaining (:remaining p 0)
           :rooms (count (a/tiles p :room)) :fields (count (field-list p)) :field-tiles (count (a/tiles p :field))
           :grain-fields (count-crop p :grain) :vegetable-fields (count-crop p :vegetable)
