@@ -114,7 +114,10 @@
              (for [i (tiles p :field) :when (zero? (get-in p [:farm i :count] 0))]
                {:cells [i] :capacity 1 :kind :field :allowed-animals #{:boar}}))
            (for [_ (range (get p :card-animal-capacity 0))]
-             {:cells [] :capacity 1 :kind :card :card (cards/id :b169)})))))
+             {:cells [] :capacity 1 :kind :card :card (cards/id :b169)})
+           (when (and (cards/has? p :a148) (pos? (:completed-feeding-phases p 0)))
+             [{:cells [] :capacity (:completed-feeding-phases p) :kind :card
+               :card (cards/id :a148) :allowed-animals #{:sheep}}])))))
 (defn organic-housing
   "Choose a legal arrangement that maximizes Organic Farmer's pasture bonus.
    Memoization is local to this calculation; no game state is retained."
@@ -387,7 +390,10 @@
               (update :fed conj pid) (log-event (str (:name p) " fed their family" (when (pos? missing) (str " · " missing " begging marks")))))
         next (mod (inc pid) (count (:players g)))]
     (if (= (count (:fed g)) (count (:players g)))
-      (assoc g :phase :breeding :turn (:starting-player g))
+      (-> g (assoc :phase :breeding :turn (:starting-player g))
+          ;; Feeding is a shared phase. Track it for everyone, even before
+          ;; Woolgrower is played, and make the new capacity available to breed.
+          (update :players #(mapv (fn [player] (update player :completed-feeding-phases (fnil inc 0))) %)))
       (assoc g :turn next))))
 (defn breeding-options [p] (into {} (for [a animals :when (>= (amount p a) 2)] [a 1])))
 (defn breed [g pid {:keys [offspring]}]

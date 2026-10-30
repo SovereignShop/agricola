@@ -1,4 +1,6 @@
-#:catalog{:revised-artifex-expansion-a-1-shelter
+#:catalog{:revised-artifex-expansion-a-148-woolgrower
+          {:passive {:sheep-per-completed-feeding true}},
+          :revised-artifex-expansion-a-1-shelter
           {:play
            [{:op :stable, :optional? true, :single-pasture? true}]},
           :revised-artifex-expansion-a-10-wooden-shed

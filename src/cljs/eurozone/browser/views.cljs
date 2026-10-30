@@ -798,8 +798,10 @@
            (if-let [url (card-art/url cid)] [:img {:src url :alt (:name card) :draggable false}]
              [:div.text-card [:h3 (:name card)] [:p (:text card)]])
            [:span.card-name (:name card) (when (get-in p [:card-state cid :face-down?]) " · used")]
-           (when (= cid (cards/id :b169))
-             [:div.card-crops (for [[animal n] (frequencies (map :animal (filter #(= :card (:kind %)) (a/animal-housing p))))] ^{:key animal}
+           (when (#{(cards/id :b169) (cards/id :a148)} cid)
+             [:div.card-crops {:aria-label "Animals on card"}
+              (for [[animal n] (reduce (fn [totals slot] (update totals (:animal slot) (fnil + 0) (:count slot))) {}
+                                      (filter #(and (= :card (:kind %)) (= cid (:card %))) (a/animal-housing p)))] ^{:key animal}
                                [art/pile animal n])])
            (when-let [food (get-in p [:card-state cid :food])] [:span.card-food (str food " food saved")])
            (when-let [stored (seq (get-in p [:card-state cid :stored-goods]))]
