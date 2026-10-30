@@ -238,13 +238,18 @@ only at five players. Their optional decisions, extra card action spaces, paymen
 one-use effects, and automatic triggers use the shared rules engine. Five online
 seats and mixed-packet draws are supported, including extra-card draws.
 
-**Artifex:** 98 of its 120 cards now have native definitions (50 minors and 48
+**Artifex:** All 120 cards now have native definitions (60 minors and 60
 occupations). Alternative printed payments and optional multi-option effects have
 explicit, saved workflows. Native rules cover conditional family capacity, boars
 on empty field tiles, discounts for building multiple rooms, free renovation,
 feeding choices, payments to the acting player, additional improvement and
 occupation actions, selected-field crop collection, and post-field-phase baking.
 Nested card actions retain their pending choices across saves and reconnects.
+The complete Artifex deck also includes temporary and reserved family/stable pieces,
+off-turn construction, occupied-space permissions, extra actions, mixed crop stacks,
+and explicit choices for improvements that count as either minor or major. Paper
+Knife uses a private, replayable random draw; physical fence supplies and goods
+stored on farm spaces are tracked by the engine.
 Sowing decisions allow pre-sow gifts before planting; declining the only offered
 seed leaves the worker available. Card action spaces, goods stored on cards, and
 optional removal of goods from other piles use the same native rules. Multi-field
@@ -256,14 +261,17 @@ offers one optional extra exchange after actual baking.
 Field prerequisites include field cards; field-tile requirements count only
 tiles on the farm, including for scoring. Partial packs show implemented/total counts in table setup;
 only implemented cards enter hands. Hosts can exclude Artifex for base-only games.
-The resulting pool has 242 hand cards plus the ten base major improvements.
+The resulting pool has 264 hand cards plus the ten base major improvements.
 
-**Coverage limits:** the remaining 22 Artifex cards, other expansion decks,
+**Coverage limits:** other expansion decks,
 six-player games, Original Edition card rules, solo campaigns, and optional
 multiplayer action tiles are not enabled.
-One documented ruling question remains: whether Agricultural Fertilizers combines
-Farmland’s field with Moldboard Plow’s extra field. The current engine treats these
-as separate plow effects; see `resources/rules/sources.edn` for the open question.
+Documented ruling questions remain about Agricultural Fertilizers with Moldboard
+Plow, and using an otherwise empty Grain Utilization action solely to decline Sow
+for Lazy Sowman. The engine treats the two plow effects separately and requires a
+legal base action for Lazy Sowman. Lodger also records an explicit assumption about
+choosing an adult or newborn when its temporary room expires. See
+`resources/rules/sources.edn` for the sources and current interpretations.
 A headless bot and recording/replay harness are available below. The imported
 2,214-card catalogue is reference data, not a claim that all those cards execute.
 Generate the complete coverage ledger with
@@ -518,6 +526,10 @@ python test/browser_artifex_board.py
 python test/browser_artifex_sowing.py
 python test/browser_artifex_construction.py
 python test/browser_artifex_plows.py
+python test/browser_artifex_supply.py
+python test/browser_artifex_temporary.py
+python test/browser_placement_cards.py
+python test/browser_artifex_harvest.py
 python test/browser_woolgrower.py
 python test/browser_peer.py
 ```
@@ -531,7 +543,7 @@ available. Old tables and browser saves remain intact. Regression coverage:
 `test/browser_activity_recovery.py`.
 
 Table creators can include/exclude the base A/B card groups, the
-5–6 Player Expansion, and the implemented Artifex subset before starting.
+5–6 Player Expansion, and Artifex before starting.
 Exclusions apply to actual draft packets,
 random hands and the five-player minor reserve. Guests see the selected packs
 and must confirm readiness after changes. Unsupported catalogue-only packs are
