@@ -575,14 +575,15 @@
 (defn card-decision [g p draft busy?]
   (let [head (first (:effect-queue g)) effect (:effect head) op (:op effect) options (card-game/order-options g)
         keep (get draft :keep (select-keys (:goods p) a/animals))
-        choice (merge (select-keys draft [:cell :rooms :frame? :brushwood? :renovate-to :paper-maker? :card :cook? :option :payment-option :improvement :upgrade :bake-grain :exchange?])
+        choice (merge (select-keys draft [:cell :cells :rooms :frame? :brushwood? :renovate-to :paper-maker? :card :cook? :option :payment-option :improvement :upgrade :bake-grain :exchange?])
                       (when (contains? draft :effect-fields) {:fields (:effect-fields draft)})
                       {:type :resolve :decision (:decision-id g) :keep keep :grain (get draft :effect-grain 1)
                        :action (or (:effect-action draft) (if (= op :young-artist) :draw :room))
                        :resource (or (:effect-resource draft) (first (or (:choices effect) (if (= op :boat-painter) [:grain :food] [:grain :vegetable]))))
                        :plantings (if (= op :sow) (:plantings draft)
                                     (when (and (= op :countryman) (some? (:cell draft))) [{:cell (:cell draft) :crop (or (:effect-resource draft) :grain)}]))})
-        choice (cond-> choice (and (= op :card-action) (:card choice)) (dissoc :improvement :upgrade :bake-grain))
+        choice (cond-> choice (#{:plow-many :wheel-plow} op) (update :cells #(vec (filter integer? %)))
+                             (and (= op :card-action) (:card choice)) (dissoc :improvement :upgrade :bake-grain))
         choice (if (= op :take-pile-good)
                  (merge (dissoc choice :resource) (select-keys effect [:space :resource])
                         (when-let [[space resource] (:pile-choice draft)] {:space space :resource resource})) choice)
@@ -650,6 +651,19 @@
        [field "Farm space" [:select {:aria-label "Farm space" :value (if (some? (:cell draft)) (:cell draft) "") :on-change #(draft! :cell (js/parseInt (.. % -target -value)))}
                             [:option {:value ""} "Choose a space…"]
                             (for [i (range 15) :when (= :empty (get-in p [:farm i :type]))] ^{:key i} [:option {:value i} (str "Space " (inc i))])]])
+     (when (#{:plow-many :wheel-plow} op)
+       [:div
+        [:p.small (if (= op :wheel-plow) "Choose up to two additional fields, in plowing order." "Choose up to two fields, in plowing order.")]
+        (for [index (range 2)] ^{:key index}
+          [field (str "Plow field " (inc index))
+           [:select {:aria-label (str "Plow field " (inc index)) :value (get (:cells draft) index "")
+                     :on-change #(let [value (.. % -target -value) cells (vec (or (:cells draft) []))]
+                                   (draft! :cells (if (seq value)
+                                                    (assoc (vec (take 2 (concat cells (repeat "")))) index (js/parseInt value))
+                                                    (subvec cells 0 (min index (count cells))))))}
+            [:option {:value ""} "No field"]
+            (for [i (range 15) :when (and (a/empty-cell? p i) (not= i (get-in effect [:source-command :cell])))] ^{:key i}
+              [:option {:value i} (str "Space " (inc i))])]])])
      (when (= op :bake) [field "Grain to bake" [number-input (get draft :effect-grain 1) #(draft! :effect-grain %) (a/amount p :grain)]])
      (when (= op :bake-one)
        [field "Baking improvement" [:select {:value (if (:improvement draft) (name (:improvement draft)) "")

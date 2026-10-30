@@ -125,6 +125,8 @@
   (let [p (g/p state pid) head (first (:effect-queue state)) effect (:effect head)
         options (case (:op effect)
                   (:plow :stable :mini-pasture :corral-builder :amateur-fencer :plowsmith) (map #(hash-map :cell %) (range 15))
+                  (:plow-many :wheel-plow) (concat (map #(hash-map :cells [%]) (range 15))
+                                                 (for [x (range 15) y (range 15) :when (not= x y)] {:cells [x y]}))
                   :sow-offer [{}]
                   :build-rooms (for [rooms (g/room-plans p) opts (payment-options p)] (assoc opts :rooms rooms))
                   :sow (let [player (g/sowing-player state pid effect)

@@ -5,6 +5,11 @@
                       :effects [{:op :gain, :goods {:food 2}} {:op :points, :amount 1}]}}]},
           :revised-artifex-expansion-a-148-woolgrower
           {:passive {:sheep-per-completed-feeding true}},
+          :revised-artifex-expansion-a-18-wheel-plow
+          {:play [{:op :set-uses :uses 1}]},
+          :revised-artifex-expansion-a-20-double-turn-plow
+          {:requires [:<= [:round] 5], :cost :double-turn-plow,
+           :play [{:op :plow-many :max-fields 2 :optional? true}]},
           :revised-artifex-expansion-a-1-shelter
           {:play
            [{:op :stable, :optional? true, :single-pasture? true}]},

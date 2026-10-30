@@ -85,6 +85,7 @@
     (or
       (case s
         "" true
+        "play in round 3 (5) or before" [:<= [:round] 5]
         ("clay or stone house" "clay hut or stone house" "renovated to clay or stone") [:not [:= [:house] :wood]]
         ("wooden house" "still in wooden house" "wooden hut") [:= [:house] :wood]
         "clay house" [:= [:house] :clay] "stone house" [:= [:house] :stone]

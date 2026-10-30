@@ -329,6 +329,13 @@
   (let [n (count (:players g)) current (:turn g)
         next (first (filter #(pos? (get-in g [:players % :remaining])) (map #(mod (+ current %) n) (range 1 (inc n)))))]
     (if (some? next) (assoc g :turn next) (round-end g))))
+(defn plow-action-player
+  "Apply the base field and a trusted, saved card plow plan before sowing."
+  [g pid space cell]
+  (let [plan (:plow-plan g)
+        extra (when (and (= pid (:player plan)) (= space (:space plan))) (:cells plan))]
+    (reduce #(place-tile %1 :field %2) (get-in g [:players pid])
+            (concat (when (some? cell) [cell]) extra))))
 (defn apply-action [g pid {:keys [space cell rooms stables fences plantings bake-grain choice] :as command}]
   (let [a (action-definition g space) p (get-in g [:players pid])]
     (require! (= :work (:phase g)) "Finish the harvest or animal housing first.")
@@ -344,7 +351,8 @@
               (case space
                 :market (do (require! (or (= 4 (count (:players g))) (#{:reed :stone} choice)) "Choose reed or stone.")
                             (update-in g [:players pid] gain (if (= 4 (count (:players g))) {:reed 1 :stone 1 :food 1} {choice 1 :food 1})))
-                :plow (update-in g [:players pid] place-tile :field cell)
+                :plow (do (require! (some? cell) "Choose a field to plow.")
+                          (assoc-in g [:players pid] (plow-action-player g pid space cell)))
                 :build (do (require! (or (seq rooms) (seq stables)) "Select at least one room or stable.")
                            (update-in g [:players pid] #(-> % (build-rooms rooms command) (build-stables stables 2))))
                 :house-building (do (require! (and (seq rooms) (empty? stables)) "Build at least one room; this space does not build stables.")
@@ -357,8 +365,8 @@
                               (update-in g [:players pid] #(-> % (build-stables stables 1) (bake (or bake-grain 0)))))
                 :sow-bake (do (require! (or (seq plantings) (pos? (or bake-grain 0))) "Sow at least one field or bake bread.")
                              (update-in g [:players pid] #(-> % (sow plantings) (bake (or bake-grain 0)))))
-                :cultivation (do (require! (or (some? cell) (seq plantings)) "Plow a field and/or sow.")
-                                 (update-in g [:players pid] #(sow (if (some? cell) (place-tile % :field cell) %) plantings)))
+                :cultivation (do (require! (or (some? cell) (seq plantings) (seq (:cells (:plow-plan g)))) "Plow a field and/or sow.")
+                                 (assoc-in g [:players pid] (sow (plow-action-player g pid space cell) plantings)))
                 :growth (update-in g [:players pid] grow true)
                 :modest-growth (update-in g [:players pid] grow true)
                 :urgent-growth (update-in g [:players pid] grow false)
