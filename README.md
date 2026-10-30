@@ -564,3 +564,40 @@ kind per player plus all requested extra draft cards.
 Card rule upgrades change the replay/peer rules fingerprint. Existing peer host
 backups require their matching version; they are not silently reinterpreted or
 overwritten. Finish ongoing tables before switching the hosted build.
+
+
+## Tabletop UI experiment
+
+The `experiment/tabletop-views` branch replaces the in-game tiled layout with a
+single pan/zoom table. Board view fits the table; selecting a player centres
+that farm and spreads its visible decks. All farms remain upright. Click an
+available action to preview it and confirm placement; spatial actions and card
+effects use dialogs with the existing validated rules workflows.
+
+Drag cloth to pan, use Ctrl/Command + wheel or the zoom buttons to zoom, and use
+the percentage button to fit the current view. Drag a deck/resource's `⠿`
+handle to arrange it relative to its farm (or use arrow keys on the handle).
+Positions snap to a small grid and farm edges. Stack, single-card exposure, and
+Spread are supported. Card inspection never reveals another user's hand.
+
+**Tablecloth** offers original white linen, natural linen, sage check and cognac
+leather textures. Arrangements, deck modes and material are saved locally per
+browser user, keyed by Discord user ID when authenticated. They never enter
+game state or affect other players. **Table menu → Reset my arrangement** resets
+positions and deck modes while retaining the material. Source prompts and the
+built-in image-generation provenance are in
+`resources/public/art/tablecloths/generation.json`.
+
+Build with `python3 scripts/build_browser.py` (advanced Closure optimizations),
+then start a separate preview, without production Discord environment variables:
+
+```sh
+EUROZONE_DATA=data/tabletop-preview.edn clojure -M:run 3004
+```
+
+Browser integration: `python3 test/browser_tabletop.py` with Playwright and
+`EUROZONE_BROWSER` pointing to Chromium. It starts an isolated server and covers
+five-player camera fitting, no nested scrolling, private hands, deck inspection,
+dragging/snapping/persistence, material selection, placement confirmation,
+spatial actions, optional effects, and mobile controls. The live Discord service
+is intentionally not switched to this experimental branch.

@@ -1,7 +1,7 @@
 (ns eurozone.browser.views
   (:require [reagent.core :as r] [re-frame.core :as rf] [clojure.string :as str]
             [cljs.reader :as reader] [agricola.recording :as recording] [eurozone.browser.table-controls :as controls]
-            [agricola.engine :as a] [agricola.card-expressions :as expr] [agricola.five-player :as five] [agricola.card-game :as card-game] [eurozone.catalog :as catalog] [eurozone.browser.art :as art] [agricola.card-rules :as cards] [eurozone.browser.card-art :as card-art] [eurozone.browser.layout :as layout] [eurozone.browser.readability :as readability] [eurozone.browser.comms :as comms] [eurozone.store :as store]))
+            [agricola.engine :as a] [agricola.card-expressions :as expr] [agricola.five-player :as five] [agricola.card-game :as card-game] [eurozone.catalog :as catalog] [eurozone.browser.art :as art] [agricola.card-rules :as cards] [eurozone.browser.card-art :as card-art] [eurozone.browser.layout :as layout] [eurozone.browser.tabletop :as tabletop] [eurozone.browser.readability :as readability] [eurozone.browser.comms :as comms] [eurozone.store :as store]))
 
 (def glyph {:wood "▰" :clay "◆" :reed "≋" :stone "⬟" :grain "♧" :vegetable "●" :food "◉" :sheep "♧" :boar "◆" :cattle "⬢"})
 (def labels {:wood "Wood" :clay "Clay" :reed "Reed" :stone "Stone" :grain "Grain" :vegetable "Vegetables" :food "Food" :sheep "Sheep" :boar "Wild boar" :cattle "Cattle"})
@@ -1042,11 +1042,11 @@
    [:p.small (if (= :cards (:variant g))
                "This table uses occupations and minor improvements from the selected packs. Use Lessons for occupations and Meeting Place or an improvement action for minor improvements. Card prerequisites and costs are enforced. Effects trigger automatically; optional effects and choices wait for their owner. Cards can change the basic costs and rules above. Pack coverage is shown in table setup."
                "This table uses the official beginner variant without hand cards. Meeting Place accumulates one food each round. Side Job offers one stable for one wood and/or baking bread.")]
-   [:p.small "Animal placement is automatically arranged to fit your herd. Drag panel titles to dock them and drag dividers to resize. Use Show all farms to see every player’s board, or Focus table for more room."]
+   [:p.small "Animal placement is automatically arranged to fit your herd. Drag the tablecloth to pan and use Control or Command with the mouse wheel to zoom. Select a player to focus their farm. Drag deck and resource handles to arrange your table; positions are saved in this browser."]
    [:div.form-row [:a.button.secondary {:href (:rules (first catalog/games)) :target "_blank" :rel "noreferrer"} "Official rulebook ↗"]
     [:a.button.secondary {:href (:appendix (first catalog/games)) :target "_blank" :rel "noreferrer"} "Official appendix ↗"]]])
 (declare hand-panel)
-(defn game [room]
+(defn legacy-game [room]
   (let [g (:state room) ui @(rf/subscribe [:ui]) permission @(rf/subscribe [:permission])
         actor (card-game/acting-player g)
         can-play? (and (:connected? ui) (some #{actor} (:seats permission)) (not= :finished (:phase g)) (not (seq (:takeback room))))
@@ -1096,6 +1096,11 @@
               (for [farmer (:players g)]
                 {:id (str "cards-" (:id farmer)) :title (str (:name farmer) "'s played cards") :content [played-cards farmer]})))
         (count (:players g))])]))
+(defn game [room]
+  ^{:key (:id room)} [tabletop/table room {:farm farm :action-board action-board :board-action board-action
+                        :player-panel player-panel :action-editor action-editor :improvement-effects improvement-effects
+                        :chat chat-panel :scores score-table :rules rules-panel
+                        :recording-picker recording-picker}])
 (defn hand-card [cid & [attrs]]
   (let [card (cards/card cid)]
     [:button.hand-card (merge {:type "button" :class (name (:kind card)) :aria-label (:name card)} attrs)
@@ -1254,7 +1259,7 @@
 (defn app []
   (let [ui @(rf/subscribe [:ui]) room @(rf/subscribe [:game])
         playing? (or @replay-data (and (:state room) (not= :draw (:status room))))
-        focused? (and playing? (:focus? (layout/layout ui (:id room))))]
+        focused? (and @replay-data (:focus? (layout/layout ui (:id room))))]
     [:div.app {:aria-busy (boolean (:busy? ui)) :class (str (when playing? "playing ") (when focused? "table-focused"))}
      [:header.site-header [:button.wordmark {:on-click #(dispatch :navigate nil)} "eurozone" [:span "✳"]]
       [:div.header-right (when-not playing? [readability/controls]) [:span.connection {:class (when (:connected? ui) "online")} [:i] (if (:activity-lobby? ui) "Discord Activity" (or (:peer-status ui) (if (:connected? ui) "Connected" "Reconnecting…")))]]]

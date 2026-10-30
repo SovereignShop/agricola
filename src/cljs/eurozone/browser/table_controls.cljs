@@ -16,7 +16,7 @@
    [:select {:value seconds :disabled disabled? :on-change #(change (js/parseInt (.. % -target -value)))}
     (for [n flow/limits] ^{:key n} [:option {:value n} (if (zero? n) "No time limit" (str n " seconds"))])]
    [:small "Each required decision has its own clock. At zero, a bot makes that decision."]])
-(defn turn-banner [room]
+(defn turn-banner [room & [focus-decision!]]
   (let [ui @(rf/subscribe [:ui]) permission @(rf/subscribe [:permission]) s (:state room)
         actors (flow/actors room) mine (first (filter (set (:seats permission)) actors))
         pid (or mine (first actors)) clock (get-in room [:clocks pid])
@@ -34,11 +34,11 @@
         [:strong (cond paused? "Takeback vote · play paused" (some? mine) (str "Your turn · " name) :else (str name "’s turn"))]
         [:span (if paused? "The clock resumes when the vote ends." task)]]
        (when (and (some? mine) (not= :draw (:phase s)))
-         [:button.text-button {:on-click #(do (rf/dispatch [:inspect-player mine]) (rf/dispatch [:panel :board])
+         [:button.text-button {:on-click #(if focus-decision! (focus-decision! mine) (do (rf/dispatch [:inspect-player mine]) (rf/dispatch [:panel :board])
                                               (when-not (some #{"farm"} (:order (layout/layout ui (:id room))))
                                                 (rf/dispatch [:layout/change (:id room) :toggle "farm"]))
                                               (js/setTimeout (fn [] (when-let [node (.querySelector js/document "[data-tile='farm']")]
-                                                                     (.scrollIntoView node #js {:block "nearest" :behavior "smooth"}))) 50))} "Go to my decision"])
+                                                                     (.scrollIntoView node #js {:block "nearest" :behavior "smooth"}))) 50)))} "Go to my decision"])
        (when clock
          [:div.turn-countdown {:role "timer" :aria-label "Time remaining" :data-seconds seconds :class (when urgent? "urgent")}
           [:strong (if paused? "Paused" (time-text seconds))]

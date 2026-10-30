@@ -1,0 +1,22 @@
+{
+  "tool": "Built-in image_gen",
+  "purpose": "Original tabletop material textures",
+  "prompts": [
+    {
+      "id": "white",
+      "prompt": "Use case: photorealistic-natural. Asset type: seamless repeating texture for a browser board game's table surface. An orthographic straight-down macro material scan, square, 1024x1024. Fill the entire image with the material, perfectly flat, even diffuse lighting across every edge, no perspective, objects, table edges, text, logos, vignettes, borders, deep folds or cast shadows. Seamless tile, extremely understated, fine tactile detail that stays quiet behind colorful board game components. Beautiful washed ivory-white European linen tablecloth, delicate irregular fine warp and weft fibres, tiny natural slubs. Warm white, refined and soft, never grey or yellow, very subtle variation."
+    },
+    {
+      "id": "tan",
+      "prompt": "Use case: photorealistic-natural. Asset type: seamless repeating texture for a browser board game's table surface. An orthographic straight-down macro material scan, square, 1024x1024. Fill the entire image with the material, perfectly flat, even diffuse lighting across every edge, no perspective, objects, table edges, text, logos, vignettes, borders, deep folds or cast shadows. Seamless tile, extremely understated, fine tactile detail that stays quiet behind colorful board game components. Beautiful natural oatmeal tan Belgian linen tablecloth, fine closely woven flax fibres and tiny organic slubs. Warm pale biscuit neutral tan, refined understated material, very subtle color variation."
+    },
+    {
+      "id": "checkered",
+      "prompt": "Use case: photorealistic-natural. Asset type: seamless repeating texture for a browser board game's table surface. An orthographic straight-down macro material scan, square, 1024x1024. Fill the entire image with the material, perfectly flat, even diffuse lighting across every edge, no perspective, objects, table edges, text, logos, vignettes, borders, deep folds or cast shadows. Seamless tile, extremely understated, fine tactile detail that stays quiet behind colorful board game components. Beautiful woven country tablecloth with a regular gingham check, muted sage green and warm ivory threads. 8 full square checks across and 8 down, uniform aligned squares, finely woven realistic cotton linen, tasteful quiet low-contrast palette. Seamless periodic pattern, aligned to all four image edges."
+    },
+    {
+      "id": "leather",
+      "prompt": "Use case: photorealistic-natural. Asset type: seamless repeating texture for a browser board game's table surface. An orthographic straight-down macro material scan, square, 1024x1024. Fill the entire image with the material, perfectly flat, even diffuse lighting across every edge, no perspective, objects, table edges, text, logos, vignettes, borders, deep folds or cast shadows. Seamless tile, extremely understated, fine tactile detail that stays quiet behind colorful board game components. Beautiful premium dark cognac-brown leather game table playing surface, fine supple pebbled leather grain, restrained patina with microscopic pores, rich tobacco and chestnut brown, matte with very subtle soft sheen, extremely even tone, no scratches, seams or stitching."
+    }
+  ]
+}
