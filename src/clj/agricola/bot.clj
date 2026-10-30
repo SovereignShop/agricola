@@ -106,8 +106,9 @@
          (for [option options
                hora (if (and (c/has? p :a174) (five/linked-groups space)) [false true] [false])
                double (if (and (c/has? p :a180) (= space :animal-market)) [false true] [false])
+               shave? (if (g/pre-use-shaving? state pid space) [false true] [false])
                part (if (and (c/has? p :d180) (:accumulate (a/action-definition state space))) [false true] [false])]
-           (cond-> (merge {:type :action :space space} option) hora (assoc :master-hora? true) double (assoc :animal-brander? true) part (assoc :part-time? true)))))
+           (cond-> (merge {:type :action :space space} option) hora (assoc :master-hora? true) double (assoc :animal-brander? true) part (assoc :part-time? true) shave? (assoc :shaving-horse? true)))))
      ;; Sleeping Corner can share Growth; validate-space decides whether it can.
      (filter #(and (not (contains? (:cancelled-sowing state) [pid % (:round state)]))
                    (or (not (contains? (:occupied state) %)) (g/occupied-permission state pid %))) (:active state)))))

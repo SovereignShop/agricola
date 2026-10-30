@@ -120,7 +120,7 @@
           :revised-artifex-expansion-a-117-wood-carrier
           {:play [{:op :gain, :goods {:wood [:improvements]}}]},
           :revised-artifex-expansion-a-118-treegardener
-          {:triggers
+          {:group-wood-receipts true :triggers
            [{:event :field-phase,
              :effects
              [{:op :gain, :goods {:wood 1}}

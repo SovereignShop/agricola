@@ -375,7 +375,8 @@
           :exchange (update-in g [:players pid] a/gain (expr/quantities g pid context (:goods effect)))
           :threshold-exchange
           (do (a/require! (>= (a/amount current (:resource effect)) (:minimum effect)) "You do not have enough crops for this exchange.")
-              (update-in g [:players pid] #(-> % (a/pay {(:resource effect) 1}) (a/gain {:food (:food effect)}))))
+              (cond-> (update-in g [:players pid] #(-> % (a/pay {(:resource effect) 1}) (a/gain {:food (:food effect)})))
+                (:wood-group effect) (assoc-in [:players pid :card-state (c/id :a048) :group-consumed] (:wood-group effect))))
           :proportional-gain (update-in g [:players pid] a/gain {(:resource effect) (quot (a/amount current (:resource effect)) (:divisor effect))})
           :points (update-in g [:players pid :bonus-points] (fnil + 0) (expr/evaluate g pid context (:amount effect)))
           :sequence (queue-front g (map #(task pid card % context) (:effects effect)))
@@ -543,7 +544,7 @@
 
 (defn run-effect [g {:keys [player effect context] :as head} choice]
   (a/require! (or (:skip? choice) (five/eligible? g player (:op effect) context)) "This card effect is not available now.")
-  (let [before (count (a/tiles (p g player) :field)) after (run-effect* g head choice)
+  (let [before (count (a/tiles (p g player) :field)) after (reactive/note-effect g (run-effect* g head choice) head)
         plowed (- (count (a/tiles (p after player) :field)) before)
         fenced? (not= (:fences (p g player)) (:fences (p after player)))
         stables (- (count (filter :stable (:farm (p after player)))) (count (filter :stable (:farm (p g player)))))
@@ -853,12 +854,27 @@
   [g space]
   (first (keep-indexed (fn [index id] (when (= space id) (inc index)))
                       (drop (count (a/base-actions (count (:players g)) (:variant g))) (:active g)))))
-(defn before-use-player [g pid space]
+(defn before-use-gains [g pid space]
   (let [round-space (round-space-number g space)]
     (reduce (fn [player cid]
               (if-let [goods (get-in (c/card cid) [:passive :before-use-round-goods round-space])]
                 (a/gain player goods) player))
             (p g pid) (c/active-owned (p g pid)))))
+(defn pre-use-shaving? [g pid space]
+  (let [before (p g pid) after (before-use-gains g pid space)]
+    (and (not= :minstrel (get-in g [:action-context :mode])) (c/has? before :a048)
+         (> (a/amount after :wood) (a/amount before :wood))
+         (<= 5 (a/amount after :wood) 6))))
+(defn before-use-player
+  ([g pid space] (before-use-player g pid space {}))
+  ([g pid space options]
+   (let [before (p g pid) gained (before-use-gains g pid space)
+         receipt? (and (c/has? before :a048) (> (a/amount gained :wood) (a/amount before :wood)))
+         selected? (:shaving-horse? options)]
+     (when selected? (a/require! (and receipt? (>= (a/amount gained :wood) 5)) "Shaving Horse needs a qualifying wood bonus before this action."))
+     (let [after (if (and receipt? (or selected? (>= (a/amount gained :wood) 7)))
+                   (-> gained (a/pay {:wood 1}) (a/gain {:food 3})) gained)]
+       (cond-> after receipt? (assoc-in [:card-state (c/id :a048) :received-seen] (:received after)))))))
 (defn accumulation-goods [g space]
   (let [definition (a/action-definition g space)]
     (when (:accumulate definition) (set (keys (:gain definition))))))
@@ -937,7 +953,7 @@
                 "There is no free animal market for the Lasso's second action."))
   (let [occupied (get-in g [:occupied space])
         base (five/refresh g)
-        base (cond-> (assoc-in base [:players pid] (if (= :minstrel (get-in g [:action-context :mode])) (p base pid) (before-use-player base pid space))) occupied (update :occupied dissoc space))
+        base (cond-> (assoc-in base [:players pid] (if (= :minstrel (get-in g [:action-context :mode])) (p base pid) (before-use-player base pid space cmd))) occupied (update :occupied dissoc space))
         base (if (:master-hora? cmd)
                (do (a/require! (and (owned? g pid :a174) (five/linked-groups space)) "Master Hora needs a linked extension space.")
                    (update-in base [:players pid] #(-> % (a/pay {:food 1}) (a/gain {:vegetable 1})))) base)
@@ -995,7 +1011,7 @@
         (a/require! (and (owned? g pid :b024) (not (:lasso g)) (>= (:remaining (p g pid)) 2)) "Lasso is unavailable.")
         (a/require! (some #(and (some #{%} (:active g)) (not (contains? (:occupied g) %))) [:sheep :boar :cattle :animal-market])
                     "There is no free animal market for the Lasso's second action."))
-      (let [source (select-keys command (cond-> [:space :cell :lasso?] (= space :sow-bake) (conj :bake-grain)))
+      (let [source (select-keys command (cond-> [:space :cell :lasso? :shaving-horse?] (= space :sow-bake) (conj :bake-grain)))
             effect {:op :sow-offer :optional? true :unconditional? true :source-command source}]
         ;; Validate a planned plow now, before any other player commits a gift.
         (sowing-player g pid effect)
@@ -1027,7 +1043,7 @@
                   "Choose a legal action before using Wheel Plow.")
       (queue-front g [(task pid (c/id :a018)
                            {:op :wheel-plow :optional? true
-                            :source-command (select-keys command [:space :cell :plantings :lasso?])} {})]))
+                            :source-command (select-keys command [:space :cell :plantings :lasso? :shaving-horse?])} {})]))
     (take-action-with-sowing g pid command)))
 (defn card-spaces [g pid]
   (vec (for [owner (:players g) cid (c/active-owned owner)
@@ -1198,4 +1214,5 @@
                        (a/require! (some pos? (vals (:goods cmd))) "Choose goods to convert.")
                        (update-in g [:players pid] a/convert-food (:goods cmd)))
           (throw (ex-info "Unknown card-game command." {})))]
-    (drain (cond-> result (#{:ability :convert} type) (dissoc :cancelled-sowing)))))
+    (drain (cond-> result (#{:ability :convert} type)
+             (as-> state (reactive/note-effect g (dissoc state :cancelled-sowing) {:player pid :card (:card cmd) :effect {:op type}}))))))

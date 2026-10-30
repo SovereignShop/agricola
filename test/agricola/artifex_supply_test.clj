@@ -119,3 +119,39 @@
     (is (= 5 (a/amount (g/p done 0) :wood)))
     (is (= 7 (delta state done :food)))
     (is (empty? (:effect-queue done)))))
+
+(deftest treegardener-is-one-wood-receipt-unless-another-effect-intervenes
+  (let [state (-> (horse 4) (own 0 :a118) (assoc :phase :field-harvest))
+        pending (g/drain (g/queue-front state [(g/event :field-phase 0)]))
+        purchase (resolve! pending {})
+        done (resolve! purchase {:option 1})]
+    (is (= :choose (op purchase)))
+    (is (empty? (:effect-queue done)))
+    (is (= 6 (a/amount (g/p done 0) :wood)))
+    (is (= 1 (delta state done :food)))
+    (let [other (g/queue-front purchase [(g/task 0 (c/id :a029) {:op :points :amount 1 :optional? true} {})])
+          interrupted (resolve! other {}) again (resolve! interrupted {:option 1})]
+      (is (= :threshold-exchange (op again)))
+      (is (= 5 (a/amount (g/p (resolve! again {}) 0) :wood))))))
+
+(deftest shaving-before-use-is-atomic-and-precedes-action-costs
+  (let [fences7 (vec (fenced [0 1]))
+        fences6 (vec (remove #{(a/shared-edge 0 1)} fences7))
+        state (-> (horse 6) (own 0 :a126)
+                  (assoc :active (conj (a/base-actions 4 :cards) :fences)))
+        done (g/command state 0 {:type :action :space :fences :fences fences6})]
+    (is (thrown? clojure.lang.ExceptionInfo (g/command state 0 {:type :action :space :fences :fences fences7})))
+    (is (= 0 (a/amount (g/p done 0) :wood)))
+    (is (= 3 (delta state done :food)))
+    (is (= 1 (get-in done [:players 0 :remaining]))))
+  (let [state (-> (horse 4) (own 0 :a126) (hand :a045)
+                  (assoc-in [:players 0 :goods :food] 0)
+                  (assoc :active (conj (a/base-actions 4 :cards) :improvement)))
+        cmd {:type :action :space :improvement :card (c/id :a045)}
+        done (g/command state 0 (assoc cmd :shaving-horse? true))]
+    (is (g/pre-use-shaving? state 0 :improvement))
+    (is (thrown? clojure.lang.ExceptionInfo (g/command state 0 cmd)))
+    (is (= 2 (a/amount (g/p done 0) :food)))
+    (is (= 4 (a/amount (g/p done 0) :wood)))
+    (is (empty? (:effect-queue done)))
+    (is (some :shaving-horse? (bot/action-candidates (bot/observation state 0) 0)))))

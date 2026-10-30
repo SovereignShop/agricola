@@ -541,6 +541,10 @@
        [hand-select g p (if (#{:lessons :lessons-extra :lessons-copse :lessons-growth} space) :occupation :minor) draft (not (#{:lessons :lessons-extra :lessons-copse :lessons-growth} space))])
      (when (and (= :cards (:variant g)) (#{:lessons :lessons-extra :lessons-copse :lessons-growth} space) (cards/has? p :b109))
        [:label.checkbox [:input {:type "checkbox" :checked (boolean (:paper-maker? draft)) :on-change #(draft! :paper-maker? (.. % -target -checked))}] "Use Paper Maker before paying the occupation cost"])
+     (when (card-game/pre-use-shaving? g (:id p) space)
+       [:label.checkbox [:input {:type "checkbox" :checked (boolean (:shaving-horse? draft))
+                                  :on-change #(draft! :shaving-horse? (.. % -target -checked))}]
+        "Shaving Horse: exchange 1 wood for 3 food before this action"])
      (when (and (cards/has? p :b024) (not (:lasso g)))
        [:label.checkbox [:input {:type "checkbox" :checked (boolean (:lasso? draft)) :on-change #(draft! :lasso? (.. % -target -checked))}] "Lasso: take a second action immediately (one action must be an animal market)"])
      (when (#{:build :house-building :renovate :redevelop} space) [payment-options p draft])

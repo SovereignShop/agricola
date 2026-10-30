@@ -3,15 +3,38 @@
   (:require [agricola.engine :as a] [agricola.card-rules :as c] [agricola.card-expressions :as expr]))
 
 (def shaving-id (c/id :a048))
+(declare wood-gain?)
+(defn note-effect [before after head]
+  (reduce
+   (fn [g pid]
+     (let [old (get-in before [:players pid]) player (get-in g [:players pid])
+           path [:players pid :card-state shaving-id]
+           wood (get-in player [:received :wood] 0)
+           source (:card head) consumed (get-in player [:card-state shaving-id :group-consumed])
+           other-goods? (some #(> (get-in player [:received %] 0) (get-in old [:received %] 0)) (remove #{:wood} a/resources))
+           interrupt? (and consumed (not= source shaving-id)
+                           (or other-goods?
+                               (and (= pid (:player head)) (not= source (first consumed)) (not (wood-gain? before head)))))]
+       (if-not (c/has? player :a048) g
+         (cond-> g
+           interrupt? (update-in path dissoc :group-consumed)
+           (> wood (get-in old [:received :wood] 0))
+           (assoc-in (conj path :last-wood-source)
+                     {:at wood :group (when (:group-wood-receipts (c/card source)) [source (:phase g) (:round g)])})))))
+   after (range (count (:players after)))))
 (defn watch-wood [g pid]
   (assoc-in g [:players pid :card-state shaving-id :received-seen] (get-in g [:players pid :received] {})))
 (defn sync-shaving [g]
   (reduce (fn [g pid]
             (let [player (get-in g [:players pid]) seen (get-in player [:card-state shaving-id :received-seen] (:received player))
-                  wood (- (get-in player [:received :wood] 0) (get seen :wood 0))]
+                  wood (- (get-in player [:received :wood] 0) (get seen :wood 0))
+                  receipt (get-in player [:card-state shaving-id :last-wood-source])
+                  group (when (= (:at receipt) (get-in player [:received :wood] 0)) (:group receipt))
+                  consumed (get-in player [:card-state shaving-id :group-consumed])]
               (if-not (c/has? player :a048) g
                 (cond-> (watch-wood g pid)
-                  (pos? wood) (update :shaving-pending (fnil conj #{}) pid)))))
+                  (and (pos? wood) (not (and group (= group consumed))))
+                  (assoc-in [:shaving-pending pid] group)))))
           g (range (count (:players g)))))
 (defn wood-gain? [g head]
   (when (#{:gain :all-gain} (get-in head [:effect :op]))
@@ -25,14 +48,14 @@
         boundary? (or (nil? head) (= :continue (:kind head))
                       (and (= :event (:kind head)) (#{:after-use-space :turn-end :round-end :harvest-end} (:event head)))
                       (and (= :effect (:kind head)) (not (wood-gain? g head))))
-        pids (sort (:shaving-pending g))]
+        pids (sort (keys (:shaving-pending g))) pending (:shaving-pending g)]
     (if-not (and boundary? (seq pids)) g
       (-> g (dissoc :shaving-pending)
           (update :effect-queue #(vec (concat
                                       (for [pid pids :when (>= (a/amount (get-in g [:players pid]) :wood) 5)]
                                         {:kind :effect :player pid :card shaving-id :context {}
                                          :effect {:op :threshold-exchange :optional? true :resource :wood
-                                                  :minimum 5 :mandatory-at 7 :food 3}}) %)))))))
+                                                  :minimum 5 :mandatory-at 7 :food 3 :wood-group (get pending pid)}}) %)))))))
 
 (defn task [pid cid effect] {:kind :effect :player pid :card cid :effect effect :context {}})
 (defn prepend [g tasks] (update g :effect-queue #(vec (concat tasks %))))
