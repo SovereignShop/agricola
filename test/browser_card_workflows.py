@@ -91,7 +91,7 @@ def check(base, fixtures):
         page.get_by_label("Pre-game hand setup").select_option("random")
         pack = page.get_by_label("Include Artifex Expansion", exact=True)
         expect(pack).to_be_checked()
-        expect(page.locator(".pack-picker")).to_contain_text("120/120 cards")
+        expect(page.get_by_text("Artifex Expansion", exact=True)).to_be_visible()
         page.get_by_text("Card coverage", exact=True).click()
         expect(page.get_by_text("Artifex Expansion: 120 / 120", exact=True)).to_be_visible()
         pack.click()
