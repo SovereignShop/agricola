@@ -364,9 +364,9 @@ Played major/minor improvements and occupations have separate stacks:
 click a card to slide it out, click again to put it back, or choose **Show all** /
 **Stack cards**. Private hands appear in their own tile.
 
-Artwork is stored locally in `resources/public/art/agricola/`. Board, farm,
-pieces, and ten major scans come from the **Korean Revised Edition**, with English
-interface labels. Ninety base hand cards use original **English** card images;
+Artwork is stored locally in `resources/public/art/agricola/`. The experimental
+table uses the three **original English board segments**, English majors, and
+Korean Revised Edition farm/piece illustrations. Ninety base hand cards use original **English** card images;
 six have readable text fallbacks. The 48 five-player occupations currently use
 text cards; matching scans have not been sourced. All fourteen round cards use original English
 edition scans with matching stage backs and Revised Edition action labels. They
@@ -585,8 +585,13 @@ never reveals another user's hand.
 
 Card choices appear as spreads of playable cards, validated against the native
 rules, with unavailable-card reasons under a disclosure. Major improvements
-use English card scans. The five-player spaces use the publisher's printed
-board extension beside the main board, including its three linked pairs.
+use English card scans. The shared board uses the original three English segments:
+two portrait boards and the landscape final-round board, aligned along the top
+with their natural proportions and small cloth seams. Round cards occupy the
+printed slots. Player-count actions occupy the left board's card area, including
+the three linked pairs at five players. This is a presentation change: the
+existing Revised Edition card and action rules still apply; it does not enable
+an Original Edition ruleset.
 Artwork provenance is recorded in `resources/public/art/agricola/manifest.json`.
 
 **Tablecloth** offers original white linen, natural linen, sage check and cognac

@@ -51,8 +51,22 @@ def check(base, fixtures):
         assert abs(inventory.bounding_box()['width']-farm.bounding_box()['width'])<1
         assert inventory.bounding_box()['y']+inventory.bounding_box()['height']<farm.bounding_box()['y']
         expect(page.locator('.five-extension')).to_have_count(0)
-        expect(page.locator('.five-printed-board .action-card')).to_have_count(11)
-        assert page.locator('.five-printed-board').bounding_box()['x']<page.locator('.physical-board').bounding_box()['x']
+        expect(page.locator('.five-printed-board')).to_have_count(0)
+        expect(page.locator('.board-segment')).to_have_count(3)
+        segments=[page.locator('[data-segment="'+s+'"]').bounding_box() for s in ['actions','early-rounds','late-rounds']]
+        assert max(s['y'] for s in segments)-min(s['y'] for s in segments)<1
+        assert abs(segments[0]['height']-segments[1]['height'])<1
+        assert segments[2]['height']<segments[1]['height']*.75
+        assert all(segments[i]['x']+segments[i]['width']<segments[i+1]['x'] for i in range(2))
+        expect(page.locator('.player-count-actions .action-card')).to_have_count(11)
+        # All round cards lie on their correct segment without overlapping other slots.
+        slots=page.locator('.round-card-slot').evaluate_all('els=>els.map(e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height}})')
+        for i,slot in enumerate(slots):
+            segment=segments[1 if i<7 else 2]
+            assert slot['x']>=segment['x'] and slot['x']+slot['w']<=segment['x']+segment['width']
+            assert slot['y']>=segment['y'] and slot['y']+slot['h']<=segment['y']+segment['height']
+            for other in slots[i+1:]:
+                assert slot['x']+slot['w']<=other['x'] or other['x']+other['w']<=slot['x'] or slot['y']+slot['h']<=other['y'] or other['y']+other['h']<=slot['y']
         expect(page.locator('.tile-grid,.table-tile,.tile-content')).to_have_count(0)
         expect(page.locator('.round-card-slot[data-revealed=false]')).to_have_count(13)
         assert page.locator('.round-card-slot[data-revealed=false] .round-card-front').evaluate_all('(els)=>els.every(e=>!e.textContent.trim())')
@@ -170,7 +184,7 @@ def check(base, fixtures):
         expect(page.locator('[data-owner="0"][data-deck="occupations"] .tt-card')).to_have_count(1)
         action('Copse')
         confirm()
-        expect(page.locator('.five-printed-space[data-action="lessons-copse"] .action-card')).to_be_disabled()
+        expect(page.locator('.player-count-actions .action-card[data-action="lessons-copse"]')).to_be_disabled()
         # Small viewports still have one camera and a fitting modal; Ctrl+ is text only.
         page.set_viewport_size({'width':390,'height':844})
         focus('Ben')

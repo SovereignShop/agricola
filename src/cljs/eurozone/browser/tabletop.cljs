@@ -141,7 +141,7 @@
         right-w (if (next sides) (apply max 1280 (map :w (take-nth 2 (rest sides)))) 0)
         row-heights (mapv #(apply max (map :h %)) (partition-all 2 sides))
         upper-h (+ 120 (reduce + row-heights) (* 64 (max 0 (dec (count row-heights)))))
-        center-x (+ left-w 104) center-w (if (= 5 (count players)) 1400 1080)
+        center-x (+ left-w 104) center-w 2100
         lower (nth players 4 nil)
         placements (mapv (fn [i p] (assoc p :x (if (even? i) 48 (+ center-x center-w 64))
                                         :y (+ 64 (reduce + (take (quot i 2) row-heights)) (* 64 (quot i 2))))) (range) sides)

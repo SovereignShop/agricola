@@ -1,7 +1,7 @@
 (ns eurozone.browser.views
   (:require [reagent.core :as r] [re-frame.core :as rf] [clojure.string :as str]
             [cljs.reader :as reader] [agricola.recording :as recording] [eurozone.browser.table-controls :as controls]
-            [agricola.engine :as a] [agricola.card-expressions :as expr] [agricola.five-player :as five] [agricola.card-game :as card-game] [eurozone.catalog :as catalog] [eurozone.browser.art :as art] [agricola.card-rules :as cards] [eurozone.browser.card-art :as card-art] [eurozone.browser.layout :as layout] [eurozone.browser.tabletop :as tabletop] [eurozone.browser.readability :as readability] [eurozone.browser.comms :as comms] [eurozone.store :as store]))
+            [agricola.engine :as a] [agricola.card-expressions :as expr] [agricola.five-player :as five] [agricola.card-game :as card-game] [eurozone.catalog :as catalog] [eurozone.browser.art :as art] [eurozone.browser.board-layout :as board-layout] [agricola.card-rules :as cards] [eurozone.browser.card-art :as card-art] [eurozone.browser.layout :as layout] [eurozone.browser.tabletop :as tabletop] [eurozone.browser.readability :as readability] [eurozone.browser.comms :as comms] [eurozone.store :as store]))
 
 (def glyph {:wood "▰" :clay "◆" :reed "≋" :stone "⬟" :grain "♧" :vegetable "●" :food "◉" :sheep "♧" :boar "◆" :cattle "⬢"})
 (def labels {:wood "Wood" :clay "Clay" :reed "Reed" :stone "Stone" :grain "Grain" :vegetable "Vegetables" :food "Food" :sheep "Sheep" :boar "Wild boar" :cattle "Cattle"})
@@ -304,17 +304,7 @@
      [:div {:class (str "round " (when (= n (:round g)) "current ") (when (< n (:round g)) "past "))
             :title (str "Round " n (when (a/harvest-rounds n) " · Harvest"))}
       [:span n] [:small (when (a/harvest-rounds n) "♧")]])])
-(def board-spaces
-  {:build [188 9 115 131] :meeting [188 148 115 76] :grain [188 231 115 76]
-   :plow [188 323 115 76] :side-job [188 414 115 106] :lessons [188 414 115 106] :lessons-extra [6 417 145 106] :labor [188 533 115 88]
-   :wood [329 159 147 149] :clay [329 318 147 92] :reed [329 420 147 103] :fishing [329 533 147 88]
-   :copse [6 8 145 131] :grove [6 148 145 85] :market [6 243 145 76]
-   :hollow [6 329 145 82] :traveling [6 533 145 88]})
-(def round-spaces [[329 8] [491 8] [653 8] [815 8] [491 164] [653 164] [815 164]
-                   [491 320] [653 320] [491 476] [653 476] [167 632] [329 632] [653 632]])
-(defn round-space-position [round]
-  (let [[x y] (nth round-spaces (dec round))]
-    {:left (str (/ x 10) "%") :top (str (/ y 8) "%") :width "14.7%" :height "18.25%"}))
+(def round-space-position board-layout/round-position)
 (defn future-round-markers [g]
   [:<>
    (for [[round owners] (card-game/future-round-resources g)]
@@ -346,16 +336,20 @@
                  [:path {:d "M5 3v18 M10 3v18 M15 3v18 M20 3v18" :stroke "#79502e" :stroke-width 2}]]
                 [art/piece resource])
               [:b n]])]])]])])
-(defn board-position [g id]
-  (let [round-index (.indexOf (clj->js (vec (drop (count (a/base-actions (count (:players g)) (:variant g))) (:active g)))) (name id))
-        [x y w h] (or (board-spaces id) (let [[x y] (nth round-spaces round-index)] [x y 147 146]))]
-    {:left (str (/ x 10) "%") :top (str (/ y 8) "%") :width (str (/ w 10) "%") :height (str (/ h 8) "%")}))
+(defn board-position [_ id]
+  (some-> (board-layout/actions id) board-layout/position))
+(defn printed-action? [g id]
+  (and (contains? board-layout/actions id)
+       (not= id :side-job)
+       (not (and (= id :meeting) (not= :cards (:variant g))))
+       (not (and (= id :wood) (= 1 (count (:players g)))))))
 (defn board-action [g id can-play? draft busy? round & [extension?]]
   (let [action (a/action-definition g id) placement (get-in g [:occupied id]) owners (card-game/space-owners g id) owner (or (first owners) (first (get-in g [:newborn-spaces id]))) occupied? (some? placement)
                               share? (and (= :cards (:variant g)) (card-game/occupied-permission g (:turn g) id))
                               gain (if (:accumulate action) (get-in g [:piles id]) (:gain action))]
-      [:button.action-card {:class (str (name (:group action)) (when round " round-action") (when extension? " extension-action") (when occupied? " occupied") (when (= id (:space draft)) " chosen"))
+      [:button.action-card {:class (str (name (:group action)) (when round " round-action") (when extension? " extension-action") (when (printed-action? g id) " printed-action") (when occupied? " occupied") (when (= id (:space draft)) " chosen"))
                             :style (when-not (or round extension?) (board-position g id)) :disabled (or (not (a/available-space? g id)) (and occupied? (not share?)) (not can-play?) busy?) :on-click #(dispatch :select-action id)
+                            :data-action (name id) :aria-label (str (:name action) ": " (:description action))
                             :title (or (:description action) (:name action))}
        (when round [art/round-card-art :front (art/round-card-indices id)])
        [:span.action-top [:span.action-category (name (:group action))]
@@ -387,22 +381,16 @@
     [:div.round-card-front
      (when id [board-action g id can-play? draft busy? round])]]])
 
-(def five-extension-spaces #{:copse :grove :hollow :market :traveling :riverbank :house-building :modest-growth :animal-market :lessons-copse :lessons-growth})
-(def five-board-spaces
-  ;; Coordinates on the publisher's 206 x 289 five-player board diagram.
-  {:lessons-copse [69 5 53 42] :copse [156 6 28 40]
-   :riverbank [98 55 25 49] :grove [126 59 29 43]
-   :lessons-growth [69 112 64 43] :modest-growth [139 112 47 43]
-   :animal-market [69 164 46 68] :market [127 164 57 27] :hollow [128 195 28 37]
-   :house-building [69 238 56 46] :traveling [154 246 30 37]})
-(defn five-extension [g can-play? draft busy?]
-  [:div.five-printed-board {:role "group" :aria-label "Five-player action spaces"}
-   [:img {:src (art/url "five-player-board.jpg") :alt "Official five-player board extension; three linked pairs" :draggable false}]
-   (for [[id [x y w h]] five-board-spaces :when (some #{id} (:active g))] ^{:key id}
-     [:div.five-printed-space {:data-action id :data-linked-group (some-> (five/linked-groups id) name)
-                               :style {:left (str (* 100 (/ x 206)) "%") :top (str (* 100 (/ y 289)) "%")
-                                       :width (str (* 100 (/ w 206)) "%") :height (str (* 100 (/ h 289)) "%")}}
-      [board-action g id can-play? draft busy? nil true]])])
+(defn player-count-actions [g can-play? draft busy?]
+  (let [groups (keep (fn [ids] (seq (filter (set (:active g)) ids)))
+                     (board-layout/player-count-groups (count (:players g))))]
+    (when (seq groups)
+      [:div.player-count-actions {:role "group" :aria-label "Player-count action cards"
+                                   :style (assoc (board-layout/position board-layout/player-count-area)
+                                                 :grid-template-rows (str "repeat(" (if (= 5 (count (:players g))) 4 3) ", minmax(0, 1fr))"))}
+       (for [ids groups] ^{:key (first ids)}
+         [:div.player-count-card {:data-linked-group (when (> (count ids) 1) (name (five/linked-groups (first ids))))}
+          (for [id ids] ^{:key id} [board-action g id can-play? draft busy? nil true])])])) )
 (defn card-action-spaces [g can-play? busy?]
   (let [pid (:turn g) spaces (card-game/card-spaces g pid)]
     (when (seq spaces)
@@ -426,22 +414,18 @@
   (let [base (a/base-actions (count (:players g)) (:variant g))
         revealed (vec (drop (count base) (:active g)))]
     [:section.action-board
-     [:div.section-heading [:div [:div.eyebrow "THE VILLAGE"] [:h2 "Make your move."]] [:span.small "One person. One action."]]
-     [:div.board-scroll {:class (when (= 5 (count (:players g))) "five-player-board") :role "region" :aria-label "Agricola board; scroll horizontally on small screens" :tab-index 0}
-      [:div.action-grid.physical-board
-       [:img.board-art {:src (art/url "board.png") :alt "Original Agricola Revised Edition board, Korean printing; English actions overlaid" :draggable false}]
-       (for [id [:copse :grove :market :hollow :traveling] :when (and (not= 5 (count (:players g))) (not (some #{id} (:active g))))] ^{:key (str "closed-" id)}
-         [:div.closed-board-space {:style (board-position g id)} [:span (if (= 5 (count (:players g))) "Use five-player village below" "Additional players")]])
-       [:div.closed-board-space {:style {:left "0.6%" :top "52%" :width "14.5%" :height "13%"}}
-        [:span (if (= :cards (:variant g)) "Additional players" "Beginner game") [:br] (when-not (= :cards (:variant g)) "No occupations")]]
-       (for [id (take (count base) (:active g)) :when (not (and (= 5 (count (:players g))) (five-extension-spaces id)))] ^{:key id}
+     [:div.board-scroll {:role "region" :aria-label "Agricola three-segment board" :tab-index 0}
+      [:div.action-grid.physical-board.original-board
+       (for [{:keys [id file label bounds]} board-layout/segments] ^{:key id}
+         [:img.board-segment {:data-segment (name id) :src (art/url file) :alt (str "Original English Agricola board: " label)
+                              :style (board-layout/position bounds) :draggable false}])
+       (for [id base :when (contains? board-layout/actions id)] ^{:key id}
          [board-action g id can-play? draft busy? nil])
-       ;; Stable slots let a newly revealed public action animate in place.
-       ;; Future identities are neither requested nor rendered in the browser.
+       [player-count-actions g can-play? draft busy?]
+       ;; Only public round identities reach the DOM, in the printed round slots.
        (for [round (range 1 15)] ^{:key round}
          [round-card g round (get revealed (dec round)) can-play? draft busy?])
-       [future-round-markers g]]
-      (when (= 5 (count (:players g))) [five-extension g can-play? draft busy?])]
+       [future-round-markers g]]]
      [card-action-spaces g can-play? busy?]]))
 (declare card-action-error)
 (defn card-choice [cid selected? choose! & [attrs]]

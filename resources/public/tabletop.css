@@ -48,8 +48,6 @@
 .tt-shared .physical-board .action-card.chosen {transform:scale(1.12);z-index:15;box-shadow:0 12px 24px #18200c88;outline:3px solid #b48b37}
 .tt-shared .physical-board .round-action {inset:0;width:100%;height:100%}
 .tt-shared .round-card-slot:has(.chosen) {z-index:20}
-.tt-shared .five-extension {margin-top:18px;background:#f1e8ce;border:2px solid #7c8061;box-shadow:2px 4px 7px #28351a33}
-.tt-shared .five-extension .action-card {min-height:145px;font-size:calc(12px * var(--text-scale,1))}
 .tt-shared .card-action-spaces {background:#eee5cd;margin-top:16px;padding:18px}
 .tt-major-area {position:relative;min-height:680px;margin-top:40px}
 .tt-major-area .tt-deck {left:0}
@@ -189,22 +187,36 @@
 .card-choice .tt-printed-card>p {font-size:calc(11px * var(--text-scale,1))}
 .unavailable-cards {margin:12px 0;color:#73634c}
 .tt-modal .table-dialog:has(.card-choice-spread) {width:1100px}
-/* The publisher's five-player extension replaces the three/four-player strip
-   at the left of the main board. All eleven spaces occupy their printed spots. */
-.five-player-board {position:relative}
-.tt-shared .five-player-board .physical-board,.tabletop-main .five-player-board .physical-board {width:1080px;margin-left:320px}
-.five-printed-board {position:absolute;left:0;top:0;width:480px;height:674px;z-index:2}
-.five-printed-board>img {display:block;width:100%;height:100%;border-radius:4px;box-shadow:0 4px 7px #34412555}
-.five-printed-space {position:absolute}
-.five-printed-space .action-card {position:relative;width:100%;height:100%;min-height:0;padding:3px;border:1px solid #81754999;border-radius:3px;background:#fff7d9ea;gap:2px;overflow:hidden;box-shadow:0 1px 2px #192d1855}
-.five-printed-space .action-card strong {font:600 calc(11px * var(--text-scale,1))/1.05 var(--tt-font)}
-.five-printed-space .action-top,.five-printed-space .action-description,.five-printed-space .accumulation {display:none}
-.five-printed-space .board-piles {display:flex;flex-wrap:wrap;gap:0;min-height:0}
-.five-printed-space .piece-pile {width:34px;height:32px}
-.five-printed-space .piece {width:24px;height:26px}
-.five-printed-space .pile-count {font-size:calc(11px * var(--text-scale,1));padding:0 3px}
-.five-printed-space .linked-status {font-size:calc(8px * var(--text-scale,1));padding:0}
-.five-printed-space .occupant {font-size:calc(9px * var(--text-scale,1))}
-.five-printed-space .action-card.chosen {transform:scale(1.1);outline:2px solid #b48b37;z-index:20}
-.five-printed-space:has(.chosen) {z-index:10}
+/* Original three-piece board, at one scale and with cloth visible at the seams. */
+.tt-shared .action-grid.physical-board.original-board,.tabletop-main .action-grid.physical-board.original-board {width:100%;aspect-ratio:4225/1725;background:none;border:0;box-shadow:none;border-radius:0;overflow:visible;margin:0}
+.original-board>.board-segment {position:absolute;display:block;max-width:none;border-radius:2px;box-shadow:2px 5px 6px #2a251d55;pointer-events:none}
+.original-board .round-card-slot {border-radius:3px}
+.original-board .round-card-art {left:0;width:100%}
+.tt-shared .original-board .round-action {padding:0;background:transparent;border:0;box-shadow:none}
+.original-board .round-action>strong {position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.tt-shared .original-board>.action-card.printed-action,.tabletop-main .original-board>.action-card.printed-action {background:transparent;border-color:transparent;box-shadow:none;opacity:1}
+.original-board>.printed-action>strong {position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.original-board>.printed-action>.action-top,.original-board>.printed-action>.action-description,.original-board>.printed-action>.accumulation {display:none}
+.original-board>.printed-action>.board-piles {position:absolute;bottom:12%;left:8%;margin:0}
+.original-board>.printed-action[data-action=clay]>.board-piles,.original-board>.printed-action[data-action=fishing]>.board-piles {left:auto;right:8%}
+.original-board>.printed-action .piece-pile {width:80px;height:58px}
+.original-board>.printed-action .piece-pile .piece {width:34px;height:36px}
+.original-board>.printed-action .pile-count {font-size:calc(16px * var(--text-scale,1));height:auto;min-width:22px}
+.original-board>.printed-action>.occupant {position:absolute;bottom:0;left:0;max-width:100%}
+.original-board>.printed-action:focus-visible {outline:3px solid #f1d48b;outline-offset:0}
+.original-board .player-count-actions {position:absolute;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.player-count-card {display:flex;flex-direction:column;min-width:0;min-height:0;background:#e5eac3;border:3px solid #edf0d4;border-radius:5px;box-shadow:1px 3px 4px #34371760;overflow:visible}
+.original-board .player-count-card .action-card {position:relative;inset:auto;width:100%;flex:1;min-height:0;padding:6px;border:0;box-shadow:none;background:transparent;gap:3px;overflow:hidden;font-size:calc(12px * var(--text-scale,1))}
+.original-board .player-count-card .action-card+.action-card {border-top:1px dashed #728153}
+.original-board .player-count-card .action-card strong {font:600 calc(13px * var(--text-scale,1))/1.1 Georgia,serif}
+.original-board .player-count-card .action-top {display:none}
+.original-board .player-count-card .action-description {font-size:calc(10px * var(--text-scale,1));line-height:1.15}
+.original-board .player-count-card .accumulation,.original-board .player-count-card .linked-status {font-size:calc(9px * var(--text-scale,1));line-height:1.1}
+.original-board .player-count-card .board-piles {display:flex;flex-wrap:wrap;gap:0;min-height:0;margin:0}
+.original-board .player-count-card .piece-pile {width:42px;height:32px}
+.original-board .player-count-card .piece {width:26px;height:28px}
+.original-board .player-count-card .pile-count {font-size:calc(12px * var(--text-scale,1));padding:0 3px}
+.original-board .player-count-card .occupant {font-size:calc(9px * var(--text-scale,1));padding:1px 3px}
+.original-board .player-count-card:has(.chosen) {z-index:15}
+.tabletop-main .action-grid.original-board {min-width:1400px}
 @media(max-width:650px) {.card-choice {width:135px;height:200px}.card-choice-spread {gap:12px}}

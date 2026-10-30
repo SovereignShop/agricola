@@ -1,6 +1,6 @@
 {
   "artwork": "Agricola, Uwe Rosenberg; illustrations by Klemens Franz; Lookout Games. Third-party artwork is not covered by the application source code license.",
-  "edition": "Korean Revised Edition main board/farm and English hand cards; English original-edition major and round-card sheets. Official Revised five-player board diagram.",
+  "edition": "English original-edition three-segment board, majors and round cards; Korean Revised Edition farm and pieces; English Revised hand cards. Revised Edition rules.",
   "files": [
     {
       "file": "board.png",
@@ -753,6 +753,27 @@
       "source": "https://www.lookout-spiele.de/upload/en_agricolare_56players.html_Rules_Agricola-RE-56Expansion_EN.pdf",
       "sha256": "27cc63714e7fd7bd9f576ee937fe90af718de44ec41813c40ef91f371fcde96a",
       "note": "Unmodified embedded JPEG (object 126, page 3), extracted with pdfimages. Official five-player extension. Interactive spaces use the printed positions; rules and shared placement of linked pairs are unchanged."
+    },
+    {
+      "file": "board-original-base.jpg",
+      "source": "https://dl.dropboxusercontent.com/s/wncxeh4jmeam3vb/Base%20Board%20%28Normal%20A%29.jpg",
+      "reference": "https://github.com/SNiLD/TabletopSimulatorAgricola/blob/5e675a143d7192b271615d9f1a406fd04a1913f1/src/workshop.json",
+      "sha256": "5094a5bf37ff6da76d3e077f9ad8f998c4345c7b57d02b638f9b1cf39cebcc56",
+      "note": "Unmodified English original-edition main board segment. Presentation only; Eurozone retains its Revised Edition action and card rules."
+    },
+    {
+      "file": "board-original-rounds-1.jpg",
+      "source": "https://dl.dropboxusercontent.com/s/x7fdy3arcot3z81/Base%20Board%201A.jpg",
+      "reference": "https://github.com/SNiLD/TabletopSimulatorAgricola/blob/5e675a143d7192b271615d9f1a406fd04a1913f1/src/workshop.json",
+      "sha256": "ff731ea3bdcfffb274580ce84d53d3ab3fa983449691fd3e9a5726c0142f6384",
+      "note": "Unmodified English original-edition main board segment. Presentation only; Eurozone retains its Revised Edition action and card rules."
+    },
+    {
+      "file": "board-original-rounds-2.jpg",
+      "source": "https://dl.dropboxusercontent.com/s/l3riyjr55p3swcj/Base%20Board%202A.jpg",
+      "reference": "https://github.com/SNiLD/TabletopSimulatorAgricola/blob/5e675a143d7192b271615d9f1a406fd04a1913f1/src/workshop.json",
+      "sha256": "d2c09503e8e1f7745e43585152f66a7d94b1d05b3f8d3d02bcb8dfe2bee05048",
+      "note": "Unmodified English original-edition main board segment. Presentation only; Eurozone retains its Revised Edition action and card rules."
     }
   ]
 }
