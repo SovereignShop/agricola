@@ -1,6 +1,6 @@
 {
   "artwork": "Agricola, Uwe Rosenberg; illustrations by Klemens Franz; Lookout Games. Third-party artwork is not covered by the application source code license.",
-  "edition": "Korean Revised Edition boards/major cards and English Revised Edition hand cards; English game labels and effects supplied by Eurozone. Original English edition round-card fronts and stage backs.",
+  "edition": "Korean Revised Edition main board/farm and English hand cards; English original-edition major and round-card sheets. Official Revised five-player board diagram.",
   "files": [
     {
       "file": "board.png",
@@ -741,6 +741,18 @@
       "reference": "https://github.com/SNiLD/TabletopSimulatorAgricola/blob/5e675a143d7192b271615d9f1a406fd04a1913f1/src/workshop.json",
       "sha256": "71c3f5b0fde6ecfe6521c3fee6141ec30e266e780c1beb14c04aba898d193fd7",
       "note": "Original English edition round-card sheet, unmodified; displayed as a 10 by 7 CSS sprite. Revised Edition action names and rules supplied by Eurozone."
+    },
+    {
+      "file": "majors-en.jpg",
+      "source": "https://dl.dropboxusercontent.com/s/ler5n25azdg6pe3/Major%20Improvements%20A.jpg",
+      "sha256": "d5613f84e56cae823b3f20296ff3f8761e1d286e83a7028dce84f78fc02f8b52",
+      "note": "Unmodified 10-column, 7-row English major improvement sheet referenced by SNiLD/TabletopSimulatorAgricola at 5e675a143d7192b271615d9f1a406fd04a1913f1; CSS sprites use indices pottery=0, hearth-4=1, fireplace-3=2, hearth-5=3, stone-oven=4, basketry=5, joinery=6, clay-oven=7, well=8, fireplace-2=9. Printed base costs and effects checked against game definitions."
+    },
+    {
+      "file": "five-player-board.jpg",
+      "source": "https://www.lookout-spiele.de/upload/en_agricolare_56players.html_Rules_Agricola-RE-56Expansion_EN.pdf",
+      "sha256": "27cc63714e7fd7bd9f576ee937fe90af718de44ec41813c40ef91f371fcde96a",
+      "note": "Unmodified embedded JPEG (object 126, page 3), extracted with pdfimages. Official five-player extension. Interactive spaces use the printed positions; rules and shared placement of linked pairs are unchanged."
     }
   ]
 }

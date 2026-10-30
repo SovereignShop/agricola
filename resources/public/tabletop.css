@@ -66,30 +66,22 @@
 .tt-farm {position:absolute;filter:drop-shadow(2px 6px 4px #31421a48)}
 .tt-farm svg.farm {display:block;width:100%;max-width:none;height:auto;border-radius:3px;background:none}
 .tt-farm-caption {display:flex;gap:20px;margin-top:10px;color:#4c563f;font:calc(16px * var(--text-scale,1)) var(--tt-font)}
-.tt-goods {position:absolute;width:144px;height:96px;display:flex;align-items:center;justify-content:center;padding:8px 18px 24px;cursor:default}
-.tt-goods>.tt-handle {position:absolute;left:0;top:15px}
-.tt-goods .piece-pile {display:block;width:76px;height:52px}
-.tt-goods .piece-pile .piece {width:40px;height:40px;filter:drop-shadow(1px 3px 2px #0005)}
-.tt-goods .pile-count {position:absolute;right:0;bottom:0;padding:0 5px;border-radius:12px;background:#f7edce;color:#3d432f;box-shadow:0 1px 3px #0004;font-size:calc(18px * var(--text-scale,1))}
-.tt-goods-name {position:absolute;bottom:5px;left:22px;right:0;text-align:center;font:calc(15px * var(--text-scale,1)) var(--tt-font);color:#425035}
 .tt-handle {width:25px;min-width:25px;min-height:28px;padding:0;border:0;background:transparent;color:#626b4c;opacity:.38;cursor:grab;touch-action:none;font-size:22px;line-height:1}
-.tt-handle:hover,.tt-handle:focus-visible,.tt-deck:hover .tt-handle,.tt-goods:hover .tt-handle {opacity:1;background:#f5edce60}
+.tt-handle:hover,.tt-handle:focus-visible,.tt-deck:hover .tt-handle {opacity:1;background:#f5edce60}
 .is-moving {z-index:1000!important;filter:drop-shadow(5px 12px 10px #34402644)}
 .is-moving .tt-handle {cursor:grabbing}
 .tt-deck {position:absolute;cursor:default}
 .tt-deck-heading {display:flex;align-items:center;gap:5px;min-height:34px;margin-bottom:8px;border-bottom:1px solid #53603c45;color:#434d35}
 .tt-deck-heading>strong {font:calc(15px * var(--text-scale,1)) var(--tt-font);flex:1}
 .tt-deck-count {font-size:calc(12px * var(--text-scale,1));opacity:.7}
-.tt-deck-heading>button:not(.tt-handle),.tt-deck-browse button {background:transparent;border:0;padding:4px;color:#465438;font-size:calc(12px * var(--text-scale,1));border-radius:3px}
-.tt-deck-heading>button:hover,.tt-deck-browse button:hover {background:#f5edce60}
+.tt-deck-heading>button:not(.tt-handle) {background:transparent;border:0;padding:4px;color:#465438;font-size:calc(12px * var(--text-scale,1));border-radius:3px}
+.tt-deck-heading>button:hover {background:#f5edce60}
 .tt-deck-cards {position:relative}
 .tt-card {position:absolute;display:block;width:90px;height:140px;border:0;padding:0;border-radius:5px;background:#efe2bd;box-shadow:1px 3px 4px #27351a66;transition:left .2s,top .2s,transform .18s;cursor:pointer;color:#392d1d;text-align:left;overflow:visible}
 .tt-deck-cards.stack .tt-card {width:128px;height:178px}
 .tt-card:hover,.tt-card:focus-visible {outline:2px solid #f5d68c;outline-offset:2px;transform:translateY(-4px);z-index:102!important}
-.tt-card.exposed {box-shadow:3px 9px 10px #27351a77}
 .tt-card-face {position:relative;height:100%;width:100%;overflow:hidden;border-radius:4px;background:#f3e5bc;border:1px solid #7a674a;box-sizing:border-box}
 .tt-card-face>img {width:100%;height:100%;object-fit:fill;pointer-events:none}
-.tt-card-caption {position:absolute;bottom:0;left:0;right:0;padding:3px 4px;background:#f3e7c7ed;font:calc(10px * var(--text-scale,1))/1.15 var(--tt-font);color:#392d1d;text-align:center}
 .tt-printed-card {height:100%;padding:6px;background:linear-gradient(140deg,#fff5d8,#e6d3a1);border:3px solid #bd994a}
 .tt-printed-card>small {display:block;text-transform:uppercase;font-size:calc(6px * var(--text-scale,1));letter-spacing:.5px;text-align:center}
 .tt-printed-card>strong {display:block;font:600 calc(11px * var(--text-scale,1))/1.2 var(--tt-font);margin:5px 0;border-top:1px solid #a48a4e;padding-top:5px}
@@ -99,7 +91,6 @@
 .tt-card-back {background:repeating-linear-gradient(45deg,#61724c 0,#61724c 3px,#687c53 3px,#687c53 5px);border:5px solid #e9d7a6;outline:1px solid #536141;display:flex;align-items:center;justify-content:center;text-align:center;color:#f4e1ad;font:italic 18px var(--tt-font)}
 .tt-card-back small {display:block;font-size:11px;margin-top:20px}
 .tt-empty-deck {display:flex;align-items:center;justify-content:center;width:128px;height:178px;border:1px dashed #65724e5c;border-radius:5px;color:#798465}
-.tt-deck-browse {position:absolute;bottom:0;left:0;display:flex;align-items:center;gap:7px;font-size:calc(12px * var(--text-scale,1));color:#48573a}
 .tt-card-markers {display:flex;flex-wrap:wrap;gap:4px;position:absolute;bottom:20px;left:5px;right:0;pointer-events:none}
 .tt-card-markers>span {display:flex;align-items:center;background:#f8edcaeb;border-radius:4px;box-shadow:0 1px 3px #0005;padding:1px 3px;font-size:calc(12px * var(--text-scale,1))}
 .tt-card-markers .piece {width:22px;height:22px}
@@ -123,7 +114,6 @@
 .tt-inspection .tt-printed-card>small {font-size:calc(12px * var(--text-scale,1))}
 .tt-inspection .tt-printed-card>strong {font-size:calc(23px * var(--text-scale,1))}
 .tt-inspection .tt-printed-card>p {font-size:calc(17px * var(--text-scale,1));padding:8px}
-.tt-inspection .tt-card-caption {font-size:calc(14px * var(--text-scale,1))}
 .tt-inspection .tt-card-markers {position:static;margin-top:20px}
 .tt-menu {display:flex;flex-wrap:wrap;gap:12px}
 .tt-menu>p {flex-basis:100%}
@@ -146,17 +136,15 @@
 .tt-viewport,.tt-canvas {background-color:var(--surface);background-image:var(--cloth);background-size:640px 640px;background-repeat:repeat}
 .tt-world {background:none;box-shadow:inset 0 0 80px #4632210c}
 .tt-world::before {border-color:#e4cf9a99;outline-color:#47372333}
-.tt-board-title,.tt-player-title,.tt-player-title>button,.tt-board-title h1,.tt-goods-name,.tt-farm-caption,.tt-deck-heading,.tt-deck-browse,.tt-round-note,.tt-round-note p,.tt-handle,.tt-deck-heading>button:not(.tt-handle),.tt-deck-browse button {color:var(--table-ink)}
+.tt-board-title,.tt-player-title,.tt-player-title>button,.tt-board-title h1,.tt-farm-caption,.tt-deck-heading,.tt-round-note,.tt-round-note p,.tt-handle,.tt-deck-heading>button:not(.tt-handle) {color:var(--table-ink)}
 .tt-board-title h1 {text-shadow:none}
 .tt-board-title,.tt-player-title,.tt-deck-heading,.tt-farm-caption,.tt-round-note {background:var(--label);border-radius:3px}
 .tt-board-title {padding:10px 14px;margin-bottom:20px}
 .tt-player-title {width:max-content;max-width:100%;padding:5px 12px;margin-left:24px}
-.tt-goods-name {background:var(--label);border-radius:3px}
 .tt-farm-caption {padding:4px 8px;width:max-content;max-width:100%}
 .tt-deck-heading {border-bottom-color:#776b4c66}
 .tt-round-note {padding:18px 22px}
 .tt-empty-deck {color:var(--table-muted);border-color:#9e8a6566}
-.tt-deck-browse {background:var(--label);border-radius:3px}
 .tt-material-picker {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
 .tt-material-picker>button {padding:7px;background:#eee3cb;border:2px solid transparent;border-radius:6px;color:#3f3a28;text-align:left}
 .tt-material-picker>button[aria-pressed=true] {border-color:#64724d;box-shadow:0 0 0 2px #64724d44}
@@ -168,11 +156,55 @@
 .tt-game[data-material=checkered] {--cloth-wash:#e9ecd14d}
 .tt-game[data-material=leather] {--cloth-wash:#50311e44}
 .tt-viewport,.tt-canvas {background-image:linear-gradient(var(--cloth-wash),var(--cloth-wash)),var(--cloth)}
-.tt-deck-browse {z-index:110}
-.tt-shared .extension-spaces {grid-template-columns:repeat(8,minmax(0,1fr))}
 .tt-player.tt-arranging::before {border:2px dashed #a77c32;box-shadow:0 0 0 5px #fff3bf22}
 .tt-player.tt-arranging .tt-farm {outline:1px dashed #e2b967;outline-offset:12px}
 .tt-modal .table-dialog:has(.tt-simple-action) {width:700px}
 .tt-simple-action .action-editor>.eyebrow,.tt-simple-action .action-editor>h3 {display:none}
 .tt-placement-confirmation button {background:#f5ebd4;border:1px solid #b3a27a;border-radius:4px;padding:7px 12px;color:#4b4733;font:calc(13px * var(--text-scale,1)) var(--tt-font)}
 .tt-placement-confirmation button:hover {background:#fff4d7;border-color:#82704b}
+
+/* A player's entire positive inventory moves as one quiet strip. */
+.tt-inventory {position:absolute;display:flex;align-items:center;gap:0;height:64px;padding:6px 10px 6px 4px;box-sizing:border-box;background:var(--label);border-radius:4px;cursor:default}
+.tt-inventory>.tt-handle {flex:none;margin-right:8px}
+.tt-resource {display:inline-flex;align-items:center;justify-content:center;flex:0 1 64px;gap:3px;min-width:0;color:var(--table-ink);font:calc(20px * var(--text-scale,1)) var(--tt-font)}
+.tt-resource .piece {width:32px;height:36px;object-fit:contain;filter:drop-shadow(1px 2px 1px #0005)}
+.tt-resource .pile-count {position:static;background:none;padding:0;border:0;box-shadow:none;color:inherit;font:inherit}
+.tt-inventory:hover>.tt-handle {opacity:1}
+.tt-player::before {top:145px}
+.tt-deck-cards.stack .tt-card:hover,.tt-deck-cards.stack .tt-card:focus-visible {transform:none;z-index:var(--stack-index)!important;outline:2px solid #ead49e;outline-offset:0}
+.tt-printed-card>strong {margin:0 0 5px;padding:0;border:0}
+.tt-card:disabled {opacity:1;cursor:default}
+/* Printed names on scanned cards remain visible; no caption covers the art. */
+.major-card-art {display:block;width:100%;aspect-ratio:339/527;background-size:1000% 700%;background-repeat:no-repeat;border-radius:4px}
+.tt-card-face>.major-card-art {height:100%;aspect-ratio:auto}
+.major-card-art.improvement-art {width:143px;height:auto}
+.card-choice-picker {margin:14px 0}
+.card-choice-spread {display:flex;flex-wrap:wrap;align-items:flex-start;gap:14px;margin:10px 0 16px;overflow:visible}
+.card-choice {display:block;width:160px;height:236px;padding:0;border:0;background:#eee2c6;border-radius:5px;box-shadow:1px 4px 7px #352c2444;transition:transform .15s,box-shadow .15s;text-align:left;cursor:pointer}
+.card-choice:hover {transform:translateY(-3px);box-shadow:2px 7px 12px #352c2455}
+.card-choice[aria-pressed=true] {outline:3px solid #697c45;outline-offset:3px;box-shadow:0 0 0 6px #697c4525}
+.card-choice:disabled {opacity:.5;cursor:default}
+.card-choice .tt-printed-card>strong {font-size:calc(16px * var(--text-scale,1))}
+.card-choice .tt-printed-card>small {font-size:calc(8px * var(--text-scale,1))}
+.card-choice .tt-printed-card>p {font-size:calc(11px * var(--text-scale,1))}
+.unavailable-cards {margin:12px 0;color:#73634c}
+.tt-modal .table-dialog:has(.card-choice-spread) {width:1100px}
+/* The publisher's five-player extension replaces the three/four-player strip
+   at the left of the main board. All eleven spaces occupy their printed spots. */
+.five-player-board {position:relative}
+.tt-shared .five-player-board .physical-board,.tabletop-main .five-player-board .physical-board {width:1080px;margin-left:320px}
+.five-printed-board {position:absolute;left:0;top:0;width:480px;height:674px;z-index:2}
+.five-printed-board>img {display:block;width:100%;height:100%;border-radius:4px;box-shadow:0 4px 7px #34412555}
+.five-printed-space {position:absolute}
+.five-printed-space .action-card {position:relative;width:100%;height:100%;min-height:0;padding:3px;border:1px solid #81754999;border-radius:3px;background:#fff7d9ea;gap:2px;overflow:hidden;box-shadow:0 1px 2px #192d1855}
+.five-printed-space .action-card strong {font:600 calc(11px * var(--text-scale,1))/1.05 var(--tt-font)}
+.five-printed-space .action-top,.five-printed-space .action-description,.five-printed-space .accumulation {display:none}
+.five-printed-space .board-piles {display:flex;flex-wrap:wrap;gap:0;min-height:0}
+.five-printed-space .piece-pile {width:34px;height:32px}
+.five-printed-space .piece {width:24px;height:26px}
+.five-printed-space .pile-count {font-size:calc(11px * var(--text-scale,1));padding:0 3px}
+.five-printed-space .linked-status {font-size:calc(8px * var(--text-scale,1));padding:0}
+.five-printed-space .occupant {font-size:calc(9px * var(--text-scale,1))}
+.five-printed-space .action-card.chosen {transform:scale(1.1);outline:2px solid #b48b37;z-index:20}
+.five-printed-space:has(.chosen) {z-index:10}
+@media(max-width:650px) {.card-choice {width:135px;height:200px}.card-choice-spread {gap:12px}}

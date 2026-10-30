@@ -388,16 +388,21 @@
      (when id [board-action g id can-play? draft busy? round])]]])
 
 (def five-extension-spaces #{:copse :grove :hollow :market :traveling :riverbank :house-building :modest-growth :animal-market :lessons-copse :lessons-growth})
+(def five-board-spaces
+  ;; Coordinates on the publisher's 206 x 289 five-player board diagram.
+  {:lessons-copse [69 5 53 42] :copse [156 6 28 40]
+   :riverbank [98 55 25 49] :grove [126 59 29 43]
+   :lessons-growth [69 112 64 43] :modest-growth [139 112 47 43]
+   :animal-market [69 164 46 68] :market [127 164 57 27] :hollow [128 195 28 37]
+   :house-building [69 238 56 46] :traveling [154 246 30 37]})
 (defn five-extension [g can-play? draft busy?]
-  [:section.five-extension {:aria-label "Five-player action spaces"}
-   [:h3 "Five-player village"]
-   [:p.small "Linked spaces share one placement per round. Goods remain on a blocked accumulation space."]
-   [:div.extension-spaces
-    (for [[i pair] (map-indexed vector [[:lessons-copse :copse] [:lessons-growth :modest-growth] [:house-building :traveling]
-                                       [:riverbank] [:grove] [:hollow] [:market] [:animal-market]])] ^{:key i}
-      [:div {:class (if (> (count pair) 1) "linked-pair" "extension-single")}
-       (when (> (count pair) 1) [:small "Linked · choose one"])
-       (for [id pair :when (some #{id} (:active g))] ^{:key id} [board-action g id can-play? draft busy? nil true])])]])
+  [:div.five-printed-board {:role "group" :aria-label "Five-player action spaces"}
+   [:img {:src (art/url "five-player-board.jpg") :alt "Official five-player board extension; three linked pairs" :draggable false}]
+   (for [[id [x y w h]] five-board-spaces :when (some #{id} (:active g))] ^{:key id}
+     [:div.five-printed-space {:data-action id :data-linked-group (some-> (five/linked-groups id) name)
+                               :style {:left (str (* 100 (/ x 206)) "%") :top (str (* 100 (/ y 289)) "%")
+                                       :width (str (* 100 (/ w 206)) "%") :height (str (* 100 (/ h 289)) "%")}}
+      [board-action g id can-play? draft busy? nil true]])])
 (defn card-action-spaces [g can-play? busy?]
   (let [pid (:turn g) spaces (card-game/card-spaces g pid)]
     (when (seq spaces)
@@ -422,10 +427,10 @@
         revealed (vec (drop (count base) (:active g)))]
     [:section.action-board
      [:div.section-heading [:div [:div.eyebrow "THE VILLAGE"] [:h2 "Make your move."]] [:span.small "One person. One action."]]
-     [:div.board-scroll {:role "region" :aria-label "Agricola board; scroll horizontally on small screens" :tab-index 0}
+     [:div.board-scroll {:class (when (= 5 (count (:players g))) "five-player-board") :role "region" :aria-label "Agricola board; scroll horizontally on small screens" :tab-index 0}
       [:div.action-grid.physical-board
        [:img.board-art {:src (art/url "board.png") :alt "Original Agricola Revised Edition board, Korean printing; English actions overlaid" :draggable false}]
-       (for [id [:copse :grove :market :hollow :traveling] :when (or (= 5 (count (:players g))) (not (some #{id} (:active g))))] ^{:key (str "closed-" id)}
+       (for [id [:copse :grove :market :hollow :traveling] :when (and (not= 5 (count (:players g))) (not (some #{id} (:active g))))] ^{:key (str "closed-" id)}
          [:div.closed-board-space {:style (board-position g id)} [:span (if (= 5 (count (:players g))) "Use five-player village below" "Additional players")]])
        [:div.closed-board-space {:style {:left "0.6%" :top "52%" :width "14.5%" :height "13%"}}
         [:span (if (= :cards (:variant g)) "Additional players" "Beginner game") [:br] (when-not (= :cards (:variant g)) "No occupations")]]
@@ -435,20 +440,37 @@
        ;; Future identities are neither requested nor rendered in the browser.
        (for [round (range 1 15)] ^{:key round}
          [round-card g round (get revealed (dec round)) can-play? draft busy?])
-       [future-round-markers g]]]
-     (when (= 5 (count (:players g))) [five-extension g can-play? draft busy?])
+       [future-round-markers g]]
+      (when (= 5 (count (:players g))) [five-extension g can-play? draft busy?])]
      [card-action-spaces g can-play? busy?]]))
+(declare card-action-error)
+(defn card-choice [cid selected? choose! & [attrs]]
+  [:button.card-choice (merge {:type "button" :aria-label (:name (tabletop/card-info cid))
+                               :aria-pressed (boolean selected?) :on-click choose!} attrs)
+   [tabletop/card-face cid false nil]])
 (defn improvement-select [g p draft & [effect]]
-  [:div
-   [field "Major improvement"
-    [:select {:value (or (some-> (:improvement draft) name) "") :on-change #(draft! :improvement (when (seq (.. % -target -value)) (keyword (.. % -target -value))))}
-     [:option {:value ""} "Choose an improvement…"]
-     (for [id (sort (:available-improvements g)) :when (or (nil? (:major-ids effect)) (contains? (:major-ids effect) id)) :let [card (a/improvements id) cost (a/improvement-cost p id nil {:cost (:major-cost effect)})]] ^{:key id}
-       [:option {:value (name id)} (str (:name card) " · " (str/join ", " (for [[r n] cost] (str n " " (name r)))) " · " (:points card) " VP")])]]
-   (when (:upgrade (a/improvements (:improvement draft)))
-     [field "Payment" [:select {:value (if (:upgrade draft) (subs (str (:upgrade draft)) 1) "") :on-change #(draft! :upgrade (when (seq (.. % -target -value)) (keyword (.. % -target -value))))}
-                       [:option {:value ""} "Pay clay"]
-                       (for [id (a/fireplace-upgrades p)] ^{:key id} [:option {:value (subs (str id) 1)} (str "Return " (:name (a/improvement-definition id)))])]] )])
+  (let [ui @(rf/subscribe [:ui])
+        candidates (for [id (sort (:available-improvements g))
+                         :when (or (nil? (:major-ids effect)) (contains? (:major-ids effect) id))
+                         :let [base (-> draft (assoc :improvement id :bake-grain 0) (dissoc :card :upgrade))
+                               options (cons base (when (:upgrade (a/improvements id))
+                                                    (map #(assoc base :upgrade %) (a/fireplace-upgrades p))))
+                               playable (first (filter #(nil? (card-action-error g (:id p) % ui)) options))]]
+                     {:id id :playable playable :reason (when-not playable (card-action-error g (:id p) base ui))})]
+    [:div.card-choice-picker
+     [:h4 "Major improvement"]
+     [:div.card-choice-spread {:role "group" :aria-label "Playable major improvements"}
+      (for [{:keys [id playable]} candidates :when playable] ^{:key id}
+        [card-choice id (= id (:improvement draft))
+         #(do (draft! :improvement id) (when (:upgrade playable) (draft! :upgrade (:upgrade playable))))])]
+     (when-not (some :playable candidates) [:p.small "No major improvements are playable with the current choices."])
+     (when (some :reason candidates)
+       [:details.unavailable-cards [:summary "Unavailable major improvements"]
+        (for [{:keys [id reason]} candidates :when reason] ^{:key id} [:p.small (str (:name (a/improvements id)) ": " reason)])])
+     (when (:upgrade (a/improvements (:improvement draft)))
+       [field "Payment" [:select {:value (if (:upgrade draft) (subs (str (:upgrade draft)) 1) "") :on-change #(draft! :upgrade (when (seq (.. % -target -value)) (keyword (.. % -target -value))))}
+                         [:option {:value ""} "Pay clay"]
+                         (for [id (a/fireplace-upgrades p)] ^{:key id} [:option {:value (subs (str id) 1)} (str "Return " (:name (a/improvement-definition id)))])]])]))
 (defn with-private-hand [g pid ui]
   (assoc-in g [:players pid :hand] (get-in ui [:private-hands (:game-id ui) pid])))
 (defn extra-action-options [g]
@@ -472,6 +494,7 @@
   (try
     (let [g (with-private-hand g pid ui)]
       (cond
+        (not= :cards (:variant g)) (a/apply-action (assoc g :defer-advance? true) pid (action-command draft))
         (#{:sidekick :extra-action} (get-in g [:effect-queue 0 :effect :op])) (card-game/resolve-choice g pid {:decision (:decision-id g) :action-command (action-command draft)})
         (= :young-artist (get-in g [:effect-queue 0 :effect :op])) (card-game/resolve-choice g pid {:decision (:decision-id g) :action :play :card (:card draft)})
         (#{:scholar :card-action :freshman-bake} (get-in g [:effect-queue 0 :effect :op]))
@@ -486,20 +509,25 @@
     [:div
      (when (and (= kind :occupation) (cards/has? p :a028))
        [field "Wood for occupation cost" [number-input (get draft :occupation-wood 0) #(draft! :occupation-wood %) 3]])
-     [field (if (= kind :occupation) "Occupation" "Minor improvement")
-     [:select {:aria-label (if (= kind :occupation) "Occupation" "Minor improvement")
-               :value (or (some-> (:card draft) str) "")
-               :on-change #(draft! :card (let [value (.. % -target -value)] (when (seq value) (keyword (subs value 1)))))}
-      [:option {:value ""} (if optional? (if (= :freshman-bake (get-in g [:effect-queue 0 :effect :op])) "Bake bread instead" "None / use a major improvement") "Choose a card…")]
-      (for [id hand :let [reason (card-action-error g pid (-> draft (assoc :card id) (dissoc :improvement :upgrade :bake-grain :payment-option)) ui)]] ^{:key id}
-        [:option {:value (str id) :disabled (boolean reason)}
-         (str (:name (cards/card id)) (when reason (str " — " reason)))])]]
+     [:div.card-choice-picker
+      [:h4 (if (= kind :occupation) "Occupation" "Minor improvement")]
+      (when optional? [button (if (= :freshman-bake (get-in g [:effect-queue 0 :effect :op])) "Bake bread instead" "No hand card")
+                       #(draft! :card nil) "text-button"])
+      (let [choices (mapv (fn [id] {:id id :reason (card-action-error g pid (-> draft (assoc :card id) (dissoc :improvement :upgrade :bake-grain :payment-option)) ui)}) hand)]
+        [:div
+         [:div.card-choice-spread {:role "group" :aria-label (if (= kind :occupation) "Playable occupations" "Playable minor improvements")}
+          (for [{:keys [id reason]} choices :when (nil? reason)] ^{:key id}
+            [card-choice id (= id (:card draft)) #(draft! :card id)])]
+         (when-not (some #(nil? (:reason %)) choices) [:p.small "No cards of this type are playable with the current choices."])
+         (when (some :reason choices)
+           [:details.unavailable-cards [:summary "Unavailable cards"]
+            (for [{:keys [id reason]} choices :when reason] ^{:key id} [:p.small (str (:name (cards/card id)) ": " reason)])])])]
      (when (= :return-cooking (:cost (cards/card (:card draft))))
        [:div
-        [field "Return cooking improvement"
-         [:select {:aria-label "Return cooking improvement" :value (name (or (:return-improvement draft) (first (a/returnable-cooking p)) :none))
-                   :on-change #(draft! :return-improvement (keyword (.. % -target -value)))}
-          (for [id (a/returnable-cooking p)] ^{:key id} [:option {:value (name id)} (:name (a/improvements id))])]]
+        [:h4 "Return cooking improvement"]
+        [:div.card-choice-spread {:role "group" :aria-label "Return cooking improvement"}
+         (for [id (a/returnable-cooking p)] ^{:key id}
+           [card-choice id (= id (or (:return-improvement draft) (first (a/returnable-cooking p)))) #(draft! :return-improvement id)])]
         (when-not (= #{:major} (get-in g [:effect-queue 0 :effect :kinds]))
           [:label.checkbox [:input {:type "checkbox" :checked (boolean (:as-major? draft))
                                     :on-change #(draft! :as-major? (.. % -target -checked))}]
@@ -639,12 +667,12 @@
      [:div.eyebrow "RESOLVE A CARD EFFECT"] [:h3 (if (= op :ability-window) "After the harvest" (or (:name (cards/card (:card head))) (when (#{:sow :sow-offer} op) "Sow crops") "Make room for your animals"))]
      (when (= op :paper-knife)
        [:div [:p.small "Choose three occupations. One will be selected randomly and played for free."]
-        (for [cid (get-in (with-private-hand g (:id p) ui) [:players (:id p) :hand :occupation])]
-          ^{:key cid} [:label.checkbox
-                      [:input {:type "checkbox" :aria-label (str "Offer " (:name (cards/card cid)))
-                               :checked (boolean (some #{cid} (:cards draft)))
-                               :on-change #(dispatch :draft-card cid (.. % -target -checked))}]
-                      (:name (cards/card cid))])])
+        [:div.card-choice-spread {:role "group" :aria-label "Occupations to offer"}
+         (for [cid (get-in (with-private-hand g (:id p) ui) [:players (:id p) :hand :occupation])
+               :let [selected? (boolean (some #{cid} (:cards draft)))]] ^{:key cid}
+           [card-choice cid selected? #(dispatch :draft-card cid (not selected?))
+            {:aria-label (str "Offer " (:name (cards/card cid)))
+             :disabled (and (not selected?) (>= (count (:cards draft)) 3))}])]])
      (when (= op :ability-window) [:p.small "You may use your card abilities before continuing to the next round or final scoring."])
      (when (and (= op :take-pile-good) (nil? (:space effect)))
        [field "Accumulation space"
@@ -777,11 +805,10 @@
                                       [:option {:value (name animal)} (labels animal)])]]])
      (when (= op :bake) [field "Grain to bake" [number-input (get draft :effect-grain 1) #(draft! :effect-grain %) (a/amount p :grain)]])
      (when (= op :bake-one)
-       [field "Baking improvement" [:select {:value (if (:improvement draft) (subs (str (:improvement draft)) 1) "")
-                                            :on-change #(draft! :improvement (when (seq (.. % -target -value)) (keyword (.. % -target -value))))}
-                                   [:option {:value ""} "Choose a baking improvement…"]
-                                   (for [id (a/baking-improvement-ids p)] ^{:key id}
-                                     [:option {:value (subs (str id) 1)} (str (:name (a/improvement-definition id)) " · 1 grain → " (:bake (a/improvement-definition id)) " food")])]])
+       [:div [:h4 "Baking improvement"]
+        [:div.card-choice-spread {:role "group" :aria-label "Baking improvement"}
+         (for [id (a/baking-improvement-ids p)] ^{:key id}
+           [card-choice id (= id (:improvement draft)) #(draft! :improvement id)])]])
      (when (= op :take-field-crop)
        [:div
         [field "Vegetable field" [:select {:value (if (some? (:cell draft)) (str (:cell draft)) "")
@@ -970,7 +997,7 @@
                                   :aria-label (str (:name card) " · " (str/join ", " (map (fn [[r n]] (str n " " (name r))) (:cost card))))
                                   :style (when-not @all? {:top (str (* i 31) "px") :left (if open? "min(162px, calc(100% - 150px))" (str (* i 2) "px")) :z-index (if open? 20 i)})
                                   :on-click #(reset! exposed (when-not open? id))}
-             [:img {:src (art/card-url id) :alt (str (:name card) " — scanned Korean edition card") :draggable false}]
+             [art/major-card id {:aria-label (str (:name card) " · original English card")}]
              [:span.card-name (:name card) [:small (str (:points card) " VP")]]])]
          [:p.empty-lane "Build a major improvement to add its card here."])
        (when selected
@@ -981,7 +1008,7 @@
          [:div [played-hand-stack "Minor improvements" (:minors p) p] [played-hand-stack "Occupations" (:occupations p) p]]
          [:div [:div.card-lane-heading [:strong "Occupations & minor improvements"] [:span "0"]]
           [:p.empty-lane "This table uses the beginner variant without hand cards."]])
-       [:p.art-credit "Major scans: Korean · hand cards: English. " [:a {:href "/art/agricola/sources.html" :target "_blank" :rel "noreferrer"} "Artwork sources ↗"]]])))
+       [:p.art-credit "Major and hand-card scans: English. " [:a {:href "/art/agricola/sources.html" :target "_blank" :rel "noreferrer"} "Artwork sources ↗"]]])))
 
 (defn chat-panel [room]
   (let [ui @(rf/subscribe [:ui]) permission @(rf/subscribe [:permission])
@@ -1022,11 +1049,11 @@
        [:tr [:td "Building resources"] (for [[i score] (map-indexed vector scores)] ^{:key i} [:td (:tiebreak score)])]]]]]))
 (defn improvement-library [g]
   [:section.panel [:div.eyebrow "TOOLS FOR A BETTER FARM"] [:h2 "Major improvements"]
-   [:p.small "All 10 base-game major improvements are available here. Original Korean card scans accompany the English effects enforced by the game. In card mode, private occupations and minor improvements appear in your hand panel. Pack coverage is shown in table setup."]
+   [:p.small "All 10 base-game major improvements are available here. Original English card scans accompany the effects enforced by the game. In card mode, private occupations and minor improvements appear in your hand panel. Pack coverage is shown in table setup."]
    [:div.improvement-grid
     (for [[id card] (sort-by (comp :name val) a/improvements)] ^{:key id}
       [:div.improvement-card {:class (when-not ((:available-improvements g) id) "built")}
-       [:img.improvement-art {:src (art/card-url id) :alt (str (:name card) " — original Korean edition card")} ]
+       [art/major-card id {:class "major-card-art improvement-art" :aria-label (str (:name card) " · original English card")}]
        [:div.section-heading [:strong (:name card)] [:span (str (:points card) " VP")]]
        [improvement-effects card]
        [:span.small (if ((:available-improvements g) id) "Available" (str "Built by " (:name (first (filter #((:improvements %) id) (:players g))))))]])]])

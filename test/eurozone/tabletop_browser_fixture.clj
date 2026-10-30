@@ -25,5 +25,15 @@
                   (update-in [:players 0] a/gain {:wood 2})
                   (reactive/watch-wood 0)
                   (cards/command 0 {:type :action :space :wood}))]
-    (store/save! s (-> @(:rooms s) (assoc-in [online :state] private-game) (assoc-in [effect-id :state] horse)))
-    (println (str/join "," [id online effect-id]))))
+    (store/save! s (swap! (:rooms s) #(-> % (assoc-in [online :state] private-game) (assoc-in [effect-id :state] horse))))
+    (let [make-major (fn [upgrade?]
+                       (let [mid (:id (store/transact! s token {:event :create :mode :local :name "Ada" :names ["Ada" "Ben"]
+                                                               :title "Major card choices" :setup {:mode :random}}))
+                             order (vec (cons :improvement (remove #{:improvement} (mapcat identity a/stages))))
+                             state (cond-> (cards/initialize (a/new-game ["Ada" "Ben"] order 0))
+                                     upgrade? (update-in [:players 0 :improvements] conj :fireplace-2)
+                                     upgrade? (update :available-improvements disj :fireplace-2)
+                                     (not upgrade?) (update-in [:players 0] a/gain {:clay 2}))]
+                         (store/save! s (swap! (:rooms s) assoc-in [mid :state] state)) mid))
+          major (make-major false) upgrade (make-major true)]
+      (println (str/join "," [id online effect-id major upgrade])))))

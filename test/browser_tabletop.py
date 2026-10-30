@@ -9,7 +9,7 @@ from browser_smoke import main
 
 
 def check(base, fixtures):
-    five, online, optional = fixtures.split(',')
+    five, online, optional, major, upgrade = fixtures.split(',')
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=True, executable_path=os.environ['EUROZONE_BROWSER'])
         context = browser.new_context(viewport={'width':1680,'height':1050})
@@ -44,6 +44,15 @@ def check(base, fixtures):
 
         open_game(five)
         expect(page.locator('.tt-player')).to_have_count(5)
+        inventory=page.locator('.tt-inventory[data-inventory="0"]')
+        expect(inventory.locator('[data-goods]')).to_have_count(5)
+        expect(inventory.locator('[data-goods="grain"],[data-goods="sheep"]')).to_have_count(0)
+        farm=page.locator('.tt-player[data-player="0"] .tt-farm')
+        assert abs(inventory.bounding_box()['width']-farm.bounding_box()['width'])<1
+        assert inventory.bounding_box()['y']+inventory.bounding_box()['height']<farm.bounding_box()['y']
+        expect(page.locator('.five-extension')).to_have_count(0)
+        expect(page.locator('.five-printed-board .action-card')).to_have_count(11)
+        assert page.locator('.five-printed-board').bounding_box()['x']<page.locator('.physical-board').bounding_box()['x']
         expect(page.locator('.tile-grid,.table-tile,.tile-content')).to_have_count(0)
         expect(page.locator('.round-card-slot[data-revealed=false]')).to_have_count(13)
         assert page.locator('.round-card-slot[data-revealed=false] .round-card-front').evaluate_all('(els)=>els.every(e=>!e.textContent.trim())')
@@ -68,11 +77,12 @@ def check(base, fixtures):
         close()
         deck.get_by_role('button',name='Stack Hand · occupations',exact=True).click()
         expect(deck).to_have_attribute('data-mode','stack')
-        deck.get_by_role('button',name='Next in Hand · occupations',exact=True).click()
-        expect(deck.locator('.tt-card.exposed')).to_have_count(1)
-        deck.get_by_role('button',name='Read card',exact=True).click()
+        expect(deck.locator('.tt-card-caption,.tt-deck-browse')).to_have_count(0)
+        deck.get_by_role('button',name='Wood Cutter',exact=True).click(position={'x':50,'y':10})
         expect(page.get_by_role('dialog',name='Wood Cutter',exact=True)).to_be_visible()
         close()
+        expect(deck).to_have_attribute('data-mode','stack')
+        expect(deck.locator('.exposed')).to_have_count(0)
         deck.get_by_role('button',name='Spread Hand · occupations',exact=True).click()
         # Drag at a non-unit zoom: camera scale must not affect saved coordinates.
         revision=page.locator('.game').get_attribute('data-revision')
@@ -87,8 +97,8 @@ def check(base, fixtures):
         handle.focus();page.keyboard.press('ArrowRight')
         expect(deck).to_have_attribute('data-x',str(moved[0]+16))
         moved=position(deck)
-        goods=page.locator('.tt-player[data-player="0"] [data-goods="wood"]')
-        gh=goods.get_by_role('button',name='Move Ada wood',exact=True)
+        goods=page.locator('.tt-inventory[data-inventory="0"]')
+        gh=goods.get_by_role('button',name='Move Ada resources',exact=True)
         before_goods=position(goods)
         gh.focus();page.keyboard.press('ArrowDown')
         expect(goods).to_have_attribute('data-y',str(before_goods[1]+16))
@@ -145,6 +155,22 @@ def check(base, fixtures):
         page.get_by_role('button',name='Continue',exact=True).click()
         expect(page.get_by_role('dialog')).to_have_count(0)
         expect(page.locator('.tt-player[data-player="0"] [aria-label="Farm space 5: field"]')).to_have_count(0)
+        # Card choices are playable image spreads; unmet prerequisites are excluded.
+        action('Meeting Place')
+        minors=page.get_by_role('group',name='Playable minor improvements',exact=True)
+        expect(minors.get_by_role('button',name='Beanfield',exact=True)).to_have_count(0)
+        expect(page.get_by_role('combobox',name='Minor improvement',exact=True)).to_have_count(0)
+        page.get_by_role('button',name='Choose another space',exact=True).click()
+        action('Lessons')
+        occupations=page.get_by_role('group',name='Playable occupations',exact=True)
+        expect(occupations.locator('.card-choice')).to_have_count(7)
+        occupations.get_by_role('button',name='Wood Cutter',exact=True).click()
+        expect(occupations.get_by_role('button',name='Wood Cutter',exact=True)).to_have_attribute('aria-pressed','true')
+        confirm()
+        expect(page.locator('[data-owner="0"][data-deck="occupations"] .tt-card')).to_have_count(1)
+        action('Copse')
+        confirm()
+        expect(page.locator('.five-printed-space[data-action="lessons-copse"] .action-card')).to_be_disabled()
         # Small viewports still have one camera and a fitting modal; Ctrl+ is text only.
         page.set_viewport_size({'width':390,'height':844})
         focus('Ben')
@@ -165,6 +191,23 @@ def check(base, fixtures):
         expect(page.get_by_role('dialog')).to_have_count(0)
         expect(page.locator('.tt-player[data-player="0"] [data-goods="wood"] .pile-count')).to_have_text('4')
         expect(page.locator('.tt-player[data-player="0"] [data-goods="food"] .pile-count')).to_have_text('5')
+        # Only affordable English major cards are offered, including returning a fireplace.
+        open_game(major)
+        action('Major or Minor Improvement')
+        major_cards=page.get_by_role('group',name='Playable major improvements',exact=True)
+        expect(major_cards.locator('.card-choice')).to_have_count(1)
+        expect(major_cards.locator('.major-card-art')).to_have_count(1)
+        assert 'majors-en.jpg' in major_cards.locator('.major-card-art').get_attribute('style')
+        major_cards.get_by_role('button',name='Fireplace',exact=True).click()
+        confirm()
+        expect(page.locator('[data-owner="0"][data-deck="improvements"] .major-card-art')).to_have_count(1)
+        open_game(upgrade)
+        action('Major or Minor Improvement')
+        expect(major_cards.locator('.card-choice')).to_have_count(2)
+        major_cards.get_by_role('button',name='Cooking Hearth',exact=True).first.click()
+        expect(page.get_by_role('combobox',name='Payment',exact=True)).to_have_value('fireplace-2')
+        confirm()
+        expect(page.locator('[data-owner="0"][data-deck="improvements"] .major-card-art')).to_have_count(1)
         # Real online permissions, including unauthorized actions and hidden cards.
         open_game(online)
         focus('Ben')
@@ -182,7 +225,7 @@ def check(base, fixtures):
         expect(guest.locator('.tt-game')).to_have_attribute('data-material','tan')
         assert guest.evaluate('Object.keys(localStorage).some(k=>k.startsWith("eurozone-tabletop-v1:"))')  # Host prefs exist, but are not used for this user.
         assert not errors,errors
-        print('PASS: five-player camera, no subpanel scroll, deck spread/peek, drag/snap/save, surfaces, placement confirmation, spatial action, mobile, optional effect, takeback, online privacy and per-user isolation',flush=True)
+        print('PASS: five-player camera, no subpanel scroll, deck stack/spread popups, drag/snap/save, surfaces, placement confirmation, spatial action, mobile, optional effect, takeback, online privacy and per-user isolation',flush=True)
         browser.close()
 
 

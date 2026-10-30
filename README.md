@@ -575,10 +575,19 @@ available action to preview it and confirm placement; spatial actions and card
 effects use dialogs with the existing validated rules workflows.
 
 Drag cloth to pan, use Ctrl/Command + wheel or the zoom buttons to zoom, and use
-the percentage button to fit the current view. Drag a deck/resource's `⠿`
-handle to arrange it relative to its farm (or use arrow keys on the handle).
-Positions snap to a small grid and farm edges. Stack, single-card exposure, and
-Spread are supported. Card inspection never reveals another user's hand.
+the percentage button to fit the current view. Drag a deck or resource strip's
+`⠿` handle to arrange it relative to its farm (or use arrow keys on the handle).
+Resources share one farm-width strip above the board, showing only nonzero
+holdings. Positions snap to a small grid and farm edges. Decks have two modes:
+**Stack** and **Spread**. Clicking a card opens its inspection popup without
+moving it out of the deck. Stacks expose the cards' printed titles; inspection
+never reveals another user's hand.
+
+Card choices appear as spreads of playable cards, validated against the native
+rules, with unavailable-card reasons under a disclosure. Major improvements
+use English card scans. The five-player spaces use the publisher's printed
+board extension beside the main board, including its three linked pairs.
+Artwork provenance is recorded in `resources/public/art/agricola/manifest.json`.
 
 **Tablecloth** offers original white linen, natural linen, sage check and cognac
 leather textures. Arrangements, deck modes and material are saved locally per
@@ -599,5 +608,6 @@ Browser integration: `python3 test/browser_tabletop.py` with Playwright and
 `EUROZONE_BROWSER` pointing to Chromium. It starts an isolated server and covers
 five-player camera fitting, no nested scrolling, private hands, deck inspection,
 dragging/snapping/persistence, material selection, placement confirmation,
-spatial actions, optional effects, and mobile controls. The live Discord service
+spatial actions, playable-card selection, fireplace upgrades, optional effects,
+and mobile controls. The live Discord service
 is intentionally not switched to this experimental branch.

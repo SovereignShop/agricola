@@ -19,7 +19,15 @@
                                          (.getItem js/localStorage "eurozone-session") "guest")))
 (defn load-arrangement []
   (try (let [v (some-> (.getItem js/localStorage (storage-key)) reader/read-string)]
-         (if (map? v) v {})) (catch :default _ {})))
+         (if-not (map? v) {:arrangement-version 2}
+           (if (= 2 (:arrangement-version v)) v
+             (assoc (reduce (fn [prefs pid]
+                              (reduce (fn [prefs deck]
+                                        (let [path [pid deck :position] xy (get-in prefs path)]
+                                          (if (and (vector? xy) (= 2 (count xy)) (every? number? xy))
+                                            (update-in prefs path (fn [[x y]] [x (min 2400 (+ y 80))])) prefs)))
+                                      prefs [:hand-occupation :hand-minor :occupations :improvements])) v (range 5))
+                    :arrangement-version 2)))) (catch :default _ {:arrangement-version 2})))
 (defn save-arrangement! [v] (try (.setItem js/localStorage (storage-key) (pr-str v)) (catch :default _ nil)))
 (defn position [prefs path default]
   (let [v (get-in prefs (conj path :position))]
@@ -35,7 +43,7 @@
                  (when-let [drag (when (= path (:path @gesture)) @gesture)]
                    (when-not cancel?
                      (let [[x y] (:position drag) [w h] size
-                           moved [(snap x [24 704 (- 704 w) 24]) (snap y [80 544 (- 544 h) 624])]]
+                           moved [(snap x [24 704 (- 704 w) 24]) (snap y [80 160 644 (- 644 h) 704])]]
                        (swap! prefs assoc-in (conj path :position) moved)
                        (save-arrangement! @prefs)))
                    (reset! gesture nil)))]
@@ -63,7 +71,7 @@
 
 (defn card-info [cid]
   (if-let [card (a/improvements cid)]
-    (assoc card :id cid :image (art/card-url cid) :kind :major)
+    (assoc card :id cid :kind :major)
     (assoc (cards/card cid) :id cid :image (card-art/url cid))))
 (defn card-face [cid hidden? p]
   (let [{:keys [name image text kind]} (when-not hidden? (card-info cid))
@@ -71,9 +79,10 @@
     [:div.tt-card-face {:class (str (when (or hidden? used?) "tt-card-back ") (when kind (cljs.core/name kind)))}
      (cond hidden? [:span "Agricola"]
            used? [:div [:span "Agricola"] [:small (str name " · used")]]
+           (= kind :major) [art/major-card cid]
            image [:img {:src image :alt name :draggable false :loading "lazy"}]
-           :else [:div.tt-printed-card [:small (some-> kind cljs.core/name str/capitalize)] [:strong name] [:p text]])
-     (when-not hidden? [:span.tt-card-caption name])]))
+           :else [:div.tt-printed-card [:strong name] [:small (some-> kind cljs.core/name str/capitalize)] [:p text]])
+     ]))
 (defn card-markers [cid p]
   (let [field (get-in p [:card-fields cid]) state (get-in p [:card-state cid])
         animals (reduce (fn [m slot] (update m (:animal slot) (fnil + 0) (:count slot))) {}
@@ -84,41 +93,33 @@
       [:div.tt-card-markers {:aria-label "Goods on card"}
        (for [[resource n] goods :when (pos? n)] ^{:key resource} [:span [art/piece resource] [:b n]])])))
 (defn deck-size [n spread?]
-  [288 (if spread? (+ 42 (* 154 (max 1 (js/Math.ceil (/ n 3))))) (+ 252 (* 14 (max 0 (dec n)))))])
+  [288 (if spread? (+ 42 (* 154 (max 1 (js/Math.ceil (/ n 3))))) (+ 252 (* 24 (max 0 (dec n)))))])
 (defn deck [descriptor p prefs gesture zoom inspect!]
-  (r/with-let [peek (r/atom nil)]
-    (let [{:keys [path label ids hidden? spread? xy size]} descriptor
-          [x y] (if (= path (:path @gesture)) (:position @gesture) xy)
-          n (count ids) selected (when (and (number? @peek) (< @peek n)) @peek)]
-      [:section.tt-deck {:aria-label label :data-deck (name (last path)) :data-owner (str (first path))
-                         :data-mode (if spread? "spread" "stack") :data-x (first xy) :data-y (second xy)
-                         :class (when (= path (:path @gesture)) "is-moving")
-                         :style {:left (px x) :top (px y) :width (px (first size)) :height (px (second size))}}
-       [:div.tt-deck-heading
-        [move-handle label path xy size prefs gesture zoom]
-        [:strong label] [:span.tt-deck-count n]
-        (when (pos? n)
-          [button (if spread? "Stack" "Spread")
-           #(do (swap! prefs assoc-in (conj path :mode) (if spread? :stack :spread)) (save-arrangement! @prefs))
-           {:aria-label (str (if spread? "Stack " "Spread ") label)}])]
-       (if (zero? n) [:div.tt-empty-deck "—"]
-         [:div.tt-deck-cards {:class (if spread? "spread" "stack")}
-          (for [[i cid] (map-indexed vector ids)] ^{:key (str cid "-" i)}
-            [:button.tt-card {:type "button" :aria-label (if hidden? (str "Private card " (inc i)) (:name (card-info cid)))
-                              :aria-expanded (when-not spread? (= i selected))
-                              :class (when (= selected i) "exposed")
-                              :style (if spread?
-                                       {:left (px (* (mod i 3) 96)) :top (px (* (quot i 3) 154))}
-                                       {:left (px (if (= selected i) 138 (mod i 3))) :top (px (* i 14)) :z-index (if (= selected i) 100 i)})
-                              :on-click #(if (or spread? (= i selected)) (when-not hidden? (inspect! cid p)) (reset! peek i))}
-             [card-face cid hidden? p]
-             (when-not hidden? [card-markers cid p])])])
-       (when (and (not spread?) (pos? n))
-         [:div.tt-deck-browse
-          [button "‹" #(reset! peek (mod (dec (or selected 0)) n)) {:aria-label (str "Previous in " label)}]
-          [:span (if selected (str (inc selected) " / " n) (str n " cards"))]
-          [button "›" #(reset! peek (mod (inc (or selected -1)) n)) {:aria-label (str "Next in " label)}]
-          (when (and selected (not hidden?)) [button "Read card" #(inspect! (nth ids selected) p)])])])) )
+  (let [{:keys [path label ids hidden? spread? xy size]} descriptor
+        [x y] (if (= path (:path @gesture)) (:position @gesture) xy)
+        n (count ids)]
+    [:section.tt-deck {:aria-label label :data-deck (name (last path)) :data-owner (str (first path))
+                       :data-mode (if spread? "spread" "stack") :data-x (first xy) :data-y (second xy)
+                       :class (when (= path (:path @gesture)) "is-moving")
+                       :style {:left (px x) :top (px y) :width (px (first size)) :height (px (second size))}}
+     [:div.tt-deck-heading
+      [move-handle label path xy size prefs gesture zoom]
+      [:strong label] [:span.tt-deck-count n]
+      (when (pos? n)
+        [button (if spread? "Stack" "Spread")
+         #(do (swap! prefs assoc-in (conj path :mode) (if spread? :stack :spread)) (save-arrangement! @prefs))
+         {:aria-label (str (if spread? "Stack " "Spread ") label)}])]
+     (if (zero? n) [:div.tt-empty-deck "—"]
+       [:div.tt-deck-cards {:class (if spread? "spread" "stack")}
+        (for [[i cid] (map-indexed vector ids)] ^{:key (str cid "-" i)}
+          [:button.tt-card {:type "button" :aria-label (if hidden? (str "Private card " (inc i)) (:name (card-info cid)))
+                            :aria-haspopup (when-not hidden? "dialog") :disabled hidden?
+                            :style (if spread?
+                                     {:left (px (* (mod i 3) 96)) :top (px (* (quot i 3) 154))}
+                                     {:left (px (mod i 3)) :top (px (* i 24)) :z-index i :--stack-index i})
+                            :on-click #(when-not hidden? (inspect! cid p))}
+           [card-face cid hidden? p]
+           (when-not hidden? [card-markers cid p])])])]))
 
 (defn player-objects [p hand prefs focus]
   (let [pid (:id p) names [[:hand-occupation "Hand · occupations" :occupation] [:hand-minor "Hand · minors" :minor]
@@ -129,18 +130,18 @@
                                      (if (= id :occupations) (:occupations p) (concat (sort (:improvements p)) (:minors p)))))
                           path [pid id] spread? (= :spread (get-in prefs (conj path :mode) (if (= pid focus) :spread :stack)))]]
                 {:path path :label label :ids ids :hidden? hidden? :spread? spread?
-                 :xy (position prefs path [(+ 24 (* i 312)) 624]) :size (deck-size (count ids) spread?)})
-        bits (for [[i resource] (map-indexed vector a/resources) :let [path [pid resource]]]
-               {:path path :resource resource :xy (position prefs path [(+ 768 (* (mod i 3) 160)) (+ 96 (* (quot i 3) 112))]) :size [144 96]})
-        objects (concat decks bits)]
-    {:decks decks :bits bits :w (max 1280 (+ 28 (apply max (map #(+ (first (:xy %)) (first (:size %))) objects))))
-     :h (max 920 (+ 40 (apply max (map #(+ (second (:xy %)) (second (:size %))) objects))))}))
+                 :xy (position prefs path (nth [[24 704] [376 704] [752 160] [1064 160]] i)) :size (deck-size (count ids) spread?)})
+        inventory {:path [pid :inventory] :xy (position prefs [pid :inventory] [24 80]) :size [680 64]}
+        objects (conj (vec decks) inventory)]
+    {:decks decks :inventory inventory :w (max 1380 (+ 28 (apply max (map #(+ (first (:xy %)) (first (:size %))) objects))))
+     :h (max 1000 (+ 40 (apply max (map #(+ (second (:xy %)) (second (:size %))) objects))))}))
+
 (defn table-geometry [players center-height]
   (let [sides (take 4 players) left-w (apply max 1280 (map :w (take-nth 2 sides)))
         right-w (if (next sides) (apply max 1280 (map :w (take-nth 2 (rest sides)))) 0)
         row-heights (mapv #(apply max (map :h %)) (partition-all 2 sides))
         upper-h (+ 120 (reduce + row-heights) (* 64 (max 0 (dec (count row-heights)))))
-        center-x (+ left-w 104) center-w 1080
+        center-x (+ left-w 104) center-w (if (= 5 (count players)) 1400 1080)
         lower (nth players 4 nil)
         placements (mapv (fn [i p] (assoc p :x (if (even? i) 48 (+ center-x center-w 64))
                                         :y (+ 64 (reduce + (take (quot i 2) row-heights)) (* 64 (quot i 2))))) (range) sides)
@@ -271,7 +272,7 @@
            [:div.tt-major-area {:style {:min-height (px (+ (second (:xy majors)) (second (:size majors)) 32))}} [deck majors nil prefs gesture zoom inspect!]
             [:div.tt-round-note [:strong (str "Round " (:round g))] [:span "Harvests: 4 · 7 · 9 · 11 · 13 · 14"]
              [:p "Drag the cloth to move around the table. Select a player above to bring their farm and cards closer."]]]]
-          (for [{:keys [player decks bits x y w h]} (:players geo) :let [pid (:id player)]] ^{:key pid}
+          (for [{:keys [player decks inventory x y w h]} (:players geo) :let [pid (:id player)]] ^{:key pid}
             [:section.tt-player {:aria-label (str (:name player) " table area") :data-player pid :class (when (= pid (first (:path @gesture))) "tt-arranging")
                                  :style {:left (px x) :top (px y) :width (px w) :height (px h) :--player-color (get colors pid)}}
              [:header.tt-player-title
@@ -279,17 +280,22 @@
               [:span (str (:remaining player) " / " (:family player) " workers ready")]
               (when (= pid (:starting-player g)) [:span "First player"])
               (when (= actor pid) [:strong.tt-turn-token (if (owned pid) "Your turn" "Playing")])]
-             [:div.tt-farm {:style {:left "24px" :top "80px" :width "680px"}}
+             [:div.tt-farm {:style {:left "24px" :top "160px" :width "680px"}}
               [(:farm renderers) player {} false]
               [:div.tt-farm-caption [:span (str (count (:fences player)) " / 15 fences · " (count (filter :stable (:farm player))) " / 4 stables")]
                (when (pos? (:begging player)) [:span (str (:begging player) " begging marks")])]]
-             (for [{:keys [path resource xy size]} bits
-                   :let [[bx by] (if (= path (:path @gesture)) (:position @gesture) xy) amount (a/amount player resource)]] ^{:key resource}
-               [:div.tt-goods {:data-goods (name resource) :data-x (first xy) :data-y (second xy)
-                               :style {:left (px bx) :top (px by)} :class (when (= path (:path @gesture)) "is-moving")}
-                [move-handle (str (:name player) " " (name resource)) path xy size prefs gesture zoom]
-                [:div {:data-piece-key (str "goods:" pid ":" resource) :data-piece-type (name resource) :data-piece-count amount}
-                 [art/pile resource amount]] [:span.tt-goods-name (str/capitalize (name resource))]])
+             (let [{:keys [path xy size]} inventory
+                   [bx by] (if (= path (:path @gesture)) (:position @gesture) xy)]
+               [:section.tt-inventory {:aria-label (str (:name player) " resources")
+                                      :data-inventory pid :data-x (first xy) :data-y (second xy)
+                                      :class (when (= path (:path @gesture)) "is-moving")
+                                      :style {:left (px bx) :top (px by) :width "680px"}}
+                [move-handle (str (:name player) " resources") path xy size prefs gesture zoom]
+                (for [resource a/resources :let [amount (a/amount player resource)] :when (pos? amount)] ^{:key resource}
+                  [:span.tt-resource {:data-goods (name resource) :title (str amount " " (name resource))
+                                      :aria-label (str amount " " (name resource))
+                                      :data-piece-key (str "goods:" pid ":" resource) :data-piece-type (name resource) :data-piece-count amount}
+                   [art/piece resource] [:b.pile-count amount]])])
              (for [d decks] ^{:key (:path d)} [deck d player prefs gesture zoom inspect!])])]]]
        [:div.tt-table-edge [:span "Drag cloth to pan · Ctrl / ⌘ + wheel to zoom · drag ⠿ to arrange"]
         [button "Chat" #(do (reset! dismissed decision-key) (reset! popup {:kind :chat}))]
@@ -330,7 +336,7 @@
              :menu [:div.tt-menu
                     [button "Scoring" #(reset! popup {:kind :scores})]
                     [button "Rules" #(reset! popup {:kind :rules})]
-                    [button "Reset my arrangement" #(do (swap! prefs select-keys [:material]) (save-arrangement! @prefs) (reset! popup nil) (js/requestAnimationFrame (fn [] (fit! true))))]
+                    [button "Reset my arrangement" #(do (swap! prefs select-keys [:material :arrangement-version]) (save-arrangement! @prefs) (reset! popup nil) (js/requestAnimationFrame (fn [] (fit! true))))]
                     [(:recording-picker renderers)]
                     (when (and (:host? permission) (or (= :local (:mode room)) (= :finished (:phase g))))
                       [button "Save recording" #(dispatch :send {:event :recording/request}) {:disabled (:busy? ui)}])
