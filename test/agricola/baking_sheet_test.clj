@@ -64,3 +64,58 @@
     (is (= 1 (get-in done [:players 0 :bonus-points])))
     (is (= 1 (get-in done [:players 0 :remaining])))
     (is (= 1 (:turn done)))))
+
+(deftest freshman-replacement-never-activates-baking-sheet
+  (doseq [oven? [false true]]
+    (let [state (cond-> (-> (ready 2) (own 0 :a097) (hand :a116))
+                  (not oven?) (assoc-in [:players 0 :improvements] #{}))
+          offer (g/command state 0 {:type :action :space :sow-bake :bake-grain 1})
+          done (resolve! (edn/read-string (pr-str offer)) {:card (c/id :a116)})]
+      (is (= :freshman-bake (get-in offer [:effect-queue 0 :effect :op])))
+      (is (c/has? (g/p done 0) :a116))
+      (is (= 0 (delta state done :grain)))
+      (is (= 0 (delta state done :food)))
+      (is (= 0 (get-in done [:players 0 :bonus-points])))
+      (is (empty? (:effect-queue done)))
+      (is (= 1 (get-in done [:players 0 :remaining]))))))
+
+(deftest freshman-can-choose-real-baking-and-then-use-baking-sheet
+  (let [state (-> (ready 2) (own 0 :a097) (hand :a116))
+        offer (g/command state 0 {:type :action :space :sow-bake})
+        sheet (resolve! offer {:grain 1})
+        done (resolve! (edn/read-string (pr-str sheet)) {})]
+    (is (= (c/id :a030) (get-in sheet [:effect-queue 0 :card])))
+    (is (= 4 (delta state done :food)))
+    (is (= -2 (delta state done :grain)))
+    (is (= 1 (get-in done [:players 0 :bonus-points])))
+    (is (not (c/has? (g/p done 0) :a116)))
+    (is (nil? (get-in done [:players 0 :card-state (c/id :a097) :used-turn])))
+    (is (empty? (:effect-queue done)))))
+
+(deftest baking-sheet-triggers-only-for-the-real-bake-after-a-freshman-occupation
+  (let [state (-> (ready 2) (own 0 :a097) (own 0 :b025) (hand :a116))
+        offer (g/command state 0 {:type :action :space :sow-bake})
+        paddle (resolve! offer {:card (c/id :a116)})
+        sheet (resolve! (edn/read-string (pr-str paddle)) {:grain 1})
+        done (resolve! sheet {})]
+    (is (= :bake (get-in paddle [:effect-queue 0 :effect :op])))
+    (is (= 0 (delta state paddle :food)))
+    (is (= (c/id :a030) (get-in sheet [:effect-queue 0 :card])))
+    (is (= 4 (delta state done :food)))
+    (is (= -2 (delta state done :grain)))
+    (is (= 1 (get-in done [:players 0 :bonus-points])))
+    (is (= 1 (:turn done)))
+    (is (= 1 (get-in done [:players 0 :remaining])))
+    (is (empty? (:effect-queue done)))))
+
+(deftest replacing-a-new-ovens-baking-does-not-activate-baking-sheet
+  (let [state (-> (ready 2) (own 0 :a097) (hand :a116) (update :active conj :improvement)
+                  (update-in [:players 0] a/gain {:clay 3 :stone 1}))
+        offer (g/command state 0 {:type :action :space :improvement :improvement :clay-oven :bake-grain 1})
+        done (resolve! offer {:card (c/id :a116)})]
+    (is (contains? (:improvements (g/p done 0)) :clay-oven))
+    (is (c/has? (g/p done 0) :a116))
+    (is (= 0 (delta state done :grain)))
+    (is (= 0 (delta state done :food)))
+    (is (= 0 (get-in done [:players 0 :bonus-points])))
+    (is (empty? (:effect-queue done)))))
