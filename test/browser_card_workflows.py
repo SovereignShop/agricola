@@ -93,7 +93,7 @@ def check(base, fixtures):
         expect(pack).to_be_checked()
         expect(page.locator(".pack-picker")).to_contain_text("98/120 cards")
         page.get_by_text("Card coverage", exact=True).click()
-        expect(page.get_by_text("Artifex Expansion: 87 / 120", exact=True)).to_be_visible()
+        expect(page.get_by_text("Artifex Expansion: 98 / 120", exact=True)).to_be_visible()
         pack.click()
         expect(pack).not_to_be_checked()
         expect(page.locator(".pack-picker")).to_contain_text("48 minor improvements in the eligible pool")

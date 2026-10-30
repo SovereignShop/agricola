@@ -613,8 +613,8 @@
             [field (if (integer? cell) (str "Sow field " (inc cell)) (str "Sow " (:name (cards/card cell))))
              [:select {:aria-label (if (integer? cell) (str "Sow field " (inc cell)) (str "Sow " (:name (cards/card cell))))
                        :value (or (some-> selected :crop name) "")
-                       :on-change #(let [value (.. % -target -value) other (vec (remove (fn [planting] (= cell (:cell planting))) (:plantings draft)))]
-                                     (draft! :plantings (if (seq value) (conj other {:cell cell :crop (keyword value)}) other)))}
+                       :on-change #(let [value (.. % -target -value)]
+                                     (dispatch :draft-planting cell (when (seq value) (keyword value))))}
               [:option {:value ""} "Leave empty"]
               (for [crop [:grain :vegetable] :when (or (nil? (:allowed-crop tile)) (= crop (:allowed-crop tile)))]
                 ^{:key crop} [:option {:value (name crop)} (labels crop)])]])
@@ -643,7 +643,7 @@
         (for [i (range 15) :when (a/empty-cell? p i)]
           ^{:key i} [:label.checkbox [:input {:type "checkbox" :aria-label (str "Build room " (inc i))
                                              :checked (boolean (some #{i} (:rooms draft)))
-                                             :on-change #(draft! :rooms (toggle-value (:rooms draft) i))}]
+                                             :on-change #(dispatch :draft-room i (.. % -target -checked))}]
                      (str "Space " (inc i))])])
      (when (= op :cottage)
        [field "Cottager action" [:select {:value (name (or (:effect-action draft) :room)) :on-change #(draft! :effect-action (keyword (.. % -target -value)))} [:option {:value "room"} "Build one room"] [:option {:value "renovate"} "Renovate"]]])
@@ -657,10 +657,8 @@
         (for [index (range 2)] ^{:key index}
           [field (str "Plow field " (inc index))
            [:select {:aria-label (str "Plow field " (inc index)) :value (get (:cells draft) index "")
-                     :on-change #(let [value (.. % -target -value) cells (vec (or (:cells draft) []))]
-                                   (draft! :cells (if (seq value)
-                                                    (assoc (vec (take 2 (concat cells (repeat "")))) index (js/parseInt value))
-                                                    (subvec cells 0 (min index (count cells))))))}
+                     :on-change #(let [value (.. % -target -value)]
+                                   (dispatch :draft-plow-field index (when (seq value) (js/parseInt value))))}
             [:option {:value ""} "No field"]
             (for [i (range 15) :when (and (a/empty-cell? p i) (not= i (get-in effect [:source-command :cell])))] ^{:key i}
               [:option {:value i} (str "Space " (inc i))])]])])

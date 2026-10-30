@@ -13,6 +13,28 @@
     (cond-> (assoc-in db [:draft key] value)
       (= key :improvement) (update :draft dissoc :upgrade :bake-grain :card)
       (= key :card) (update :draft dissoc :improvement :upgrade :bake-grain :payment-option))))
+;; Apply multi-control edits to the latest draft, not the render-time snapshot.
+;; Several DOM changes can arrive before Reagent renders the next frame.
+(rf/reg-event-db :draft-planting
+  (fn [db [_ cell crop]]
+    (update-in db [:draft :plantings]
+               (fn [plantings]
+                 (let [others (vec (remove #(= cell (:cell %)) plantings))]
+                   (cond-> others crop (conj {:cell cell :crop crop})))))))
+(rf/reg-event-db :draft-room
+  (fn [db [_ cell selected?]]
+    (update-in db [:draft :rooms]
+               (fn [rooms]
+                 (let [others (vec (remove #{cell} rooms))]
+                   (cond-> others selected? (conj cell)))))))
+(rf/reg-event-db :draft-plow-field
+  (fn [db [_ index cell]]
+    (update-in db [:draft :cells]
+               (fn [selection]
+                 (let [cells (vec selection)]
+                   (if (some? cell)
+                     (assoc (vec (take 2 (concat cells (repeat "")))) index cell)
+                     (subvec cells 0 (min index (count cells)))))))))
 (rf/reg-event-db :select-action (fn [db [_ space]] (assoc db :draft {:space space :rooms [] :stables [] :fences [] :plantings [] :bake-grain 0} :error nil)))
 (rf/reg-event-db :inspect-player (fn [db [_ pid]] (assoc db :inspect-player pid)))
 (rf/reg-fx :navigate #(cond

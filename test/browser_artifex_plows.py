@@ -73,9 +73,13 @@ def check(base, fixtures):
         for number in range(1, 4):
             page.get_by_label("Sow field " + str(number), exact=True).select_option("grain")
             expect(page.get_by_role("button", name="Resolve effect →", exact=True)).to_be_enabled()
+        # Let the controlled selects render, then check all edits survived.
+        page.evaluate("() => new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)))")
+        for number in range(1, 4):
+            expect(page.get_by_label("Sow field " + str(number), exact=True)).to_have_value("grain")
         click_decision()
         fields(3)
-        expect(page.locator('[data-tile="farm"] [data-piece-type="grain"]')).to_have_count(9)
+        expect(page.locator('[data-tile="farm"] svg.farm [data-piece-type="grain"]')).to_have_count(9)
         print("Cultivation can sow all three newly plowed fields after saved decisions: passed", flush=True)
         assert errors == [], errors
         page.screenshot(path="/tmp/eurozone-artifex-plows.png", full_page=True)
