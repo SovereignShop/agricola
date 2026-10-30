@@ -50,7 +50,6 @@
 .tt-shared .round-card-slot:has(.chosen) {z-index:20}
 .tt-shared .card-action-spaces {background:#eee5cd;margin-top:16px;padding:18px}
 .tt-major-area {position:relative;min-height:680px;margin-top:40px}
-.tt-major-area .tt-deck {left:0}
 .tt-round-note {position:absolute;left:370px;top:56px;max-width:480px;font:calc(20px * var(--text-scale,1))/1.5 var(--tt-font);color:#465139}
 .tt-round-note>strong,.tt-round-note>span {display:block}
 .tt-round-note>strong {font-size:calc(30px * var(--text-scale,1));margin-bottom:12px}
@@ -220,3 +219,25 @@
 .original-board .player-count-card:has(.chosen) {z-index:15}
 .tabletop-main .action-grid.original-board {min-width:1400px}
 @media(max-width:650px) {.card-choice {width:135px;height:200px}.card-choice-spread {gap:12px}}
+
+/* A stack occupies exactly one card's width; opening it does not move it. */
+.tt-deck-heading {display:grid;grid-template-columns:25px 1fr auto;grid-template-rows:1fr 28px;gap:0 3px;height:64px;min-height:64px;margin-bottom:8px}
+.tt-deck-heading>.tt-deck-title {grid-column:1/-1;grid-row:1;font:calc(13px * var(--text-scale,1))/1.1 var(--tt-font);text-align:left;padding:2px 3px;white-space:normal;overflow-wrap:anywhere}
+.tt-deck-heading>.tt-handle {grid-column:1;grid-row:2}
+.tt-deck-count {grid-column:2;grid-row:2;align-self:center}
+.tt-deck-heading>button:not(.tt-handle):not(.tt-deck-title) {grid-column:3;grid-row:2;font-size:calc(11px * var(--text-scale,1));padding:2px}
+.tt-deck {cursor:pointer}
+.tt-deck-popup .card-choice {position:relative}
+.tt-deck-popup .card-choice:disabled {opacity:1}
+.tt-back-to-spread {margin-bottom:16px;background:#e7dab9;border:1px solid #a39370;border-radius:4px;padding:7px 12px;color:#443b29}
+.tt-major-board {position:absolute;cursor:default}
+.tt-major-heading {display:flex;align-items:center;gap:8px;height:42px;color:var(--table-ink)}
+.tt-major-heading>button:not(.tt-handle) {font:calc(17px * var(--text-scale,1)) var(--tt-font);background:var(--label);border:0;border-radius:3px;padding:4px 10px;color:inherit}
+.tt-major-board:hover .tt-handle {opacity:1}
+.tt-major-supply {position:relative;width:100%;aspect-ratio:1725/1234;filter:drop-shadow(2px 6px 4px #31421a48)}
+.tt-major-supply>img {display:block;width:100%;height:100%;border-radius:3px;pointer-events:none}
+.tt-major-slot {position:absolute;padding:0;border:0;border-radius:4px;background:transparent;color:#443b29;cursor:pointer}
+.tt-major-slot[data-available=true] {box-shadow:2px 4px 4px #2e291a55}
+.tt-major-slot:hover,.tt-major-slot:focus-visible {outline:3px solid #ead49e;outline-offset:2px;z-index:2}
+.tt-major-owner {position:absolute;bottom:6%;left:4%;right:4%;padding:6px;background:#f5e8c9ed;border-left:4px solid;border-radius:3px;font:calc(14px * var(--text-scale,1))/1.15 var(--tt-font)}
+.tt-major-area .tt-round-note {left:920px;margin-left:0}

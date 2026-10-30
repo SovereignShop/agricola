@@ -774,6 +774,13 @@
       "reference": "https://github.com/SNiLD/TabletopSimulatorAgricola/blob/5e675a143d7192b271615d9f1a406fd04a1913f1/src/workshop.json",
       "sha256": "d2c09503e8e1f7745e43585152f66a7d94b1d05b3f8d3d02bcb8dfe2bee05048",
       "note": "Unmodified English original-edition main board segment. Presentation only; Eurozone retains its Revised Edition action and card rules."
+    },
+    {
+      "file": "major-improvements-board.jpg",
+      "source": "https://dl.dropboxusercontent.com/s/wqy2sjb0rkn891e/MajImp%20Board%20A.jpg",
+      "reference": "https://github.com/SNiLD/TabletopSimulatorAgricola/blob/5e675a143d7192b271615d9f1a406fd04a1913f1/src/workshop.json",
+      "sha256": "b0e917c8e76d4f358e83b3a87a3dec0f06b449b5be460c1edf4eb304666ecf47",
+      "note": "Unmodified original English major improvements supply board. Available cards occupy their printed slots; purchased slots remain visible."
     }
   ]
 }

@@ -93,18 +93,20 @@
       [:div.tt-card-markers {:aria-label "Goods on card"}
        (for [[resource n] goods :when (pos? n)] ^{:key resource} [:span [art/piece resource] [:b n]])])))
 (defn deck-size [n spread?]
-  [288 (if spread? (+ 42 (* 154 (max 1 (js/Math.ceil (/ n 3))))) (+ 252 (* 24 (max 0 (dec n)))))])
-(defn deck [descriptor p prefs gesture zoom inspect!]
+  [(if spread? 288 128) (if spread? (+ 72 (* 154 (max 1 (js/Math.ceil (/ n 3))))) (+ 250 (* 24 (max 0 (dec n)))))])
+(defn deck [descriptor p prefs gesture zoom open-deck!]
   (let [{:keys [path label ids hidden? spread? xy size]} descriptor
         [x y] (if (= path (:path @gesture)) (:position @gesture) xy)
         n (count ids)]
     [:section.tt-deck {:aria-label label :data-deck (name (last path)) :data-owner (str (first path))
                        :data-mode (if spread? "spread" "stack") :data-x (first xy) :data-y (second xy)
+                       :on-click #(when-not (.closest (.-target %) "button") (open-deck! path))
                        :class (when (= path (:path @gesture)) "is-moving")
                        :style {:left (px x) :top (px y) :width (px (first size)) :height (px (second size))}}
      [:div.tt-deck-heading
       [move-handle label path xy size prefs gesture zoom]
-      [:strong label] [:span.tt-deck-count n]
+      [button label #(open-deck! path) {:class "tt-deck-title" :aria-label (str "Open " label " spread") :aria-haspopup "dialog"}]
+      [:span.tt-deck-count n]
       (when (pos? n)
         [button (if spread? "Stack" "Spread")
          #(do (swap! prefs assoc-in (conj path :mode) (if spread? :stack :spread)) (save-arrangement! @prefs))
@@ -113,32 +115,72 @@
        [:div.tt-deck-cards {:class (if spread? "spread" "stack")}
         (for [[i cid] (map-indexed vector ids)] ^{:key (str cid "-" i)}
           [:button.tt-card {:type "button" :aria-label (if hidden? (str "Private card " (inc i)) (:name (card-info cid)))
-                            :aria-haspopup (when-not hidden? "dialog") :disabled hidden?
+                            :aria-haspopup "dialog"
                             :style (if spread?
                                      {:left (px (* (mod i 3) 96)) :top (px (* (quot i 3) 154))}
-                                     {:left (px (mod i 3)) :top (px (* i 24)) :z-index i :--stack-index i})
-                            :on-click #(when-not hidden? (inspect! cid p))}
+                                     {:left "0px" :top (px (* i 24)) :z-index i :--stack-index i})
+                            :on-click #(open-deck! path)}
+           [card-face cid hidden? p]
+           (when-not hidden? [card-markers cid p])])])]))
+
+(def major-board-order [:fireplace-2 :fireplace-3 :hearth-4 :hearth-5 :well
+                        :clay-oven :stone-oven :joinery :pottery :basketry])
+(def major-board-size [864 660])
+(defn major-board [g prefs gesture zoom inspect! open-deck!]
+  (let [path [:shared :major-board] xy (position @prefs path [0 0])
+        [x y] (if (= path (:path @gesture)) (:position @gesture) xy)]
+    [:section.tt-major-board {:aria-label "Major improvements board" :data-x (first xy) :data-y (second xy)
+                              :class (when (= path (:path @gesture)) "is-moving")
+                              :style {:left (px x) :top (px y) :width (px (first major-board-size))}}
+     [:div.tt-major-heading
+      [move-handle "Major improvements board" path xy major-board-size prefs gesture zoom]
+      [button "Major improvements" #(open-deck! path) {:aria-label "Open Major improvements spread" :aria-haspopup "dialog"}]]
+     [:div.tt-major-supply
+      [:img {:src (art/url "major-improvements-board.jpg") :alt "Original English major improvements supply board" :draggable false}]
+      (for [[i cid] (map-indexed vector major-board-order)
+            :let [available? (contains? (:available-improvements g) cid)
+                  owner (first (filter #(contains? (:improvements %) cid) (:players g)))]] ^{:key cid}
+        [:button.tt-major-slot {:data-major-slot (name cid) :data-available available?
+                                 :aria-label (str (:name (card-info cid)) (when-not available? (str " · built by " (:name owner))))
+                                 :aria-haspopup "dialog" :on-click #(inspect! cid owner)
+                                 :style {:left (str (* 100 (/ (nth [16 363 710 1057 1403] (mod i 5)) 1725)) "%")
+                                         :top (str (* 100 (/ (if (< i 5) 77 660) 1234)) "%")
+                                         :width (str (* 100 (/ 310 1725)) "%") :height (str (* 100 (/ 500 1234)) "%")}}
+         (if available? [card-face cid false nil]
+           [:span.tt-major-owner {:style {:border-color (get colors (:id owner))}} (str "Built by " (:name owner))])])]]))
+
+(defn deck-spread [descriptor p inspect!]
+  (let [{:keys [ids hidden? label]} descriptor]
+    [:div.tt-deck-popup
+     (when hidden? [:p.small "This player's hand is private."])
+     (if (empty? ids) [:p.small "No cards here yet."]
+       [:div.card-choice-spread {:role "group" :aria-label label}
+        (for [[i cid] (map-indexed vector ids)] ^{:key (str cid "-" i)}
+          [:button.card-choice {:type "button" :aria-label (if hidden? (str "Private card " (inc i)) (:name (card-info cid)))
+                                :disabled hidden? :aria-haspopup (when-not hidden? "dialog")
+                                :on-click #(when-not hidden? (inspect! cid p))}
            [card-face cid hidden? p]
            (when-not hidden? [card-markers cid p])])])]))
 
 (defn player-objects [p hand prefs focus]
   (let [pid (:id p) names [[:hand-occupation "Hand · occupations" :occupation] [:hand-minor "Hand · minors" :minor]
                          [:occupations "Played · occupations" nil] [:improvements "Played · improvements" nil]]
+        played-width (first (deck-size (count (:occupations p)) (= :spread (get-in prefs [pid :occupations :mode] :stack))))
         decks (for [[i [id label kind]] (map-indexed vector names)
                     :let [hidden? (and kind (nil? hand))
                           ids (vec (if kind (if hidden? (range (get-in p [:hand-counts kind] 0)) (get hand kind))
                                      (if (= id :occupations) (:occupations p) (concat (sort (:improvements p)) (:minors p)))))
-                          path [pid id] spread? (= :spread (get-in prefs (conj path :mode) (if (= pid focus) :spread :stack)))]]
+                          path [pid id] spread? (= :spread (get-in prefs (conj path :mode) (if (and kind (= pid focus)) :spread :stack)))]]
                 {:path path :label label :ids ids :hidden? hidden? :spread? spread?
-                 :xy (position prefs path (nth [[24 704] [376 704] [752 160] [1064 160]] i)) :size (deck-size (count ids) spread?)})
+                 :xy (position prefs path (nth [[24 704] [376 704] [752 160] [(+ 792 played-width) 160]] i)) :size (deck-size (count ids) spread?)})
         inventory {:path [pid :inventory] :xy (position prefs [pid :inventory] [24 80]) :size [680 64]}
         objects (conj (vec decks) inventory)]
-    {:decks decks :inventory inventory :w (max 1380 (+ 28 (apply max (map #(+ (first (:xy %)) (first (:size %))) objects))))
+    {:decks decks :inventory inventory :w (max 1080 (+ 28 (apply max (map #(+ (first (:xy %)) (first (:size %))) objects))))
      :h (max 1000 (+ 40 (apply max (map #(+ (second (:xy %)) (second (:size %))) objects))))}))
 
 (defn table-geometry [players center-height]
-  (let [sides (take 4 players) left-w (apply max 1280 (map :w (take-nth 2 sides)))
-        right-w (if (next sides) (apply max 1280 (map :w (take-nth 2 (rest sides)))) 0)
+  (let [sides (take 4 players) left-w (apply max 1080 (map :w (take-nth 2 sides)))
+        right-w (if (next sides) (apply max 1080 (map :w (take-nth 2 (rest sides)))) 0)
         row-heights (mapv #(apply max (map :h %)) (partition-all 2 sides))
         upper-h (+ 120 (reduce + row-heights) (* 64 (max 0 (dec (count row-heights)))))
         center-x (+ left-w 104) center-w 2100
@@ -191,7 +233,8 @@
                focus! (fn [id] (reset! auto-fit? true) (reset! view id) (dispatch :inspect-player (when (number? id) id))
                         (js/requestAnimationFrame #(js/requestAnimationFrame (fn [] (fit! true)))))
                zoom! (fn [factor cx cy] (reset! auto-fit? false) (zoom-at! nodes zoom factor cx cy animation))
-               inspect! (fn [cid p] (reset! popup {:kind :card :id cid :player p}))]
+               inspect! (fn [cid p] (reset! popup {:kind :card :id cid :player p}))
+               open-deck! (fn [path] (reset! popup {:kind :deck :path path}))]
     (let [ui @(rf/subscribe [:ui]) permission @(rf/subscribe [:permission]) g (:state room)
           actor (game/acting-player g) owned (set (:seats permission))
           can-play? (and (:connected? ui) (owned actor) (not= :finished (:phase g)) (not (seq (:takeback room))))
@@ -211,10 +254,15 @@
           active-popup (or @popup (when (and decision? (not= decision-key @dismissed)) {:kind :decision}))
           close! #(do (reset! popup nil) (reset! dismissed decision-key))
           open-decision! (fn [pid] (focus! pid) (reset! dismissed nil) (when-not decision? (reset! popup {:kind :farm :pid pid})))
-          board (:board geo) shared-path [:shared :majors]
-          major-spread? (= :spread (get-in @prefs (conj shared-path :mode) :stack))
-          majors {:path shared-path :label "Major improvements" :ids (vec (sort (:available-improvements g))) :spread? major-spread?
-                  :xy (position @prefs shared-path [0 0]) :size (deck-size (count (:available-improvements g)) major-spread?)}]
+          board (:board geo)
+          major-xy (position @prefs [:shared :major-board] [0 0])
+          deck-path (or (:path active-popup) (:deck-path active-popup))
+          popup-deck (when deck-path
+                       (if (= deck-path [:shared :major-board])
+                         {:path deck-path :label "Major improvements" :ids (vec (filter (:available-improvements g) major-board-order))}
+                         (some #(when (= deck-path (:path %)) %) (mapcat :decks objects))))
+          inspect-from-deck! (fn [cid p] (reset! popup {:kind :card :id cid :player p :deck-path deck-path}))]
+
       [:main.game.tt-game {:data-revision (:revision room) :data-motion-table (:id room) :data-material (name (if (some #{(:material @prefs)} (map first materials)) (:material @prefs) :tan)) :data-view (if (number? @view) (str "player-" @view) "board")}
        [:div.tt-toolbar
         [button "← Tables" #(dispatch :navigate nil) {:class "tt-back"}]
@@ -269,7 +317,8 @@
                                                             (.observe @shared-observer el))) :style {:left (px (:x board)) :top (px (:y board)) :width (px (:w board))}}
            [:header.tt-board-title [:h1 "Agricola"] [:span (:title room)]]
            [(:action-board renderers) g (and can-play? (= :work (:phase g)) (empty? (:effect-queue g))) (:draft ui) (:busy? ui)]
-           [:div.tt-major-area {:style {:min-height (px (+ (second (:xy majors)) (second (:size majors)) 32))}} [deck majors nil prefs gesture zoom inspect!]
+           [:div.tt-major-area {:style {:min-height (px (+ (second major-xy) (second major-board-size) 32))}}
+            [major-board g prefs gesture zoom inspect! open-deck!]
             [:div.tt-round-note [:strong (str "Round " (:round g))] [:span "Harvests: 4 · 7 · 9 · 11 · 13 · 14"]
              [:p "Drag the cloth to move around the table. Select a player above to bring their farm and cards closer."]]]]
           (for [{:keys [player decks inventory x y w h]} (:players geo) :let [pid (:id player)]] ^{:key pid}
@@ -296,14 +345,14 @@
                                       :aria-label (str amount " " (name resource))
                                       :data-piece-key (str "goods:" pid ":" resource) :data-piece-type (name resource) :data-piece-count amount}
                    [art/piece resource] [:b.pile-count amount]])])
-             (for [d decks] ^{:key (:path d)} [deck d player prefs gesture zoom inspect!])])]]]
+             (for [d decks] ^{:key (:path d)} [deck d player prefs gesture zoom open-deck!])])]]]
        [:div.tt-table-edge [:span "Drag cloth to pan · Ctrl / ⌘ + wheel to zoom · drag ⠿ to arrange"]
         [button "Chat" #(do (reset! dismissed decision-key) (reset! popup {:kind :chat}))]
         (when (and decision? (= decision-key @dismissed)) [button decision-title #(reset! dismissed nil)])]
        [:div.tt-modal
         (when (and active-popup (not vote-visible?) (not (seq (:takeback room))))
           [controls/modal
-           (case (:kind active-popup) :decision decision-title :card (:name (card-info (:id active-popup)))
+           (case (:kind active-popup) :decision decision-title :deck (or (:label popup-deck) "Cards") :card (if (:hidden? popup-deck) "Private card" (:name (card-info (:id active-popup))))
              :farm (str (get-in g [:players (:pid active-popup) :name]) "’s farm") :chat "Table chat" :scores "Scoring" :rules "Rules" :cloth "Tablecloth" "Table menu")
            (case (:kind active-popup)
              :decision [:div {:class (when simple-action? "tt-simple-action")}
@@ -318,13 +367,17 @@
                           [(:player-panel renderers) g (get-in g [:players actor]) (:draft ui) can-play? (:busy? ui)])]
              :farm [:div [(:player-panel renderers) g (get-in g [:players (:pid active-popup)]) (:draft ui) can-play? (:busy? ui)]
                     [controls/harvest-planner room (:pid active-popup)]]
-             :card (let [cid (:id active-popup) p (:player active-popup) card (card-info cid)]
+             :deck [deck-spread popup-deck (get-in g [:players (first deck-path)]) inspect-from-deck!]
+             :card (if (:hidden? popup-deck) [:p.small "This player's hand is private."]
+                     (let [cid (:id active-popup) p (:player active-popup) card (card-info cid)]
                      [:div.tt-inspection [card-face cid false p]
-                      [:div [:h3 (:name card)]
+                      [:div
+                       (when deck-path [button "Back to spread" #(open-deck! deck-path) {:class "tt-back-to-spread"}])
+                       [:h3 (:name card)]
                        (if (= :major (:kind card)) [(:improvement-effects renderers) card]
                            [:div [:p (:text card)] (when (seq (:cost-text card)) [:p (str "Cost: " (:cost-text card))])
                             (when (seq (:prerequisites card)) [:p (str "Requires: " (:prerequisites card))])])
-                       [card-markers cid p]]])
+                       [card-markers cid p]]]))
              :cloth [:div.tt-material-picker
                      (for [[id label] materials] ^{:key id}
                        [button [:<> [:span.tt-material-swatch {:style {:background-image (str "url(/art/tablecloths/" (name id) ".webp)")}}] [:strong label]]

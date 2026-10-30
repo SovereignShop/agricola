@@ -579,13 +579,20 @@ the percentage button to fit the current view. Drag a deck or resource strip's
 `⠿` handle to arrange it relative to its farm (or use arrow keys on the handle).
 Resources share one farm-width strip above the board, showing only nonzero
 holdings. Positions snap to a small grid and farm edges. Decks have two modes:
-**Stack** and **Spread**. Clicking a card opens its inspection popup without
-moving it out of the deck. Stacks expose the cards' printed titles; inspection
-never reveals another user's hand.
+**Stack** and **Spread**. A stack occupies one card's width. Played occupations
+and improvements default to stacks even in player view; explicit saved modes
+still apply. Clicking a deck or its heading opens a spread popup, where clicking
+a card opens its inspection, with a **Back to spread** button. Closing the popup
+preserves the table arrangement. Stacks expose the cards' printed titles; private
+hands show only backs to other users, including in spread popups.
 
 Card choices appear as spreads of playable cards, validated against the native
 rules, with unavailable-card reasons under a disclosure. Major improvements
-use English card scans. The shared board uses the original three English segments:
+use English card scans. The major-improvements supply uses its original English
+board, with ten fixed printed slots. Built cards leave the slot visible with the
+owner's name; returning a fireplace restores its card. The board has a saved
+move handle and opens individual card inspections or a spread of available majors.
+The shared board uses the original three English segments:
 two portrait boards and the landscape final-round board, aligned along the top
 with their natural proportions and small cloth seams. Round cards occupy the
 printed slots. Player-count actions occupy the left board's card area, including
