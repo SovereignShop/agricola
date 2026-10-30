@@ -1,9 +1,9 @@
 (ns eurozone.browser.events
   (:require [re-frame.core :as rf] [datascript.core :as d]
-            [eurozone.model :as model] [eurozone.browser.comms :as comms] [eurozone.browser.chat] [eurozone.browser.peer] [eurozone.browser.layout :as layout]))
+            [eurozone.model :as model] [eurozone.browser.comms :as comms] [eurozone.browser.chat] [eurozone.browser.peer] [eurozone.browser.layout :as layout] [eurozone.browser.readability :as readability]))
 
 (defn hash-id [] (let [h (subs (.-hash js/location) 1)] (when (seq h) h)))
-(rf/reg-event-db :initialize (fn [_ _] {:facts (d/empty-db model/schema) :permissions {} :layouts (layout/load-layouts) :connected? false :game-id (hash-id) :draft {} :panel :board}))
+(rf/reg-event-db :initialize (fn [_ _] {:facts (d/empty-db model/schema) :permissions {} :layouts (layout/load-layouts) :text-size (readability/load-size) :connected? false :game-id (hash-id) :draft {} :panel :board}))
 (rf/reg-event-fx :connection (fn [{:keys [db]} [_ connected?]] {:db (assoc db :connected? connected? :busy? false) :dispatch (if connected? [:chat/sync] [:chat/disconnect])}))
 (rf/reg-event-db :error (fn [db [_ message]] (assoc db :error message :busy? false :activity-opening? false)))
 (rf/reg-event-db :dismiss-error (fn [db _] (dissoc db :error)))

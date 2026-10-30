@@ -1,7 +1,7 @@
 (ns eurozone.browser.views
   (:require [reagent.core :as r] [re-frame.core :as rf] [clojure.string :as str]
             [cljs.reader :as reader] [agricola.recording :as recording] [eurozone.browser.table-controls :as controls]
-            [agricola.engine :as a] [agricola.card-expressions :as expr] [agricola.five-player :as five] [agricola.card-game :as card-game] [eurozone.catalog :as catalog] [eurozone.browser.art :as art] [agricola.card-rules :as cards] [eurozone.browser.card-art :as card-art] [eurozone.browser.layout :as layout] [eurozone.browser.comms :as comms] [eurozone.store :as store]))
+            [agricola.engine :as a] [agricola.card-expressions :as expr] [agricola.five-player :as five] [agricola.card-game :as card-game] [eurozone.catalog :as catalog] [eurozone.browser.art :as art] [agricola.card-rules :as cards] [eurozone.browser.card-art :as card-art] [eurozone.browser.layout :as layout] [eurozone.browser.readability :as readability] [eurozone.browser.comms :as comms] [eurozone.store :as store]))
 
 (def glyph {:wood "▰" :clay "◆" :reed "≋" :stone "⬟" :grain "♧" :vegetable "●" :food "◉" :sheep "♧" :boar "◆" :cattle "⬢"})
 (def labels {:wood "Wood" :clay "Clay" :reed "Reed" :stone "Stone" :grain "Grain" :vegetable "Vegetables" :food "Food" :sheep "Sheep" :boar "Wild boar" :cattle "Cattle"})
@@ -186,6 +186,8 @@
                             (cond (bot-seats i) "Bot · Ready" (and (= :online (:mode room)) (not (online i))) "Offline" (get ready i) "Ready" :else "Not ready"))]])]
            [:p.small (str (count (:seats room)) " / " expected " players · "
                           (case (get-in room [:setup :mode]) :draw (str "Draw: 14 + " (get-in room [:setup :extra]) " cards, pass left") :random "Random 7 + 7 hand" "Beginner game"))]
+           (when (> expected 1)
+             [:p.small.starting-food "Starting food: the randomly chosen starting player gets 2 food; everyone else gets 3."])
            (when (and (= :online (:mode room)) (not (.-EUROZONE_ACTIVITY js/window)))
              [:div.invite
               [:span.small "INVITE YOUR FRIENDS"]
@@ -1067,6 +1069,7 @@
      [:div.game-toolbar
       [:nav.tabs (for [[id label] [[:board "Village & farm"] [:improvements "Improvements"] [:scores "Scoring"] [:rules "How to play"]]] ^{:key id}
                    [button label #(dispatch :panel id) (str "tab " (when (= panel id) "active"))])]
+      (when (not= panel :board) [readability/controls])
       [recording-picker]
       (when (and (:host? permission) (or (= :local (:mode room)) (= :finished (:phase g))))
         [button "Save recording" #(dispatch :send {:event :recording/request}) "text-button" (:busy? ui)])
@@ -1254,7 +1257,7 @@
         focused? (and playing? (:focus? (layout/layout ui (:id room))))]
     [:div.app {:aria-busy (boolean (:busy? ui)) :class (str (when playing? "playing ") (when focused? "table-focused"))}
      [:header.site-header [:button.wordmark {:on-click #(dispatch :navigate nil)} "eurozone" [:span "✳"]]
-      [:div.header-right [:span.connection {:class (when (:connected? ui) "online")} [:i] (if (:activity-lobby? ui) "Discord Activity" (or (:peer-status ui) (if (:connected? ui) "Connected" "Reconnecting…")))]]]
+      [:div.header-right (when-not playing? [readability/controls]) [:span.connection {:class (when (:connected? ui) "online")} [:i] (if (:activity-lobby? ui) "Discord Activity" (or (:peer-status ui) (if (:connected? ui) "Connected" "Reconnecting…")))]]]
      (when (:error ui) [:div.toast {:role "alert"} [:span (:error ui)] [button "×" #(dispatch :dismiss-error) "text-button"]])
      (cond (:activity-lobby? ui) [activity-lobby]
            (:missing-host-save ui)

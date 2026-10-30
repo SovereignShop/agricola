@@ -21,7 +21,8 @@ def check_layout(base, fixture_id):
         assert page.locator(".game").bounding_box()["width"] > 2500
         assert page.locator(".tile-row").first.bounding_box()["width"] > 2500
         page.screenshot(path="/tmp/eurozone-workspace-initial.png")
-        assert page.locator(".tile-grid").bounding_box()["y"] < 300
+        # Includes the turn banner above the table (production baseline is about 343px).
+        assert page.locator(".tile-grid").bounding_box()["y"] < 380
         board = page.locator('[data-tile="board"]')
         farm = page.locator('[data-tile="farm"]')
         assert abs(board.bounding_box()["y"] - farm.bounding_box()["y"]) < 2

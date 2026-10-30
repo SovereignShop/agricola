@@ -186,6 +186,10 @@ The server compresses text assets and revalidates cached files with ETags.
 card catalogue are retained; its dependencies are isolated under `:desktop` and
 are not loaded by the browser application.
 
+Multiplayer games start the randomly chosen starting player with **2 food** and
+everyone else with **3 food**. This applies to beginner, random-hand, and draw
+setups; taking the starting-player marker later does not remove food.
+
 ## Playable scope and rule sources
 
 The implementation follows Lookout’s [official rulebook](https://www.lookout-spiele.de/upload/en_agricolare.html_Rules_Agricola-RE_EN.pdf)
@@ -333,6 +337,11 @@ The table uses the full browser width with a compact game header. **Table view**
 puts the shared board, active farm, and chat side by side. The board scales to its
 panel height, and panel contents scroll independently. **Focus table** hides the
 site header and round strip; **Fullscreen** uses the browser’s fullscreen mode.
+The **Text − / percentage / +** controls scale interface text from 80% to 200%
+without changing board artwork or tile widths. Ctrl+/Ctrl−/Ctrl0 (or ⌘ on Mac)
+increase, decrease, and reset text size, including inside the Discord Activity.
+The percentage button resets to 100%; the preference is saved in each browser.
+Controls remain available in focus mode.
 
 Drag a panel title to another panel’s left or right edge to split that space, or
 to its top or bottom edge to create a row. A highlighted preview shows where it
@@ -526,6 +535,7 @@ python test/browser_artifex_board.py
 python test/browser_artifex_sowing.py
 python test/browser_artifex_construction.py
 python test/browser_artifex_plows.py
+python test/browser_text_size.py
 python test/browser_artifex_supply.py
 python test/browser_artifex_temporary.py
 python test/browser_placement_cards.py

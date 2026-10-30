@@ -5,6 +5,23 @@
             [agricola.card-game :as cards] [agricola.card-rules :as rules] [agricola.draw :as draw])
   (:import [java.nio.file Files]))
 (defn create [store mode] (:id (s/transact! store "host" {:event :create :name "Ada" :mode mode :names ["Ada" "Ben"]})))
+(deftest starting-player-food-survives-every-hand-setup
+  (doseq [n (range 2 6) starter (range n) mode [:beginner :random :draw]]
+    (let [names (mapv #(str "Player " %) (range n))
+          order (vec (mapcat identity a/stages))
+          initial (with-redefs [s/new-state (fn [_ names] (a/new-game names order starter))]
+                    (s/start-state names {:mode mode :extra 2}))
+          expected (mapv #(if (= starter %) 2 3) (range n))
+          finished (if (= mode :draw)
+                     (s/finish-draw
+                      (loop [state initial]
+                        (let [d (:draw state)]
+                          (if (= :complete (:status d)) state
+                            (let [pid (first (sort (:pending d))) card (first (draw/legal-cards d pid))]
+                              (recur (update state :draw draw/pick pid (:wave d) card))))))) initial)]
+      (is (= expected (mapv #(a/amount % :food) (:players initial))) (str n " players, start " starter ", " mode))
+      (is (= starter (:starting-player finished)))
+      (is (= expected (mapv #(a/amount % :food) (:players finished)))))))
 (deftest newborn-occupancy-set-survives-client-projection
   (doseq [newborn-only [#{} #{:growth}]]
     (let [state (-> (cards/initialize (a/new-game ["Ada" "Ben"] (vec (mapcat identity a/stages)) 0))

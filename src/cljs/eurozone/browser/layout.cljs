@@ -1,6 +1,6 @@
 (ns eurozone.browser.layout
   (:require [re-frame.core :as rf] [reagent.core :as r] [cljs.reader :as reader] [clojure.string :as str]
-            [eurozone.table-layout :as model]))
+            [eurozone.table-layout :as model] [eurozone.browser.readability :as readability]))
 (def storage-key "eurozone-layouts-v1")
 (defn seat-storage-key [] (str storage-key ":" (.getItem js/sessionStorage "eurozone-session")))
 (defn load-layouts []
@@ -68,6 +68,7 @@
          [:button {:on-click #(change! room :preset :farms player-count)} "Show all farms"]]
         [:span.layout-hint "Drag a title to a panel edge · drag dividers to resize"]
         [:div.layout-view-controls
+         [readability/controls]
          [:button {:aria-expanded (boolean (:arranging? ui)) :on-click #(rf/dispatch [:layout/edit])} "Panels"]
          [:button {:aria-pressed (boolean (:focus? current)) :on-click #(change! room :focus)} (if (:focus? current) "Exit focus" "Focus table")]
          (when (.-EUROZONE_ACTIVITY js/window)
