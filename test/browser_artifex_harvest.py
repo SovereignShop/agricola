@@ -73,7 +73,7 @@ def check(base, fixtures):
         print("Oriental Fireplace exchanges an owned Cooking Hearth through the normal action UI: passed", flush=True)
 
         open_game(winnowing)
-        page.get_by_label("Baking improvement", exact=True).select_option("catalog/revised-artifex-expansion-a-60-oriental-fireplace")
+        page.get_by_label(re.compile("^Baking improvement")).select_option("catalog/revised-artifex-expansion-a-60-oriental-fireplace")
         click_decision()
         expect(amount("grain")).to_have_text("0")
         expect(amount("food")).to_have_text("4")
@@ -84,8 +84,8 @@ def check(base, fixtures):
         choose_card("Occupation", "Heresy Teacher")
         confirm_action(page)
         ada()
-        expect(page.locator('[data-tile="farm"] [data-piece-type="vegetable"]')).to_have_count(2)
-        expect(page.locator('[data-tile="farm"] [data-piece-type="grain"]')).to_have_count(6)
+        expect(page.locator('[data-tile="farm"] svg.farm [data-piece-type="vegetable"]')).to_have_count(2)
+        expect(page.locator('[data-tile="farm"] svg.farm [data-piece-type="grain"]')).to_have_count(6)
         print("Heresy Teacher displays vegetables beneath existing grain stacks: passed", flush=True)
 
         open_game(knife)
