@@ -48,6 +48,7 @@
              {:state (when-not (= :lobby (:eurozone.game/status room))
                        (merge (unqualify "agricola.game" room)
                               {:available-improvements (set (:agricola.game/available-improvements room))
+                               :newborn-only (set (:agricola.game/newborn-only room))
                                :players
                                (mapv (fn [p]
                                        (-> (unqualify "agricola.player" p)

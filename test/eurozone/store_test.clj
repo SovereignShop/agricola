@@ -5,6 +5,18 @@
             [agricola.card-game :as cards] [agricola.card-rules :as rules] [agricola.draw :as draw])
   (:import [java.nio.file Files]))
 (defn create [store mode] (:id (s/transact! store "host" {:event :create :name "Ada" :mode mode :names ["Ada" "Ben"]})))
+(deftest newborn-occupancy-set-survives-client-projection
+  (doseq [newborn-only [#{} #{:growth}]]
+    (let [state (-> (cards/initialize (a/new-game ["Ada" "Ben"] (vec (mapcat identity a/stages)) 0))
+                    (assoc :newborn-only newborn-only :newborn-spaces {:growth [0]} :occupied {:growth 0}))
+          room {:id "projection" :title "Projection" :mode :local :revision 0 :state state}
+          db (d/db-with (d/empty-db model/schema) (model/game-tx room))
+          projected (:state (model/pull-game db "projection"))
+          after (cards/take-action projected 0 {:space :grain})]
+      (is (= newborn-only (:newborn-only projected)))
+      (is (set? (:newborn-only projected)))
+      (is (= (if (seq newborn-only) [] [0]) (cards/space-owners projected :growth)))
+      (is (= 1 (a/amount (cards/p after 0) :grain))))))
 (deftest lobby-settings-are-authorized-and-persisted
   (doseq [n [3 4 5]]
     (let [store (s/make-store nil)
