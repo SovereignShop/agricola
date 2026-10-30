@@ -133,6 +133,14 @@
                                    {:cards [(hand i) (hand j) (hand k)]}))
                   :silage (g/silage-choices p)
                   :sow-offer [{}]
+                  :lodger-remove [{:person-kind :adult} {:person-kind :newborn}]
+                  :reserve-stables (map #(hash-map :rounds %) (remove empty? (subsets (g/planner-rounds state))))
+                  :build-stables (let [cells (filter #(and (= :empty (get-in p [:farm % :type])) (not (get-in p [:farm % :stable]))) (range 15))]
+                                   (concat (map #(hash-map :stables [%]) cells)
+                                           (for [one cells two cells :when (< one two)] {:stables [one two]})
+                                           (for [n [3 4]] {:stables (vec (take n cells))})))
+                  :build-fences (for [fences (fence-plans p) material (if (c/has? p :a016) [:wood :clay] [:wood])]
+                                  {:fences fences :fence-material material})
                   :build-rooms (for [rooms (g/room-plans p) opts (payment-options p)] (assoc opts :rooms rooms))
                   :sow (let [player (g/sowing-player state pid effect)
                              plans (if (:max-fields effect)

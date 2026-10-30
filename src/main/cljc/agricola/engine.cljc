@@ -83,12 +83,15 @@
          reductions (when (and (>= (count cells) 2) (some true? (cards/passives p :batch-room-discount)))
                       {:reed 2 (:house p) ({:wood 2 :clay 3 :stone 4} (:house p))})]
      (reduce #(place-tile %1 :room %2) (pay p (discounted cost reductions)) cells))))
+(defn fences-available [p] (- 15 (count (:fences p)) (:discarded-fences p 0)))
+(defn stables-available [p]
+  (- 4 (count (filter :stable (:farm p))) (reduce + 0 (vals (:reserved-stables p)))))
+(defn family-limit [p] (- 5 (:removed-family p 0)))
 (defn build-stables [p cells cost]
   (reduce (fn [p i]
             (require! (and (cell? i) (= :empty (get-in p [:farm i :type])) (not (get-in p [:farm i :stable]))) "A stable needs an empty space or pasture without another stable.")
-            (require! (< (count (filter :stable (:farm p))) 4) "You have only four stables.")
+            (require! (pos? (stables-available p)) "No unreserved stable remains in your supply.")
             (assoc-in (pay p {:wood cost}) [:farm i :stable] true)) p cells))
-(defn fences-available [p] (- 15 (count (:fences p)) (:discarded-fences p 0)))
 (defn build-fences
   ([p additions] (build-fences p additions {}))
   ([p additions options]
@@ -210,9 +213,10 @@
         homekeeper? (and (some true? (cards/passives p :homekeeper)) (#{:clay :stone} (:house p))
                          (some #(and (some field-cells (neighbors %)) (some pasture-cells (neighbors %))) (tiles p :room)))]
     (+ (count (tiles p :room)) (reduce + 0 (cards/passives p :extra-room))
-       (if (:off-site-room p) 1 0) (if homekeeper? 1 0))))
+       (if (:off-site-room p) 1 0) (if homekeeper? 1 0)
+       (if (and (cards/has? p :a127) (get-in p [:card-state (cards/id :a127) :room-active?])) 1 0))))
 (defn grow [p room-required?]
-  (require! (< (:family p) 5) "Your family already has five people.")
+  (require! (< (:family p) (family-limit p)) "No person remains in your supply.")
   (require! (or (not room-required?) (> (family-capacity p) (:family p))) "Family growth needs an empty room.")
   (-> p (update :family inc) (update :newborn inc)))
 (defn improvement-cost

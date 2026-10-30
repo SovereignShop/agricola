@@ -25,6 +25,17 @@
   (fn [db [_ card selected?]]
     (update-in db [:draft :cards]
                (fn [cards] (cond-> (vec (remove #{card} cards)) selected? (conj card))))))
+(rf/reg-event-db :draft-toggle-value
+  (fn [db [_ key value]]
+    (update-in db [:draft key]
+               (fn [selection]
+                 (if (some #{value} selection) (vec (remove #{value} selection)) (conj (vec selection) value))))))
+(rf/reg-event-db :draft-selection
+  (fn [db [_ key value selected?]]
+    (update-in db [:draft key]
+               (fn [selection]
+                 (let [others (vec (remove #{value} selection))]
+                   (cond-> others selected? (conj value)))))))
 (rf/reg-event-db :draft-room
   (fn [db [_ cell selected?]]
     (update-in db [:draft :rooms]

@@ -23,7 +23,20 @@
    :status :unresolved
    :note "No explicit publisher or designer clarification was found. Do not present either interpretation as a verified ruling."}]
  :regressions
- [{:id :woolgrower-completed-feeding
+ [{:id :lodger-person-supply-and-choice
+   :cards [:catalog/revised-artifex-expansion-a-127-lodger]
+   :source "https://docs.google.com/document/d/1WUl0HlzX6Yx0ume75UmpaIMhoHukx9XufM_LbV1oZ6E/edit"
+   :authority :unofficial-compilation
+   :rule "Lodger expires at returning home in round nine; a person removed for lacking other accommodation can never grow back."
+   :implementation-assumption "Without a card-specific ruling about room assignment, a player with both adult and newborn people chooses which occupied the temporary room. The saved mandatory choice updates newborn feeding and permanently reduces person supply."
+   :test agricola.artifex-temporary-test/lodger-saves-a-choice-between-an-adult-and-newborn-occupant}
+  {:id :stable-planner-supply-reservations
+   :cards [:catalog/revised-artifex-expansion-a-89-stable-planner]
+   :source "https://docs.google.com/document/d/1WUl0HlzX6Yx0ume75UmpaIMhoHukx9XufM_LbV1oZ6E/edit"
+   :authority :unofficial-compilation
+   :rule "Stable Planner reserves physical stable pieces; they cannot be built early, and their preparation-phase construction does not trigger own-turn stable bonuses."
+   :test agricola.artifex-temporary-test/stable-planner-reserves-physical-pieces-until-their-rounds}
+  {:id :woolgrower-completed-feeding
    :cards [:catalog/revised-artifex-expansion-a-148-woolgrower]
    :source "https://docs.google.com/document/d/1WUl0HlzX6Yx0ume75UmpaIMhoHukx9XufM_LbV1oZ6E/edit"
    :authority :unofficial-compilation

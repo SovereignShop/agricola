@@ -284,8 +284,8 @@
        ^{:key edge}
        [:g {:role (when (and fence-mode? (not built?)) "button") :tab-index (when (and fence-mode? (not built?)) 0)
             :aria-label (str "Fence " edge (when built? ", built"))
-            :on-click (fn [e] (.stopPropagation e) (when (and fence-mode? (not built?)) ((or edit! draft!) :fences (toggle-value (:fences draft) edge))))
-            :on-key-down #(when (and fence-mode? (not built?) (#{"Enter" " "} (.-key %))) (.preventDefault %) ((or edit! draft!) :fences (toggle-value (:fences draft) edge)))}
+            :on-click (fn [e] (.stopPropagation e) (when (and fence-mode? (not built?)) (if edit! (edit! :fences (toggle-value (:fences draft) edge)) (dispatch :draft-toggle-value :fences edge))))
+            :on-key-down #(when (and fence-mode? (not built?) (#{"Enter" " "} (.-key %))) (.preventDefault %) (if edit! (edit! :fences (toggle-value (:fences draft) edge)) (dispatch :draft-toggle-value :fences edge)))}
         [:line {:x1 (if horizontal? (+ x 6) x) :y1 (if horizontal? y (+ y 6))
                 :x2 (if horizontal? (+ x 94) x) :y2 (if horizontal? y (+ y 94)) :stroke "transparent" :stroke-width 16}]
         [:line {:x1 (if horizontal? (+ x 6) x) :y1 (if horizontal? y (+ y 6))
@@ -326,12 +326,16 @@
                                    :title (str owner " · " sources)}
           [:span.future-owner-name owner]
           [:div.future-goods
-           (for [resource (conj a/resources :field) :let [n (get goods resource 0)] :when (pos? n)]
+           (for [resource (into a/resources [:field :stable :person]) :let [n (get goods resource 0)] :when (pos? n)]
              ^{:key resource}
              [:span.future-resource {:data-resource (name resource)
                                      :aria-label (str owner ": " n " " (name resource) " in round " round)
                                      :title (str owner " · " sources " · " n " " (name resource))}
-              (if (= resource :field)
+              (case resource
+                :person [:img.piece {:src (art/worker-url player) :alt "Temporary person"}]
+                :stable [:svg.piece {:viewBox "0 0 24 24" :aria-label "Stable" :role "img"}
+                         [:path {:d "M2 9L12 2L22 9V22H2Z" :fill "#b07949" :stroke "#704729"}]]
+                :field
                 [:svg.piece {:viewBox "0 0 24 24" :aria-label "Field" :role "img"}
                  [:rect {:x 1 :y 1 :width 22 :height 22 :rx 2 :fill "#b78246"}]
                  [:path {:d "M5 3v18 M10 3v18 M15 3v18 M20 3v18" :stroke "#79502e" :stroke-width 2}]]
@@ -580,7 +584,7 @@
 (defn card-decision [g p draft busy?]
   (let [head (first (:effect-queue g)) effect (:effect head) op (:op effect) options (card-game/order-options g)
         keep (get draft :keep (select-keys (:goods p) a/animals))
-        choice (merge (select-keys draft [:accommodate-taken? :grain-source :animal :cell :cells :rooms :cards :frame? :brushwood? :renovate-to :paper-maker? :occupation-wood :card :cook? :option :payment-option :improvement :upgrade :bake-grain :exchange?])
+        choice (merge (select-keys draft [:accommodate-taken? :grain-source :animal :cell :cells :rooms :stables :fences :fence-material :rounds :person-kind :cards :frame? :brushwood? :renovate-to :paper-maker? :occupation-wood :card :cook? :option :payment-option :improvement :upgrade :bake-grain :exchange?])
                       (when (contains? draft :effect-fields) {:fields (:effect-fields draft)})
                       {:type :resolve :decision (:decision-id g) :keep keep :grain (get draft :effect-grain 1)
                        :action (or (:effect-action draft) (if (= op :young-artist) :draw :room))
@@ -651,6 +655,33 @@
        [field "Resource" [:select {:value (name (or (:effect-resource draft) (first (or (:choices effect) (if (= op :boat-painter) [:grain :food] [:grain :vegetable])))))
                                    :on-change #(draft! :effect-resource (keyword (.. % -target -value)))}
                           (for [r (or (:choices effect) (if (= op :boat-painter) [:grain :food] [:grain :vegetable]))] ^{:key r} [:option {:value (name r)} (labels r)])]])
+     (when (= op :lodger-remove)
+       [:div [:p.small "Lodger’s room expires now. Choose the person who occupied it; this piece leaves the game permanently."]
+        [field "Person to remove" [:select {:aria-label "Person to remove" :value (or (some-> (:person-kind draft) name) "")
+                                            :on-change #(draft! :person-kind (keyword (.. % -target -value)))}
+                                   [:option {:value ""} "Choose a person…"]
+                                   (when (> (:family p) (:newborn p 0)) [:option {:value "adult"} "Adult"])
+                                   (when (pos? (:newborn p 0)) [:option {:value "newborn"} "Newborn"])]]])
+     (when (= op :reserve-stables)
+       [:div [:p.small (str (a/stables-available p) " stable pieces available. Reserved pieces cannot be built early.")]
+        (for [round (card-game/planner-rounds g)]
+          ^{:key round} [:label.checkbox [:input {:type "checkbox" :aria-label (str "Reserve stable for round " round)
+                                                :checked (boolean (some #{round} (:rounds draft)))
+                                                :on-change #(dispatch :draft-selection :rounds round (.. % -target -checked))}]
+                         (str "Round " round)])])
+     (when (= op :build-stables)
+       [:div [:p.small "Choose stables to build at 2 wood each."]
+        (for [i (range 15) :when (and (= :empty (get-in p [:farm i :type])) (not (get-in p [:farm i :stable])))]
+          ^{:key i} [:label.checkbox [:input {:type "checkbox" :aria-label (str "Build stable " (inc i))
+                                             :checked (boolean (some #{i} (:stables draft)))
+                                             :on-change #(dispatch :draft-selection :stables i (.. % -target -checked))}] (str "Space " (inc i))])])
+     (when (= op :build-fences)
+       [:div [:p.small "Select farm edges to enclose pastures."]
+        [farm p (assoc draft :space :fences) true]
+        (when (cards/has? p :a016)
+          [field "Fence material" [:select {:value (name (:fence-material draft :wood))
+                                            :on-change #(draft! :fence-material (keyword (.. % -target -value)))}
+                                   [:option {:value "wood"} "Wood"] [:option {:value "clay"} "Clay"]]])])
      (when (= op :build-rooms)
        [:div [:p.small "Choose rooms in the order to build them."]
         (for [i (range 15) :when (a/empty-cell? p i)]
@@ -806,7 +837,7 @@
               (assoc draft :space (five/stage-left g (get-in g [:effect-queue 0 :context :space])))
               draft)
      (and can-play? (= (:id p) (card-game/acting-player g)) (= :work (:phase g)))]
-    [:div.farm-stats [:span (str (count (:fences p)) "/15 fences")] [:span (str (count (filter :stable (:farm p))) "/4 stables")]
+    [:div.farm-stats [:span (str (count (:fences p)) "/15 fences")] [:span (str (count (filter :stable (:farm p))) "/4 stables" (when (seq (:reserved-stables p)) (str " · " (reduce + (vals (:reserved-stables p))) " reserved")))]
      [:span (str "Pet: " (or (some #(when (= :pet (:kind %)) (labels (:animal %))) (a/animal-housing p)) "none"))]]
     [:div.inventory (for [resource a/resources] ^{:key resource} [badge resource (a/amount p resource) (:id p)])]
     (when (pos? (:begging p)) [:p.warning (str (:begging p) " begging marks · −" (* 3 (:begging p)) " points")])

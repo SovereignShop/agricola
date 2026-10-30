@@ -557,6 +557,7 @@
           :revised-artifex-expansion-a-43-farmyard-manure
           {:triggers
            [{:event :build-stables,
+             :condition [:own-turn],
              :effect
              {:op :schedule, :offsets [1 2 3], :goods {:food 1}}}]},
           :revised-artifex-expansion-a-45-fire-protection-pond
@@ -739,6 +740,7 @@
           :revised-artifex-expansion-a-74-stable-tree
           {:triggers
            [{:event :build-stables,
+             :condition [:own-turn],
              :effect
              {:op :schedule, :offsets [1 2 3], :goods {:wood 1}}}]},
           :revised-artifex-expansion-a-76-cob
@@ -841,4 +843,21 @@
  :revised-artifex-expansion-a-167-breeder-buyer
  {:triggers [{:event :build-rooms :effect {:op :breeder-buyer}}
              {:event :build-stables :effect {:op :breeder-buyer}}]}
+
+ :revised-artifex-expansion-a-128-riparian-builder
+ {:triggers [{:event :use-space :scope :others :spaces #{:reed}
+              :effect {:op :build-rooms :optional? true :max-rooms 1 :room-discount {:clay 1 :stone 2}}}]}
+ :revised-artifex-expansion-a-150-stagehand
+ {:triggers [{:event :use-space :scope :others :spaces #{:traveling}
+              :effect {:op :choose :optional? true
+                       :options [{:label "Build rooms" :effects [{:op :build-rooms :optional? true}]}
+                                 {:label "Build stables" :effects [{:op :build-stables :optional? true}]}
+                                 {:label "Build fences" :effects [{:op :build-fences :optional? true}]}]}}]}
+
+ :revised-artifex-expansion-a-22-telegram
+ {:play [{:op :telegram}]}
+ :revised-artifex-expansion-a-89-stable-planner
+ {:play [{:op :reserve-stables :optional? true}]}
+ :revised-artifex-expansion-a-127-lodger
+ {:play [{:op :lodger-start}]}
 }
