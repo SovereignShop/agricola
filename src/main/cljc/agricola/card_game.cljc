@@ -1048,7 +1048,7 @@
                                  :cancelled-sowing :plow-plan :freshman-plan)
                     (and (= pid (get-in g [:plow-plan :player])) (= space (get-in g [:plow-plan :space]))
                          (#{:plow :cultivation} space) (seq (get-in g [:plow-plan :cells])))
-                    (update-in [:players pid :card-state (c/id :a018) :uses] dec)) true))))
+                    (update-in [:players pid :card-state (c/id :a018) :uses] dec)) true)))))
 (defn staged-sowing? [g pid space]
   (and (#{:sow-bake :cultivation} space)
        (or (and (= :sow-bake space) (get-in g [:freshman-plan :card]) (get-in g [:freshman-plan :sow-before?]))
