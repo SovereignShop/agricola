@@ -134,6 +134,9 @@
                   :paper-knife (let [hand (vec (get-in p [:hand :occupation]))]
                                  (for [i (range (count hand)) j (range (inc i) (count hand)) k (range (inc j) (count hand))]
                                    {:cards [(hand i) (hand j) (hand k)]}))
+                  :classify-fields (let [{:keys [mixed-fields dual-improvements]} (expression/classification-options p (:original effect))]
+                                     (for [grain (range (inc (or mixed-fields 0))) major (range (inc (or dual-improvements 0)))]
+                                       {:mixed-as-grain grain :dual-as-major major}))
                   :silage (g/silage-choices p)
                   :sow-offer [{}]
                   :lodger-remove [{:person-kind :adult} {:person-kind :newborn}]

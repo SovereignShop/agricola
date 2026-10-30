@@ -2,11 +2,25 @@
   "Small, explicit numeric/predicate language shared by card rules and previews.
    Unknown forms fail closed; card prose is never an executable effect."
   (:require [agricola.engine :as a] [clojure.string :as str]))
-(declare evaluate)
+(declare evaluate evaluate*)
 (defn field-list [player] (concat (filter #(= :field (:type %)) (:farm player)) (vals (:card-fields player))))
-(defn count-crop [player crop] (count (filter #(and (= crop (:crop %)) (pos? (:count % 0))) (field-list player))))
-(defn evaluate [g pid context form]
-  (let [p (get-in g [:players pid]) ev #(evaluate g pid context %)]
+(defn mixed-fields [player] (filter #(and (pos? (a/field-crop-count % :grain)) (pos? (a/field-crop-count % :vegetable))) (field-list player)))
+(defn dual-improvements [player] (filter #(get-in (a/improvement-definition %) [:major-or-minor]) (:minors player)))
+(defn references? [form op] (boolean (some #(and (vector? %) (= op (first %))) (tree-seq coll? seq form))))
+(defn classification-options [player form]
+  {:mixed-fields (when (and (references? form :grain-fields) (references? form :vegetable-fields)) (count (mixed-fields player)))
+   :dual-improvements (when (and (references? form :majors) (references? form :minors)) (count (dual-improvements player)))})
+(defn count-contexts [player context form]
+  (let [{:keys [mixed-fields dual-improvements]} (classification-options player form)]
+    (for [grain (if (and (pos? (or mixed-fields 0)) (not (contains? context :mixed-as-grain))) (range (inc mixed-fields)) [(:mixed-as-grain context)])
+          major (if (and (pos? (or dual-improvements 0)) (not (contains? context :dual-as-major))) (range (inc dual-improvements)) [(:dual-as-major context)])]
+      (cond-> context (some? grain) (assoc :mixed-as-grain grain) (some? major) (assoc :dual-as-major major)))))
+(defn count-crop [player crop context]
+  (let [all (count (filter #(pos? (a/field-crop-count % crop)) (field-list player))) mixed (count (mixed-fields player))]
+    (if (contains? context :mixed-as-grain)
+      (+ (- all mixed) (if (= crop :grain) (:mixed-as-grain context) (- mixed (:mixed-as-grain context)))) all)))
+(defn evaluate* [g pid context form]
+  (let [p (get-in g [:players pid]) ev #(evaluate* g pid context %)]
     (if-not (vector? form) form
       (let [[op & args] form x (first args)]
         (case op
@@ -20,7 +34,7 @@
           :own-work-turn (and (= :work (:phase g)) (= pid (:turn g)))
           :house (:house p) :round (:round g) :family (:family p) :newborn (:newborn p 0) :remaining (:remaining p 0)
           :rooms (count (a/tiles p :room)) :fields (count (field-list p)) :field-tiles (count (a/tiles p :field))
-          :grain-fields (count-crop p :grain) :vegetable-fields (count-crop p :vegetable)
+          :grain-fields (count-crop p :grain context) :vegetable-fields (count-crop p :vegetable context)
           :planted-fields (count (filter #(pos? (:count % 0)) (field-list p)))
           :empty-fields (count (filter #(zero? (:count % 0)) (field-list p)))
           :unused (count (filter #(a/empty-cell? p %) (range 15)))
@@ -29,7 +43,8 @@
           :fences (count (:fences p)) :fences-left (a/fences-available p)
           :occupation-hand (count (get-in p [:hand :occupation]))
           :stables (count (filter :stable (:farm p)))
-          :occupations (count (:occupations p)) :minors (count (:minors p)) :majors (+ (count (:improvements p)) (count (filter #(get-in (a/improvement-definition %) [:major-or-minor]) (:minors p))))
+          :occupations (count (:occupations p)) :minors (- (count (:minors p)) (:dual-as-major context 0))
+          :majors (+ (count (:improvements p)) (get context :dual-as-major (count (dual-improvements p))))
           :improvements (+ (count (:minors p)) (count (:improvements p)))
           :cards (+ (count (:minors p)) (count (:improvements p)) (count (:occupations p)))
           :animals (reduce + (map #(a/amount p %) a/animals))
@@ -58,6 +73,9 @@
                                        :when (and (:accumulate (a/action-definition g space))
                                                   (apply (case (second args) := = :>= >= :> >) [amount (ev (nth args 2))]))] space))
           (throw (ex-info "Unknown card expression" {:form form})))))))
+(defn evaluate [g pid context form]
+  (let [values (map #(evaluate* g pid % form) (count-contexts (get-in g [:players pid]) context form))]
+    (cond (= 1 (count values)) (first values) (every? number? values) (apply max values) :else (boolean (some identity values)))))
 (defn quantities [g pid context goods]
   (into {} (for [[resource expression] goods] [resource (evaluate g pid context expression)])))
 (def count-subjects

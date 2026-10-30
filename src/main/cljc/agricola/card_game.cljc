@@ -43,7 +43,7 @@
       :childless (and (>= (count (a/tiles p :room)) 3) (= 2 (:family p)))
       :only-two-rooms (and (= 2 (count (a/tiles p :room))) (every? #(or (= pid (:id %)) (> (count (a/tiles % :room)) 2)) (:players g)))
       :building-resources (>= (reduce + (for [r [:wood :clay :reed :stone]] (- (get-in p [:received r] 0) (get-in p [:work-baseline r] 0)))) x)
-      :three-fields (and (pos? (crop-fields p :grain)) (pos? (crop-fields p :vegetable)) (some #(zero? (or (:count %) 0)) (fields p)))
+      :three-fields (expr/evaluate g pid context [:and [:> [:grain-fields] 0] [:> [:vegetable-fields] 0] [:> [:empty-fields] 0]])
       false)))
 (defn prerequisites? [g pid card]
   (let [requirement (if (contains? card :requires) (:requires card) (expr/requirement (:prerequisites card)))]
@@ -257,7 +257,7 @@
 (defn needs-input? [g {:keys [player effect] :as head}]
   (or (optional-effect? g head)
       (and (= :pay-or-beg (:op effect)) (< (a/amount (p g player) :food) (:food effect)))
-      (#{:paper-knife :lodger-remove :ability-window :choose :plow :plow-many :wheel-plow :mini-pasture :stable :choose-good :bake :bake-one :take-field-crop :sow-offer :sow :housing :cottage :scholar} (:op effect))
+      (#{:classify-fields :paper-knife :lodger-remove :ability-window :choose :plow :plow-many :wheel-plow :mini-pasture :stable :choose-good :bake :bake-one :take-field-crop :sow-offer :sow :housing :cottage :scholar} (:op effect))
       (and (= :seasonal-crop (:op effect)) (>= (:round g) 6))))
 (defn run-effect* [g {:keys [player card effect context window] :as head} choice]
   (let [pid player current (p g pid) op (:op effect) cost (expr/quantities g pid context (or (:cost effect) {}))]
@@ -296,6 +296,21 @@
                        (-> g (update-in [:players pid :discarded-fences] (fnil inc 0))
                            (update-in [:players pid] a/gain {:food 2})
                            (update-in [:players pid :bonus-points] (fnil inc 0))))
+          :classify-fields
+          (let [original (:original effect) options (expr/classification-options current original)
+                _ (doseq [[option amount] [[:mixed-as-grain (:mixed-fields options)] [:dual-as-major (:dual-improvements options)]]
+                          :when (pos? (or amount 0))]
+                    (a/require! (and (a/natural? (get choice option)) (<= (get choice option) amount)) "Choose how to classify each mixed field or improvement, without counting it twice."))
+                context (merge context (select-keys choice [:mixed-as-grain :dual-as-major]))]
+            (run-effect* g (assoc head :effect original :context context) choice))
+          :heresy-teacher
+          (update-in g [:players pid]
+                     (fn [player]
+                       (reduce (fn [player cell]
+                                 (let [path (a/field-path cell) field (get-in player path)]
+                                   (if (and (>= (a/field-crop-count field :grain) 3) (zero? (a/field-crop-count field :vegetable)))
+                                     (assoc-in player (conj path :under-crops) {:vegetable 1}) player)))
+                               player (concat (a/tiles player :field) (keys (:card-fields player))))))
           :card-action (granted-card-action g pid effect choice)
           :telegram
           (let [round (+ (:round g) (a/fences-available current))]
@@ -448,10 +463,10 @@
           :take-field-crop
           (let [cell (:cell choice) path (a/field-path cell) field (get-in current path) crop (:crop effect)
                 exchange (:exchange effect)]
-            (a/require! (and (= :field (:type field)) (= crop (:crop field)) (pos? (get field :count 0))) "Choose a planted field with the required crop.")
+            (a/require! (and (= :field (:type field)) (pos? (a/field-crop-count field crop))) "Choose a planted field with the required crop.")
             (a/require! (or (not (:exchange? choice)) exchange) "This card does not offer an exchange.")
             ;; Taking or moving a crop is not harvesting it, even when the field empties.
-            (cond-> (-> g (update-in (into [:players pid] (conj path :count)) dec)
+            (cond-> (-> g (update-in [:players pid] a/remove-field-crop cell crop)
                          (update-in [:players pid] a/gain {crop 1}))
               (:exchange? choice) (update-in [:players pid] #(-> % (a/pay {crop 1}) (a/gain {:food (:food exchange)})))
               (:exchange? choice) (update-in [:players pid :bonus-points] (fnil + 0) (:points exchange))))
@@ -462,7 +477,7 @@
                               (update-in [:players pid :begging] + (- owed available))))
           :add-field-crops (reduce (fn [state cell]
                                     (let [path (a/field-path cell) field (get-in current path)]
-                                      (if (and (:crop field) (pos? (:count field 0)))
+                                      (if (= 1 (count (filter (comp pos? val) (a/field-crops field))))
                                         (update-in state (into [:players pid] (conj path :count)) + (:amount effect)) state)))
                                   g (concat (a/tiles current :field) (keys (:card-fields current))))
           :shepherd-crook (let [old (set (:old-pastures context)) new (filter #(and (>= (count %) 4) (not (old %))) (a/pastures current))]
@@ -474,7 +489,7 @@
                 chosen (get choice :fields eligible)]
             (a/require! (and (sequential? chosen) (= (count chosen) (count (set chosen)))
                              (every? (set eligible) chosen)) "Choose grain fields that still contain grain.")
-            (queue-front (reduce (fn [g i] (-> g (update-in (into [:players pid] (conj (a/field-path i) :count)) dec)
+            (queue-front (reduce (fn [g i] (-> g (update-in [:players pid] a/remove-field-crop i :grain)
                                                 (update-in [:players pid] a/gain {:grain 1}))) g chosen)
                          (harvested-crop-events current chosen)))
           :silage
@@ -482,7 +497,7 @@
             (a/require! (some #{source} (silage-grain-sources current)) "Choose one grain from your supply or a grain field.")
             (a/require! (and ((set a/animals) animal) (>= (a/amount current animal) 2)) "Choose one species with at least two animals.")
             (let [paid (if (= source :supply) (a/pay current {:grain 1})
-                           (update-in current (conj (a/field-path source) :count) dec))
+                           (a/remove-field-crop current source :grain))
                   next (a/gain paid {animal 1})]
               (a/require! (a/animal-housing next) "You must be able to accommodate this offspring.")
               (-> g (assoc-in [:players pid] next) (queue-front [(event :check-state pid)]))))
@@ -723,6 +738,9 @@
                        (recur (cond-> (update-in rest-state [:players pid :minors] #(vec (remove #{cid} %)))
                                 (> n 1) (update-in [:players (mod (inc pid) n) :hand :minor] conj cid)) (inc steps)))
           :effect (cond
+                    (and (not= :classify-fields (get-in head [:effect :op]))
+                         (some #(pos? (or % 0)) (vals (expr/classification-options (p g (:player head)) (:effect head)))))
+                    (recur (assoc-in g [:effect-queue 0 :effect] {:op :classify-fields :original (:effect head) :optional? (get-in head [:effect :optional?])}) (inc steps))
                     (not (possible-effect? g head))
                     (recur (or (promote-available-effect g head)
                                (a/log-event rest-state (str (or (:name (c/card (:card head))) "Card") " · no legal use of this effect."))) (inc steps))

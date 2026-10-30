@@ -3,6 +3,9 @@
           :revised-artifex-expansion-a-34-loppers {:play [{:op :watch-fences}]}
           :revised-artifex-expansion-a-40-potter-s-yard {:play [{:op :potters-yard}]}
           :revised-artifex-expansion-a-144-sequestrator {:play [{:op :sequestrator}]}
+          :revised-artifex-expansion-a-113-heresy-teacher
+          {:triggers [{:event :use-space :spaces #{:lessons :lessons-extra :lessons-copse :lessons-growth}
+                       :effect {:op :heresy-teacher}}]},
           :revised-artifex-expansion-a-60-oriental-fireplace
           {:cost :return-cooking :passive {:cook {:vegetable 4 :sheep 3 :cattle 5} :bake 2 :fireplace true :major-or-minor true}},
           :revised-artifex-expansion-a-17-reclamation-plow

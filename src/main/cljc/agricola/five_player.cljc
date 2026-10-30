@@ -69,7 +69,7 @@
       :cattle-caregiver (gain {:food (max 0 (min 3 (- (count (filter #(pos? (a/amount % :cattle)) (:players g))) 2)))})
       :sweeper (if (linked-groups space) (bank g pid cid 1) g)
       :field-overseer (let [n (reduce + (for [other (:players g) :when (not= pid (:id other))]
-                                        (count (filter #(and (= :grain (:crop %)) (pos? (get % :count 0)))
+                                        (count (filter #(pos? (a/field-crop-count % :grain))
                                                  (concat (:farm other) (vals (:card-fields other)))))))]
                         (gain (cond (>= n 6) {:vegetable 1} (>= n 4) {:grain 1} (>= n 3) {:food 1} :else {})))
       :game-teaser (gain (if-let [animal ({1 :cattle 2 :boar 3 :sheep} (resource-taken context :food))] {animal 1} {}))

@@ -1,7 +1,7 @@
 (ns agricola.artifex-harvest-test
   (:require [clojure.test :refer :all] [clojure.edn :as edn] [clojure.set :as set]
             [agricola.engine :as a] [agricola.card-game :as g] [agricola.card-rules :as c]
-            [agricola.bot :as bot]
+            [agricola.bot :as bot] [agricola.card-expressions :as expr]
             [agricola.expansion-cards-test :refer [fresh own hand resolve! delta]]))
 (defn boundary [cells] (set (map key (filter #(= 1 (val %)) (frequencies (mapcat a/edges cells))))))
 (defn pasture [state cells]
@@ -132,3 +132,62 @@
         done (resolve! pending {:improvement (c/id :a060)})]
     (is (= -1 (delta state done :grain)))
     (is (= 2 (delta state done :food)))))
+
+(deftest heresy-teacher-adds-vegetable-beneath-three-grain-on-all-lessons-spaces
+  (doseq [space [:lessons :lessons-extra :lessons-copse :lessons-growth]]
+    (let [state (-> (g/initialize (a/new-game ["A" "B" "C" "D" "E"] (vec (mapcat identity a/stages)) 0))
+                    (hand :a113) (update :active #(vec (distinct (conj % space))))
+                    (update-in [:players 0] a/gain {:food 5})
+                    (assoc-in [:players 0 :farm 0] {:type :field :crop :grain :count 3})
+                    (assoc-in [:players 0 :farm 1] {:type :field :crop :grain :count 2}))
+          done (g/command state 0 {:type :action :space space :card (c/id :a113)})]
+      (is (= {:grain 3 :vegetable 1} (a/field-crops (get-in done [:players 0 :farm 0]))))
+      (is (= {:grain 2} (a/field-crops (get-in done [:players 0 :farm 1]))))
+      (is (= 0 (delta state done :vegetable))))))
+
+(deftest mixed-stacks-harvest-top-first-and-score-all-crops
+  (let [state (assoc-in (fresh) [:players 0 :farm 0] {:type :field :crop :grain :count 3 :under-crops {:vegetable 1}})
+        p (g/p state 0) turns (take 5 (iterate a/field-harvest p))]
+    (is (= [{:grain 3 :vegetable 1} {:grain 2 :vegetable 1} {:grain 1 :vegetable 1} {:vegetable 1} {}]
+           (mapv #(a/field-crops (get-in % [:farm 0])) turns)))
+    (is (= [[0 0] [1 0] [2 0] [3 0] [3 1]] (mapv #(mapv (fn [r] (a/amount % r)) [:grain :vegetable]) turns)))
+    (is (= 1 (get-in (a/score p) [:breakdown :vegetables])))
+    (is (= :vegetable (get-in (nth turns 3) [:farm 0 :crop])))
+    (is (= 0 (get-in (nth turns 4) [:farm 0 :count])))))
+
+(deftest mixed-fields-cannot-be-counted-twice-in-one-prerequisite-or-effect
+  (let [mixed {:type :field :crop :grain :count 3 :under-crops {:vegetable 1}}
+        state (-> (fresh) (assoc-in [:players 0 :farm 0] mixed) (assoc-in [:players 0 :farm 1] {:type :field :count 0}))]
+    (is (= 1 (expr/evaluate state 0 {} [:grain-fields])))
+    (is (= 1 (expr/evaluate state 0 {} [:vegetable-fields])))
+    (is (false? (expr/evaluate state 0 {} [:and [:>= [:grain-fields] 1] [:>= [:vegetable-fields] 1]])))
+    (is (false? (g/condition? state 0 [:three-fields] {})))
+    (let [two (assoc-in state [:players 0 :farm 2] mixed)]
+      (is (true? (g/condition? two 0 [:three-fields] {})))
+      (let [ready (-> two (hand :a007) (update-in [:players 0] a/gain {:wood 1}))
+            pending (g/drain (g/play-card ready 0 (c/id :a007) 0 {}))
+            done (resolve! (edn/read-string (pr-str pending)) {:mixed-as-grain 1})]
+        (is (= :classify-fields (get-in pending [:effect-queue 0 :effect :op])))
+        (is (= 1 (delta ready done :food)))
+        (is (= 1 (delta ready done :grain)))
+        (is (thrown? clojure.lang.ExceptionInfo (resolve! pending {:mixed-as-grain 3}))))))
+  (let [state (own (fresh) 0 :a060)]
+    (is (= 1 (expr/evaluate state 0 {} [:majors])))
+    (is (= 1 (expr/evaluate state 0 {} [:minors])))
+    (is (false? (expr/evaluate state 0 {} [:and [:>= [:majors] 1] [:>= [:minors] 1]])))))
+
+(deftest mixed-crops-work-with-silage-slicer-and-calcium-fertilizers
+  (let [mixed {:type :field :crop :grain :count 1 :under-crops {:vegetable 1}}
+        state (-> (fresh) (own 0 :a084) (own 0 :a072) (own 0 :a058) (pasture [0 1])
+                  (assoc-in [:players 0 :farm 2] mixed) (update-in [:players 0] a/gain {:sheep 2}))
+        silage (resolve! (home state) {:grain-source 2 :animal :sheep})]
+    (is (= {:vegetable 1} (a/field-crops (get-in silage [:players 0 :farm 2]))))
+    (let [fert (g/drain (g/queue-front state [(g/event :use-space 0 {:space :stone-east})]))]
+      (is (= mixed (get-in fert [:players 0 :farm 2]))))
+    (let [slicer (g/drain (g/queue-front (assoc state :round 8) [(g/event :return-home 0)]))
+          ;; Choose the Slicer before Silage in their shared return-home window.
+          slicer (g/drain (g/reorder-effect slicer 0 (c/id :a058)))
+          done (resolve! slicer {:cell 2 :exchange? false})]
+      (is (= 1 (delta state done :vegetable)))
+      (is (= 1 (a/field-crop-count (get-in done [:players 0 :farm 2]) :grain)))
+      (is (= 0 (a/field-crop-count (get-in done [:players 0 :farm 2]) :vegetable))))))

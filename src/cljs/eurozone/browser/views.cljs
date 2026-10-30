@@ -1,7 +1,7 @@
 (ns eurozone.browser.views
   (:require [reagent.core :as r] [re-frame.core :as rf] [clojure.string :as str]
             [cljs.reader :as reader] [agricola.recording :as recording] [eurozone.browser.table-controls :as controls]
-            [agricola.engine :as a] [agricola.five-player :as five] [agricola.card-game :as card-game] [eurozone.catalog :as catalog] [eurozone.browser.art :as art] [agricola.card-rules :as cards] [eurozone.browser.card-art :as card-art] [eurozone.browser.layout :as layout] [eurozone.browser.comms :as comms] [eurozone.store :as store]))
+            [agricola.engine :as a] [agricola.card-expressions :as expr] [agricola.five-player :as five] [agricola.card-game :as card-game] [eurozone.catalog :as catalog] [eurozone.browser.art :as art] [agricola.card-rules :as cards] [eurozone.browser.card-art :as card-art] [eurozone.browser.layout :as layout] [eurozone.browser.comms :as comms] [eurozone.store :as store]))
 
 (def glyph {:wood "▰" :clay "◆" :reed "≋" :stone "⬟" :grain "♧" :vegetable "●" :food "◉" :sheep "♧" :boar "◆" :cattle "⬢"})
 (def labels {:wood "Wood" :clay "Clay" :reed "Reed" :stone "Stone" :grain "Grain" :vegetable "Vegetables" :food "Food" :sheep "Sheep" :boar "Wild boar" :cattle "Cattle"})
@@ -267,6 +267,9 @@
           [:image {:aria-label "Potter's Yard clay" :href (art/piece-url :clay) :x (+ x 36) :y (+ y 40) :width 30 :height 30}])
         (when (:stable cell) [:g [:rect {:x (+ x 30) :y (+ y 38) :width 40 :height 30 :fill "#b07949"}]
                                 [:path {:d (str "M" (+ x 23) " " (+ y 38) "l27 -18 27 18Z") :fill "#6f563a"}]])
+        (when (pos? (get-in cell [:under-crops :vegetable] 0))
+          [:image {:data-piece-key (str "crop:" (:id p) ":" i ":under-vegetable") :data-piece-type "vegetable"
+                   :href (art/piece-url :vegetable) :x (+ x 49) :y (+ y 64) :width 36 :height 40}])
         (when (pos? (get cell :count 0))
           [:g (for [n (range (:count cell))] ^{:key n}
                 [:image {:data-piece-key (str "crop:" (:id p) ":" i ":" n) :data-piece-type (name (:crop cell)) :href (art/piece-url (:crop cell)) :x (+ x 15 (* n 13)) :y (- (+ y 40) (* n 6)) :width 36 :height 40}])])
@@ -621,7 +624,8 @@
                        :resource (or (:effect-resource draft) (first (or (:choices effect) (if (= op :boat-painter) [:grain :food] [:grain :vegetable]))))
                        :plantings (if (= op :sow) (:plantings draft)
                                     (when (and (= op :countryman) (some? (:cell draft))) [{:cell (:cell draft) :crop (or (:effect-resource draft) :grain)}]))})
-        choice (cond-> choice (#{:plow-many :wheel-plow} op) (update :cells #(vec (filter integer? %)))
+        choice (cond-> choice (= op :classify-fields) (assoc :mixed-as-grain (get draft :mixed-as-grain 0) :dual-as-major (get draft :dual-as-major 0))
+                             (#{:plow-many :wheel-plow} op) (update :cells #(vec (filter integer? %)))
                              (and (= op :card-action) (:card choice)) (dissoc :improvement :upgrade :bake-grain))
         choice (if (= op :take-pile-good)
                  (merge (dissoc choice :resource) (select-keys effect [:space :resource])
@@ -740,6 +744,14 @@
        [:label.checkbox [:input {:type "checkbox" :checked (get draft :accommodate-taken? true)
                                  :on-change #(draft! :accommodate-taken? (.. % -target -checked))}]
         "Keep all newly taken animals (cooked animals may come from your previous stock)"])
+     (when (= op :classify-fields)
+       (let [{:keys [mixed-fields dual-improvements]} (expr/classification-options p (:original effect))]
+         [:div
+          (when (pos? (or mixed-fields 0))
+            [field (str "Mixed fields counted as grain (the other " (- mixed-fields (get draft :mixed-as-grain 0)) " count as vegetable)")
+             [number-input (get draft :mixed-as-grain 0) #(draft! :mixed-as-grain %) mixed-fields]])
+          (when (pos? (or dual-improvements 0))
+            [field "Dual improvements counted as major" [number-input (get draft :dual-as-major 0) #(draft! :dual-as-major %) dual-improvements]])]))
      (when (= op :silage)
        [:div
         [field "Grain source" [:select {:aria-label "Grain source" :value (if (contains? draft :grain-source) (pr-str (:grain-source draft)) "")
@@ -766,7 +778,7 @@
                                   [:option {:value ""} "Choose a vegetable field…"]
                                   (for [i (concat (a/tiles p :field) (keys (:card-fields p)))
                                         :let [f (get-in p (a/field-path i))]
-                                        :when (and (= (:crop effect) (:crop f)) (pos? (get f :count 0)))]
+                                        :when (pos? (a/field-crop-count f (:crop effect)))]
                                     ^{:key i} [:option {:value (str i)} (if (integer? i) (str "Field " (inc i)) (:name (cards/card i)))])]]
         (when (:exchange effect)
           [:label.checkbox [:input {:type "checkbox" :checked (boolean (:exchange? draft)) :on-change #(draft! :exchange? (.. % -target -checked))}]
@@ -930,7 +942,7 @@
            (when-let [food (get-in p [:card-state cid :food])] [:span.card-food (str food " food saved")])
            (when-let [stored (seq (get-in p [:card-state cid :stored-goods]))]
              [:div.card-stored-goods {:aria-label "Stored goods"} [goods (into {} stored)]])
-           (when (pos? (or (:count field) 0)) [:div.card-crops [art/pile (:crop field) (:count field)]])])])
+           (when (pos? (or (:count field) 0)) [:div.card-crops (for [[crop amount] (a/field-crops field) :when (pos? amount)] ^{:key crop} [art/pile crop amount])])])])
      (when @exposed [:div.card-detail [:strong (:name (cards/card @exposed))] [:p.small (:text (cards/card @exposed))]])]))
 (defn played-cards [p]
   (r/with-let [all? (r/atom false) exposed (r/atom nil)]

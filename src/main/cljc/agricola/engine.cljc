@@ -194,6 +194,23 @@
                            (recur (- left used) (rest ovens) (+ food (* used (:bake oven))))))))]
         (gain (pay p {:grain n}) {:food food}))))
 (defn field-path [cell] (if (integer? cell) [:farm cell] [:card-fields cell]))
+(defn field-crops [field]
+  (merge-with + (or (:under-crops field) {})
+              (if (and (:crop field) (pos? (:count field 0))) {(:crop field) (:count field)} {})))
+(defn field-crop-count [field crop] (get (field-crops field) crop 0))
+(defn normalize-field [field]
+  (if (pos? (:count field 0)) field
+    (if-let [[crop amount] (first (filter (comp pos? val) (:under-crops field)))]
+      (cond-> (assoc field :crop crop :count amount)
+        true (update :under-crops dissoc crop)
+        (= 1 (count (:under-crops field))) (dissoc :under-crops))
+      (assoc (dissoc field :crop :under-crops) :count 0))))
+(defn remove-field-crop [player cell crop]
+  (let [path (field-path cell) field (get-in player path)]
+    (require! (pos? (field-crop-count field crop)) "That field does not contain this crop.")
+    (assoc-in player path (normalize-field
+                          (if (= crop (:crop field)) (update field :count dec)
+                              (update-in field [:under-crops crop] dec))))))
 (defn sow [p plantings]
   (reduce (fn [p {:keys [cell crop]}]
             (let [path (field-path cell) field (get-in p path)]
@@ -307,12 +324,12 @@
 (defn field-harvest [p]
   (reduce (fn [p cell]
             (let [path (field-path cell) {:keys [crop count]} (get-in p path)]
-              (if (and crop (pos? (or count 0))) (-> p (gain {crop 1}) (update-in (conj path :count) dec)) p)))
+              (if (and crop (pos? (or count 0))) (-> p (gain {crop 1}) (remove-field-crop cell crop)) p)))
           p (concat (range 15) (keys (:card-fields p)))))
 (defn threshold-score [n thresholds] (if (< n (first thresholds)) -1 (count (filter #(>= n %) thresholds))))
 (defn score [p]
   (let [crops (merge-with + (select-keys (:goods p) [:grain :vegetable])
-                          (reduce (fn [m f] (if (:crop f) (update m (:crop f) (fnil + 0) (:count f)) m)) {} (concat (:farm p) (vals (:card-fields p)))))
+                          (reduce #(merge-with + %1 (field-crops %2)) {} (concat (:farm p) (vals (:card-fields p)))))
         fenced (pasture-cells p)
         breakdown {:fields (threshold-score (count (tiles p :field)) [2 3 4 5])
                    :pastures (threshold-score (count (pastures p)) [1 2 3 4])
