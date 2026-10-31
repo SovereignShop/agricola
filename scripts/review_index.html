@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eurozone · Recorded games</title>
+<style>
+:root{color-scheme:light;font:16px/1.5 Georgia,serif;color:#352e24;background:#e9e2d3}*{box-sizing:border-box}body{max-width:1500px;margin:0 auto;padding:30px}h1{font-weight:normal;margin:0}header p{margin:6px 0 16px;color:#655b4d}a{color:#375c42}button,input,select,textarea{font:14px/1.5 system-ui;border:1px solid #b8ad98;border-radius:5px;padding:8px;background:#fffdf6;color:inherit}button,a{cursor:pointer}button:hover{background:#f0eadc}.filters{display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin:22px 0}label{display:flex;flex-direction:column;font:13px/1.5 system-ui}input[type=search]{min-width:260px}#summary{padding:14px 18px;background:#faf6eb;border:1px solid #c7baa1;border-radius:6px}table{border-collapse:collapse;width:100%;background:#faf7ee}th,td{text-align:left;padding:10px 12px;border-bottom:1px solid #d6cbb9;vertical-align:top}th{font:600 12px/1.5 system-ui;text-transform:uppercase;letter-spacing:.04em}td{font:14px/1.5 system-ui}small{display:block;color:#75674f}.flag{color:#8a362d;font-weight:600}.cardlist{max-width:430px}details{margin-top:5px}summary{cursor:pointer}.reviewed{opacity:.65}textarea{width:100%;min-width:180px;min-height:65px;margin-top:7px}#notice{color:#863b2b}.score{white-space:nowrap}.actions{display:flex;gap:8px;flex-wrap:wrap}.actions a{display:inline-block;padding:5px 9px;background:#e8eddf;border:1px solid #b6c3aa;border-radius:4px;text-decoration:none}@media(max-width:700px){body{padding:15px}table,tbody,tr,td{display:block}thead{display:none}tr{border-bottom:2px solid #b8ad98;padding:8px}td{border:0;padding:5px}.cardlist{max-width:none}}
+</style>
+<header><h1>Recorded games</h1><p>Current rules · 2–5 players · random hands and drafts</p></header>
+<div id="summary" aria-live="polite">Loading recordings…</div>
+<p>Open a replay, then use <b>Play</b>, <b>Next</b>, or the move slider to inspect it. All hands are visible. Failed games retain the position before the error. Passing replay verification checks consistency, not whether every rule interpretation is correct.</p>
+<div class="filters">
+<label>Card, seed, or error<input id="search" type="search" placeholder="e.g. Plowman"></label>
+<label>Search cards in<select id="cardScope"><option value="played">Played cards</option><option value="dealt">Dealt cards</option><option value="effects">Triggered effects</option></select></label>
+<label>Players<select id="players"><option value="">All</option><option value="2">2</option><option>3</option><option>4</option><option>5</option></select></label>
+<label>Setup<select id="mode"><option value="">All</option><option value="random">Random hands</option><option value="draw">Draft</option></select></label>
+<label>Review<select id="status"><option value="">All games</option><option value="attention">Errors / unusual outcomes</option><option value="failed">Failed games</option><option value="unreviewed">Not yet reviewed</option><option value="noted">With my notes</option></select></label>
+<label>Sort<select id="sort"><option value="attention">Errors first</option><option value="seed">Seed</option><option value="high">Highest score</option><option value="low">Lowest score</option><option value="cards">Most cards played</option></select></label>
+<button id="export">Export review notes</button>
+</div>
+<p id="notice" role="status"></p><p id="count"></p>
+<table><thead><tr><th>Game</th><th>Result</th><th>Cards</th><th>Review</th></tr></thead><tbody id="games"></tbody></table>
+<script>
+const $=id=>document.getElementById(id), key='eurozone-review:'+location.pathname;
+let manifest={games:[]}, notes={};try{notes=JSON.parse(localStorage.getItem(key)||'{}')}catch(e){}
+function save(){try{localStorage.setItem(key,JSON.stringify(notes))}catch(e){$('notice').textContent='Notes could not be stored. Use Export review notes before closing.'}}
+const flags=g=>[...(g.status!=='complete'?[g.error||g.status]:[]),...(g.begging?.some(n=>n>=5)?['5+ begging cards']:[]),...(g.scores?.some(n=>n<0)?['Negative score']:[]),...(g.moves>=600?['600+ commands']:[])];
+function element(tag,text,cls){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e}
+function cell(row){const td=document.createElement('td');row.append(td);return td}
+function render(){
+const q=$('search').value.toLowerCase().trim(), scope=$('cardScope').value, status=$('status').value;
+let games=manifest.games.filter(g=>(!$('players').value||g.players==$('players').value)&&(!$('mode').value||g.mode===$('mode').value)&&(!q||[g.seed,g.error,...(g[scope]||[]).map(c=>c.name+' '+c.id)].join(' ').toLowerCase().includes(q))&&(!status||(status==='failed'&&g.status!=='complete')||(status==='attention'&&flags(g).length)||(status==='unreviewed'&&!notes[g.seed]?.reviewed)||(status==='noted'&&notes[g.seed]?.text)));
+games.sort((a,b)=>{switch($('sort').value){case'high':return Math.max(...b.scores)-Math.max(...a.scores)||a.seed-b.seed;case'low':return Math.min(...a.scores)-Math.min(...b.scores)||a.seed-b.seed;case'cards':return b.played.length-a.played.length||a.seed-b.seed;case'attention':return (a.status==='complete')-(b.status==='complete')||flags(b).length-flags(a).length||a.seed-b.seed;default:return a.seed-b.seed}});
+$('count').textContent=games.length+' shown · '+Object.values(notes).filter(n=>n.reviewed).length+' marked reviewed. Notes stay in this browser.';
+$('games').replaceChildren();
+for(const g of games){const tr=element('tr');if(notes[g.seed]?.reviewed)tr.className='reviewed';const identity=cell(tr);
+identity.append(element('strong',String(g.seed)),element('div',g.players+' players · '+(g.mode==='draw'?'Draft +'+g.extra:'Random hands')));
+identity.append(element('small',g.policies.includes('random')?'Includes a random-policy seat':'Deployed bots'));
+const links=element('div',undefined,'actions');if(g.verified){const a=element('a','Watch');a.href='/?replay='+encodeURIComponent(new URL(g.file,location.href).pathname);a.target='_blank';a.rel='noopener';links.append(a)}
+const download=element('a','EDN');download.href=g.file;download.download=g.file;links.append(download);identity.append(links);
+const result=cell(tr);result.append(element('strong',g.scores?.length?g.scores.join(' / '):'Incomplete','score'),element('small',g.moves+' commands · '+(g.verified?'replay verified':'not verified')));
+for(const f of flags(g))result.append(element('div',f,'flag'));
+if(g.attempt)result.append(element('small',g.attempt));
+const cards=cell(tr);cards.className='cardlist';cards.append(element('div',(g.played||[]).map(c=>c.name).join(' · ')||'No cards played'));
+const details=element('details');details.append(element('summary',(g.dealt||[]).length+' dealt cards'),element('div',(g.dealt||[]).map(c=>c.name).join(' · ')));cards.append(details);
+const review=cell(tr), button=element('button',notes[g.seed]?.reviewed?'Reviewed ✓':'Mark reviewed');button.onclick=()=>{notes[g.seed]={...notes[g.seed],reviewed:!notes[g.seed]?.reviewed};save();render()};
+const note=element('textarea');note.placeholder='Round / move and suspected bug';note.setAttribute('aria-label','Notes for game '+g.seed);note.value=notes[g.seed]?.text||'';note.oninput=()=>{notes[g.seed]={...notes[g.seed],text:note.value};save()};review.append(button,note);$('games').append(tr);
+}}
+async function update(){try{const response=await fetch('manifest.json',{cache:'no-store'});if(!response.ok)throw Error('HTTP '+response.status);manifest=await response.json();const complete=manifest.games.filter(g=>g.status==='complete').length,failed=manifest.games.length-complete;const all=new Set(manifest.games.flatMap(g=>(g.played||[]).map(c=>c.id)));$('summary').textContent=`${manifest.completed} / ${manifest.target} recorded · ${complete} finished games · ${failed} failures · ${all.size} distinct cards played${manifest.finished?' · Batch finished':' · Recording continues'}`;if(manifest.worker_failures.length)$('notice').textContent=manifest.worker_failures.join(' · ');if(!document.activeElement.matches('textarea'))render()}catch(error){$('notice').textContent='Could not refresh recordings: '+error.message}}
+for(const id of ['search','cardScope','players','mode','status','sort'])$(id).addEventListener('input',render);
+$('export').onclick=()=>{const blob=new Blob([JSON.stringify({batch:location.pathname,notes},null,2)],{type:'application/json'}),a=element('a');a.href=URL.createObjectURL(blob);a.download='eurozone-review-notes.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+update();setInterval(()=>{if(!manifest.finished)update()},15000);
+</script>
+</html>

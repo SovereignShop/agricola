@@ -672,3 +672,26 @@ No model is automatically promoted.
   --analysis data/analysis/openings-20261026 \
   --output data/muzero/food-growth-pilot-20261026 --games 64
 ```
+
+
+## Record a review corpus
+
+`python3 scripts/record_review.py --output data/reviews/review-20261031 --per-group 40`
+records 320 games across 2–5 players and random/draft setups. Eight isolated JVM
+workers use the deployed bot policy; every fifth game includes one random-policy
+seat. Draft extras cycle through 0, 2, 4, 8, and 10. No model is trained or changed.
+Use a new output directory and a different `--seed` for a fresh corpus.
+
+Each command, effect trace, and state hash is recorded. Every finished or failed
+game is replayed and checked against state invariants. Failure recordings retain
+the last valid position and attempted command; other games continue. `plan.json`
+records the source commit and seeds, `manifest.json` tracks progress and card
+coverage, and per-group logs retain worker errors. A run with a failed worker exits
+nonzero; a recorded game failure is retained as a review result.
+
+Expose the output with a symlink at `resources/public/recordings/review-<name>`,
+then open `/recordings/review-<name>/index.html` on the running server. This serves
+synthetic bot recordings, including all hands. The index filters by player count,
+setup, played/dealt/effect cards, and failures; Watch opens verified board playback.
+Review notes and checkmarks stay in browser local storage and can be exported.
+High begging and negative scores are inspection hints, not confirmed rule bugs.

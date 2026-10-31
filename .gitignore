@@ -44,3 +44,6 @@ node_modules/
 *.swo
 /addition-log/
 /retraction-log/
+
+# Generated review corpora are kept in data/, optionally exposed via symlinks.
+/resources/public/recordings/review-*
