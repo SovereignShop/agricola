@@ -14,6 +14,12 @@
     (is (thrown-with-msg? clojure.lang.ExceptionInfo #"two players"
                           (growth/features (sim/initial-state {:seed 1 :players 3}) 0)))))
 
+(deftest room-gap-ignores-inapplicable-construction-replacements
+  (doseq [card [:revised-base/a123 :catalog/original-base-k-272-frame-builder]]
+    (let [player (-> (first (:players (a/new-game ["Ada" "Ben"])))
+                     (assoc :occupations [card]) (a/gain {:wood 5 :reed 2}))]
+      (is (= 0 (growth/room-gap player))))))
+
 (deftest zero-correction-preserves-current-strong-policy
   (let [records (atom [])]
     (with-redefs [sim/choose

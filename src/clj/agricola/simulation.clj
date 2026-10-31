@@ -10,7 +10,7 @@
 (def canonical recording/canonical)
 (def sha recording/sha)
 (def state-hash recording/state-hash)
-(def rule-files ["agricola/board.edn" "agricola/cards.edn" "agricola/five-player-cards.edn" "agricola/expansion-cards.edn" "agricola/original-e-construction.edn" "agricola/original-e-improvement-permissions.edn" "agricola/original-e-animals.edn" "agricola/original-e-timing.edn" "agricola/original-e-plows.edn" "agricola/original-e-animal-economy.edn" "agricola/original-e-improvement-followups.edn" "agricola/original-e-action-occupations.edn" "agricola/original-e-resource-actions.edn" "agricola/original-e-conversions.edn" "agricola/original-i-minors.edn" "agricola/original-i-occupations-a.edn" "agricola/original-i-occupations-b.edn" "agricola/original-i-crops-rounds.edn" "agricola/original-cards.edn" "agricola/original-e-minors-extra.edn" "agricola/original-e-occupations-extra.edn" "agricola/five_player.cljc" "agricola/engine.cljc" "agricola/card_game.cljc" "agricola/card_reactive.cljc" "agricola/card_random.cljc" "agricola/card_rules.cljc" "agricola/card_expressions.cljc" "agricola/card_catalog.cljc" "agricola/draw.cljc"])
+(def rule-files ["agricola/board.edn" "agricola/cards.edn" "agricola/five-player-cards.edn" "agricola/expansion-cards.edn" "agricola/original-e-construction.edn" "agricola/original-e-improvement-permissions.edn" "agricola/original-e-animals.edn" "agricola/original-e-timing.edn" "agricola/original-e-plows.edn" "agricola/original-e-animal-economy.edn" "agricola/original-e-improvement-followups.edn" "agricola/original-e-action-occupations.edn" "agricola/original-e-resource-actions.edn" "agricola/original-e-conversions.edn" "agricola/original-i-minors.edn" "agricola/original-i-occupations-a.edn" "agricola/original-i-occupations-b.edn" "agricola/original-i-crops-rounds.edn" "agricola/original-k-minors.edn" "agricola/original-k-occupations-a.edn" "agricola/original-k-occupations-b.edn" "agricola/original-k-workers-draw.edn" "agricola/original-cards.edn" "agricola/original-e-minors-extra.edn" "agricola/original-e-occupations-extra.edn" "agricola/five_player.cljc" "agricola/engine.cljc" "agricola/card_game.cljc" "agricola/card_reactive.cljc" "agricola/card_random.cljc" "agricola/card_rules.cljc" "agricola/card_expressions.cljc" "agricola/card_catalog.cljc" "agricola/draw.cljc"])
 (defn rules-hash [] (sha (apply str (map #(slurp (io/resource %)) rule-files))))
 (defn shuffle-with [^Random rng xs]
   (let [copy (ArrayList. (vec xs))] (Collections/shuffle copy rng) (vec copy)))
@@ -21,7 +21,7 @@
                      :card-rng (inc (mod (long seed) 2147483646)))
         pool (filter #(<= (:min-players %) players) (sort-by :id (vals c/cards)))
         by-kind (into {} (for [kind draw/kinds] [kind (shuffle-with rng (filter #(= kind (:kind %)) pool))]))
-        state (cond-> state (= players 5) (assoc :minor-order (mapv :id (by-kind :minor))))]
+        state (assoc state :minor-order (mapv :id (by-kind :minor)))]
     (case mode
       :beginner state
       :random (g/initialize
@@ -55,7 +55,7 @@
   (doseq [p (:players state)]
     (a/require! (every? a/natural? (vals (:goods p))) "Negative/nonintegral goods in simulation.")
     (a/require! (<= 2 (:family p) 5) "Invalid family size in simulation.")
-    (a/require! (<= 0 (:remaining p) (+ (:family p) (:guests p 0))) "Invalid remaining worker count.")
+    (a/require! (<= 0 (:remaining p) (a/workers-in-play p)) "Invalid remaining worker count.")
     (a/require! (= 15 (count (:farm p))) "Invalid farm size in simulation.")
     (a/require! (<= (count (:fences p)) 15) "Too many fences in simulation.")
     (when (not= :draw (:phase state))

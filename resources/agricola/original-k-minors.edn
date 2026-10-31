@@ -1,0 +1,43 @@
+;; Original English K minors. Compendium pp188–204 and English printing.
+{:catalog/original-base-k-105-acreage {:passive {:card-stacks {:crop :grain :count 2 :field? true}}}
+ :catalog/original-base-k-106-bakehouse {:cost :return-oven :requires [:> [:ovens] 0] :passive {:bake 5 :limit 2} :play [{:op :bake :optional? true}]}
+ :catalog/original-base-k-107-lumber {:play [{:op :gain :goods {:wood 3}}]}
+ :catalog/original-base-k-108-beehive {:requires [:and [:>= [:occupations] 3] [:>= [:improvements] 2]] :play [{:op :schedule :rounds [2 4 6 8 10 12 14] :goods {:food 2}}]}
+ :catalog/original-base-k-109-spit-roast {:passive {:spit-roast true}}
+ :catalog/original-base-k-110-brewery {:triggers [{:event :feeding-start :effect {:op :exchange :optional? true :cost {:grain 1} :goods {:food 3}}}] :score {:type :expression :value [:if [:>= [:total-crops :grain] 9] 1 0]}}
+ :catalog/original-base-k-111-bread-paddle {:triggers [{:event :occupation :effect {:op :bake :optional? true}}]}
+ :catalog/original-base-k-112-bookshelf {:passive {:occupation-food 3}}
+ :catalog/original-base-k-113-flail {:triggers [{:event :use-space :spaces #{:plow :cultivation} :effect {:op :bake :optional? true}}]}
+ :catalog/original-base-k-114-duck-pond {:play [{:op :schedule :offsets [1 2 3] :goods {:food 1}}]}
+ :catalog/original-base-k-115-swing-plow {:passive {:action-plow {:extra-fields 2 :spaces #{:plow}}} :play [{:op :set-uses :uses 2}]}
+ :catalog/original-base-k-116-granary {:cost-options [{:wood 3} {:clay 3}] :play [{:op :schedule :rounds [8 10 12] :goods {:grain 1}}]}
+ :catalog/original-base-k-117-greenhouse {:printed-cost {:wood 2} :cost-text "2 Wood" :play [{:op :schedule :offsets [4 7] :goods {:vegetable 1} :arrival-cost {:food 1}}]}
+ :catalog/original-base-k-118-liquid-manure {:requires [:>= [:animals] 4] :passive {:extra-sown-all 1}}
+ :catalog/original-base-k-119-crooked-plow {:passive {:action-plow {:extra-fields 2 :spaces #{:plow}}} :play [{:op :set-uses :uses 1}]}
+ :catalog/original-base-k-120-house-goat {:passive {:no-house-animals true} :triggers [{:event :feeding-start :effect {:op :gain :goods {:food 1}}}]}
+ :catalog/original-base-k-121-sawhorse {:passive {:sawhorse true}}
+ :catalog/original-base-k-122-sawmill {:cost :return-joinery :requires [:owns-major :joinery] :passive {:sawmill true} :triggers [{:event :feeding-start :effect {:op :exchange :optional? true :cost {:wood 1} :goods {:food 3}}}] :score {:type :sawmill}}
+ :catalog/original-base-k-123-wooden-strongbox {:score {:type :expression :value [:if [:>= [:rooms] 6] 4 [:if [:= [:rooms] 5] 2 0]]}}
+ :catalog/original-base-k-124-yoke {:requires [:>= [:goods :cattle] 1] :play [{:op :plow-many :optional? true :max-fields [:all-plows]}]}
+ :catalog/original-base-k-126-landing-net {:triggers [{:event :after-action :condition [:test [:> [:source-goods :reed] 0]] :effect {:op :landing-net}}]}
+ :catalog/original-base-k-127-clapper {:play [{:op :clapper :played? true}] :triggers [{:event :use-space :effect {:op :clapper}}]}
+ :catalog/original-base-k-128-cooking-hearth {:cost :return-fireplace :requires [:> [:returnable-fireplaces] 0] :passive {:cooking-hearth true :cook {:vegetable 3 :sheep 2 :boar 3 :cattle 4} :bake 3}}
+ :catalog/original-base-k-129-corn-sheaf {:play [{:op :gain :goods {:grain 1}}]}
+ :catalog/original-base-k-130-herb-garden {:requires [:>= [:vegetable-fields] 1] :play [{:op :schedule :offsets [1 2 3 4 5] :goods {:food 1}}]}
+ :catalog/original-base-k-131-clay-pit {:triggers [{:event :use-space :spaces #{:labor} :effect {:op :gain :goods {:clay 3}}}]}
+ :catalog/original-base-k-132-clay-hut-extension {:requires [:= [:house] :clay] :requires-effect? true :play [{:op :build-rooms :max-rooms 1 :free? true}]}
+ :catalog/original-base-k-133-milking-stool {:triggers [{:event :before-field-phase :effect {:op :gain :goods {:food [:min 3 [:quot [:+ [:goods :cattle] 1] 2]]}}}] :score {:type :animals :resource :cattle :divisor 2}}
+ :catalog/original-base-k-134-ox-team {:requires [:>= [:goods :cattle] 2] :play [{:op :plow-many :optional? true :max-fields [:min 3 [:rounds-left]]}]}
+ :catalog/original-base-k-135-horse {:score {:type :expression :value [:if [:< [:animal-types] 3] 2 0]}}
+ ;; Lookout's official card list and compendium both correct the scan's 3 to 2.
+ :catalog/original-base-k-136-brushwood-roof {:requires [:>= [:occupations] 2] :prerequisites "2 Occupations" :passive {:brushwood-roof true}}
+ :catalog/original-base-k-137-turnip-field {:passive {:card-field :vegetable} :play [{:op :sow-offer :optional? true}]}
+ :catalog/original-base-k-139-sleeping-corner {:requires [:>= [:grain-fields] 2] :passive {:share-growth-spaces true}}
+ :catalog/original-base-k-140-swan-lake {:play [{:op :schedule :offsets [1 2 3 4 5] :goods {:food 1}}]}
+ :catalog/original-base-k-141-boar-breeding {:play [{:op :gain :goods {:boar 1}}]}
+ :catalog/original-base-k-142-stone-cart {:play [{:op :schedule :rounds [2 4 6 8 10 12 14] :goods {:stone 1}}]}
+ :catalog/original-base-k-143-stone-exchange {:cost-options [{:wood 2} {:clay 2}] :play [{:op :gain :goods {:stone 2}}]}
+ :catalog/original-base-k-144-mansion {:score {:type :expression :value [:if [:= [:house] :stone] [:* 2 [:rooms]] 0]}}
+ :catalog/original-base-k-145-forest-pasture {:passive {:forest-boars true}}
+ :catalog/original-base-k-146-loom {:triggers [{:event :before-field-phase :effect {:op :loom}}] :score {:type :animals :resource :sheep :divisor 3}}
+ :catalog/original-base-k-339-pelts {:triggers [{:event :convert-food :condition [:test [:> [:context :cooked-animals] 0]] :effect {:op :pelts :optional? true}}] :score {:type :expression :value [:card-state :catalog/original-base-k-339-pelts :pelts]}}}

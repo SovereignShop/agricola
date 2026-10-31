@@ -37,11 +37,13 @@
         paper? (if (and (= kind :occupation) (c/has? p :b109)) [false true] [false])
         payment (if-let [costs (:cost-options (c/card cid))] (range (count costs)) [nil])
         wood (if (and (= kind :occupation) (c/has? p :a028)) (range (+ 4 (:additional-food-cost (c/card cid) 0))) [0])
-        returned (if (#{:return-cooking :return-oven :return-hearth :return-well} (:cost (c/card cid))) (g/card-return-options p cid) [nil])
+        returned (if (#{:return-cooking :return-oven :return-hearth :return-well :return-fireplace :return-joinery} (:cost (c/card cid))) (g/card-return-options p cid) [nil])
         returned-pair (if (= :return-two-improvements (:cost (c/card cid))) (g/card-return-pairs p) [nil])
         discount-resource (or (seq (a/improvement-discount-resources p cid)) [nil])
+        improvement-payment (if (= kind :minor) (a/improvement-payment-options p cid) [{}])
+        perpetual? (if (and (= kind :occupation) (some true? (c/passives p :perpetual-student))) [false true] [false])
         major? (if (get-in (c/card cid) [:passive :major-or-minor]) [false true] [false])]
-    (cond-> {:card cid} paper? (assoc :paper-maker? true) (some? payment) (assoc :payment-option payment)
+    (cond-> (merge {:card cid} improvement-payment) perpetual? (assoc :perpetual-student? true) paper? (assoc :paper-maker? true) (some? payment) (assoc :payment-option payment)
             returned (assoc :return-improvement returned) returned-pair (assoc :return-improvements returned-pair)
             discount-resource (assoc :discount-resource discount-resource)
             major? (assoc :as-major? true) (pos? wood) (assoc :occupation-wood wood))))
@@ -90,8 +92,9 @@
         upgrade (if (:upgrade (a/improvements cid))
                   (cons nil (a/fireplace-upgrades p)) [nil])
         discount-resource (or (seq (a/improvement-discount-resources p cid)) [nil])
+        improvement-payment (a/improvement-payment-options p cid)
         grain (if (:oven (a/improvements cid)) (range (inc (min 3 (a/amount p :grain)))) [0])]
-    (cond-> {:improvement cid} upgrade (assoc :upgrade upgrade) (pos? grain) (assoc :bake-grain grain)
+    (cond-> (merge {:improvement cid} improvement-payment) upgrade (assoc :upgrade upgrade) (pos? grain) (assoc :bake-grain grain)
             discount-resource (assoc :discount-resource discount-resource))))
 (defn supply-minor-options [state p]
   (filter #(a/major-as-minor? p (:improvement %)) (major-options state p)))
@@ -100,8 +103,9 @@
         minors (concat (hand-options p :minor) (supply-minor-options state p))
         majors (major-options state p)
         cells (filter #(a/empty-cell? p %) (range 15))
-        fences (delay (for [f (fence-plans p) material (if (c/has? p :a016) [:wood :clay] [:wood])]
-                       {:fences f :fence-material material}))]
+        fences (delay (for [f (fence-plans p) material (if (c/has? p :a016) [:wood :clay] [:wood])
+                             carver? (if (a/wood-carver-available? p) [false true] [false])]
+                       {:fences f :fence-material material :wood-carver? carver?}))]
     (mapcat
      (fn [space]
        (let [options
@@ -113,7 +117,7 @@
                :house-building (for [cell cells opts (a/room-payment-plans p [cell])] (assoc opts :rooms [cell]))
                :animal-market (map #(hash-map :choice %) a/animals)
                :build (concat (for [cell cells opts (a/room-payment-plans p [cell])] (assoc opts :rooms [cell]))
-                              (for [cell (range 15)] {:stables [cell]}))
+                              (for [cell (range 15) carver? (if (a/wood-carver-available? p) [false true] [false])] {:stables [cell] :wood-carver? carver?}))
                :fences @fences
                :sow-bake (for [plantings (if (g/staged-sowing? state pid space) [[]] (sow-plans p)) grain (range (inc (min 8 (a/amount p :grain))))]
                            {:plantings plantings :bake-grain grain})
@@ -125,15 +129,19 @@
                :improvement (concat majors minors)
                :renovate (for [opts payments improvement (concat [{}] majors minors)] (merge opts improvement))
                :redevelop (for [opts payments fence (cons {} @fences)] (merge opts fence))
-               [{}])]
+               [{}])
+             options (concat options
+                             (when (g/salesman-available? state pid {:kinds (if (#{:meeting :growth} space) #{:minor} #{:major :minor}) :origin-space space})
+                               (map #(assoc % :salesman? true) (if (#{:meeting :growth} space) majors minors))))]
          (for [base options option (with-bake-cooking p base :bake-grain)
+               adopt-hut? (if (and (:reed-hut? p) (#{:growth :urgent-growth :modest-growth} space)) [false true] [nil])
                hora (if (and (c/has? p :a174) (five/linked-groups space)) [false true] [false])
                double (if (and (c/has? p :a180) (= space :animal-market)) [false true] [false])
                shave? (if (g/pre-use-shaving? state pid space) [false true] [false])
                lasso? (if (and (seq (g/lasso-animal-spaces p)) (not (:lasso state)) (>= (:remaining p) 2)) [false true] [false])
                pig? (if (g/pig-catcher-available? state pid space) [false true] [false])
                part (if (and (c/has? p :d180) (:accumulate (a/action-definition state space))) [false true] [false])]
-           (cond-> (merge {:type :action :space space} option) hora (assoc :master-hora? true) double (assoc :animal-brander? true) part (assoc :part-time? true) shave? (assoc :shaving-horse? true) pig? (assoc :pig-catcher? true) lasso? (assoc :lasso? true)))))
+           (cond-> (merge {:type :action :space space} option) (some? adopt-hut?) (assoc :adopt-reed-hut? adopt-hut?) hora (assoc :master-hora? true) double (assoc :animal-brander? true) part (assoc :part-time? true) shave? (assoc :shaving-horse? true) pig? (assoc :pig-catcher? true) lasso? (assoc :lasso? true)))))
      ;; Sleeping Corner can share Growth; validate-space decides whether it can.
      (filter #(and (not (contains? (:cancelled-sowing state) [pid % (:round state)]))
                    (or (not (contains? (:occupied state) %)) (g/occupied-permission state pid %))) (:active state)))))
@@ -166,8 +174,32 @@
 (defn decision-candidates [state pid]
   (let [p (g/p state pid) head (first (:effect-queue state)) effect (g/plow-effect (:effect head))
         options (case (:op effect)
+                  :relocate (map #(hash-map :option %) (range (count (g/relocation-origins state pid))))
+                  :serf [{:resource :grain} {:resource :vegetable}]
+                  :pieceworker (map #(hash-map :purchase %) (g/pieceworker-choices (:context head)))
+                  :wet-nurse (for [amount (range 1 (inc (get-in head [:context :rooms-built] 0))) adopt? (if (:reed-hut? p) [false true] [false])]
+                               (cond-> {:amount amount} adopt? (assoc :adopt-reed-hut? true)))
+                  :adopt-original (map #(hash-map :amount %) (range 1 (inc (min (:newborn p) (get-in head [:context :newborns-added] 1)))))
+                  :educator (hand-options p :occupation)
+                  :original-scholar (concat (hand-options p :occupation) (hand-options p :minor) (major-options state p))
+                  :perpetual-play (for [wood (if (c/has? p :a028) (range 8) [0])] {:occupation-wood wood})
+                  :wood-distributor [{}]
+                  :basin-maker (map #(hash-map :amount %) (range 1 (inc (min (a/amount p :wood) (* 2 (g/unclaimed-cooked-boar state (:context head) :basin))))))
+                  :tanner (for [boar (range (inc (g/unclaimed-cooked-boar state (:context head) :tanner)))
+                                cattle (range (inc (get-in head [:context :cooked-cattle] 0))) :when (pos? (+ boar cattle))]
+                            {:animals {:boar boar :cattle cattle}})
+                  :grow (if (:reed-hut? p) [{:adopt-reed-hut? false} {:adopt-reed-hut? true}] [{}])
+                  :resource-seller-receipt (map #(hash-map :option %) (range (count (g/resource-seller-options state pid (:card head) (:goods effect)))))
+                  :foreman (map #(hash-map :space %) (g/fence-marker-spaces state pid))
+                  :animal-breeder (map #(hash-map :animal %) a/animals)
+                  :animal-trainer (let [budget (min (a/amount p :food) (get-in head [:context :pile-food] 0))]
+                                    (for [sheep (range (inc (quot budget 2))) boar (range (inc (quot (- budget (* sheep 2)) 2)))
+                                          cattle (range (inc (quot (- budget (* 2 (+ sheep boar))) 3)))
+                                          :when (pos? (+ sheep boar cattle))]
+                                      {:animals {:sheep sheep :boar boar :cattle cattle}}))
                   :mark-fence-space (map #(hash-map :space %) (g/fence-marker-spaces state pid))
                   :harvest-helper (g/harvest-helper-options state pid)
+                  :pelts (map #(hash-map :amount %) (range 1 (inc (min (a/amount p :food) (get-in head [:context :cooked-animals] 0) (- (count (a/tiles p :room)) (get-in p [:card-state (:card head) :pelts] 0))))))
                   :cover-unused (map #(hash-map :amount %) (range (inc (min (a/amount p :food) (g/unused-count p)))))
                   :corn-offer [{}]
                   :corn-select (map #(hash-map :buyer %) (get-in state [:corn-sale :offers]))
@@ -176,10 +208,13 @@
                   :return-animal-loan (g/animal-loan-choices p)
                   :collect-cooked-animal (map #(hash-map :amount %) (range 1 (inc (get-in head [:context :converted-goods (:resource effect)] 0))))
                   (:plow :stable :plowsmith) (map #(hash-map :cell %) (range 15))
-                  (:mini-pasture :corral-builder :amateur-fencer) (mini-pasture-choices p)
+                  (:mini-pasture :fence-overseer :corral-builder :amateur-fencer) (mini-pasture-choices p)
                   :wheel-plow (plow-decision-candidates p effect)
-                  :plow-many (concat (map #(hash-map :cells [%]) (range 15))
-                                                 (for [x (range 15) y (range 15) :when (not= x y)] {:cells [x y]}))
+                  :plow-many (mapcat (fn [paths] (map (fn [[_ cells]] {:cells cells}) paths))
+                                      (take (:max-fields effect) (rest (iterate
+                                        (fn [paths] (take 32 (for [[player cells] paths cell (range 15)
+                                                                  :let [next (attempt #(a/place-tile player :field cell))] :when next]
+                                                              [next (conj cells cell)]))) [[p []]]))))
                   :paper-knife (let [hand (vec (get-in p [:hand :occupation]))]
                                  (for [i (range (count hand)) j (range (inc i) (count hand)) k (range (inc j) (count hand))]
                                    {:cards [(hand i) (hand j) (hand k)]}))
@@ -246,7 +281,16 @@
                   :scholar (concat (hand-options p :minor) (hand-options p :occupation) (supply-minor-options state p))
                   :extra-grain-harvest (map #(hash-map :fields %) (reductions conj [] (filter #(let [f (get-in p (a/field-path %))]
                                                                                                    (and (= :grain (:crop f)) (pos? (get f :count 0)))) (field-ids p))))
-                  [{}])]
+                  [{}])
+        options (concat options
+                        (when (and (= :card-action (:op effect))
+                                   (g/salesman-available? state pid (cond-> effect (:businessman? effect) (assoc :merchant-repeat? (get-in head [:context :merchant-repeat?])))))
+                          (map #(assoc % :salesman? true)
+                               (if (contains? (:kinds effect) :major)
+                                 (concat (hand-options p :minor) (supply-minor-options state p))
+                                 (major-options state p)))))
+        options (if (and (#{:build-stables :build-fences} (:op effect)) (a/wood-carver-available? p))
+                  (mapcat #(vector % (assoc % :wood-carver? true)) options) options)]
     (concat (when (= :ability-window (:op effect)) (ability-candidates state pid))
      (when (= :ability-window (:op effect))
        (for [cid (c/active-owned p)
@@ -258,6 +302,10 @@
              base (if (= :pay-or-beg (:op effect)) {:food (:food effect)}
                       (expression/quantities state pid context (:cost effect)))
              costs (cond
+                     (= :wet-nurse (:op effect)) [{:food 1}]
+                     (= :pieceworker (:op effect)) (for [option options] {:food (reduce + 0 (map #(if (= :vegetable %) 2 1) (keys (:purchase option))))})
+                     (= :educator (:op effect)) [{:food (if (>= (count (:occupations p)) 3) 2 3)}]
+                     (= :animal-breeder (:op effect)) (map #(hash-map :food %) [1 2 3])
                      (= :card-action (:op effect)) (keep #(attempt (fn [] (merge-with + base (g/granted-action-cost state pid effect %)))) options)
                      (= :choose (:op effect))
                      (for [option (:options effect)
@@ -273,8 +321,10 @@
      (fn [cid]
        (map #(merge {:type :ability :card cid} %)
             (case (get-in (c/card cid) [:ability :op])
+              :tinsmith (map #(hash-map :amount %) (range 1 (inc (a/amount p :clay))))
               :return-animal-loan (when-not (get-in p [:card-state cid :loan-settled?]) (g/animal-loan-choices p))
               (:adopt :buy-stock :cash-card :reed-food :claim-goods :corn-profiteer) [{}]
+              :renovate-clay-stone (map #(assoc % :renovate-to :stone) (payment-options p))
               :renovate-wood-clay (remove #(= :stone (:renovate-to %)) (payment-options p))
               :free-placement-fences (map #(hash-map :fences %) (fence-plans p))
               :free-room (map #(hash-map :rooms [%]) (range 15))
@@ -344,7 +394,7 @@
         crop-food (reduce + (for [f fields :when (pos? (get f :count 0))] (get rates (:crop f) 0)))
         cookable (reduce + (for [animal a/animals] (* (get rates animal 0) (max 0 (- (a/amount p animal) 2)))))
         food (+ (a/amount p :food) cookable (* 0.75 crop-food))
-        target (* (if (= 1 (count (:players state))) 3 2) family)
+        target (* (if (= 1 (count (:players state))) 3 2) (+ family (a/reed-hut-count p)))
         harvest (first (sort (filter #(>= % r) a/harvest-rounds)))
         urgency (if (= r harvest) 1.6 (if (= 1 (- harvest r)) 1.1 0.65))
         fed-now? (and (#{:feeding :breeding :finish-round} (:phase state)) (contains? (:fed state) pid))
@@ -363,7 +413,7 @@
                   (max 0 (- (reduce + (map #(a/amount p %) a/animals))
                             (reduce + (map :capacity (a/accommodations p))))))]
     (+ (:total (g/score state pid))
-       (* 1.35 future (- family 2))
+       (* 1.35 future (- (+ family (a/reed-hut-count p)) 2))
        (if growth-room? (+ 2.0 (* 0.75 future)) 0)
        (* (min 1.0 (/ future 5.0)) material-values)
        (diminishing (a/amount p :food) (repeat (+ target 2) 0.38) 0.06)

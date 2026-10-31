@@ -1,0 +1,56 @@
+;; Original English K290–312 and K342; printed English atlas and Agricola
+;; compendium pp48–68. Enabled together with native K-deck timing workflows.
+{:catalog/original-base-k-290-clay-worker
+ {:triggers [{:event :use-space :condition [:test [:or [:> [:source-goods :wood] 0] [:> [:source-goods :clay] 0]]]
+              :effect {:op :gain :goods {:clay 1}}}]}
+ :catalog/original-base-k-291-lover
+ {:additional-food-cost 4 :requires-effect? true :play [{:op :grow :room-required? false}]}
+ :catalog/original-base-k-292-market-woman {:passive {:market-woman true}}
+ :catalog/original-base-k-293-plowman
+ {:play [{:op :schedule :offsets [4 7 10] :effect {:op :plow :cost {:food 1} :optional? true}}]}
+ :catalog/original-base-k-294-brushwood-collector {:passive {:brushwood-collector true}}
+ :catalog/original-base-k-295-cattle-breeder
+ {:play [{:op :gain :goods {:cattle 1}}]
+  :triggers [{:event :round-end :condition [:round 12] :effect {:op :extra-animal-birth :animal :cattle}}]}
+ :catalog/original-base-k-296-seed-seller
+ {:play [{:op :gain :goods {:grain 1}}]
+  :triggers [{:event :use-space :spaces #{:grain} :effect {:op :gain :goods {:grain 1}}}]}
+ :catalog/original-base-k-297-sheep-farmer
+ {:triggers [{:event :use-space :condition [:test [:> [:source-goods :sheep] 0]] :effect {:op :gain :goods {:sheep 1}}}]
+  :ability {:op :exchange-options :exclude-phases #{:breeding} :exclude-final-breeding? true :options [{:label "Exchange 3 sheep for 1 boar and 1 cattle" :cost {:sheep 3} :goods {:boar 1 :cattle 1}}]}}
+ :catalog/original-base-k-298-shepherd-boy
+ {:play [{:op :shepherd-boy}]
+  :triggers [{:event :renovate :effect {:op :shepherd-boy}}]}
+ :catalog/original-base-k-299-slaughterman
+ {:passive {:feed-last true :slaughter-income true}
+  :triggers [{:event :convert-food :scope :others :condition [:test [:> [:context :cooked-animals] 0]] :effect {:op :gain :goods {:food 1}}}]}
+ :catalog/original-base-k-300-schnaps-distiller
+ {:triggers [{:event :feeding-start :effect {:op :exchange :optional? true :cost {:vegetable 1} :goods {:food 5}}}]}
+ :catalog/original-base-k-301-wood-carver {:passive {:wood-carver true}}
+ :catalog/original-base-k-302-pig-whisperer
+ {:play [{:op :schedule :offsets [4 7 10] :goods {:boar 1}}]}
+ :catalog/original-base-k-303-stone-breaker {:ability {:op :renovate-clay-stone}}
+ :catalog/original-base-k-304-veterinarian
+ {:play [{:op :set-card-state :values {:bag (:sheep :sheep :sheep :sheep :boar :boar :boar :cattle :cattle)}}]
+  :triggers [{:event :round-start :effect {:op :veterinarian}}]}
+ :catalog/original-base-k-305-animal-handler
+ {:play [{:op :schedule :rounds [7] :effect {:op :gain :goods {:sheep 1} :cost {:food 1} :optional? true}}
+         {:op :schedule :rounds [10] :effect {:op :gain :goods {:boar 1} :cost {:food 1} :optional? true}}
+         {:op :schedule :rounds [14] :effect {:op :gain :goods {:cattle 1} :cost {:food 1} :optional? true}}]}
+ :catalog/original-base-k-306-animal-tamer {:passive {:room-pets true}}
+ :catalog/original-base-k-307-animal-breeder
+ {:triggers [{:event :fence :effect {:op :animal-breeder :optional? true :once-per-turn? true}}]}
+ :catalog/original-base-k-308-foreman
+ {:triggers [{:event :round-start :effect {:op :foreman :optional? true}}]}
+ :catalog/original-base-k-309-weaver
+ {:triggers [{:event :work-start :condition [:test [:>= [:goods :sheep] 2]] :effect {:op :gain :goods {:food 1}}}]}
+ :catalog/original-base-k-310-resource-seller
+ {:play [{:op :set-card-state :values {:resource-stack (:wood :clay :reed :clay :stone :clay :stone)}}]
+  :passive {:resource-seller true}}
+ :catalog/original-base-k-311-magician
+ {:triggers [{:event :use-space :spaces #{:traveling} :condition [:test [:= [:context :last-person?] true]]
+              :effect {:op :gain :goods {:grain 1 :food 1}}}]}
+ :catalog/original-base-k-312-fence-overseer
+ {:triggers [{:event :stables-created :effect {:op :fence-overseer :optional? true :cost {:food 1}}}]}
+ :catalog/original-base-k-342-animal-trainer
+ {:triggers [{:event :after-action :spaces #{:traveling} :effect {:op :animal-trainer :optional? true}}]}}

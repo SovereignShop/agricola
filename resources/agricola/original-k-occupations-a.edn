@@ -1,0 +1,53 @@
+{:catalog/original-base-k-266-serf {:passive {:original-serf true}}
+  :catalog/original-base-k-267-adoptive-parents
+  {:triggers [{:event :grow :effect {:op :adopt-original :cost {:food 1} :optional? true}}]}
+  :catalog/original-base-k-268-pieceworker
+  {:triggers [{:event :before-action-rewards
+               :condition [:test [:> [:+ [:source-goods :wood] [:source-goods :clay] [:source-goods :reed]
+                                         [:source-goods :stone] [:source-goods :grain] [:source-goods :vegetable]] 0]]
+               :effect {:op :pieceworker :optional? true}}]}
+  :catalog/original-base-k-269-acrobat {:passive {:original-acrobat true}}
+  :catalog/original-base-k-270-wet-nurse
+  {:triggers [{:event :build-rooms :effect {:op :wet-nurse :optional? true}}]}
+  :catalog/original-base-k-271-educator
+  {:triggers [{:event :occupation :scope :others :effect {:op :educator :optional? true}}]}
+  :catalog/original-base-k-272-frame-builder {:passive {:original-frame-builder true}}
+  :catalog/original-base-k-273-basin-maker
+  {:triggers [{:event :convert-food :condition [:test [:> [:context :cooked-boar] 0]]
+               :effect {:op :basin-maker :optional? true}}]
+   :score {:type :basin-maker}}
+  :catalog/original-base-k-274-organic-farmer
+  {:passive {:organic-pastures true} :score {:type :original-organic-pastures}}
+  :catalog/original-base-k-275-perpetual-student {:passive {:perpetual-student true}}
+  :catalog/original-base-k-276-constable
+  {:play [{:op :house-steward}] :global-score? true :score {:type :constable}}
+  :catalog/original-base-k-277-manufacturer {:passive {:manufacturer true}}
+  :catalog/original-base-k-278-forester {:passive {:card-stacks {:crop :wood :count 3 :field? false}}}
+  :catalog/original-base-k-279-scholar
+  {:scholar-round-start? true
+   :triggers [{:event :round-start :condition [:house :stone] :effect {:op :original-scholar :optional? true}}]}
+  :catalog/original-base-k-280-tanner
+  {:triggers [{:event :convert-food :condition [:test [:> [:+ [:context :cooked-boar] [:context :cooked-cattle]] 0]]
+               :effect {:op :tanner :optional? true}}]
+   :score {:type :tanner}}
+  :catalog/original-base-k-281-traveling-salesman {:passive {:traveling-salesman true}}
+  :catalog/original-base-k-282-house-steward
+  {:play [{:op :house-steward}] :global-score? true :score {:type :most-rooms}}
+  :catalog/original-base-k-283-wood-deliveryman
+  {:play [{:op :schedule :rounds [8 9 10 11 12 13 14] :goods {:wood 1}}]}
+  :catalog/original-base-k-284-wood-distributor
+  {:play [{:op :gain :goods {:wood 2}}]
+   :triggers [{:event :round-start :effect {:op :wood-distributor :optional? true}}]}
+  :catalog/original-base-k-285-tinsmith {:ability {:op :tinsmith}}
+  :catalog/original-base-k-286-smallholder {:passive {:smallholder true}}
+  :catalog/original-base-k-287-storehouse-clerk
+  {:scholar-round-start? true
+   :triggers [{:event :round-start :effect {:op :gain :goods {:stone [:if [:>= [:goods :stone] 5] 1 0]
+                                                           :reed [:if [:>= [:goods :reed] 6] 1 0]
+                                                           :clay [:if [:>= [:goods :clay] 7] 1 0]
+                                                           :wood [:if [:>= [:goods :wood] 8] 1 0]}}}]}
+  :catalog/original-base-k-288-storehouse-keeper
+  {:triggers [{:event :use-space
+               :condition [:test [:and [:> [:source-goods :reed] 0] [:> [:source-goods :stone] 0]]]
+               :effect {:op :choose-good :choices [:clay :grain]}}]}
+  :catalog/original-base-k-289-countryman {:passive {:original-countryman true}}}

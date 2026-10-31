@@ -87,16 +87,23 @@
   (let [field (get-in p [:card-fields cid]) state (get-in p [:card-state cid])
         animals (reduce (fn [m slot] (merge-with + m (a/housing-animals slot))) {}
                         (filter #(and (= :card (:kind %)) (= cid (:card %))) (when p (a/animal-housing p))))
-        goods (merge-with + (:stored-goods state) (when (:food state) {:food (:food state)})
+        goods (merge-with + (frequencies (:resource-stack state)) (:stored-goods state) (when (:pelts state) {:food (:pelts state)}) (when (:food state) {:food (:food state)})
                           (a/card-field-goods p cid)
                           (reduce (fn [goods [key slot]]
                                     (if (= cid (or (:card slot) key))
                                       (merge-with + goods (:under-crops slot)) goods)) {} (:card-fields p))
                           animals)]
-    (when (or (seq goods) (:marked-space state)
+    (when (or (seq goods) (seq (:bag state)) (:marked-space state) (and (= cid :catalog/original-base-k-138-reed-hut) (:reed-hut? p) (not (:reed-hut-placed? p)))
               (and (= cid :catalog/original-base-i-265-fence-deliveryman) (seq (:reserved-fences p))))
       [:div.tt-card-markers {:aria-label "Goods on card"}
+       (when (and (= cid :catalog/original-base-k-138-reed-hut) (:reed-hut? p) (not (:reed-hut-placed? p)))
+         [:img.piece {:src (art/worker-url (:id p)) :alt "Reed Hut occupant" :draggable false
+                      :data-piece-key (str "hut:" (:id p)) :data-piece-type (str "worker:" (:id p))}])
        (for [[resource n] goods :when (pos? n)] ^{:key resource} [:span [art/piece resource] [:b n]])
+       (when-let [top (first (:resource-stack state))]
+         [:span {:aria-label "Next resource on Resource Seller"} "Next: " [art/piece top]])
+       (when (seq (:bag state))
+         [:span {:aria-label "Veterinarian bag"} (str "Bag: " (count (:bag state)) " animals")])
        (when-let [space (:marked-space state)]
          [:span (str "Fence: " (or (:name (a/actions space)) (:name (cards/card space))))])
        (when (= cid :catalog/original-base-i-265-fence-deliveryman)
@@ -336,7 +343,7 @@
                                  :style {:left (px x) :top (px y) :width (px w) :height (px h) :--player-color (get colors pid)}}
              [:header.tt-player-title
               [button (:name player) #(focus! pid) {:aria-label (str "Focus " (:name player) " farm")}]
-              [:span (str (:remaining player) " / " (:family player) " workers ready")]
+              [:span (str (:remaining player) " / " (a/workers-in-play player) " workers ready")]
               (when (= pid (:starting-player g)) [:span "First player"])
               (when (= actor pid) [:strong.tt-turn-token (if (owned pid) "Your turn" "Playing")])]
              [:div.tt-farm {:style {:left "24px" :top "160px" :width "680px"}}

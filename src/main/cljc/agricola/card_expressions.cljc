@@ -38,6 +38,10 @@
           :all-goods (reduce + 0 (map #(a/amount % x) (:players g)))
           :total-crops (+ (a/amount p x) (reduce + 0 (map #(a/field-crop-count % x) (field-list p))))
           :returnable-hearths (count (a/returnable-hearths p))
+          :returnable-fireplaces (count (a/fireplace-upgrades p))
+          :all-plows (count (for [player (:players g) cid (cards/active-owned player)
+                                 :when (or (get-in (cards/card cid) [:passive :action-plow])
+                                           (#{(cards/id :a018) (cards/id :b019)} cid))] cid))
           :player-count (count (:players g))
           :actor-family-difference (let [actor (get-in g [:players (:actor context)])]
                                      (- (- (:family actor 0) (:temporary-family actor 0))

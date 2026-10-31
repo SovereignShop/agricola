@@ -11,8 +11,8 @@
 (rf/reg-event-db :draft
   (fn [db [_ key value]]
     (cond-> (assoc-in db [:draft key] value)
-      (= key :improvement) (update :draft dissoc :upgrade :bake-grain :card :discount-resource :return-improvement :return-improvements :as-major?)
-      (= key :card) (update :draft dissoc :improvement :upgrade :bake-grain :payment-option :return-improvement :return-improvements :as-major? :discount-resource))))
+      (= key :improvement) (update :draft dissoc :upgrade :bake-grain :card :discount-resource :manufacturer-discount :wood-carver? :return-improvement :return-improvements :as-major?)
+      (= key :card) (update :draft dissoc :improvement :upgrade :bake-grain :payment-option :return-improvement :return-improvements :as-major? :discount-resource :manufacturer-discount :wood-carver?))))
 ;; Apply multi-control edits to the latest draft, not the render-time snapshot.
 ;; Several DOM changes can arrive before Reagent renders the next frame.
 (rf/reg-event-db :draft-map-entry

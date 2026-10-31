@@ -1,11 +1,14 @@
 {:edition :revised-2016
  :reviewed "2026-10-30"
  :sources
- [{:id :original-printed-rules :authority :publisher :edition :original
+ [{:id :original-publisher-card-list :authority :publisher :edition :original
+   :url "https://lookout-spiele.de/upload/archive/agricola-cards-completelist-v7.pdf"
+   :note "Official original card list used to cross-check printing discrepancies, including Brushwood Roof's two-occupation requirement."}
+  {:id :original-printed-rules :authority :publisher :edition :original
    :url "https://www.lookout-spiele.de/upload/de_agricola.html_Rules_Agricola_EN.pdf"}
   {:id :original-english-cards :authority :printed-card-scans :edition :original
    :url "https://github.com/SNiLD/TabletopSimulatorAgricola/blob/5e675a143d7192b271615d9f1a406fd04a1913f1/src/workshop.json"
-   :note "English E/I/K sheets. E- and I-deck atlas mappings, original download URLs and file hashes are in the artwork manifest. Card art does not imply executable coverage."}
+   :note "English E/I/K sheets. E-, I- and K-deck atlas mappings, original download URLs and file hashes are in the artwork manifest. Card art does not imply executable coverage."}
   {:id :original-compendium-v9 :authority :unofficial-compilation :edition :original
    :url "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf"
    :note "Edition-specific clarifications checked alongside the English prints; this is a community compilation, not a new publisher rulebook."}
@@ -24,7 +27,14 @@
    :url "http://playagricola.com/forums/index.php?board=23.0"
    :note "Check card edition and printing. Separate expansion boards are linked from the forum index."}]
  :open-questions
- [{:id :original-wildlife-reserve-trough
+ [{:id :original-broom-finite-reserve
+   :cards [:catalog/original-base-k-125-broom]
+   :question "How should Broom resolve when fewer than seven undealt minor improvements remain?"
+   :current-behavior "Draw every remaining eligible card from the persisted private reserve; never recycle cards discarded during play."
+   :status :implementation-assumption
+   :sources ["https://agricola.no/wp-content/uploads/2024/07/compendium.pdf"]
+   :note "The compendium specifies seven cards and excludes in-game discards but does not resolve reserve exhaustion. Taking the remaining cards is the finite-reserve interpretation."}
+  {:id :original-wildlife-reserve-trough
    :cards [:catalog/original-base-i-102-wildlife-reserve :catalog/original-base-e-59-drinking-trough]
    :question "How are Drinking Trough's two additional places distributed on Wildlife Reserve?"
    :current-behavior "Wildlife Reserve keeps its one place per species and gains two flexible places in total, not two per species. Shepherd's Pipe adds two sheep places separately."
@@ -54,9 +64,60 @@
    :status :unresolved
    :note "No explicit publisher or designer clarification was found. Do not present either interpretation as a verified ruling."}]
  :regressions
- [{:id :original-i-moldboard-printing-difference :cards [:catalog/original-base-i-63-moldboard-plow]
+ [{:id :original-k-reed-hut-worker-order
+   :cards [:catalog/original-base-k-138-reed-hut :catalog/original-base-i-227-church-warden]
+   :source "https://boardgames.stackexchange.com/questions/14935/church-warden-vs-reed-hut-in-round-14" :authority :community-discussion
+   :rule "Reed Hut's occupant acts after family and Guest, must be fed and receives no family points until adopted. Another family member must perform adoption; the occupant cannot adopt itself. Church Warden counts actual placements, so adoption that removes the occupant's remaining placement does not create a fifth placement. The discussion cites the compendium; its original publisher-forum links are unavailable."
+   :test agricola.original-k-workers-draw-test/reed-hut-is-last-after-family-and-guest-and-cannot-adopt-itself}
+  {:id :original-k-broom-private-reserve
+   :cards [:catalog/original-base-k-125-broom]
    :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
-   :rule "The available English image says once; the v9 compendium explicitly says twice and describes two use markers. Native play follows the compendium's two uses, each restricted to Plow One Field and adding only one extra field."
+   :rule "Broom replaces the owner's remaining minor hand using a private, persisted reserve from the setup's included card packs for all supported player counts. It never reintroduces cards discarded during play and offers a paid, prerequisite-checked extra minor play."
+   :test agricola.original-k-workers-draw-test/broom-draws-private-undealt-minors-and-preserves-a-paid-play-window}
+
+  {:id :original-k-brushwood-printing :cards [:catalog/original-base-k-136-brushwood-roof]
+   :source "https://lookout-spiele.de/upload/archive/agricola-cards-completelist-v7.pdf" :authority :publisher
+   :rule "Brushwood Roof requires two occupations according to the publisher card list and compendium; the available English scan says three. Native play uses two. Partial wood/reed replacement can combine with Clay Roof and vary per room."
+   :test agricola.original-k-minors-test/original-roof-supports-mixed-and-per-room-payment}
+  {:id :original-k-greenhouse-cost :cards [:catalog/original-base-k-117-greenhouse]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Greenhouse costs two wood despite the catalogue omission. Its round-plus-four and round-plus-seven vegetables each require an optional food payment at arrival; start-round income can fund the payment."
+   :test agricola.original-k-minors-test/greenhouse-requires-payment-at-arrival-and-can-use-well-income}
+  {:id :original-k-upgrades :cards [:catalog/original-base-k-106-bakehouse :catalog/original-base-k-128-cooking-hearth]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Bakehouse returns an eligible oven plus three stone, permits immediate baking, and is not itself an oven. Original Cooking Hearth returns a Fireplace, including Simple Fireplace; returned majors restore supply while returned minors leave the game."
+   :test agricola.original-k-minors-test/bakery-and-hearth-upgrades-return-the-correct-physical-card}
+  {:id :original-k-sawmill :cards [:catalog/original-base-k-122-sawmill]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Sawmill returns Joinery to supply. If both are subsequently owned, their printed points both count but only Sawmill's wood bonus scores. Wood on planted card stacks counts toward that bonus."
+   :test agricola.original-k-minors-test/sawmill-returns-joinery-and-suppresses-only-its-bonus}
+  {:id :original-k-sawhorse :cards [:catalog/original-base-k-121-sawhorse]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Sawhorse's next stable is consumed even if already free. Fence ordinals three, six, nine, twelve and fifteen are free before Hedge Keeper's additional fences; unused ordinal discounts cannot be saved."
+   :test agricola.original-k-minors-test/sawhorse-consumes-next-stable-and-fence-ordinals}
+  {:id :original-k-clapper :cards [:catalog/original-base-k-127-clapper]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Clapper adds one to every planted grain stack, including Acreage, and to planted wood stacks. At five players the linked Lessons/Growth space qualifies from round five even when Lessons is chosen. Card-granted growth does not qualify."
+   :test agricola.original-k-minors-test/clapper-adds-to-every-planted-grain-and-wood-stack}
+  {:id :original-k-sleeping-corner :cards [:catalog/original-base-k-139-sleeping-corner]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Sleeping Corner permits occupied growth spaces and the five-player linked alternative from round five, but never a space or linked pair containing the owner's worker. Existing other workers are preserved."
+   :test agricola.original-k-minors-test/sleeping-corner-reuses-others-growth-but-never-its-own-worker}
+  {:id :original-k-spit-roast :cards [:catalog/original-base-k-109-spit-roast]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Spit Roast grants at most one food per harvest, only for actual animal cooking during feeding. The food is available before the feeding payment, including when the last feeder advances the phase to breeding."
+   :test agricola.original-k-minors-test/spit-roast-food-is-credited-before-last-player-feeds}
+  {:id :original-k-pelts :cards [:catalog/original-base-k-339-pelts]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Pelts optionally stores food received after cooking animals, at most one per cooked animal and one per room. Stored food is removed from usable supply and scores one point each. It does not replace other actual-cooking responses."
+   :test agricola.original-k-minors-test/cooking-pelts-and-spit-roast-distinguish-harvest-phase}
+  {:id :original-k-liquid-manure :cards [:catalog/original-base-k-105-acreage :catalog/original-base-k-118-liquid-manure :catalog/original-base-k-137-turnip-field]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Acreage has two independent grain stacks and counts for field prerequisites but not scored fields. Liquid Manure adds to each newly planted crop or wood stack, including card fields. Turnip Field offers a saved Sow action for all eligible fields."
+   :test agricola.original-k-minors-test/acreage-turnip-and-liquid-manure-share-real-sowing}
+  {:id :original-i-moldboard-printing-difference :cards [:catalog/original-base-i-63-moldboard-plow]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "The available English image says once; the v9 compendium explicitly says twice and describes two use markers. The publisher original appendix also specifies two uses (https://www.lookout-spiele.de/wp-content/uploads/Agricola_EN_old_web.pdf). Native play follows the compendium's two uses, each restricted to Plow One Field and adding only one extra field."
    :test agricola.original-i-minors-test/moldboard-and-public-harrow-are-exclusive-paid-plow-workflows}
   {:id :original-i-taster-payment :cards [:catalog/original-base-i-260-taster]
    :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation

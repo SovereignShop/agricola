@@ -1,0 +1,4 @@
+{:catalog/original-base-k-125-broom
+ {:play [{:op :replace-minor-hand}
+         {:op :card-action :kinds #{:minor} :optional? true}]}
+ :catalog/original-base-k-138-reed-hut {:play [{:op :reed-hut-worker}]}}

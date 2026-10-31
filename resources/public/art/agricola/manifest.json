@@ -816,6 +816,20 @@
       "reference": "https://github.com/SNiLD/TabletopSimulatorAgricola/blob/5e675a143d7192b271615d9f1a406fd04a1913f1/src/workshop.json",
       "sha256": "42e7edea13ef734c8195b18fd0e30591ea5ec583cf2e97d22c2847c5c8010896",
       "note": "Unmodified English original I-deck sheet. Titles and card positions visually checked for CSS sprite mapping; rules follow the recorded compendium clarifications."
+    },
+    {
+      "file": "original-k-minors.jpg",
+      "source": "https://www.dropbox.com/s/bgwet714pi1cpux/K-Deck%20%28Minor%20Imp%20A%29.jpg?dl=1",
+      "reference": "https://github.com/SNiLD/TabletopSimulatorAgricola/blob/5e675a143d7192b271615d9f1a406fd04a1913f1/src/workshop.json",
+      "sha256": "fa5f680ad9a9a6074710be5f8bdf6fcd35d4e6fcc1d4fad0d1198952bca8e3e0",
+      "note": "Unmodified English original K-deck sheet. Titles and card positions visually checked; documented publisher corrections take precedence over printing errors."
+    },
+    {
+      "file": "original-k-occupations.jpg",
+      "source": "https://www.dropbox.com/s/svd6v7i6x0xnfxy/K-Deck%20%28Occupations%20A%29.jpg?dl=1",
+      "reference": "https://github.com/SNiLD/TabletopSimulatorAgricola/blob/5e675a143d7192b271615d9f1a406fd04a1913f1/src/workshop.json",
+      "sha256": "f699c66e5f487b16ab233ad54740f114ea98a9feebb7d9cc34a94b76139f1fc9",
+      "note": "Unmodified English original K-deck sheet. Titles and card positions visually checked; documented publisher corrections take precedence over printing errors."
     }
   ]
 }

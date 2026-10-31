@@ -11,7 +11,7 @@
   (rec/sha (str (slurp (io/resource "agricola/growth_learning.clj")) (value/source-hash)
                (slurp (io/resource "eurozone/play-values.edn")))))
 (defn room-gap [p]
-  (apply min (for [options (bot/payment-options p)]
+  (apply min (for [options (a/room-payment-choices p)]
                (reduce + (for [[r cost] (a/room-cost p options)] (max 0 (- cost (a/amount p r))))))))
 (defn features [state pid]
   (a/require! (= 2 (count (:players state))) "Growth learning supports two players.")

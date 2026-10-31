@@ -12,7 +12,7 @@
 
 (deftest completed-original-decks-have-native-rules-and-distinct-english-faces
   (let [art (art-map)]
-    (doseq [[deck expected] [["E" 126] ["I" 91]]]
+    (doseq [[deck expected] [["E" 126] ["I" 91] ["K" 91]]]
       (let [catalogue (into {} (filter (fn [[_ card]] (and (= "Original" (:edition card)) (= deck (:deck card))
                                                           (#{:minor :occupation} (:kind card)))) c/metadata))
             faces (map art (keys catalogue))]

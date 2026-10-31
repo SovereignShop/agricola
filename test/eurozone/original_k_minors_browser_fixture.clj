@@ -1,0 +1,25 @@
+(require '[eurozone.store :as store] '[agricola.engine :as a] '[agricola.card-game :as g]
+         '[agricola.card-rules :as c] '[clojure.string :as str])
+(let [store (store/make-store (System/getenv "EUROZONE_DATA")) token (apply str (repeat 64 "a"))
+      names ["Ada" "Ben" "Cora" "Dan"] base (g/initialize (a/new-game names (vec (mapcat identity a/stages)) 0))
+      id (fn [n] (:id (first (filter #(and (= "Original" (:edition %)) (= "K" (:deck %)) (= (str n) (:number %))) (vals c/metadata)))))
+      greenhouse (-> base (assoc :round 4) (update-in [:players 0 :minors] conj (id 117))
+                     (assoc-in [:players 0 :schedule 5] [{:card (id 117) :goods {:vegetable 1} :arrival-cost {:food 1}}])
+                     (assoc-in [:players 0 :goods :food] 0) (assoc-in [:players 0 :well-rounds] #{5}) g/begin-round g/drain)
+      ox (-> base (update-in [:players 0 :minors] conj (id 134))
+             (g/queue-front [(g/task 0 (id 134) {:op :plow-many :optional? true :max-fields [:min 3 [:rounds-left]]} {})]) g/drain)
+      pelts (-> base (update-in [:players 0 :minors] conj (id 339))
+                (assoc-in [:players 0 :improvements] #{:hearth-4})
+                (assoc-in [:players 0 :goods :sheep] 2) (assoc-in [:players 0 :goods :food] 0)
+                (g/command 0 {:type :convert :goods {:sheep 2}}))
+      build (-> base (update-in [:players 0 :minors] into [(id 136) :catalog/original-base-e-36-clay-roof])
+                (assoc-in [:players 0 :goods] {:wood 6 :clay 1 :food 2})
+                (g/queue-front [(g/task 0 (id 136) {:op :build-rooms :optional? true} {})]) g/drain)
+      hearth (-> base (assoc-in [:players 0 :hand :minor] [(id 128)])
+                 (assoc-in [:players 0 :improvements] #{:fireplace-2})
+                 (update :available-improvements disj :fireplace-2))
+      ids (mapv (fn [[title state]]
+                  (let [room (:id (store/transact! store token {:event :create :mode :local :name "Ada" :names names :title title :setup {:mode :random}}))]
+                    (store/save! store (swap! (:rooms store) assoc-in [room :state] state)) room))
+                [["Greenhouse" greenhouse] ["Ox Team" ox] ["Pelts" pelts] ["Brushwood Roof" build] ["Original Cooking Hearth" hearth]])]
+  (println (str/join "," ids)))
