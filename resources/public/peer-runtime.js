@@ -28,6 +28,18 @@
   class Transport {
     constructor(options) {
       this.options = options; this.peers = new Map(); this.links = new Map(); this.closed = false;
+      // In-memory only: another tab with the same seat cannot replace this one.
+      this.connection = crypto.randomUUID();
+      this.backgrounded = document.hidden;
+      this.visibility = () => {
+        if (document.hidden) this.backgrounded = true;
+        else if (this.backgrounded) { this.backgrounded = false; this.resume(); }
+      };
+      this.pageshow = e => { if (e.persisted) this.resume(); };
+      this.online = () => this.resume();
+      document.addEventListener('visibilitychange', this.visibility);
+      window.addEventListener('pageshow', this.pageshow);
+      window.addEventListener('online', this.online);
       this.connect();
     }
     status(message) { this.options.onStatus(message); }
@@ -37,18 +49,36 @@
     }
     connect() {
       if (this.closed) return;
+      clearTimeout(this.timer);
       const url = new URL('/peer', location.href); url.protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-      this.ws = new WebSocket(url);
-      this.ws.onopen = () => this.raw({op: this.options.createOptions ? 'create' : 'join', room: this.options.room,
-        token: this.options.token, auth: window.EUROZONE_DISCORD_AUTH, invite: this.options.invite, options: this.options.createOptions, relay: !!this.options.relay});
-      this.ws.onmessage = e => {
+      const ws = this.ws = new WebSocket(url);
+      ws.onopen = () => this.raw({op: this.options.createOptions ? 'create' : 'join', room: this.options.room,
+        token: this.options.token, auth: window.EUROZONE_DISCORD_AUTH, invite: this.options.invite, connection: this.connection,
+        options: this.options.createOptions, relay: !!this.options.relay});
+      ws.onmessage = e => {
         try { this.receive(JSON.parse(e.data)); } catch (error) { this.options.onError(error.message); }
       };
-      this.ws.onclose = () => {
+      ws.onclose = () => {
+        if (this.closed || ws !== this.ws) return;
+        this.options.onDisconnect?.();
         this.status('Coordinator reconnecting');
         if (!this.closed) this.timer = setTimeout(() => this.connect(), 1500);
       };
-      this.ws.onerror = () => this.ws.close();
+      ws.onerror = () => ws.close();
+    }
+    resume() {
+      if (this.closed) return;
+      // Android can leave a suspended socket reporting OPEN indefinitely.
+      // Rejoin and request fresh state without reloading the Discord SDK/frame.
+      this.options.onDisconnect?.();
+      this.status('Reconnecting after returning to the table');
+      if (this.ws) {
+        this.ws.onopen = this.ws.onmessage = this.ws.onclose = this.ws.onerror = null;
+        this.ws.close();
+      }
+      for (const {pc} of this.links.values()) pc.close();
+      this.links.clear();
+      this.connect();
     }
     receive(message) {
       if (message.op === 'error') { this.options.onError(message.message); return; }
@@ -140,7 +170,13 @@
       } else { this.raw({op:'relay',to:id,payload:text}); this.status('Browser host · relay'); }
     }
     initialized() { this.raw({op:'initialized'}); }
-    close() { this.closed=true; clearTimeout(this.timer); this.ws?.close(); for (const {pc} of this.links.values()) pc.close(); }
+    close() {
+      this.closed=true; clearTimeout(this.timer);
+      document.removeEventListener('visibilitychange', this.visibility);
+      window.removeEventListener('pageshow', this.pageshow);
+      window.removeEventListener('online', this.online);
+      this.ws?.close(); for (const {pc} of this.links.values()) pc.close();
+    }
   }
   window.EurozonePeer = {start:options => new Transport(options), read, save};
 })();

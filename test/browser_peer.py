@@ -116,6 +116,7 @@ def check(base, _):
                 cards=p.locator('.draw-packet > div .hand-grid').first.locator('.hand-card:not([disabled])')
                 if cards.count():
                     cards.first.click()
+                    p.get_by_role('button', name='Select card', exact=True).click()
                     revision=p.locator('.game').get_attribute('data-revision')
                     p.get_by_role('button',name='Keep card & pass left →').click()
                     expect(p.locator('.game')).not_to_have_attribute('data-revision',revision)

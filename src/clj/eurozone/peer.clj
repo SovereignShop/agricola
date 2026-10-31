@@ -38,7 +38,7 @@
   (locking (:lock service)
     (try
       (require! (and (string? raw) (<= (count raw) 1200000)) "Peer message is too large.")
-      (let [{:keys [op room token invite to payload kind options relay] :as message} (json/read-str raw :key-fn keyword)]
+      (let [{:keys [op room token invite to payload kind options relay connection] :as message} (json/read-str raw :key-fn keyword)]
         (case op
           ("join" "create")
           (do
@@ -53,13 +53,18 @@
               (if-let [existing (get @(:tables service) room)]
                 (require! (and (= (:host existing) (peer-id room token)) (= (:invite-hash existing) (digest invite))) "This peer table already exists.")
                 (create-table! service {:room room :token token :invite invite :options options :source :browser})))
-            (let [table (get @(:tables service) room) id (peer-id room token)]
+            (let [table (get @(:tables service) room) id (peer-id room token)
+                  previous (filter #(and (not= channel (key %)) (= id (:id (val %)))) (members service room))]
               (require! (and table (= (:invite-hash table) (digest invite))) "This peer invitation is invalid.")
               (require! (< (count (members service room)) 24) "This table has too many connections.")
-              (require! (not-any? #(and (not= channel (key %)) (= id (:id (val %)))) (members service room))
+              (require! (every? #(and (valid-token? connection) (= connection (:connection (val %)))) previous)
                         "This seat is already connected in another tab. Close it or open a new player tab.")
+              ;; A suspended mobile socket may remain OPEN on both ends. Only
+              ;; this runtime's nonce can replace it; revoke its routing rights.
+              (swap! (:connections service) #(apply dissoc % (map key previous)))
               (leave! service send channel)
-              (swap! (:connections service) assoc channel {:room room :id id :relay (boolean relay) :window (System/currentTimeMillis) :messages 0 :bytes 0})
+              (swap! (:connections service) assoc channel {:room room :id id :connection (when (valid-token? connection) connection)
+                                                         :relay (boolean relay) :window (System/currentTimeMillis) :messages 0 :bytes 0})
               (send-json! send channel {:op "welcome" :room room :self id :host (:host table)
                                        :initialized (:initialized table) :options (:options table)})
               (roster! service send room)))

@@ -106,6 +106,36 @@ def check(base):
             assert child.evaluate('peerConnections.length')==0
             assert child.evaluate('EUROZONE_ACTIVITY')
             assert {'AUTHORIZE','AUTHENTICATE'} <= set(page.evaluate('rpc'))
+        # Emulate mobile visibility suspension while its socket still looks
+        # open. Keep the old server socket alive to exercise nonce replacement.
+        for page, frame in zip(pages,frames):
+            child=page.frames[1]
+            revision=frame.locator('.game').get_attribute('data-revision')
+            rpc_before=page.evaluate('rpc')
+            joins=child.evaluate('coordinatorMessages.filter(m=>m.op==="join"||m.op==="create").length')
+            child.evaluate('''() => {
+              const original=WebSocket.prototype.close;
+              WebSocket.prototype.close=function(){ window.suspendedSocket=this; };
+              Object.defineProperty(document,'hidden',{configurable:true,value:true});
+              document.dispatchEvent(new Event('visibilitychange'));
+              Object.defineProperty(document,'hidden',{configurable:true,value:false});
+              document.dispatchEvent(new Event('visibilitychange'));
+              delete document.hidden;
+              WebSocket.prototype.close=original;
+            }''')
+            child.wait_for_function('(n)=>coordinatorMessages.filter(m=>m.op==="join"||m.op==="create").length>n',arg=joins)
+            expect(frame.locator('.connection')).to_have_class('connection online')
+            expect(frame.locator('.game')).to_have_attribute('data-revision',revision)
+            expect(frame.locator('[data-piece-key^="worker::wood:"]')).to_have_count(1)
+            expect(frame.locator('[data-deck="hand-occupation"] .tt-card-face:not(.tt-card-back)')).to_have_count(7)
+            auth=lambda commands:[c for c in commands if c in ['AUTHORIZE','AUTHENTICATE']]
+            assert auth(page.evaluate('rpc'))==auth(rpc_before), 'Resume must not restart Discord authentication'
+            child.evaluate('suspendedSocket.close()')
+        actor=next(f for f in frames if f.locator('.action-card[data-action="clay"]').is_enabled())
+        choose_action(actor,'Clay Pit');confirm_action(actor)
+        for frame in frames:
+            expect(frame.locator('[data-piece-key^="worker::clay:"]')).to_have_count(1)
+        print('Host and guest resume: stale socket replaced, saved revision/hands retained, SDK not restarted, subsequent move synchronized')
         pages[0].screenshot(path='/tmp/eurozone-discord-activity.png',full_page=True)
         for ctx in contexts: ctx.close()
         # An existing default two-seat Activity can be enlarged without another

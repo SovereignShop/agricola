@@ -75,6 +75,7 @@ def check_setup(base, fixture_id):
                 cards = page.locator(".draw-packet > div .hand-grid").first.locator(".hand-card:not([disabled])")
                 if cards.count():
                     cards.first.click()
+                    page.get_by_role('button', name='Select card', exact=True).click()
                     revision = page.locator(".game").get_attribute("data-revision")
                     page.get_by_role("button", name="Keep card & pass left →").click()
                     expect(page.locator(".game")).not_to_have_attribute("data-revision", revision)

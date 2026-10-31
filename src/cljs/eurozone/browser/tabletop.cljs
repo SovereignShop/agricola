@@ -252,6 +252,57 @@
       (apply-camera! v (:canvas @nodes) (:world @nodes) z (+ (/ (.-clientWidth v) 2) (- (* (/ (- (+ (.-scrollLeft v) x) (/ (.-clientWidth v) 2)) old) z) x)) (+ (/ (.-clientHeight v) 2) (- (* (/ (- (+ (.-scrollTop v) y) (/ (.-clientHeight v) 2)) old) z) y)))
       (reset! zoom z))))
 
+(defn touch-camera! [el nodes zoom animation auto-fit? gesture]
+  ;; Own the table gesture rather than scaling the whole Discord iframe. Keep
+  ;; the world point under the two-finger midpoint fixed, including while panning.
+  (let [state (atom nil) suppress-until (atom 0)
+        points (fn [e] (mapv (fn [t] [(.-clientX t) (.-clientY t)]) (array-seq (.-touches e))))
+        midpoint (fn [[[x y] [x2 y2]]] [(/ (+ x x2) 2) (/ (+ y y2) 2)])
+        distance (fn [[[x y] [x2 y2]]] (js/Math.hypot (- x2 x) (- y2 y)))
+        begin! (fn [e]
+                 (let [ps (points e) pinch? (<= 2 (count ps))]
+                   (when (seq ps)
+                     (when-not @state (reset! suppress-until 0))
+                     (reset! state {:points ps :scroll [(.-scrollLeft el) (.-scrollTop el)] :zoom @zoom
+                                    :moved? pinch?
+                                    :handle? (and (not pinch?) (.closest (.-target e) ".tt-handle"))})
+                     (when pinch?
+                       (.preventDefault e) (reset! gesture nil)
+                       (reset! suppress-until (+ (.now js/Date) 800))))))]
+    (.addEventListener el "touchstart" begin! #js {:passive false :capture true})
+    (.addEventListener el "touchmove"
+      (fn [e]
+        (when-let [{start :points [sx sy] :scroll old :zoom handle? :handle?} @state]
+          (let [ps (points e) pinch? (and (<= 2 (count ps)) (<= 2 (count start)))
+                [x y] (if pinch? (midpoint ps) (first ps))
+                [ox oy] (if pinch? (midpoint start) (first start))]
+            (when (and (not handle?) (or pinch? (> (js/Math.hypot (- x ox) (- y oy)) 6)))
+              (.preventDefault e) (.stopPropagation e)
+              (swap! state assoc :moved? true)
+              (reset! suppress-until (+ (.now js/Date) 800))
+              (reset! auto-fit? false)
+              (when @animation (js/cancelAnimationFrame @animation) (reset! animation nil))
+              (if pinch?
+                (let [z (clamp (* old (/ (distance ps) (max 1 (distance start)))) 0.12 2)
+                      rect (.getBoundingClientRect el) hw (/ (.-clientWidth el) 2) hh (/ (.-clientHeight el) 2)
+                      wx (/ (- (+ sx ox) (.-left rect) hw) old)
+                      wy (/ (- (+ sy oy) (.-top rect) hh) old)]
+                  (apply-camera! el (:canvas @nodes) (:world @nodes) z
+                                 (+ hw (* wx z) (- (.-left rect) x))
+                                 (+ hh (* wy z) (- (.-top rect) y)))
+                  (reset! zoom z))
+                (do (set! (.-scrollLeft el) (- sx (- x ox)))
+                    (set! (.-scrollTop el) (- sy (- y oy)))))))))
+      #js {:passive false :capture true})
+    (.addEventListener el "touchend"
+      (fn [e]
+        (when (:moved? @state) (reset! suppress-until (+ (.now js/Date) 800)))
+        (if (seq (points e)) (begin! e) (reset! state nil))) #js {:passive false :capture true})
+    (.addEventListener el "touchcancel" (fn [_] (reset! state nil)) #js {:capture true})
+    (.addEventListener el "click"
+      (fn [e] (when (< (.now js/Date) @suppress-until) (.preventDefault e) (.stopImmediatePropagation e)))
+      #js {:capture true})))
+
 (defn table [room renderers]
   (r/with-let [prefs (r/atom (load-arrangement)) gesture (r/atom nil) zoom (r/atom 0.3)
                view (r/atom :board) nodes (atom {}) geometry (atom nil) animation (atom nil)
@@ -309,7 +360,7 @@
        [:div.tt-turn-line [:span.tt-round (str "Round " (:round g) " / 14")]
         [controls/turn-banner room open-decision!]
         (when (number? @view) [button "Farm actions" #(do (reset! dismissed decision-key) (reset! popup {:kind :farm :pid @view}))])]
-       [:div.tt-viewport {:tab-index 0 :aria-label "Tabletop. Drag the cloth to pan; Control or Command wheel to zoom."
+       [:div.tt-viewport {:tab-index 0 :aria-label "Tabletop. Drag to pan; pinch or Control or Command wheel to zoom."
                           :data-zoom @zoom
                           :on-key-down (fn [e] (when (and (not (or (.-ctrlKey e) (.-metaKey e))) (= (.-target e) (.-currentTarget e)))
                                                 (case (.-key e)
@@ -319,10 +370,11 @@
                           :ref (fn [el]
                                  (when (and el (not= el (:viewport @nodes)))
                                    (swap! nodes assoc :viewport el)
+                                   (touch-camera! el nodes zoom animation auto-fit? gesture)
                                    (.addEventListener el "wheel" (fn [e] (when (or (.-ctrlKey e) (.-metaKey e))
                                                                          (.preventDefault e) (zoom! (js/Math.exp (* -0.003 (.-deltaY e))) (.-clientX e) (.-clientY e)))) #js {:passive false})
                                    (set! (.-onpointerdown el)
-                                         (fn [e] (when (and (or (= 1 (.-button e)) (and (= 0 (.-button e)) (not (.closest (.-target e) "button,a,input,select,textarea,[role=button]")))))
+                                         (fn [e] (when (and (not= "touch" (.-pointerType e)) (or (= 1 (.-button e)) (and (= 0 (.-button e)) (not (.closest (.-target e) "button,a,input,select,textarea,[role=button]")))))
                                                    (.preventDefault e) (.setPointerCapture el (.-pointerId e))
                                                    (when @animation (js/cancelAnimationFrame @animation) (reset! animation nil))
                                                    (reset! auto-fit? false)
@@ -374,7 +426,7 @@
                                       :data-piece-key (str "goods:" pid ":" resource) :data-piece-type (name resource) :data-piece-count amount}
                    [art/piece resource] [:b.pile-count amount]])])
              (for [d decks] ^{:key (:path d)} [deck d player prefs gesture zoom open-deck!])])]]]
-       [:div.tt-table-edge [:span "Drag cloth to pan · Ctrl / ⌘ + wheel to zoom · drag ⠿ to arrange"]
+       [:div.tt-table-edge [:span "Drag to pan · pinch or Ctrl / ⌘ + wheel to zoom · drag ⠿ to arrange"]
         [button "Chat" #(do (reset! dismissed decision-key) (reset! popup {:kind :chat}))]
         (when (and decision? (= decision-key @dismissed)) [button decision-title #(reset! dismissed nil)])]
        [:div.tt-modal

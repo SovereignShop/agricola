@@ -60,6 +60,19 @@ Relay traffic uses HTTPS/WSS but is readable by the relay operator; this is not
 application-level end-to-end encryption. Native and Activity browser storage
 are separate origins; opening the website does not migrate an Activity save.
 
+On phones, drag the table with one finger and pinch with two to zoom around
+their midpoint. Card choices open a full-card preview; **Select card** returns
+to the action or draw for final confirmation. **Back to cards** leaves the
+selection unchanged.
+
+Returning from another app reconnects the existing Activity transport and
+resynchronizes the table without reloading Discord authentication. A runtime
+nonce lets it replace its own stale socket without admitting duplicate tabs.
+Each accepted host move is saved before publication. Android/Discord can still
+terminate the Activity itself; reopen it and join the saved table from the same
+Discord account and device. Other players must wait while the browser host is
+suspended or absent; there is no background host service.
+
 For a new **private** deployment:
 
 1. Create **Eurozone** at <https://discord.com/developers/applications>. Copy the

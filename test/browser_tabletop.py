@@ -12,7 +12,7 @@ def check(base, fixtures):
     five, online, optional, major, upgrade, online_five = fixtures.split(',')
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=True, executable_path=os.environ['EUROZONE_BROWSER'])
-        context = browser.new_context(viewport={'width':1680,'height':1050})
+        context = browser.new_context(viewport={'width':1680,'height':1050}, has_touch=True)
         context.add_init_script('sessionStorage.setItem("eurozone-session", "'+'a'*64+'")')
         page = context.new_page()
         errors=[]
@@ -218,7 +218,18 @@ def check(base, fixtures):
         action('Lessons')
         occupations=page.get_by_role('group',name='Playable occupations',exact=True)
         expect(occupations.locator('.card-choice')).to_have_count(7)
+        revision=page.locator('.game').get_attribute('data-revision')
         occupations.get_by_role('button',name='Wood Cutter',exact=True).click()
+        preview=page.get_by_role('dialog',name='Wood Cutter',exact=True)
+        expect(preview.locator('.tt-card-face')).to_be_visible()
+        expect(occupations.get_by_role('button',name='Wood Cutter',exact=True)).to_have_attribute('aria-pressed','false')
+        expect(page.locator('.game')).to_have_attribute('data-revision',revision)
+        # Escape closes only the preview; the action and draft remain intact.
+        page.keyboard.press('Escape')
+        expect(preview).to_have_count(0)
+        expect(page.get_by_role('dialog')).to_have_count(1)
+        occupations.get_by_role('button',name='Wood Cutter',exact=True).click()
+        preview.get_by_role('button',name='Select card',exact=True).click()
         expect(occupations.get_by_role('button',name='Wood Cutter',exact=True)).to_have_attribute('aria-pressed','true')
         confirm()
         expect(page.locator('[data-owner="0"][data-deck="occupations"] .tt-card')).to_have_count(1)
@@ -229,6 +240,50 @@ def check(base, fixtures):
         page.set_viewport_size({'width':390,'height':844})
         focus('Ben')
         assert page.locator('body').evaluate('(e)=>e.scrollWidth<=innerWidth')
+        # Real multi-touch input, not synthetic wheel/pointer events. Zoom stays
+        # anchored under the moving midpoint and never activates a board action.
+        touch=context.new_cdp_session(page)
+        viewport=page.locator('.tt-viewport')
+        box=viewport.bounding_box();cx=box['x']+box['width']/2;cy=box['y']+box['height']/2
+        def touches(kind, points):
+            touch.send('Input.dispatchTouchEvent', {'type':kind,'touchPoints':[
+                {'x':x,'y':y,'id':i,'radiusX':2,'radiusY':2} for i,(x,y) in enumerate(points)]})
+        def world_at(x,y):
+            return viewport.evaluate('(e,p)=>{const r=e.getBoundingClientRect(),z=Number(e.dataset.zoom);return [(e.scrollLeft+p[0]-r.left-e.clientWidth/2)/z,(e.scrollTop+p[1]-r.top-e.clientHeight/2)/z]}',[x,y])
+        start_zoom=float(viewport.get_attribute('data-zoom')); anchor=world_at(cx,cy)
+        touch_revision=page.locator('.game').get_attribute('data-revision')
+        touches('touchStart',[(cx-45,cy),(cx+45,cy)])
+        for n in range(1,9):
+            touches('touchMove',[(cx-45-5*n+2*n,cy+n),(cx+45+5*n+2*n,cy+n)])
+        touches('touchEnd',[])
+        page.wait_for_timeout(100)
+        assert float(viewport.get_attribute('data-zoom'))>start_zoom*1.7
+        anchored=world_at(cx+16,cy+8)
+        assert max(abs(a-b) for a,b in zip(anchor,anchored))<12,(anchor,anchored)
+        expect(page.get_by_role('dialog')).to_have_count(0)
+        expect(page.locator('.game')).to_have_attribute('data-revision',touch_revision)
+        assert page.evaluate('visualViewport.scale')==1
+        # Pinch inward, lift one finger, then continue panning without a jump.
+        before=float(viewport.get_attribute('data-zoom'))
+        touches('touchStart',[(cx-80,cy),(cx+80,cy)])
+        touches('touchMove',[(cx-40,cy),(cx+40,cy)])
+        # Release contact 1 explicitly, keeping contact 0 for the next pan.
+        touch.send('Input.dispatchTouchEvent', {'type':'touchEnd','touchPoints':[
+            {'x':cx+40,'y':cy,'id':1,'radiusX':2,'radiusY':2}]})
+        scroll=viewport.evaluate('e=>[e.scrollLeft,e.scrollTop]')
+        touches('touchMove',[(cx-15,cy+25)])
+        touches('touchEnd',[])
+        page.wait_for_timeout(100)
+        assert float(viewport.get_attribute('data-zoom'))<before*.6
+        after=viewport.evaluate('e=>[e.scrollLeft,e.scrollTop]')
+        assert all(abs((a-b)-25)<3 for a,b in zip(scroll,after)),(scroll,after)
+        expect(page.get_by_role('dialog')).to_have_count(0)
+        # The next deliberate tap works immediately after a gesture.
+        page.locator('.tt-shared .action-card[data-action="reed"]').tap()
+        expect(page.get_by_role('heading',name='Place a family member here?',exact=True)).to_be_visible()
+        page.get_by_role('button',name='Choose another space',exact=True).click()
+        expect(page.locator('.game')).to_have_attribute('data-revision',touch_revision)
+        touch.detach()
         z=page.locator('.tt-viewport').get_attribute('data-zoom')
         page.locator('.tt-viewport').focus();page.keyboard.press('Control+=')
         expect(page.get_by_role('button',name='Reset text size',exact=True)).to_have_text('110%')
@@ -253,6 +308,7 @@ def check(base, fixtures):
         expect(major_cards.locator('.major-card-art')).to_have_count(1)
         assert 'majors-en.jpg' in major_cards.locator('.major-card-art').get_attribute('style')
         major_cards.get_by_role('button',name='Fireplace',exact=True).click()
+        page.get_by_role('button',name='Select card',exact=True).click()
         confirm()
         expect(page.locator('[data-owner="0"][data-deck="improvements"] .major-card-art')).to_have_count(1)
         expect(supply.locator('[data-major-slot="fireplace-2"]')).to_have_attribute('data-available','false')
@@ -263,6 +319,7 @@ def check(base, fixtures):
         action('Major or Minor Improvement')
         expect(major_cards.locator('.card-choice')).to_have_count(2)
         major_cards.get_by_role('button',name='Cooking Hearth',exact=True).first.click()
+        page.get_by_role('button',name='Select card',exact=True).click()
         expect(page.get_by_role('combobox',name='Payment',exact=True)).to_have_value('fireplace-2')
         confirm()
         expect(page.locator('[data-owner="0"][data-deck="improvements"] .major-card-art')).to_have_count(1)

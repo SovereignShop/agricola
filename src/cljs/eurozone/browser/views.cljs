@@ -449,11 +449,30 @@
          [round-card g round (get revealed (dec round)) can-play? draft busy?])
        [future-round-markers g]]]
      [card-action-spaces g can-play? busy?]]))
-(declare card-action-error)
+(declare card-action-error improvement-effects)
+(defn card-selection-preview [cid choose! close!]
+  (let [card (tabletop/card-info cid)]
+    [:div.tt-modal.tt-card-selection
+     [controls/modal (:name card)
+      [:div.tt-inspection
+       [tabletop/card-face cid false nil]
+       [:div
+        (if (= :major (:kind card)) [improvement-effects card]
+            [:div [:p (:text card)]
+             (when (seq (:cost-text card)) [:p (str "Cost: " (:cost-text card))])
+             (when (seq (:prerequisites card)) [:p (str "Requires: " (:prerequisites card))])])
+        [:div.dialog-actions
+         [button "Back to cards" close!]
+         [button "Select card" #(do (choose!) (close!)) "button primary"]]]]
+      close!]]))
 (defn card-choice [cid selected? choose! & [attrs]]
-  [:button.card-choice (merge {:type "button" :aria-label (:name (tabletop/card-info cid))
-                               :aria-pressed (boolean selected?) :on-click choose!} attrs)
-   [tabletop/card-face cid false nil]])
+  (r/with-let [preview? (r/atom false)]
+    [:<>
+     [:button.card-choice (merge {:type "button" :aria-label (:name (tabletop/card-info cid))
+                                 :aria-pressed (boolean selected?) :on-click #(reset! preview? true)} attrs)
+      [tabletop/card-face cid false nil]]
+     (when (and @preview? (not (:disabled attrs)))
+       [card-selection-preview cid choose! #(reset! preview? false)])]))
 (defn improvement-discount-select [p cid draft]
   [:div
    (when-let [resources (seq (a/improvement-discount-resources p cid))]
@@ -1469,10 +1488,12 @@
                                              :aria-pressed (= cid (:card draft))}]
                              (when reason [:p.card-unavailable reason])])]])])))
 (defn draw-packet [room pid private]
-  (r/with-let [revealed? (r/atom (= :online (:mode room))) selected (r/atom nil)]
+  (r/with-let [revealed? (r/atom (= :online (:mode room))) selected (r/atom nil) preview (r/atom nil)]
     (let [ui @(rf/subscribe [:ui]) legal (set (:legal private)) card @selected
           counts (get-in room [:state :draw :counts pid]) choosing? (seq (:packet private))]
       [:section.draw-packet
+       (when (and @preview (legal @preview) (some #{@preview} (:packet private)))
+         [card-selection-preview @preview #(reset! selected @preview) #(reset! preview nil)])
        [:div.section-heading [:div [:div.eyebrow "YOUR PACKET"] [:h2 (str (get-in room [:seats pid :name]) "’s choice")]]
         [:span.small (if choosing? (str (count (:packet private)) " cards in this packet") "Waiting for the next packet")]]
        (if-not @revealed?
@@ -1493,7 +1514,7 @@
              [hand-card cid {:class (str (name (:kind (cards/card cid))) (when (= card cid) " selected"))
                              :aria-pressed (= card cid) :disabled (not (legal cid))
                              :title (if (legal cid) "Choose this card" "You already have seven cards of this type")
-                             :on-click #(reset! selected cid)}])]]
+                             :on-click #(reset! preview cid)}])]]
             [:div.draw-waiting [:h2 "Your pick is in"]
              [:p "Your hand stays visible while the other players choose."]])]
           [:aside.draw-kept {:aria-label "Your drafted cards"}

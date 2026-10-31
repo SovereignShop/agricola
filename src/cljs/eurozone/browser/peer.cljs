@@ -172,6 +172,7 @@
                         :onWelcome #(when (current?) (welcome! (js->clj % :keywordize-keys true)))
                         :onRoster #(when (current?) (roster! (js->clj % :keywordize-keys true)))
                         :onStatus #(when (current?) (rf/dispatch [:peer/status %]))
+                        :onDisconnect #(when (current?) (rf/dispatch [:connection false]))
                         :onError #(when (current?) (error! (js/Error. %)))
                         :onDirect (fn [_] (when (and (current?) (not (host?))) (send! {:event :sync})))})))))
 (defn boot! []

@@ -25,7 +25,7 @@
 .tt-turn-line .turn-countdown {min-width:70px;padding:0 10px}
 .tt-turn-line .turn-countdown strong {font-size:calc(23px * var(--text-scale,1))}
 .tt-turn-line .clock-urgent {outline:2px solid #b44830;background:#f7ceb6!important;border-radius:6px}
-.tt-viewport {position:relative;flex:1;min-height:160px;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#665a4080 #b7baa3;cursor:grab;touch-action:pan-x pan-y;background-color:#b7baa3;background-image:repeating-linear-gradient(0deg,#ffffff07 0px,#ffffff07 1px,#33422907 1px,#33422907 3px),repeating-linear-gradient(90deg,#ffffff12 0px,#ffffff12 1px,transparent 1px,transparent 4px)}
+.tt-viewport {position:relative;flex:1;min-height:160px;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#665a4080 #b7baa3;cursor:grab;touch-action:none;background-color:#b7baa3;background-image:repeating-linear-gradient(0deg,#ffffff07 0px,#ffffff07 1px,#33422907 1px,#33422907 3px),repeating-linear-gradient(90deg,#ffffff12 0px,#ffffff12 1px,transparent 1px,transparent 4px)}
 .tt-viewport:focus-visible {outline:2px solid #6d754c;outline-offset:-3px}
 .tt-viewport.is-panning {cursor:grabbing;user-select:none}
 .tt-canvas {position:relative;min-width:100%;min-height:100%}
@@ -107,6 +107,8 @@
 .tt-modal .chat-messages,.tt-modal .table-scroll,.tt-modal .hand-grid {max-height:none;overflow:visible}
 .tt-modal .chat-panel {background:none;border:0;padding:0;box-shadow:none}
 .tt-modal .tt-inspection {display:grid;grid-template-columns:280px minmax(0,1fr);gap:28px;align-items:start}
+.tt-card-selection .dialog-backdrop {z-index:1100}
+.tt-card-selection .table-dialog {width:760px}
 .tt-inspection>.tt-card-face {height:400px;box-shadow:3px 7px 12px #4c402c55}
 .tt-inspection .tt-printed-card>small {font-size:calc(12px * var(--text-scale,1))}
 .tt-inspection .tt-printed-card>strong {font-size:calc(23px * var(--text-scale,1))}

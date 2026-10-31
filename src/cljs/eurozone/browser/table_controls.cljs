@@ -46,10 +46,13 @@
 
 (defn modal [title children & [close]]
   (r/with-let [previous (.-activeElement js/document)
+               node (atom nil)
+               top? (fn [] (= @node (last (array-seq (.querySelectorAll js/document ".table-dialog")))))
                handler (fn [e]
-                         (when (= "Escape" (.-key e)) (when close (close)))
-                         (when (= "Tab" (.-key e))
-                           (when-let [dialog (.querySelector js/document ".table-dialog")]
+                         (when (and (top?) (= "Escape" (.-key e)))
+                           (.stopImmediatePropagation e) (when close (close)))
+                         (when (and (top?) (= "Tab" (.-key e)))
+                           (when-let [dialog @node]
                              (let [nodes (.querySelectorAll dialog "button:not([disabled]),select:not([disabled]),input:not([disabled]),[tabindex='0']")
                                    first (aget nodes 0) last (aget nodes (dec (.-length nodes)))]
                                (when (and first (or (and (.-shiftKey e) (= (.-activeElement js/document) first))
@@ -58,7 +61,7 @@
                _ (.addEventListener js/document "keydown" handler)]
     [:div.dialog-backdrop
      [:section.table-dialog {:role "dialog" :aria-modal true :aria-label title :tab-index -1
-                             :ref #(when (and % (not (.contains % (.-activeElement js/document)))) (.focus %))}
+                             :ref #(when % (reset! node %) (when (and (top?) (not (.contains % (.-activeElement js/document)))) (.focus %)))}
       [:div.section-heading [:h2 title] (when close [:button.text-button {:aria-label "Close dialog" :on-click close} "×"])]
       children]]
     (finally (.removeEventListener js/document "keydown" handler)

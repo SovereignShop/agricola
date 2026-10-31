@@ -41,6 +41,7 @@ def check(base, fixture_ids):
         goods('reed', 2);goods('stone', 2);goods('food', 1)
         table(scholar, 'Scholar')
         page.get_by_role('group', name='Playable occupations', exact=True).get_by_role('button', name='Storehouse Clerk', exact=True).click()
+        page.get_by_role('button', name='Select card', exact=True).click()
         resolve();expect(page.get_by_role('dialog')).to_have_count(0);goods('wood', 21);goods('stone', 21)
         page.set_viewport_size({'width':390, 'height':844})
         table(student, 'Perpetual Student')
@@ -51,6 +52,7 @@ def check(base, fixture_ids):
         table(salesman, 'Traveling Salesman and Merchant')
         for card in ['House Goat', 'Wooden Strongbox', 'Spit Roast']:
             page.get_by_role('group', name='Playable minor improvements', exact=True).get_by_role('button', name=card, exact=True).click()
+            page.get_by_role('button', name='Select card', exact=True).click()
             resolve()
         expect(page.get_by_role('dialog')).to_have_count(0);goods('food', 21)
         expect(page.locator('[data-owner="0"][data-deck="improvements"] .tt-card')).to_have_count(4)

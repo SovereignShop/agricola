@@ -71,6 +71,7 @@ def check(base, fixture_ids):
         table(hearth)
         page.locator('.action-card[data-action="meeting"]').click()
         page.get_by_role('group', name='Playable minor improvements', exact=True).get_by_role('button', name='Cooking Hearth', exact=True).click()
+        page.get_by_role('button', name='Select card', exact=True).click()
         expect(page.get_by_role('group', name='Return improvement', exact=True).get_by_role('button', name='Fireplace', exact=True)).to_have_attribute('aria-pressed', 'true')
         page.get_by_role('button', name='Place family member →', exact=True).click()
         expect(page.get_by_role('dialog')).to_have_count(0)

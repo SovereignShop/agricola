@@ -65,6 +65,7 @@ def check(base, fixtures):
         open_saved(businessman, 'Businessman')
         for name, following in [('Clogs', 'Merchant'), ('Raft', 'Businessman'), ('Plane', None)]:
             page.get_by_role('group', name='Playable minor improvements', exact=True).get_by_role('button', name=name, exact=True).click()
+            page.get_by_role('button', name='Select card', exact=True).click()
             resolve()
             if following:
                 expect(page.get_by_role('dialog', name='Resolve '+following, exact=True)).to_be_visible()

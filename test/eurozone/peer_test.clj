@@ -52,3 +52,20 @@
     (is (empty? @(:tables service)))
     (p/route! service send :host (json/write-str {:op "create" :room room :invite invite :token host :auth "approved" :options settings}))
     (is (= 1 (count @(:tables service))))))
+
+(deftest suspended-socket-can-be-replaced-only-by-the-same-runtime
+  (let [{:keys [service send messages route]} (harness nil)
+        nonce (str (random-uuid))
+        join {:op "join" :room room :token host :invite invite :connection nonce}]
+    (route :suspended (assoc join :op "create" :options settings))
+    (route :other-tab (assoc join :connection (str (random-uuid))))
+    (is (= "error" (:op (second (last @messages)))))
+    (route :resumed join)
+    (is (= #{:resumed} (set (keys @(:connections service)))))
+    (is (= "welcome" (get-in @messages [(- (count @messages) 2) 1 :op])))
+    (route :suspended {:op "initialized"})
+    (is (= "Join a peer table first." (:message (second (last @messages)))))
+    (p/leave! service send :suspended)
+    (is (= #{:resumed} (set (keys @(:connections service)))))
+    (route :resumed {:op "initialized"})
+    (is (true? (get-in @(:tables service) [room :initialized])))))

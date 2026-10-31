@@ -27,6 +27,7 @@ def check(base, fixture_ids):
         expect(page.locator('.tt-player[data-player="0"] .tt-farm-caption')).to_contain_text('1 / 4 stables')
         table(puppet, 'Puppeteer')
         page.get_by_role('group',name='Playable occupations',exact=True).get_by_role('button',name='Wood Collector',exact=True).click()
+        page.get_by_role('button', name='Select card', exact=True).click()
         resolve();expect(page.get_by_role('dialog')).to_have_count(0)
         goods(0,'food',0);goods(1,'food',2)
         expect(page.locator('[data-owner="0"][data-deck="occupations"] .tt-card')).to_have_count(2)
