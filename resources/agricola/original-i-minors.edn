@@ -1,0 +1,100 @@
+;; Original English I deck. Costs and interactions checked against the English
+;; print and Agricola compendium v9, pp171–187. Passing status comes from catalogue.
+{:catalog/original-base-i-64-alms
+ {:requires [:= [:occupations] 0] :play [{:op :gain :goods {:food [:- [:round] 1]}}]}
+ :catalog/original-base-i-65-baker-s-kitchen
+ {:cost :return-oven :requires [:> [:ovens] 0]
+  :passive {:bake 5 :limit 2} :play [{:op :bake :optional? true}]}
+ :catalog/original-base-i-66-village-well
+ {:cost :return-well :requires [:owns-major :well] :preserve-well-deliveries? true
+  :play [{:op :schedule :offsets [1 2 3] :goods {:food 1}}]}
+ :catalog/original-base-i-67-threshing-board
+ {:triggers [{:event :use-space :spaces #{:plow :cultivation} :effect {:op :bake :optional? true}}]}
+ :catalog/original-base-i-69-strawberry-patch
+ {:requires [:>= [:vegetable-fields] 2] :play [{:op :schedule :offsets [1 2 3] :goods {:food 1}}]}
+ :catalog/original-base-i-72-goose-pond
+ {:play [{:op :schedule :offsets [1 2 3 4] :goods {:food 1}}]}
+ :catalog/original-base-i-74-grain-cart
+ {:triggers [{:event :use-space :spaces #{:grain} :effect {:op :gain :goods {:grain 2}}}]}
+ :catalog/original-base-i-75-hand-mill
+ {:triggers [{:event :feeding-start
+              :effect {:op :choose :optional? true
+                       :options [{:label "1 grain → 2 food" :when [:>= [:goods :grain] 1]
+                                  :effects [{:op :exchange :cost {:grain 1} :goods {:food 2}}]}
+                                 {:label "2 grain → 4 food" :when [:>= [:goods :grain] 2]
+                                  :effects [{:op :exchange :cost {:grain 2} :goods {:food 4}}]}]}}]}
+ :catalog/original-base-i-79-wood-cart
+ {:triggers [{:event :use-space :condition [:test [:and [:source-accumulation] [:> [:source-goods :wood] 0]]]
+              :effect {:op :gain :goods {:wood 2}}}]}
+ :catalog/original-base-i-81-wooden-hut-extension
+ {:requires [:= [:house] :wood] :requires-effect? true :play [{:op :build-rooms :max-rooms 1 :free? true}]}
+ :catalog/original-base-i-82-wooden-crane
+ {:triggers [{:event :use-space :spaces #{:stone-west :stone-east}
+              :effects [{:op :gain :goods {:stone 1}}
+                        {:op :exchange :optional? true :cost {:food 1} :goods {:stone 1}}]}]}
+ :catalog/original-base-i-84-chicken-coop
+ {:cost-options [{:wood 2 :reed 1} {:clay 2 :reed 1}]
+  :play [{:op :schedule :offsets [1 2 3 4 5 6 7 8] :goods {:food 1}}]}
+ :catalog/original-base-i-85-cooking-corner
+ {:cost :return-hearth :requires [:> [:returnable-hearths] 0]
+  :passive {:cooking-corner true :cook {:vegetable 4 :sheep 2 :boar 3 :cattle 4} :bake 3}}
+ :catalog/original-base-i-91-ladder
+ {:passive {:reed-construction-discount 1
+            :reed-discount-for-improvements #{:catalog/original-base-i-103-water-mill
+                                              :catalog/original-base-e-21-half-timbered-house
+                                              :catalog/original-base-i-84-chicken-coop
+                                              :catalog/original-base-i-71-holiday-house
+                                              :catalog/original-base-k-144-mansion
+                                              :catalog/original-base-i-86-corn-storehouse}}}
+ :catalog/original-base-i-93-milking-shed
+ {:triggers [{:event :before-field-phase
+              :effect {:op :gain :goods {:food [:+ [:quot [:all-goods :sheep] 5] [:quot [:all-goods :cattle] 3]]}}}]}
+ :catalog/original-base-i-95-fish-trap
+ {:triggers [{:event :use-space
+              :condition [:test [:or [:= [:context :space] :fishing] [:> [:source-goods :reed] 0]]]
+              :effect {:op :gain :goods {:food 1}}}]}
+ :catalog/original-base-i-96-reed-exchange
+ {:cost-options [{:wood 2} {:clay 2}] :play [{:op :gain :goods {:reed 2}}]}
+ :catalog/original-base-i-98-schnaps-distillery
+ {:triggers [{:event :feeding-start :effect {:op :exchange :optional? true :cost {:vegetable 1} :goods {:food 4}}}]
+  :score {:type :expression :value [:max 0 [:min 2 [:- [:total-crops :vegetable] 4]]]}}
+ :catalog/original-base-i-104-weekly-market {:play [{:op :gain :goods {:vegetable 2}}]}
+ :catalog/original-base-i-100-tavern {:action-space :tavern}
+ :catalog/original-base-i-337-clay-deposit {:action-space :clay-deposit}
+ :catalog/original-base-i-83-wooden-path {:passive {:road-value 1} :score {:type :best-road :rank 1}}
+ :catalog/original-base-i-89-clay-path {:passive {:road-value 2} :score {:type :best-road :rank 2}}
+ :catalog/original-base-i-94-paved-road {:passive {:road-value 3} :score {:type :best-road :rank 3}}
+ :catalog/original-base-i-76-rake {:score {:type :rake}}
+ :catalog/original-base-i-90-planter-box {:passive {:adjacent-room-sow-bonus {:grain 2 :vegetable 1}}}
+ :catalog/original-base-i-99-straw-thatched-roof {:requires [:>= [:grain-fields] 3] :passive {:no-construction-reed true}}
+ :catalog/original-base-i-102-wildlife-reserve {:passive {:wildlife-reserve true}}
+ ;; Compendium corrects the pictured one-use Moldboard text to two uses.
+ :catalog/original-base-i-63-moldboard-plow
+ {:passive {:action-plow {:extra-fields 1 :spaces #{:plow}}} :play [{:op :set-uses :uses 2}]}
+ :catalog/original-base-i-68-harrow {:passive {:action-plow {:extra-fields 1 :public? true}}}
+ :catalog/original-base-i-70-punner
+ {:triggers [{:event :plow-tool-used :scope :others :effect {:op :plow :optional? true}}]}
+ :catalog/original-base-i-77-shepherd-s-crook
+ {:triggers [{:event :fence :effect {:op :shepherds-crook}}]}
+ :catalog/original-base-i-80-spinney
+ {:triggers [{:event :use-space :scope :others :spaces #{:wood}
+              :condition [:test [:and [:= [:source-rate :wood] 3] [:> [:taken :wood] 0]]] :effect {:op :spinney}}]}
+ :catalog/original-base-i-87-flagon
+ {:play [{:op :all-gain
+          :owner {:food [:* 4 [:owned-card-count #{:well :catalog/original-base-i-66-village-well}]]}
+          :others {:food [:owned-card-count #{:well :catalog/original-base-i-66-village-well}]}}]
+  :triggers [{:event :build-improvement :scope :all
+              :condition [:test [:or [:= [:event-card-id] :well] [:= [:event-card-id] :catalog/original-base-i-66-village-well]]]
+              :effect {:op :all-gain :owner {:food 4} :others {:food 1}}}]}
+ :catalog/original-base-i-101-animal-feed
+ {:triggers [{:event :before-final-score :effect {:op :animal-feed}}]}
+ :catalog/original-base-i-86-corn-storehouse
+ {:cost-options [{:wood 2 :reed 2} {:clay 2 :reed 2}]
+  :triggers [{:event :after-field-phase
+              :effect {:op :sow-offer :optional? true :allowed-crops #{:grain} :stack-adjust {:grain -1}}}]}
+ :catalog/original-base-i-103-water-mill {:passive {:water-mill true}}
+ :catalog/original-base-i-97-slaughterhouse
+ {:passive {:feed-last true :slaughter-income true}
+  :triggers [{:event :convert-food :scope :others
+              :condition [:test [:> [:context :cooked-animals] 0]] :effect {:op :gain :goods {:food 1}}}]}
+ :catalog/original-base-i-88-lasso {:play [{:op :lasso-followup :optional? true}]}}

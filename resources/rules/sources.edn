@@ -5,7 +5,7 @@
    :url "https://www.lookout-spiele.de/upload/de_agricola.html_Rules_Agricola_EN.pdf"}
   {:id :original-english-cards :authority :printed-card-scans :edition :original
    :url "https://github.com/SNiLD/TabletopSimulatorAgricola/blob/5e675a143d7192b271615d9f1a406fd04a1913f1/src/workshop.json"
-   :note "English E/I/K sheets. E-deck atlas mappings, original download URLs and file hashes are in the artwork manifest. Card art does not imply executable coverage."}
+   :note "English E/I/K sheets. E- and I-deck atlas mappings, original download URLs and file hashes are in the artwork manifest. Card art does not imply executable coverage."}
   {:id :original-compendium-v9 :authority :unofficial-compilation :edition :original
    :url "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf"
    :note "Edition-specific clarifications checked alongside the English prints; this is a community compilation, not a new publisher rulebook."}
@@ -24,7 +24,14 @@
    :url "http://playagricola.com/forums/index.php?board=23.0"
    :note "Check card edition and printing. Separate expansion boards are linked from the forum index."}]
  :open-questions
- [{:id :original-ratcatcher-adoption
+ [{:id :original-wildlife-reserve-trough
+   :cards [:catalog/original-base-i-102-wildlife-reserve :catalog/original-base-e-59-drinking-trough]
+   :question "How are Drinking Trough's two additional places distributed on Wildlife Reserve?"
+   :current-behavior "Wildlife Reserve keeps its one place per species and gains two flexible places in total, not two per species. Shepherd's Pipe adds two sheep places separately."
+   :status :implementation-assumption
+   :sources ["https://agricola.no/wp-content/uploads/2024/07/compendium.pdf"]
+   :note "The compendium explicitly permits the capacity increase but does not spell out its allocation across species. The total-two interpretation follows Drinking Trough's wording; no explicit designer ruling for this combination was located."}
+  {:id :original-ratcatcher-adoption
    :cards [:catalog/original-base-e-198-ratcatcher :revised-base/a092]
    :question "How does Ratcatcher interact with a newborn adopted during rounds ten or twelve?"
    :current-behavior "Ratcatcher suppresses one adult offspring's placement. An adopted newborn becomes eligible if no offspring was already suppressed; guests are excluded. An already suppressed worker remains idle after later family growth."
@@ -47,7 +54,47 @@
    :status :unresolved
    :note "No explicit publisher or designer clarification was found. Do not present either interpretation as a verified ruling."}]
  :regressions
- [{:id :original-room-payments :cards [:catalog/original-base-e-36-clay-roof :catalog/original-base-e-37-clay-supports :catalog/original-base-e-157-thatcher]
+ [{:id :original-i-moldboard-printing-difference :cards [:catalog/original-base-i-63-moldboard-plow]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "The available English image says once; the v9 compendium explicitly says twice and describes two use markers. Native play follows the compendium's two uses, each restricted to Plow One Field and adding only one extra field."
+   :test agricola.original-i-minors-test/moldboard-and-public-harrow-are-exclusive-paid-plow-workflows}
+  {:id :original-i-taster-payment :cards [:catalog/original-base-i-260-taster]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Original Taster's English print and compendium require one food, correcting the catalogue's two-food transcription. After the extra first placement, ordinary play restarts with the starting player."
+   :test agricola.original-i-occupations-b-test/taster-pays-one-food-and-restarts-normal-order-after-first-placement}
+  {:id :original-i-oven-upgrades :cards [:catalog/original-base-i-65-baker-s-kitchen :catalog/original-base-i-85-cooking-corner]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Baker's Kitchen requires two stone plus an owned oven and is not itself an oven. Cooking Corner returns a Cooking Hearth, restores a returned major to supply, and receives Spices' vegetable cooking bonus."
+   :test agricola.original-i-minors-test/printed-alternative-costs-and-return-costs-are-real}
+  {:id :original-i-village-well-deliveries :cards [:catalog/original-base-i-66-village-well]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Village Well returns the Well to supply while its already scheduled food remains. Rebuilding the Well adds another independent delivery schedule."
+   :test agricola.original-i-minors-test/schedules-and-village-well-preserve-and-stack-deliveries}
+  {:id :original-i-wood-source-order :cards [:catalog/original-base-i-79-wood-cart :catalog/original-base-i-80-spinney :catalog/original-base-i-253-pig-catcher]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Spinney claims its source wood before exchanges and buyers. Wood Cart still grants its bonus when Pig Catcher leaves all source wood, but not when wood comes from a nonaccumulating resource market."
+   :test agricola.original-i-minors-test/wood-cart-still-pays-when-pig-catcher-leaves-all-source-wood}
+  {:id :original-i-harvest-window :cards [:catalog/original-base-i-86-corn-storehouse :catalog/original-base-i-103-water-mill]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Corn Storehouse and Water Mill share the after-field-phase window. Corn sows only grain with one fewer supplied grain per stack; Water Mill converts one grain without baking and transfers one of three food to another owner. Manure activates these only for its user."
+   :test agricola.original-i-minors-test/water-mill-and-corn-storehouse-share-an-orderable-window}
+  {:id :original-i-lasso-turns :cards [:catalog/original-base-i-88-lasso]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Original Lasso excludes the five-player choice-of-animal space, permits immediate use when played, and its two placements count as separate turns."
+   :test agricola.original-i-minors-test/original-lasso-excludes-five-player-market-and-offers-use-when-played}
+  {:id :original-i-crook-subdivision :cards [:catalog/original-base-i-77-shepherd-s-crook]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Subdivision rewards new four-space pastures only if the number of large pastures increases. Splitting an eight-space pasture into two four-space pastures supplies four sheep; a four/two/two split supplies none."
+   :test agricola.original-i-minors-test/shepherds-crook-only-rewards-subdivision-when-large-pasture-count-increases}
+  {:id :original-i-animal-feed-loan :cards [:catalog/original-base-i-101-animal-feed :catalog/original-base-e-215-tenant-farmer]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Animal Feed occurs before Tenant Farmer's loan settlement. The new animals may repay the loan even without housing space; remaining animals must then be housed or released, never cooked after final breeding."
+   :test agricola.original-i-minors-test/animal-feed-can-repay-tenant-loan-before-final-housing}
+  {:id :original-i-slaughter-feeding-order :cards [:catalog/original-base-i-97-slaughterhouse]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Slaughterhouse gains one food per other player's animal-cooking event, not per animal or paid animal. Its owner feeds after ordinary players; multiple last-feeding owners retain normal cyclic order."
+   :test agricola.original-i-minors-test/slaughterhouse-earns-on-cooking-not-costs-and-feeds-last}
+  {:id :original-room-payments :cards [:catalog/original-base-e-36-clay-roof :catalog/original-base-e-37-clay-supports :catalog/original-base-e-157-thatcher]
    :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
    :rule "Clay Supports supplies an alternate base price per clay room; it does not combine with Carpenter's base price. Clay Roof replacements and Thatcher discounts apply afterward. Different rooms can use different payments."
    :test agricola.original-e-construction-test/clay-supports-sets-an-alternative-base-with-optional-cost-modifiers}

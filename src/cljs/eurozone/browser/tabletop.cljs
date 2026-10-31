@@ -88,10 +88,20 @@
         animals (reduce (fn [m slot] (merge-with + m (a/housing-animals slot))) {}
                         (filter #(and (= :card (:kind %)) (= cid (:card %))) (when p (a/animal-housing p))))
         goods (merge-with + (:stored-goods state) (when (:food state) {:food (:food state)})
-                          (when (pos? (:count field 0)) (a/field-crops field)) animals)]
-    (when (seq goods)
+                          (a/card-field-goods p cid)
+                          (reduce (fn [goods [key slot]]
+                                    (if (= cid (or (:card slot) key))
+                                      (merge-with + goods (:under-crops slot)) goods)) {} (:card-fields p))
+                          animals)]
+    (when (or (seq goods) (:marked-space state)
+              (and (= cid :catalog/original-base-i-265-fence-deliveryman) (seq (:reserved-fences p))))
       [:div.tt-card-markers {:aria-label "Goods on card"}
-       (for [[resource n] goods :when (pos? n)] ^{:key resource} [:span [art/piece resource] [:b n]])])))
+       (for [[resource n] goods :when (pos? n)] ^{:key resource} [:span [art/piece resource] [:b n]])
+       (when-let [space (:marked-space state)]
+         [:span (str "Fence: " (or (:name (a/actions space)) (:name (cards/card space))))])
+       (when (= cid :catalog/original-base-i-265-fence-deliveryman)
+         (for [[round n] (sort (:reserved-fences p))] ^{:key round}
+           [:span (str "Round " round ": " n " fences")]))])))
 (defn deck-size [n spread?]
   [(if spread? 288 128) (if spread? (+ 72 (* 154 (max 1 (js/Math.ceil (/ n 3))))) (+ 250 (* 24 (max 0 (dec n)))))])
 (defn deck [descriptor p prefs gesture zoom open-deck!]
@@ -358,7 +368,10 @@
              :decision [:div {:class (when simple-action? "tt-simple-action")}
                         (when (and (:space (:draft ui)) (empty? (:effect-queue g)))
                           [:div.tt-placement-confirmation
-                           [:div.tt-action-preview [(:board-action renderers) g (:space (:draft ui)) false (:draft ui) false nil true]]
+                           [:div.tt-action-preview
+                            (if-let [cid (:card-space (:draft ui))]
+                              [card-face cid false (get-in g [:players actor])]
+                              [(:board-action renderers) g (:space (:draft ui)) false (:draft ui) false nil true])]
                            [:div [:h3 "Place a family member here?"]
                             [:p "Review the action and any choices below, then confirm your placement."]
                             [button "Choose another space" #(do (dispatch :select-action nil) (close!))]]])

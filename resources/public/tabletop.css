@@ -117,6 +117,7 @@
 .tt-menu>button {background:#e9ddbd;color:#3e482c;border:1px solid #a69770;padding:8px 14px;border-radius:4px}
 .tt-placement-confirmation {display:flex;gap:26px;align-items:center;margin-bottom:22px;padding:18px;background:#e8dfc6;border-radius:6px}
 .tt-action-preview {width:220px;flex-shrink:0;transform:rotate(-1deg);animation:tt-lift .2s ease-out}
+.tt-action-preview>.tt-card-face {height:324px}
 .tt-action-preview .action-card {position:relative!important;inset:auto!important;width:100%!important;height:auto!important;min-height:150px;opacity:1!important;filter:none!important;background:#fff5d7;color:#403b25;box-shadow:2px 8px 12px #3b432c55;cursor:default}
 @keyframes tt-lift {from {transform:scale(.85);opacity:.4} to {transform:scale(1);opacity:1}}
 @media(max-width:900px) {.tt-toolbar {gap:6px;padding:6px 10px}.tt-views {order:3;flex-basis:100%}.tt-turn-line {padding:4px 10px;gap:8px}.tt-turn-line .turn-message>span {display:none}.tt-round {font-size:calc(12px * var(--text-scale,1))}.tt-table-edge>span {display:none}.tt-modal .player-panel {grid-template-columns:1fr}.tt-modal .player-panel>.farm-panel.panel,.tt-modal .player-panel>.panel,.tt-modal .card-abilities {grid-column:1;grid-row:auto}.tt-modal .tt-inspection {grid-template-columns:1fr}.tt-inspection>.tt-card-face {max-width:280px;margin:auto}.tt-modal .dialog-backdrop {padding:12px}.tt-modal .table-dialog {padding:16px}.tt-placement-confirmation {flex-wrap:wrap}.tt-turn-line .turn-banner .text-button {font-size:calc(11px * var(--text-scale,1))}}

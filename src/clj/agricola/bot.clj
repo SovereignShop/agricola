@@ -22,6 +22,7 @@
     (attempt
      #(case (:type cmd)
       :action (g/drain (without-continuations (g/take-action (g/prepare-placement state) pid cmd)))
+      :card-action (g/drain (without-continuations (g/card-action (g/prepare-placement state) pid cmd)))
       :resolve (g/drain (without-continuations (g/resolve-choice state pid cmd)))
       :ability (g/drain (g/with-housing (g/ability state pid cmd)))
       :convert (g/command (without-continuations state) pid cmd)
@@ -36,7 +37,7 @@
         paper? (if (and (= kind :occupation) (c/has? p :b109)) [false true] [false])
         payment (if-let [costs (:cost-options (c/card cid))] (range (count costs)) [nil])
         wood (if (and (= kind :occupation) (c/has? p :a028)) (range (+ 4 (:additional-food-cost (c/card cid) 0))) [0])
-        returned (if (#{:return-cooking :return-oven} (:cost (c/card cid))) (g/card-return-options p cid) [nil])
+        returned (if (#{:return-cooking :return-oven :return-hearth :return-well} (:cost (c/card cid))) (g/card-return-options p cid) [nil])
         returned-pair (if (= :return-two-improvements (:cost (c/card cid))) (g/card-return-pairs p) [nil])
         discount-resource (or (seq (a/improvement-discount-resources p cid)) [nil])
         major? (if (get-in (c/card cid) [:passive :major-or-minor]) [false true] [false])]
@@ -47,7 +48,7 @@
 (defn sow-plans [p]
   (distinct
    (cons []
-         (for [priority [[:grain :vegetable] [:vegetable :grain]]]
+         (for [priority [[:grain :vegetable :wood] [:vegetable :grain :wood]]]
            (:plan
             (reduce (fn [{:keys [player] :as out} cell]
                       (if-let [crop (first (filter #(and (pos? (a/amount player %))
@@ -129,8 +130,10 @@
                hora (if (and (c/has? p :a174) (five/linked-groups space)) [false true] [false])
                double (if (and (c/has? p :a180) (= space :animal-market)) [false true] [false])
                shave? (if (g/pre-use-shaving? state pid space) [false true] [false])
+               lasso? (if (and (seq (g/lasso-animal-spaces p)) (not (:lasso state)) (>= (:remaining p) 2)) [false true] [false])
+               pig? (if (g/pig-catcher-available? state pid space) [false true] [false])
                part (if (and (c/has? p :d180) (:accumulate (a/action-definition state space))) [false true] [false])]
-           (cond-> (merge {:type :action :space space} option) hora (assoc :master-hora? true) double (assoc :animal-brander? true) part (assoc :part-time? true) shave? (assoc :shaving-horse? true)))))
+           (cond-> (merge {:type :action :space space} option) hora (assoc :master-hora? true) double (assoc :animal-brander? true) part (assoc :part-time? true) shave? (assoc :shaving-horse? true) pig? (assoc :pig-catcher? true) lasso? (assoc :lasso? true)))))
      ;; Sleeping Corner can share Growth; validate-space decides whether it can.
      (filter #(and (not (contains? (:cancelled-sowing state) [pid % (:round state)]))
                    (or (not (contains? (:occupied state) %)) (g/occupied-permission state pid %))) (:active state)))))
@@ -156,13 +159,20 @@
         one (vec (extend [[initial []]])) two (vec (extend one))
         three (delay (take 64 (extend two)))]
     (for [cid (cons nil (:plows effect)) maker? (if (:plow-maker? effect) [false true] [false])
-          :let [maximum (+ (if cid 2 0) (if maker? 1 0))]
+          :let [maximum (+ (if cid (get-in (c/card cid) [:passive :action-plow :extra-fields] 2) 0) (if maker? 1 0))]
           [_ cells] (concat (when (pos? maximum) one) (when (>= maximum 2) two) (when (= maximum 3) @three))]
       {:cells cells :plow-card cid :plow-maker? maker?})))
 (declare ability-candidates card-action-candidates)
 (defn decision-candidates [state pid]
   (let [p (g/p state pid) head (first (:effect-queue state)) effect (g/plow-effect (:effect head))
         options (case (:op effect)
+                  :mark-fence-space (map #(hash-map :space %) (g/fence-marker-spaces state pid))
+                  :harvest-helper (g/harvest-helper-options state pid)
+                  :cover-unused (map #(hash-map :amount %) (range (inc (min (a/amount p :food) (g/unused-count p)))))
+                  :corn-offer [{}]
+                  :corn-select (map #(hash-map :buyer %) (get-in state [:corn-sale :offers]))
+                  :reveal-rounds [{:cultivation-first? true} {:cultivation-first? false}]
+                  :juggler [{}]
                   :return-animal-loan (g/animal-loan-choices p)
                   :collect-cooked-animal (map #(hash-map :amount %) (range 1 (inc (get-in head [:context :converted-goods (:resource effect)] 0))))
                   (:plow :stable :plowsmith) (map #(hash-map :cell %) (range 15))
@@ -264,7 +274,7 @@
        (map #(merge {:type :ability :card cid} %)
             (case (get-in (c/card cid) [:ability :op])
               :return-animal-loan (when-not (get-in p [:card-state cid :loan-settled?]) (g/animal-loan-choices p))
-              (:adopt :buy-stock :cash-card :reed-food :claim-goods) [{}]
+              (:adopt :buy-stock :cash-card :reed-food :claim-goods :corn-profiteer) [{}]
               :renovate-wood-clay (remove #(= :stone (:renovate-to %)) (payment-options p))
               :free-placement-fences (map #(hash-map :fences %) (fence-plans p))
               :free-room (map #(hash-map :rooms [%]) (range 15))
@@ -279,11 +289,15 @@
               []))) (c/owned p))))
 (defn card-action-candidates [state pid]
   (mapcat
-    (fn [{:keys [card kind]}]
+    (fn [{:keys [card kind owner]}]
       (when-not (g/card-space-error state pid card)
         (case kind
           :substitute-teacher (for [bundle [:resources :crops]] {:type :card-action :card-space card :bundle bundle})
-          (:bullcatcher :chapel :forest-tallyman :master-forester) [{:type :card-action :card-space card}]
+          (:tavern :clay-deposit) (cond-> [{:type :card-action :card-space card}]
+                                    (= pid owner) (conj {:type :card-action :card-space card :action :points}))
+          (:bullcatcher :chapel :forest-tallyman :master-forester :clay-digger)
+          (cond-> [{:type :card-action :card-space card}]
+            (g/pig-catcher-available? state pid card) (conj {:type :card-action :card-space card :pig-catcher? true}))
           (:greenhouse :fold-builder)
           (let [spaces (if (= kind :fold-builder) [:fences] (filter (set (:active state)) [:fences :renovate :vegetable]))]
             (map #(assoc % :type :card-action :card-space card :action (:space %))

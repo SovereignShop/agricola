@@ -46,6 +46,20 @@
   (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Internal defect"
                        (bot/attempt #(throw (ex-info "Internal defect" {:unexpected true}))))))
 
+(deftest public-card-actions-can-be-ranked-without-advancing-the-round
+  (let [tavern :catalog/original-base-i-100-tavern
+        state (-> (g/initialize (a/new-game ["Ada" "Ben"] (vec (mapcat identity a/stages)) 0))
+                  (update-in [:players 1 :minors] conj tavern))
+        command {:type :card-action :card-space tavern}
+        preview (bot/preview state 0 command)]
+    (is (some #{command} (bot/card-action-candidates state 0)))
+    (is (= 3 (- (a/amount (g/p preview 0) :food) (a/amount (g/p state 0) :food))))
+    (is (= (:round state) (:round preview)))
+    (is (= (:turn state) (:turn preview)))
+    (is (= 1 (get-in preview [:players 0 :remaining])))
+    (is (map? (:command (bot/choose state 0 (java.util.Random. 404)))))
+    (is (nil? (bot/preview state 0 (assoc command :action :points))))))
+
 (deftest complete-recordings-replay-and-detect-corruption
   (let [events (atom []) result (sim/run-game {:seed 19 :players 1 :mode :draw :extra 2} #(swap! events conj %))
         file (java.io.File/createTempFile "agricola-replay-" ".edn")]

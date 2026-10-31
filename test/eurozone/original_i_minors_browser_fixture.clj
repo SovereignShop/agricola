@@ -1,0 +1,31 @@
+(require '[eurozone.store :as store] '[agricola.engine :as a] '[agricola.card-game :as g] '[clojure.string :as str])
+(let [s (store/make-store (System/getenv "EUROZONE_DATA")) token (apply str (repeat 64 "a"))
+      names ["Ada" "Ben" "Cora" "Dan"]
+      id #(keyword "catalog" (str "original-base-i-" %1 "-" %2))
+      base (g/initialize (a/new-game names (vec (mapcat identity a/stages)) 0))
+      kitchen (-> base (assoc-in [:players 0 :hand] {:occupation [] :minor [(id 65 "baker-s-kitchen")]})
+                       (assoc-in [:players 0 :improvements] #{:clay-oven})
+                       (update :available-improvements disj :clay-oven)
+                       (update-in [:players 0] a/gain {:stone 2 :grain 1}))
+      plow (-> base (update-in [:players 0 :minors] conj (id 63 "moldboard-plow"))
+                    (assoc-in [:players 0 :card-state (id 63 "moldboard-plow") :uses] 2)
+                    (update-in [:players 1 :minors] conj (id 68 "harrow"))
+                    (g/command 0 {:type :action :space :plow :cell 0}))
+      corn (-> base (assoc :phase :field-harvest)
+                    (update-in [:players 0 :minors] conj (id 86 "corn-storehouse"))
+                    (update-in [:players 1 :minors] conj (id 103 "water-mill"))
+                    (assoc-in [:players 0 :farm 0] {:type :field :count 0})
+                    (update-in [:players 0] a/gain {:grain 2})
+                    (g/queue-front [(g/event :after-field-phase 0 {})]) g/drain)
+      tavern (update-in base [:players 0 :minors] conj (id 100 "tavern"))
+      deposit (update-in base [:players 0 :minors] conj (id 337 "clay-deposit"))
+      lasso (-> base (assoc-in [:players 0 :hand] {:occupation [] :minor [(id 88 "lasso")]})
+                     (update-in [:players 0] a/gain {:reed 1})
+                     (update :active #(vec (distinct (conj % :sheep))))
+                     (assoc-in [:piles :sheep] {:sheep 1}))
+      ids (mapv (fn [[title state]]
+                  (let [room (:id (store/transact! s token {:event :create :mode :local :name "Ada" :names names :title title :setup {:mode :random}}))]
+                    (store/save! s (swap! (:rooms s) assoc-in [room :state] state)) room))
+                [["Baker's Kitchen" kitchen] ["Public Harrow" plow] ["Corn and Water Mill" corn]
+                 ["Tavern points" tavern] ["Clay Deposit" deposit] ["Original Lasso" lasso]])]
+  (println (str/join "," ids)))

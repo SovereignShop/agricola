@@ -4,6 +4,6 @@
  :catalog/original-base-e-179-merchant
  {:triggers [{:event :improvement-action-finished
               :condition [:test [:and [:context :minor-action-allowed?]
-                                [:not [:context :merchant-repeat?]]]]
+                                [:not [:context :merchant-repeat?]] [:not [:context :businessman?]]]]
               :effect {:op :card-action :optional? true :cost {:food 1}
                        :inherit-improvement-action? true :merchant-repeat? true}}]}}

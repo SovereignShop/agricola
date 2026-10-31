@@ -1,0 +1,50 @@
+;; Original English I219–I242; Agricola Norge compendium, I occupations.
+{:catalog/original-base-i-219-fieldsman {:passive {:fieldsman true}}
+ :catalog/original-base-i-220-well-builder
+ {:passive {:major-as-minor #{:well} :fixed-improvement-costs {:well {:stone 1 :wood 1}}}}
+ :catalog/original-base-i-221-village-elder
+ {:play [{:op :house-steward}] :global-score? true :score {:type :most-improvements}}
+ :catalog/original-base-i-222-social-climber {:passive {:renovation-rank-stone true}}
+ :catalog/original-base-i-223-harvest-helper
+ {:triggers [{:event :feeding-start :effect {:op :harvest-helper :optional? true}}]}
+ :catalog/original-base-i-224-field-worker
+ {:triggers [{:event :sow :scope :others
+              :effect {:op :gain :goods {:grain [:if [:= [:player-count] 3] 1 0]
+                                        :food [:if [:> [:player-count] 3] 1 0]}}}]}
+ :catalog/original-base-i-225-field-watchman
+ {:triggers [{:event :use-space :spaces #{:grain} :effect {:op :plow :optional? true}}]}
+ :catalog/original-base-i-226-gardener {:passive {:preserve-harvest-vegetables true}}
+ :catalog/original-base-i-227-church-warden
+ {:play [{:op :house-steward}] :global-score? true :score {:type :five-people-worked}}
+ :catalog/original-base-i-228-businessman
+ {:triggers [{:event :improvement-action-finished :condition [:businessman]
+              :effect {:op :card-action :kinds #{:major :minor} :origin-space :meeting
+                       :businessman? true :optional? true}}]}
+ :catalog/original-base-i-229-sycophant {:passive {:grain-action-toll true}}
+ :catalog/original-base-i-230-clay-digger
+ {:action-space :clay-digger :play [{:op :open-accumulation :goods {:clay 3}}]}
+ :catalog/original-base-i-231-manservant
+ {:triggers [{:event :check-state :once? true :condition [:house :stone]
+              :effect {:op :schedule :offset-count [:- 14 [:round]] :goods {:food 3}}}]}
+ :catalog/original-base-i-232-midwife
+ {:triggers [{:event :grow :scope :others :effect {:op :gain :goods {:food [:min 2 [:max 0 [:actor-family-difference]]]}}}]}
+ :catalog/original-base-i-233-farm-steward {:passive {:next-growth-without-room true}}
+ :catalog/original-base-i-234-wood-buyer
+ {:triggers [{:event :after-resource-returns :scope :others :condition [:test [:> [:source-goods :wood] 0]] :effect {:op :buy-action-resource :resource :wood :cost {:food 1} :optional? true}}]}
+ :catalog/original-base-i-235-wood-collector {:play [{:op :schedule :offsets [1 2 3 4 5] :goods {:wood 1}}]}
+ :catalog/original-base-i-236-hide-farmer {:final-choice {:op :cover-unused :optional? true}}
+ :catalog/original-base-i-237-juggler
+ {:triggers [{:event :before-action-benefits :spaces #{:traveling}
+              :effect {:op :juggler :optional? true :once-per-turn? true}}]}
+ :catalog/original-base-i-238-chamberlain
+ {:triggers [{:event :check-state :once? true :condition [:test [:>= [:round] 11]] :effect {:op :reveal-rounds}}
+             {:event :round-start :once? true :condition [:test [:>= [:round] 11]] :effect {:op :reveal-rounds}}]
+  :passive {:early-rounds true}}
+ :catalog/original-base-i-239-corn-profiteer {:ability {:op :corn-profiteer}}
+ :catalog/original-base-i-240-cowherd
+ {:triggers [{:event :use-space :spaces #{:cattle} :effect {:op :gain :goods {:cattle 1}}}]}
+ :catalog/original-base-i-241-clay-plasterer
+ {:passive {:clay-room-cost 3 :wood-clay-renovation-cost 1}}
+ :catalog/original-base-i-242-clay-hut-builder
+ {:triggers [{:event :check-state :once? true :condition [:not-house :wood]
+              :effect {:op :schedule :offsets [1 2 3 4 5] :goods {:clay 2}}}]}}

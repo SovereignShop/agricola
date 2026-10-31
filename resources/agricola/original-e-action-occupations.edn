@@ -8,7 +8,7 @@
  :catalog/original-base-e-169-storyteller
  {:triggers [{:event :after-use-space :spaces #{:traveling} :condition [:test [:> [:taken :food] 0]]
               :effect {:op :return-goods :optional? true :from-taken? true :cost {:food 1}
-                       :goods {:vegetable 1 :food [:if [:and [:owns-card :catalog/original-base-e-212-dancer] [:<= [:taken :food] 4]] 1 0]}}}]}
+                       :goods {:vegetable 1 :food [:if [:and [:owns-card :catalog/original-base-e-212-dancer] [:not [:used-this-turn :catalog/original-base-i-237-juggler]] [:<= [:taken :food] 4]] 1 0]}}}]}
  :catalog/original-base-e-198-ratcatcher
  {:passive {:ratcatcher true}
   :play [{:op :conditional :condition [:test [:> [:round] 9]] :effect {:op :discard-self}}]}

@@ -1,0 +1,11 @@
+;; Original I printing: crop stacks, optional extra field phases, guests and round14.
+{:catalog/original-base-i-78-copse
+ {:passive {:card-stacks {:crop :wood :count 2 :field? false}}}
+ :catalog/original-base-i-71-holiday-house
+ {:requires [:<= [:round] 13] :cost-options [{:wood 3 :reed 2} {:clay 3 :reed 2}]
+  :passive {:holiday-house true}}
+ :catalog/original-base-i-73-guest {:play [{:op :guest-next-round}]}
+ :catalog/original-base-i-92-manure
+ {:requires [:>= [:animals] 2]
+  :triggers [{:event :round-end :condition [:non-harvest-round]
+              :effect {:op :manure-harvest :optional? true}}]}}

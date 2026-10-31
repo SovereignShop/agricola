@@ -802,6 +802,20 @@
       "reference": "https://github.com/SNiLD/TabletopSimulatorAgricola/blob/5e675a143d7192b271615d9f1a406fd04a1913f1/src/workshop.json",
       "sha256": "68ede1672d3a8f55f0dd77daf0caeb4c06959ed4416dff78c574ae979b4a528b",
       "note": "Unmodified English original E-deck sheet, 10 columns by 7 rows. Card title and number visually checked for CSS sprite mapping. Artwork availability does not imply implemented card rules."
+    },
+    {
+      "file": "original-i-minors.jpg",
+      "source": "https://www.dropbox.com/s/60eeivwf61gqxq1/I-Deck%20%28Minor%20Imp%20A%29.jpg?dl=1",
+      "reference": "https://github.com/SNiLD/TabletopSimulatorAgricola/blob/5e675a143d7192b271615d9f1a406fd04a1913f1/src/workshop.json",
+      "sha256": "2a469a223f765a55b8e0c53f710bc16de1fcb0537e1f323a1b503fba68377d49",
+      "note": "Unmodified English original I-deck sheet. Titles and card positions visually checked for CSS sprite mapping; rules follow the recorded compendium clarifications."
+    },
+    {
+      "file": "original-i-occupations.jpg",
+      "source": "https://www.dropbox.com/s/at1pzn41hdw83up/I-Deck%20%28Occupations%20A%29.jpg?dl=1",
+      "reference": "https://github.com/SNiLD/TabletopSimulatorAgricola/blob/5e675a143d7192b271615d9f1a406fd04a1913f1/src/workshop.json",
+      "sha256": "42e7edea13ef734c8195b18fd0e30591ea5ec583cf2e97d22c2847c5c8010896",
+      "note": "Unmodified English original I-deck sheet. Titles and card positions visually checked for CSS sprite mapping; rules follow the recorded compendium clarifications."
     }
   ]
 }

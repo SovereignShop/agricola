@@ -8,7 +8,7 @@
       optional (-> base (update-in [:players 0 :occupations] conj :catalog/original-base-e-154-master-brewer)
                        (assoc-in [:players 0 :goods :grain] 1)
                        (g/queue-front [(g/event :feeding-start 0)]) g/drain)
-      draw (with-redefs [c/cards (select-keys c/cards (keys c/original-definitions))]
+      draw (with-redefs [c/cards (into {} (filter (fn [[_ card]] (and (= "Original" (:edition card)) (= "E" (:deck card)))) c/cards))]
              (simulation/initial-state {:seed 914 :players 2 :mode :draw :extra 2}))
       ids (mapv (fn [[title state]]
                   (let [id (:id (store/transact! s token {:event :create :mode :local :name "Ada" :names names :title title :setup {:mode :random}}))]

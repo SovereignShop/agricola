@@ -3,7 +3,7 @@
    Unknown forms fail closed; card prose is never an executable effect."
   (:require [agricola.engine :as a] [agricola.card-rules :as cards] [clojure.string :as str]))
 (declare evaluate evaluate*)
-(defn field-list [player] (concat (filter #(= :field (:type %)) (:farm player)) (vals (:card-fields player))))
+(defn field-list [player] (filter #(= :field (:type %)) (concat (:farm player) (vals (:card-fields player)))))
 (defn mixed-fields [player] (filter #(and (pos? (a/field-crop-count % :grain)) (pos? (a/field-crop-count % :vegetable))) (field-list player)))
 (defn minor-supply-improvements [player] (filter #(a/major-as-minor? player %) (:improvements player)))
 (defn dual-improvements [player]
@@ -34,6 +34,14 @@
           :and (every? ev args) :or (boolean (some ev args)) :not (not (ev x))
           :if (ev (if (ev x) (second args) (nth args 2)))
           :goods (a/amount p x)
+          :owned-card-count (count (for [player (:players g) cid (concat (cards/owned player) (:improvements player)) :when (contains? x cid)] cid))
+          :all-goods (reduce + 0 (map #(a/amount % x) (:players g)))
+          :total-crops (+ (a/amount p x) (reduce + 0 (map #(a/field-crop-count % x) (field-list p))))
+          :returnable-hearths (count (a/returnable-hearths p))
+          :player-count (count (:players g))
+          :actor-family-difference (let [actor (get-in g [:players (:actor context)])]
+                                     (- (- (:family actor 0) (:temporary-family actor 0))
+                                        (- (:family p 0) (:temporary-family p 0))))
           :own-work-turn (and (= :work (:phase g)) (= pid (:turn g)))
           :house (:house p) :round (:round g) :family (:family p) :newborn (:newborn p 0) :remaining (:remaining p 0) :begging (:begging p 0)
           :rooms (count (a/tiles p :room)) :fields (count (field-list p)) :field-tiles (count (a/tiles p :field))
@@ -79,6 +87,8 @@
                                                  :when (:accumulate (a/action-definition g space))]
                                              (count (filter #{pid} (if (vector? owners) owners [owners])))))
           :taken (get-in context [:taken x] 0)
+          :source-accumulation (boolean (:accumulate (a/action-definition g (:space context))))
+          :source-rate (get-in (a/action-definition g (:space context)) [:gain x] 0)
           :source-goods (get-in context [:source-goods x] 0)
           :before-goods (get-in context [:before-goods x] 0)
           :received-since (max 0 (- (get-in p [:received x] 0) (get-in context [:before-received x] 0)))

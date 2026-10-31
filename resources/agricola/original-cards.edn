@@ -108,7 +108,7 @@
  ;; E207 Stablehand
  :catalog/original-base-e-207-stablehand {:triggers [{:event :fence :condition [:test [:not [:used-this-turn :catalog/original-base-e-207-stablehand]]] :effect {:op :stable :once-per-turn? true}}]}
  ;; E212 Dancer
- :catalog/original-base-e-212-dancer {:triggers [{:event :use-space :spaces #{:traveling} :effect {:op :gain :goods {:food [:max 0 [:- 4 [:taken :food]]]}}}]}
+ :catalog/original-base-e-212-dancer {:triggers [{:event :use-space :spaces #{:traveling} :condition [:test [:not [:used-this-turn :catalog/original-base-i-237-juggler]]] :effect {:op :gain :goods {:food [:max 0 [:- 4 [:taken :food]]]}}}]}
  ;; E214 Potter
  :catalog/original-base-e-214-potter {:triggers [{:event :feeding-start :effect {:op :exchange :optional? true :cost {:clay 1} :goods {:food 2}}}]}
  ;; E218 Carpenter

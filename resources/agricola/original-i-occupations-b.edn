@@ -1,0 +1,69 @@
+;; Original English I243–I265 and I340; checked against printed I-deck sheet
+;; and Agricola Norge compendium pp27–45 (Taster print costs 1 food).
+{:catalog/original-base-i-243-bricklayer
+ {:passive {:room-clay-discount 2 :renovation-clay-discount 1 :improvement-clay-discount 1}}
+ :catalog/original-base-i-244-layabout {:play [{:op :skip-next-harvest}]}
+ :catalog/original-base-i-245-market-crier
+ {:triggers [{:event :use-space :spaces #{:grain}
+              :effect {:op :all-gain :optional? true :owner {:grain 1 :vegetable 1} :others {:grain 1}}}]}
+ :catalog/original-base-i-246-milking-hand
+ {:triggers [{:event :field-phase :effect {:op :gain :goods {:food [:if [:>= [:goods :cattle] 5] 3 [:if [:>= [:goods :cattle] 3] 2 [:if [:>= [:goods :cattle] 1] 1 0]]]}}}]
+  :score {:type :expression :value [:quot [:goods :cattle] 2]}}
+ :catalog/original-base-i-247-butcher {:passive {:animal-cooking {:sheep 1 :boar 2 :cattle 3}}}
+ :catalog/original-base-i-248-net-fisherman
+ {:triggers [{:event :use-space :condition [:test [:> [:source-goods :reed] 0]]
+              :effect {:op :set-card-state :values {:reed-round [:round]}}}
+             {:event :return-home :condition [:test [:= [:card-state :catalog/original-base-i-248-net-fisherman :reed-round] [:round]]]
+              :effect {:op :net-fisherman :optional? true}}]}
+ :catalog/original-base-i-249-puppeteer
+ {:triggers [{:event :after-action :scope :others :spaces #{:traveling}
+              :effect {:op :card-action :kinds #{:occupation} :occupation-cost 1 :optional? true}}]}
+ :catalog/original-base-i-250-sheep-whisperer
+ {:play [{:op :schedule :offsets [4 7 9 11] :goods {:sheep 1}}]}
+ :catalog/original-base-i-251-reed-buyer
+ {:triggers [{:event :after-resource-returns :scope :others
+              :condition [:test [:= [:context :first-reed?] true]]
+              :effect {:op :buy-action-resource :cost {:food 1} :resource :reed :optional? true :compensation 1}}]}
+ :catalog/original-base-i-252-pig-breeder
+ {:play [{:op :gain :goods {:boar 1}}]
+  :triggers [{:event :round-end :condition [:round 12] :effect {:op :extra-boar-birth}}]}
+ :catalog/original-base-i-253-pig-catcher {:passive {:pig-catcher true}}
+ :catalog/original-base-i-254-groom
+ {:triggers [{:event :round-start :condition [:house :stone]
+              :effect {:op :stable :cost {:wood 1} :optional? true}}]}
+ :catalog/original-base-i-255-stone-buyer
+ {:triggers [{:event :after-resource-returns :scope :others
+              :condition [:test [:= [:context :first-stone?] true]]
+              :effect {:op :buy-action-resource :cost {:food 1} :resource :stone :optional? true :compensation 1}}]}
+ :catalog/original-base-i-256-stone-carver
+ {:triggers [{:event :feeding-start :effect {:op :exchange :cost {:stone 1} :goods {:food 3} :optional? true}}]}
+ :catalog/original-base-i-257-street-musician
+ {:triggers [{:event :use-space :scope :others :spaces #{:traveling} :effect {:op :gain :goods {:grain 1}}}]}
+ :catalog/original-base-i-258-cabinetmaker
+ {:triggers [{:event :feeding-start
+              :effect {:op :choose :optional? true
+                       :options [{:label "Convert 1 wood (2 food, or 3 with Plane)" :cost {:wood 1}
+                                  :effects [{:op :gain :goods {:food [:+ 2 [:if [:owns-card :catalog/original-base-e-26-plane] 1 0]]}}]}
+                                 {:label "Plane: convert 2 wood to 4 food"
+                                  :when [:owns-card :catalog/original-base-e-26-plane] :cost {:wood 2}
+                                  :effects [{:op :gain :goods {:food 4}}]}]}}]}
+ :catalog/original-base-i-259-animal-dealer
+ {:triggers [{:event :use-space :spaces #{:sheep :boar :cattle}
+              :effect {:op :animal-dealer :cost {:food 1} :optional? true}}]}
+ :catalog/original-base-i-260-taster
+ {:text "Whenever another player is the Starting player, you can pay them 1 Food at the start of the round and be the first to place a Family member. After that, play starts with the Starting player as usual."
+  :triggers [{:event :round-start :effect {:op :taster :cost {:food 1} :optional? true}}]}
+ :catalog/original-base-i-261-outrider {:passive {:newest-round-grain true}}
+ :catalog/original-base-i-262-water-carrier
+ {:play [{:op :water-carrier-start}]
+  :triggers [{:event :build-improvement :scope :all :condition [:test [:= [:event-card-id] :well]]
+              :effect {:op :schedule :offset-count [:rounds-left] :goods {:food 1}}}]}
+ :catalog/original-base-i-263-fence-builder {:play [{:op :mark-fence-space}]}
+ :catalog/original-base-i-264-fencer
+ {:triggers [{:event :fence :scope :others :condition [:test [:> [:context :fences-built] 0]]
+              :effect {:op :gain :goods {:wood [:if [:>= [:context :fences-built] 5] 2 1]}}}]}
+ :catalog/original-base-i-265-fence-deliveryman
+ {:play [{:op :schedule-fences}] :triggers [{:event :round-start :effect {:op :fence-delivery}}]}
+ :catalog/original-base-i-340-rancher
+ {:triggers [{:event :round-start :condition [:test [:= [:context :rancher-leads?] true]]
+              :effect {:op :gain :goods {:wood 1}}}]}}
