@@ -2,7 +2,7 @@
   "Card-game orchestration around the shared farm rules. Effects and decisions
    are data, so interrupted choices survive saves and reconnects."
   (:require [agricola.engine :as a] [agricola.card-rules :as c] [agricola.five-player :as five] [agricola.card-expressions :as expr] [agricola.card-reactive :as reactive] [agricola.card-random :as random] [clojure.set :as set]))
-(declare possible-effect? drain run-effect play-card begin-round advance finish-game take-action take-action-complete staged-sowing? action-events take-action-with-sowing extra-action-spaces execute-extra-action finish-action-context card-spaces card-action record-newborn adopt-newborn freshman-available? resume-freshman-source)
+(declare possible-effect? drain run-effect play-card begin-round advance finish-game take-action take-action-complete staged-sowing? action-events take-action-with-sowing extra-action-spaces execute-extra-action finish-action-context card-spaces card-action record-newborn adopt-newborn freshman-available? resume-freshman-source with-housing plow-options)
 (def ^:dynamic *effect-observer*
   "Optional diagnostic sink. It observes committed effects, never legality probes."
   nil)
@@ -10,10 +10,20 @@
   (when *effect-observer*
     (*effect-observer* (assoc (select-keys head [:player :card :effect :context :window]) :choice choice))))
 (defn p [g pid] (get-in g [:players pid]))
+(defn plow-effect
+  "Upgrade pre-original-deck Wheel Plow decisions saved without selectable plows."
+  [effect]
+  (if (and (= :wheel-plow (:op effect)) (not (contains? effect :plows)))
+    (assoc effect :plows [(c/id :a018)]) effect))
 (defn owned? [g pid code] (c/has? (p g pid) code))
 (defn queue-front [g tasks] (update g :effect-queue #(vec (concat tasks %))))
 (defn task [pid card effect context] {:kind :effect :player pid :card card :effect effect :context context})
 (defn event [kind pid & [context]] {:kind :event :event kind :player pid :context (or context {})})
+(defn improvement-finished-event [pid action repeated?]
+  (event :improvement-action-finished pid
+         {:improvement-action (select-keys action [:kinds :major-ids :major-cost :minimum-paid])
+          :minor-action-allowed? (contains? (:kinds action) :minor)
+          :merchant-repeat? (boolean repeated?)}))
 (defn step [name] {:kind :continue :step name})
 (defn acting-player [g] (or (:player (first (:effect-queue g))) (:turn g)))
 (defn fields [p] (concat (filter #(= :field (:type %)) (:farm p)) (vals (:card-fields p))))
@@ -47,7 +57,7 @@
       false)))
 (defn prerequisites? [g pid card]
   (let [requirement (if (contains? card :requires) (:requires card) (expr/requirement (:prerequisites card)))]
-    (and (some? requirement) (boolean (expr/evaluate g pid {} requirement)))))
+    (and (some? requirement) (boolean (expr/evaluate g pid (when (= :minor (:kind card)) {:occupation-purpose :minor-prerequisite}) requirement)))))
 (defn can-pay? [p cost] (every? (fn [[r n]] (>= (a/amount p r) n)) cost))
 (defn animal-accommodation-tasks [g pid context]
   (when (some pos? (vals (select-keys (:taken context) a/animals)))
@@ -55,9 +65,20 @@
      (when (and (owned? g pid :a017) (not (get-in g [:players pid :card-state (c/id :a017) :triggered?])))
        [(task pid (c/id :a017) {:op :housing} (assoc context :reclamation? true))])
      [(event :animals-accommodated pid context)])))
-(defn trigger-tasks [g {:keys [event player context]}]
+(defn public-hand-response-tasks [g {:keys [event player context]}]
+  ;; Everyone receives the same public window, whether or not they hold the
+  ;; response card. Declining must not reveal another player's private hand.
+  (for [cid c/public-hand-response-cards
+        :let [response (:public-hand-response (c/card cid))]
+        offset (range (count (:players g)))
+        :let [owner (mod (+ (:starting-player g) offset) (count (:players g)))]
+        :when (and (= event (:event response))
+                   (case (:scope response) :others (not= owner player) :all true (= owner player))
+                   (condition? g owner (:condition response) context))]
+    (task owner nil {:op :play-hand-response :card cid :optional? true} (assoc context :actor player))))
+(defn trigger-tasks [g {:keys [event player context] :as source}]
   (vec
-   (mapcat
+   (concat (mapcat
     (fn [owner]
       (mapcat
        (fn [cid]
@@ -68,13 +89,20 @@
                   spaces (if (= cid (c/id :b056)) #{:wood :clay :reed (first (:round-order g))} (:spaces trigger))]
               (when (and (= event (:event trigger))
                          (case scope :all true :others (not= owner player) (= owner player))
-                         (or (nil? spaces) (spaces (:space context)))
+                         (or (nil? spaces) (spaces (:space context))
+                             (and (= spaces #{:copse :grove :wood :riverbank})
+                                  (= :master-forester (:action-space (c/card (:space context))))))
                          (or (not (:once? trigger)) (not (get-in g [:players owner :card-state cid :triggered?])))
                          (condition? g owner (:condition trigger) context))
-                (map #(assoc (task owner cid % (assoc context :trigger-event event :actor player)) :once? (:once? trigger)) (or (:effects trigger) [(:effect trigger)])))))
+                (map (fn [effect]
+                       (let [effect (if (:inherit-improvement-action? effect)
+                                      (merge (:improvement-action context) effect) effect)]
+                         (assoc (task owner cid effect (assoc context :trigger-event event :actor player)) :once? (:once? trigger))))
+                     (or (:effects trigger) [(:effect trigger)])))))
           (:triggers (c/card cid)))))
        (c/active-owned (p g owner))))
-    (map #(mod (+ (:starting-player g) %) (count (:players g))) (range (count (:players g)))))))
+    (map #(mod (+ (:starting-player g) %) (count (:players g))) (range (count (:players g)))))
+           (public-hand-response-tasks g source))))
 (defn schedule [g pid cid effect]
   (let [rounds (or (:rounds effect) (map #(+ (:round g) %) (or (:offsets effect) (range 1 (inc (expr/evaluate g pid {} (:offset-count effect))))))) goods (:goods effect)]
     (reduce (fn [g r]
@@ -109,7 +137,8 @@
   ([g pid card occupation-cost] (card-cost g pid card occupation-cost {}))
   ([g pid card occupation-cost options]
    (let [p (p g pid)
-         discount #(a/discounted % {:wood (if (c/has? p :a075) 1 0) :stone (reduce + 0 (c/passives p :stone-discount))})]
+         discount #(a/special-improvement-cost p (:id card)
+                     (a/discounted % (a/hand-improvement-discounts p card)) options)]
      (cond
        (= :occupation (:kind card))
        (let [wood (get options :occupation-wood 0)
@@ -126,13 +155,39 @@
        :else (discount (case (:cost card)
                          :double-turn-plow (cond-> {:grain 1} (> (:round g) 3) (assoc :food 1))
                          :bottles {:clay (:family p) :food (:family p)}
-                         (:fishing-person :clay-supply :return-cooking :return-oven) {}
+                         (:fishing-person :clay-supply :return-cooking :return-oven :return-two-improvements) {}
                          (:printed-cost card)))))))
 (defn card-return-options [player cid]
   (case (:cost (c/card cid))
     :return-cooking (a/returnable-cooking player)
     :return-oven (a/returnable-ovens player)
+    :return-two-improvements (sort (a/owned-improvement-ids player))
     nil))
+(defn card-return-pairs [player]
+  (let [ids (vec (sort (a/owned-improvement-ids player)))]
+    (for [i (range (count ids)) j (range (inc i) (count ids))] [(ids i) (ids j)])))
+(defn selected-card-returns [player cid options]
+  (let [eligible (card-return-options player cid)
+        count-needed (case (:cost (c/card cid)) :return-two-improvements 2 (:return-cooking :return-oven) 1 0)
+        chosen (case count-needed
+                 2 (get options :return-improvements (vec (take 2 eligible)))
+                 1 [(or (:return-improvement options) (first eligible))]
+                 [])]
+    (a/require! (and (sequential? chosen) (= count-needed (count chosen)) (= (count chosen) (count (set chosen)))
+                     (every? (set eligible) chosen)) "Return the required number of distinct improvements you own.")
+    (vec chosen)))
+(defn remove-owned-improvement [player cid]
+  ;; Previously earned resources/points remain. Goods stored on discarded cards,
+  ;; their future deliveries and their continuing effects leave with the card.
+  (cond-> (-> player
+              (update :improvements disj cid)
+              (update :minors #(vec (remove #{cid} %)))
+              (update :card-state dissoc cid)
+              (update :card-fields dissoc cid)
+              (update :schedule #(into {} (for [[round entries] %
+                                                 :let [kept (filterv (fn [entry] (not= cid (:card entry))) entries)]
+                                                 :when (seq kept)] [round kept]))))
+    (= cid :well) (assoc :well-rounds #{})))
 (defn paid-card-player
   "Shared validation/payment for every route that plays a hand card. Pure: a
    rejected play cannot consume a worker, a card, or any resources."
@@ -150,12 +205,7 @@
       (a/require! (= pid (get-in g [:occupied :fishing])) "Brook requires one of your people on Fishing."))
     (when (= :clay-supply (:cost card))
       (a/require! (>= (a/amount player :clay) 5) "Thick Forest requires five clay in your supply; it does not spend them."))
-    (let [player (if (#{:return-cooking :return-oven} (:cost card))
-                   (let [eligible (card-return-options player cid)
-                         returned (or (:return-improvement options) (first eligible))]
-                     (a/require! (some #{returned} eligible) "Return one of your eligible improvements.")
-                     (if (a/improvements returned) (update player :improvements disj returned)
-                         (update player :minors #(vec (remove #{returned} %))))) player)
+    (let [player (reduce remove-owned-improvement player (selected-card-returns player cid options))
           player (if (= :occupation (:kind card))
                    (a/gain player {:food (reduce + 0 (c/passives player :occupation-food))}) player)
           player (if (and (= :occupation (:kind card)) (:paper-maker? options))
@@ -181,21 +231,28 @@
           player (cond-> player
                    (get-in card [:passive :lone-occupation]) (assoc-in [:hand :occupation] [])
                    (get-in card [:passive :card-field]) (assoc-in [:card-fields cid] {:type :field :allowed-crop (get-in card [:passive :card-field]) :count 0}))
-          returned (when (#{:return-cooking :return-oven} (:cost card))
-                     (or (:return-improvement options) (first (card-return-options before cid))))
+          returned (selected-card-returns before cid options)
           major? (and (get-in card [:passive :major-or-minor]) (or (:as-major? options) (:major-only? timing)))
           g (cond-> (assoc-in g [:players pid] player)
-                    (and returned (a/improvements returned)) (update :available-improvements conj returned)
-                    (and returned (not (a/improvements returned))) (update :removed-cards (fnil conj []) returned)
+                    (seq returned) (update :available-improvements into (filter a/improvements returned))
+                    (some #(not (a/improvements %)) returned) (update :removed-cards (fnil into []) (remove a/improvements returned))
+                    (seq returned) (update :effect-queue #(filterv (fn [queued] (not (and (= pid (:player queued)) ((set returned) (:card queued))))) %))
                     (and major? (= 5 (count (:players g)))) (update-in [:major-builds pid] (fnil inc 0)))
           after (cond-> [(event (if (= kind :occupation) :occupation :build-improvement) pid {:card cid :major-or-minor? (boolean (:major-or-minor? timing))})
                           (event :check-state pid)]
                   (and major? (= 5 (count (:players g)))) (conj (event :major-built pid {:card cid :improvement cid}))
                   (and (= :round-start (:event timing)) (:scholar-round-start? card))
                   (conj (event :round-start pid {:only-card cid :existing-window (:window timing)}))
-                  (:passing? card) (conj {:kind :pass-card :player pid :card cid}))]
-      (-> g (queue-front (concat (map #(task pid cid % {}) (:play card)) after))
-          (a/log-event (str (:name player) " played " (:name card))))))))
+                  (:passing? card) (conj {:kind :pass-card :player pid :card cid})
+                  (= kind :minor) (conj (improvement-finished-event
+                                         pid (or (:improvement-action timing)
+                                                 {:kinds (cond (:major-only? timing) #{:major}
+                                                               (:major-action? timing) #{:major :minor}
+                                                               :else #{:minor})})
+                                         (:merchant-repeat? timing))))]
+      (cond-> (-> g (queue-front (concat (map #(task pid cid % {}) (:play card)) after))
+                   (a/log-event (str (:name player) " played " (:name card))))
+        (seq returned) with-housing)))))
 (defn freshman-turn-key [g]
   [(:round g) (or (get-in g [:action-context :phase]) (:phase g)) (:turn-serial g 0)])
 (defn freshman-available? [g pid]
@@ -212,11 +269,16 @@
 (defn granted-action-cost [g pid effect choice]
   (if (:card choice)
     (card-cost g pid (c/card (:card choice)) (get effect :occupation-cost 0) choice)
-    (a/improvement-cost (p g pid) (:improvement choice) (:upgrade choice) {:cost (:major-cost effect)})))
+    (a/improvement-cost (p g pid) (:improvement choice) (:upgrade choice)
+                        (assoc (select-keys choice [:discount-resource]) :cost (:major-cost effect)))))
 (defn granted-card-action [g pid effect choice]
   (let [cid (:card choice) major (:improvement choice) kinds (:kinds effect)
         kind (if cid (:kind (c/card cid)) :major)
-        _ (a/require! (and (not (and cid major)) (or cid major) (or (contains? kinds kind) (and cid (get-in (c/card cid) [:passive :major-or-minor]) (contains? kinds :major)))) "Choose a card allowed by this action.")
+        _ (a/require! (and (not (and cid major)) (or cid major)
+                          (or (contains? kinds kind)
+                              (and cid (get-in (c/card cid) [:passive :major-or-minor]) (contains? kinds :major))
+                              (and major (contains? kinds :minor) (a/major-as-minor? (p g pid) major))))
+                      "Choose a card allowed by this action.")
         _ (when (:major-ids effect)
             (a/require! (or (contains? (:major-ids effect) (or major cid))
                             (and cid (get-in (c/card cid) [:passive :fireplace])
@@ -226,18 +288,21 @@
                       "This improvement action requires the specified resources to actually be paid.")
         both? (= #{:major :minor} kinds)]
     (if cid
-      (play-card g pid cid (get effect :occupation-cost 0) choice {:major-action? (contains? kinds :major) :major-only? (= #{:major} kinds) :major-or-minor? both?})
+      (play-card g pid cid (get effect :occupation-cost 0) choice
+                 {:major-action? (contains? kinds :major) :major-only? (= #{:major} kinds) :major-or-minor? both?
+                  :improvement-action effect :merchant-repeat? (:merchant-repeat? effect)})
       (let [context {:improvement major :paid cost :upgraded-fireplace? (boolean (:upgrade choice))}
             deferred-bake? (and (:oven (a/improvements major)) (freshman-available? g pid))
-            after (a/build-improvement g pid (cond-> choice deferred-bake? (assoc :bake-grain 0)) {:cost (:major-cost effect)})]
+            after (a/build-improvement g pid (cond-> choice deferred-bake? (assoc :bake-grain 0 :cook-with-bake {})) {:cost (:major-cost effect)})]
         (-> (cond-> after (= 5 (count (:players g))) (update-in [:major-builds pid] (fnil inc 0)))
             (queue-front (concat (when deferred-bake? [(task pid nil {:op :bake :optional? true} context)]) [(event :build-improvement pid context)]
                                  (when (= 5 (count (:players g))) [(event :major-built pid context)])
                                  (when (and (not deferred-bake?) (pos? (get choice :bake-grain 0))) [(event :bake pid (assoc context :grain-baked (:bake-grain choice)))])
-                                 [(event :check-state pid)])))))))
+                                 [(event :check-state pid)
+                                  (improvement-finished-event pid effect (:merchant-repeat? effect))])))))))
 (def building-resources #{:wood :clay :reed :stone})
 (defn pile-good-options [g effect]
-  (vec (for [space (sort (:active g))
+  (vec (for [space (sort (a/accumulation-spaces g))
              :let [definition (a/action-definition g space) pile (get-in g [:piles space])]
              :when (and (:accumulate definition) (or (nil? (:space effect)) (= space (:space effect)))
                         (>= (reduce + (vals (select-keys pile building-resources))) (:minimum-building effect 0)))
@@ -256,8 +321,9 @@
     {:grain-source source :animal animal}))
 (defn sowing-player [g pid effect]
   (let [player (p g pid) command (:source-command effect)]
-    (if (= :cultivation (:space command))
-      (a/plow-action-player g pid (:space command) (:cell command)) player)))
+    (cond-> (if (= :cultivation (:space command))
+              (a/plow-action-player g pid (:space command) (:cell command)) player)
+      (:allowed-crops effect) (update :goods #(apply dissoc % (remove (:allowed-crops effect) [:grain :vegetable]))))))
 (defn sowable? [player]
   (boolean (some (fn [[cell crop]]
                    (try (a/sow player [{:cell cell :crop crop}]) true
@@ -284,6 +350,29 @@
            (catch #?(:clj clojure.lang.ExceptionInfo :cljs :default) _
              (update (dissoc (finish-action-context g false) :plow-plan :freshman-plan) :cancelled-sowing (fnil conj #{}) [pid (:space command) (:round g)])))
       (queue-front g [(event :sow-declined pid (cond-> {:unconditional? (:unconditional? effect)} (:committed-source effect) (assoc :space (:committed-source effect) :completed-placement? true)))]))))
+(defn animal-loan-choices [player]
+  (for [sheep (range (inc (min 1 (a/amount player :sheep))))
+        boar (range (inc (min 1 (a/amount player :boar))))
+        cattle (range (inc (min 1 (a/amount player :cattle))))]
+    {:return-animals {:sheep sheep :boar boar :cattle cattle}}))
+(defn return-animal-loan [g pid cid returned]
+  (let [player (p g pid) returned (or returned {})]
+    (a/require! (not (get-in player [:card-state cid :loan-settled?])) "This animal loan has already been settled.")
+    (a/quantities! returned a/animals)
+    (a/require! (every? #(<= % 1) (vals returned)) "Return at most one animal of each species.")
+    (-> g (update-in [:players pid] a/pay returned)
+        (assoc-in [:players pid :card-state cid :loan-settled?] true)
+        (assoc-in [:players pid :card-state cid :returned-animals] returned))))
+(defn flush-cooking-receipts [g]
+  ;; Receipts come only from a successful engine food conversion. Paying an
+  ;; animal as a card cost, repaying a loan, and releasing surplus do not cook it.
+  (let [events (for [player (:players g) receipt (:cooking-receipts player)
+                     cid (:listeners receipt)]
+                 (event :convert-food (:id player)
+                        {:only-card cid :converted-goods (:goods receipt) :cooking-rates (:rates receipt)
+                         :cooked-boar (get-in receipt [:goods :boar] 0)}))]
+    (if (seq events)
+      (queue-front (update g :players #(mapv (fn [player] (dissoc player :cooking-receipts)) %)) events) g)))
 (defn optional-effect? [g {:keys [player effect]}]
   (and (:optional? effect)
        (or (nil? (:mandatory-at effect))
@@ -291,7 +380,7 @@
 (defn needs-input? [g {:keys [player effect] :as head}]
   (or (optional-effect? g head)
       (and (= :pay-or-beg (:op effect)) (< (a/amount (p g player) :food) (:food effect)))
-      (#{:freshman-bake :classify-fields :paper-knife :lodger-remove :ability-window :choose :plow :plow-many :wheel-plow :mini-pasture :stable :build-rooms :choose-good :bake :bake-one :take-field-crop :sow-offer :sow :housing :cottage :scholar} (:op effect))
+      (#{:return-animal-loan :freshman-bake :classify-fields :paper-knife :lodger-remove :ability-window :choose :plow :plow-many :wheel-plow :mini-pasture :stable :build-rooms :choose-good :bake :bake-one :take-field-crop :sow-offer :sow :housing :cottage :scholar} (:op effect))
       (and (= :seasonal-crop (:op effect)) (>= (:round g) 6))))
 (defn run-effect* [g {:keys [player card effect context window] :as head} choice]
   (let [pid player current (p g pid) op (:op effect) cost (expr/quantities g pid context (or (:cost effect) {}))]
@@ -313,7 +402,18 @@
             g (cond-> (if deferred-sidekick? g (update-in g [:players pid] a/pay cost))
                 (:once-per-turn? effect) (assoc-in [:players pid :card-state card :last-turn] (freshman-turn-key g)))]
         (case op
+          :return-animal-loan (return-animal-loan g pid card (:return-animals choice))
+          :collect-cooked-animal
+          (let [resource (:resource effect) maximum (get-in context [:converted-goods resource] 0)
+                amount (get choice :amount maximum)]
+            (a/require! (and (a/natural? amount) (pos? amount) (<= amount maximum)) "Collect only markers from the animals just cooked, or skip this effect.")
+            (update-in g [:players pid :card-state card :stored-goods resource] (fnil + 0) amount))
           :ability-window g
+          :play-hand-response (play-card g pid (:card effect) 0 {} {:from-hand-response? true})
+          :set-card-state (update-in g [:players pid :card-state card] merge (expr/quantities g pid context (:values effect)))
+          :discard-self (-> g (update-in [:players pid :occupations] #(vec (remove #{card} %)))
+                            (update-in [:players pid :minors] #(vec (remove #{card} %)))
+                            (update :removed-cards (fnil conj []) card))
           :paper-knife
           (let [choices (:cards choice) hand (set (get-in current [:hand :occupation]))]
             (a/require! (and (= 3 (count choices)) (= 3 (count (set choices))) (every? hand choices))
@@ -412,14 +512,25 @@
           (let [plantings (:plantings choice)]
             (a/require! (seq plantings) "Plant at least one field to take this Sow action.")
             (when (:max-fields effect) (a/require! (<= (count plantings) (:max-fields effect)) "This Sow action is limited to one field."))
+            (when (:allowed-crops effect)
+              (a/require! (every? #((:allowed-crops effect) (:crop %)) plantings) "This card permits sowing only the offered crop."))
             (a/sow (sowing-player g pid effect) plantings)
             (let [g (dissoc g :sow-in-progress)]
               (if-let [command (:source-command effect)]
                 (complete-sow-placement g pid effect (cond-> (assoc command :plantings plantings)
-                                             (and (= :sow-bake (:space command)) (contains? choice :bake-grain)) (assoc :bake-grain (:bake-grain choice))))
+                                             (and (= :sow-bake (:space command)) (contains? choice :bake-grain)) (assoc :bake-grain (:bake-grain choice) :cook-with-bake (:cook-with-bake choice))))
                 (-> g (update-in [:players pid] a/sow plantings)
                     (queue-front [(event :sow pid {:unconditional? (:unconditional? effect) :vegetables-sown (count (filter #(= :vegetable (:crop %)) plantings))})
                                   (event :check-state pid)])))))
+          :open-accumulation (assoc-in g [:piles card] (:goods effect))
+          :fisherman
+          (let [recipients (for [other (:players g) :when (not= pid (:id other))]
+                             [(:id other) (count (filter (:recipients effect) (c/owned other)))])
+                fee (reduce + 0 (map second recipients))
+                bonus (get-in context [:taken :food] 0)]
+            (reduce (fn [state [owner amount]] (update-in state [:players owner] a/gain {:food amount}))
+                    (-> g (update-in [:players pid] a/gain {:food bonus})
+                        (update-in [:players pid] a/pay {:food (min bonus fee)})) recipients))
           :gain (update-in g [:players pid] a/gain (expr/quantities g pid context (:goods effect)))
           :store-goods (update-in g [:players pid :card-state card :stored-goods]
                                  #(merge-with + (or % {}) (expr/quantities g pid context (:goods effect))))
@@ -454,7 +565,7 @@
             (when (:from-taken? effect)
               (a/require! (every? (fn [[r n]] (<= (+ n (get returned r 0)) (get-in context [:taken r] 0))) cost)
                           "Return only goods actually taken from this action space."))
-            (-> g (update-in [:players pid] a/gain (:goods effect))
+            (-> g (update-in [:players pid] a/gain (expr/quantities g pid context (:goods effect)))
                 (update-in [:piles (:space context)] #(merge-with + % cost))
                 (cond-> (:from-taken? effect) (update-in [:returned-goods window pid] #(merge-with + % cost)))))
           :choose-good (do (a/require! (some #{(:resource choice)} (:choices effect)) "Choose one of the offered resources.")
@@ -469,7 +580,10 @@
           :roof-stone (update-in g [:players pid] a/gain {:stone (count (a/tiles current :room))})
           :consultant (update-in g [:players pid] a/gain (nth [{:grain 2} {:clay 3} {:reed 2} {:sheep 2}] (min 3 (dec (count (:players g))))))
           :house-steward (update-in g [:players pid] a/gain {:wood (count (filter #(<= % (- 14 (:round g))) [1 3 6 9]))})
-          :tutor-start (assoc-in g [:players pid :card-state card :occupations-before] (count (:occupations current)))
+          :tutor-start (-> g
+                           (assoc-in [:players pid :card-state card :occupations-before]
+                                     (c/occupation-count current (when (= "Original" (:edition (c/card card))) :original-tutor)))
+                           (assoc-in [:players pid :card-state card :occupations-after] 0))
           :stock (assoc-in g [:players pid :card-state card :stock] (:goods effect))
           :set-uses (assoc-in g [:players pid :card-state card :uses] (:uses effect))
           :conditional (if (condition? g pid (:condition effect) context)
@@ -483,10 +597,19 @@
             (cond-> (update-in g [:players pid] #(reduce (fn [player cell] (a/place-tile player :field cell)) % cells))
               (:limited? effect) (update-in [:players pid :card-state card :uses] dec)))
           :wheel-plow
-          (let [cells (:cells choice) command (:source-command effect)]
-            (a/require! (and (sequential? cells) (<= 1 (count cells) 2)) "Choose one or two additional fields, or skip Wheel Plow.")
-            (a/require! (pos? (get-in g [:players pid :card-state card :uses] 0)) "Wheel Plow has already been used.")
-            (let [planned (assoc g :plow-plan {:player pid :space (:space command) :cells (vec cells)})]
+          (let [effect (plow-effect effect) cells (:cells choice) command (:source-command effect)
+                available (plow-options g pid (:space command))
+                selected (if (contains? choice :plow-card) (:plow-card choice) (first (:plows effect)))
+                maker? (true? (:plow-maker? choice))
+                maximum (+ (if selected 2 0) (if maker? 1 0))]
+            (a/require! (or (nil? selected) (some #{selected} (:plows available))) "Choose one available plow.")
+            (a/require! (or (not maker?) (:plow-maker? available)) "Plow Maker is unavailable.")
+            (a/require! (and (sequential? cells) (<= 1 (count cells) maximum)) "Choose the additional fields allowed by your plow and Plow Maker.")
+            (when (and selected (not= selected (c/id :a018)))
+              (a/require! (>= (+ (if (some? (:cell command)) 1 0) (count cells) (if maker? -1 0)) 2)
+                          "Use this plow to plow at least two fields, before Plow Maker's extra field."))
+            (let [planned (assoc g :plow-plan {:player pid :space (:space command) :cells (vec cells)
+                                              :card selected :plow-maker? maker?})]
               (a/plow-action-player planned pid (:space command) (:cell command))
               (take-action planned pid command)))
           :plow (do (when (:limited? effect) (a/require! (pos? (get-in g [:players pid :card-state card :uses] 0)) "This card has no uses left."))
@@ -504,7 +627,9 @@
                            (update-in g [:players actor] a/gain (expr/quantities g pid context (:goods effect))))
           :mini-pasture (update-in g [:players pid] a/build-mini-pasture (:cell choice) (:fences choice))
           :bake (do (a/require! (and (integer? (:grain choice)) (pos? (:grain choice))) "Bake at least one grain, or skip this effect.")
-                    (-> g (update-in [:players pid] a/bake (:grain choice)) (queue-front [(event :bake pid {:grain-baked (:grain choice)})])))
+                    (-> g (update-in [:players pid] a/bake (:grain choice) (:cook-with-bake choice))
+                        (queue-front [(event :bake pid {:grain-baked (:grain choice) :bake-source-card card
+                                                      :bake-responders (cond-> (set (:bake-responders context)) (:reactive-bake? effect) (conj pid))})])))
           :bake-one
           (let [improvement (:improvement choice) rate (:bake (a/improvement-definition improvement))]
             (a/require! (and (some #{improvement} (a/baking-improvement-ids current)) (pos? (or rate 0))) "Choose one of your baking improvements.")
@@ -570,7 +695,9 @@
                     (if (= :room (:action choice))
                      (update-in g [:players pid] a/build-rooms [(:cell choice)] choice)
                      (queue-front (update-in g [:players pid] a/renovate choice) [(event :renovate pid {:previous-house (:house current)}) (event :check-state pid)])))
-          :scholar (play-card g pid (:card choice) 1 choice {:event (:trigger-event context) :window window})
+          :scholar (if (:improvement choice)
+                     (granted-card-action g pid {:kinds #{:minor}} choice)
+                     (play-card g pid (:card choice) 1 choice {:event (:trigger-event context) :window window}))
           :boat-painter (do (a/require! (#{:grain :food} (:resource choice)) "Choose grain or food.")
                             (update-in g [:players pid] a/gain {(:resource choice) (if (= :food (:resource choice)) 2 1)}))
           :clay-thief (-> (five/collect-pile g pid :hollow :clay) (assoc-in [:players pid :card-state card :face-down?] true))
@@ -589,8 +716,7 @@
               (a/require! (pos? (get g :minor-deck-count (count drawn))) "No minor improvements remain in the deck.")
               (-> g (update-in [:players pid :hand :minor] into drawn)
                     (update :minor-deck #(vec (drop 2 %))) (update :minor-deck-count #(max 0 (- % 2)))))
-            (do (a/require! (= :minor (:kind (c/card (:card choice)))) "Choose a minor improvement.")
-                (play-card g pid (:card choice) 0 choice)))
+            (granted-card-action g pid {:kinds #{:minor}} choice))
           :tag-along
           (let [owners (get-in g [:occupied :market]) owners (if (vector? owners) owners [owners])
                 after (-> g (update-in [:players pid :remaining] dec)
@@ -683,8 +809,8 @@
                   (= :build-stables op) (map #(hash-map :stables [%]) (range 15))
                   (= :build-fences op) (for [cell (range 15) material [:wood :clay]]
                                         {:fences (vec (remove (:fences (p g player)) (a/edges cell))) :fence-material material})
-                  (= :build-rooms op) (for [rooms (room-plans (p g player)) frame? [false true] brushwood? [false true]]
-                                       {:rooms rooms :frame? frame? :brushwood? brushwood?})
+                  (= :build-rooms op) (for [rooms (room-plans (p g player)) options (a/room-payment-plans (p g player) rooms)]
+                                       (assoc options :rooms rooms))
                   (= :take-pile-good op) (pile-good-options g effect)
                   (= :renovate op) [{} {:renovate-to :stone}]
                   (= :bake-one op) (map #(hash-map :improvement %) (a/baking-improvement-ids (p g player)))
@@ -712,8 +838,25 @@
          (boolean (some (fn [cell]
                           (and (a/empty-cell? player cell)
                                (some #{cell} (mapcat a/neighbors (a/tiles player :room))))) (range 15))))))
-(defn anytime-available? [player cid]
+(defn claim-available? [g player cid]
+  (and g (not (get-in player [:card-state cid :claimed?]))
+       (condition? g (:id player) (get-in (c/card cid) [:ability :condition]) {})))
+(defn trowel-boundary? [g]
+  (and (nil? (:action-context g)) (nil? (:sow-in-progress g)) (nil? (:freshman-plan g))
+       (every? #(or (= :ability-window (get-in % [:effect :op]))
+                    (and (= :continue (:kind %)) (#{:finish-round :next-round} (:step %)))) (:effect-queue g))))
+(defn anytime-available?
+  ([player cid] (anytime-available? nil player cid))
+  ([g player cid]
   (case (get-in (c/card cid) [:ability :op])
+    :return-animal-loan (and (not (get-in player [:card-state cid :loan-settled?]))
+                              (some #(pos? (a/amount player %)) a/animals))
+    :claim-goods (claim-available? g player cid)
+    :renovate-wood-clay
+    (and (= :wood (:house player)) (or (nil? g) (trowel-boundary? g))
+         (boolean (some (fn [options] (try (a/renovate player (assoc options :renovate-to :clay)) true
+                                           (catch #?(:clj clojure.lang.ExceptionInfo :cljs :default) _ false)))
+                        (a/construction-payment-options player))))
     :free-room (free-room-available? player cid)
     :exchange-options (boolean (some #(can-pay? player (:cost %)) (get-in (c/card cid) [:ability :options])))
     :sheep-exchange (pos? (a/amount player :sheep))
@@ -725,11 +868,11 @@
     :cash-card (pos? (get-in player [:card-state cid :food] 0))
     :free-placement-fences (and (pos? (a/fences-available player)) (pos? (a/amount player :wood)))
     :move-crop (and (some #(>= (:count % 0) 2) (fields player)) (some #(zero? (:count % 0)) (fields player)))
-    false))
+    false)))
 (defn anytime-tasks [g]
   (for [offset (range (count (:players g)))
         :let [pid (mod (+ (:starting-player g) offset) (count (:players g))) player (p g pid)]
-        :when (some #(anytime-available? player %) (c/active-owned player))]
+        :when (some #(anytime-available? g player %) (c/active-owned player))]
     (task pid nil {:op :ability-window} {})))
 (defn promote-available-effect [g head]
   ;; A temporary inability to pay must not consume this timing opportunity.
@@ -754,14 +897,25 @@
            (queue-front state [(task pid (c/id :a127) {:op :lodger-remove} {})])
            (update-in state [:players pid] remove-lodger-person (if (pos? (:newborn player 0)) :newborn :adult))) state)))
    g (reverse (range (count (:players g))))))
+(defn apply-ratcatcher [g]
+  (if (and (= :work (:phase g)) (#{10 12} (:round g)))
+    (let [owners (set (for [player (:players g) :when (some true? (c/passives player :ratcatcher))] (:id player)))]
+      (update g :players
+              #(mapv (fn [player]
+                       (if (and (seq (disj owners (:id player)))
+                                (not= (:round g) (:ratcatcher-blocked-round player))
+                                (> (- (:family player) (:newborn player 0) (:temporary-family player 0)) 2)
+                                (pos? (:remaining player)))
+                         (-> player (update :remaining dec) (assoc :ratcatcher-blocked-round (:round g))) player)) %))) g))
 (defn continue-step [g name]
   (case name
     :advance (advance g)
     :after-harvest (queue-front g (concat (anytime-tasks g) [(step :finish-round)]))
     :finish-round (queue-front g (concat (map #(event :round-end (:id %)) (:players g)) [(step :next-round)]))
     :next-round (if (= 14 (:round g)) (finish-game g) (begin-round g))
+    :score-final (finish-game g)
     :work (-> g (assoc :phase :work :first-nonaccumulation nil :newborn-spaces {} :newborn-only #{}) (update :players #(mapv (fn [p] (assoc (a/reset-turn-fence-bonus p) :worker-spaces [] :tracked-newborns 0 :work-baseline (:received p) :used-accumulations {:round (:round g) :by-good {}})) %))
-              (queue-front (map #(event :work-start (:id %)) (:players g))))
+              apply-ratcatcher (queue-front (map #(event :work-start (:id %)) (:players g))))
     :return-home (prepare-return-home (queue-front (assoc g :phase :return-home) (concat (map #(event :return-home (:id %)) (:players g)) [(step :harvest-or-round)])))
     :harvest-or-round (if (a/harvest-rounds (:round g))
                         (queue-front g (concat (map #(event :before-field-phase (:id %)) (:players g)) [(step :field-harvest)]))
@@ -785,15 +939,36 @@
     :build-rooms (update-in g [:turn-construction player :rooms] (fnil conj []) (:previous-house context))
     :build-stables (update-in g [:turn-construction player :stables] (fnil + 0) (:stables-built context 0))
     g)))
+(defn tutor-points [player cid]
+  (let [n (c/occupation-count player (when (= "Original" (:edition (c/card cid))) :original-tutor))]
+    (get-in player [:card-state cid :occupations-after]
+            (max 0 (- n (get-in player [:card-state cid :occupations-before] n))))))
+(defn record-tutor-occupation [g {:keys [event player context]}]
+  ;; Count plays, not cards remaining in front of the player: late Ratcatcher
+  ;; leaves play immediately but still earns Tutor's point. Migrate old saves
+  ;; from their existing baseline before adding this event's new occupation.
+  (if (not= :occupation event) g
+    (let [played (:card context)]
+      (reduce
+       (fn [state cid]
+         (let [owner (p state player)
+               amount (if (and (= "Original" (:edition (c/card cid)))
+                               (get-in (c/card played) [:passive :academic])) 2 1)
+               previous (if (contains? (get-in owner [:card-state cid] {}) :occupations-after)
+                          (tutor-points owner cid)
+                          (max 0 (- (tutor-points owner cid) (if (some #{played} (:occupations owner)) amount 0))))]
+           (assoc-in state [:players player :card-state cid :occupations-after] (+ previous amount))))
+       g (filter #(and (not= played %) (= :tutor (get-in (c/card %) [:score :type])))
+                 (c/active-owned (p g player)))))))
 (defn drain [g]
   (loop [g g steps 0]
-   (let [g (-> g reactive/sync-farm-cards reactive/sync-shaving reactive/flush-shaving)]
+   (let [g (-> g flush-cooking-receipts reactive/sync-farm-cards reactive/sync-shaving reactive/flush-shaving)]
     (a/require! (< steps 1000) "Card effects did not settle.")
     (if-let [head (first (:effect-queue g))]
       (let [rest-state (update g :effect-queue #(vec (rest %)))]
         (case (:kind head)
-          :event (let [g (record-construction g head)
-                       rest-state (record-construction rest-state head)
+          :event (let [g (-> g (record-construction head) (record-tutor-occupation head))
+                       rest-state (-> rest-state (record-construction head) (record-tutor-occupation head))
                        window (or (get-in head [:context :existing-window]) (inc (get g :effect-window 0)))
                        tasks (trigger-tasks g head)
                        ;; Taking goods happens before optional exchanges that say
@@ -854,7 +1029,11 @@
       :else (-> g reset-turn-fence-bonuses (update :turn-serial (fnil inc 0)) (dissoc :lasso :turn-construction) (queue-front [(step :return-home)])))))
 (defn begin-round [g]
   (let [replenished? (and (pos? (get-in g [:piles :reed :reed] 0)) (= 1 (get-in (a/action-definition g :reed) [:gain :reed])))
-        g (assoc (a/begin-round (reset-turn-fence-bonuses (dissoc g :turn-construction))) :phase :preparation) r (:round g)
+        g (assoc (a/begin-round (reset-turn-fence-bonuses (dissoc g :turn-construction))) :phase :preparation)
+        g (reduce (fn [state cid] (update-in state [:piles cid :wood] (fnil + 0) 2)) g
+                  (for [owner (:players g) cid (c/active-owned owner)
+                        :when (= :master-forester (:action-space (c/card cid)))] cid))
+        r (:round g)
         arrivals (mapcat (fn [p]
                            (for [{:keys [card goods stable person]} (get-in p [:schedule r]) :when (some #{card} (c/owned p))]
                              (task (:id p) card (cond stable {:op :stable-arrival} person {:op :temporary-person :optional? true}
@@ -873,6 +1052,8 @@
 (defn card-bonus [g pid cid]
   (let [p (p g pid) {:keys [type thresholds values resource divisor]} (:score (c/card cid))]
     (case type
+      :unreturned-animals (- (reduce + 0 (vals (get-in p [:card-state cid :returned-animals] {}))) 3)
+      :collected-animals (count (filter #(<= % (get-in p [:card-state cid :stored-goods resource] 0)) thresholds))
       :expression (expr/evaluate g pid {} (get-in (c/card cid) [:score :value]))
       :pasture-spaces (count (filter #(<= % (count (a/pasture-cells p))) thresholds))
       :house (get values (:house p) 0)
@@ -880,7 +1061,13 @@
       :improvements (let [n (+ (count (:improvements p)) (count (:minors p))) qualifying (count (filter #(<= % n) thresholds))]
                       (if (zero? qualifying) 0 (nth values (dec qualifying))))
       :animals (quot (a/amount p resource) divisor)
-      :tutor (- (count (:occupations p)) (get-in p [:card-state cid :occupations-before] (count (:occupations p))))
+      :tutor (tutor-points p cid)
+      :no-negative-points
+      (+ (reduce + 0 (map #(max 0 (- %)) (vals (dissoc (:breakdown (a/score p)) :unused :begging))))
+         (reduce + 0 (for [other (c/owned p) :when (not= :no-negative-points (get-in (c/card other) [:score :type]))]
+                       (max 0 (- (card-bonus g pid other)))))
+         (reduce + 0 (map #(max 0 (- (:points (c/card %) 0))) (:minors p)))
+         (max 0 (- (:bonus-points p 0))))
       :maximum-basic-categories
       (count (filter #(= 4 %) (vals (select-keys (:breakdown (a/score p))
                                                   [:fields :pastures :grain :vegetables :sheep :boar :cattle :stables]))))
@@ -888,9 +1075,7 @@
       (if (every? (fn [animal] (every? #(>= (a/amount p animal) (a/amount % animal)) (:players g))) a/animals)
         (dec (count (:players g))) 0)
       :most-original-occupations
-      (let [occupation-count (fn [player]
-                               (+ (count (:occupations player))
-                                  (if (c/has? player :catalog/original-base-e-148-academic) 1 0)))]
+      (let [occupation-count #(c/occupation-count % :original-reeve)]
         (if (= (occupation-count p) (apply max (map occupation-count (:players g)))) 3 0))
       :most-rooms (if (= (count (a/tiles p :room)) (apply max (map #(count (a/tiles % :room)) (:players g)))) 3 0)
       :full-pastures (count (filter #(and (= :pasture (:kind %)) (= (:capacity %) (:count %))) (a/animal-housing p)))
@@ -905,21 +1090,44 @@
                  (if (and (not (c/has? p :b136)) (some #(c/has? % :b136) (:players g))) (card-bonus g pid (c/id :b136)) 0))]
     (-> score (update :total + points bonus) (update-in [:breakdown :improvements] + points) (update-in [:breakdown :bonus] + bonus))))
 (defn finish-game [g]
-  (let [scores (mapv #(score g (:id %)) (:players g)) best (last (sort (map (juxt :total :tiebreak) scores)))
-        winners (vec (keep-indexed #(when (= best ((juxt :total :tiebreak) %2)) %1) scores))]
-    (-> g (assoc :phase :finished :scores scores :winners winners) (a/log-event "The final harvest is complete."))))
+  (let [loans (when-not (:final-scoring-started? g)
+                (for [offset (range (count (:players g)))
+                      :let [pid (mod (+ (:starting-player g) offset) (count (:players g))) player (p g pid)]
+                      cid (c/active-owned player)
+                      :when (and (= :return-animal-loan (get-in (c/card cid) [:ability :op]))
+                                 (not (get-in player [:card-state cid :loan-settled?])))]
+                  (task pid cid {:op :return-animal-loan} {})))]
+    (if (seq loans)
+      (queue-front (assoc g :phase :scoring :final-scoring-started? true) (concat loans [(step :score-final)]))
+      (let [scores (mapv #(score g (:id %)) (:players g)) best (last (sort (map (juxt :total :tiebreak) scores)))
+            winners (vec (keep-indexed #(when (= best ((juxt :total :tiebreak) %2)) %1) scores))]
+        (-> g (assoc :phase :finished :scores scores :winners winners) (a/log-event "The final harvest is complete."))))))
 (defn space-owners [g space]
   (let [owner (when-not (contains? (:newborn-only g) space) (get-in g [:occupied space]))] (if (sequential? owner) (vec owner) (if (some? owner) [owner] []))))
 (defn space-people [g space]
   (+ (count (space-owners g space))
      (count (get-in g [:newborn-spaces space]))))
+(def family-sharing-spaces #{:build :house-building :growth :urgent-growth :modest-growth})
+(defn head-family-linked-space [g space]
+  (when (and (= 5 (count (:players g)))
+             (or (family-sharing-spaces space) (family-sharing-spaces (a/linked-spaces space))))
+    (a/linked-spaces space)))
+(defn head-family-permission? [g pid space]
+  (let [linked (head-family-linked-space g space) spaces (cond-> [space] linked (conj linked))]
+    (and (some true? (c/passives (p g pid) :share-family-spaces))
+         (or (family-sharing-spaces space) linked)
+         (some #(contains? (:occupied g) %) spaces)
+         (not-any? #{pid} (mapcat #(space-owners g %) spaces)))))
 (defn occupied-permission [g pid space]
-  (when (and (not= space :meeting) (contains? (:occupied g) space))
+  (when (and (not= space :meeting) (or (contains? (:occupied g) space) (head-family-permission? g pid space)))
     (let [player (p g pid) workers (:worker-spaces player)]
       (cond
         (and (= pid (get-in g [:action-context :player]))
              (#{:lazy-sowman :swagman} (get-in g [:action-context :mode]))) :extra-action
         (and (owned? g pid :a028) (#{:lessons :lessons-extra :lessons-copse :lessons-growth} space)) :forest-school
+        (head-family-permission? g pid space) :head-of-family
+        (and (some true? (c/passives player :share-field-spaces)) (#{:vegetable :plow :cultivation} space)
+             (not (some #{pid} (space-owners g space)))) :field-warden
         (and (owned? g pid :a025) (= space (:first-nonaccumulation g)) (= 1 (space-people g space))) :bassinet
         (and (owned? g pid :a130) (>= (count workers) 2) (= space (second workers))
              (some #{pid} (space-owners g space)) (not= (:round g) (:mummy-used-round player))) :mummys-boy
@@ -936,13 +1144,19 @@
       (and (not= mode :minstrel) (nil? (:first-nonaccumulation before)) (not (:accumulate (a/action-definition before space)))) (assoc :first-nonaccumulation space)
       (= :mummys-boy (occupied-permission before pid space)) (assoc-in [:players pid :mummy-used-round] (:round before))
       (pos? newborns) (update-in [:newborn-spaces space] (fnil into []) (repeat newborns pid)))))
+(defn available-action-space? [g pid space]
+  (a/available-space? (if (head-family-permission? g pid space)
+                        (update g :occupied dissoc (head-family-linked-space g space)) g) space))
 (defn validate-space [g pid space]
   (a/require! (= :work (:phase g)) "Finish the current phase first.")
   (a/require! (= pid (:turn g)) "It is another player's turn.")
-  (a/require! (a/available-space? g space) "That space is not available yet or its linked space is occupied.")
+  (a/require! (available-action-space? g pid space)
+              "That space is not available yet or its linked space is occupied.")
   (a/require! (pos? (:remaining (p g pid))) "No family members remain at home.")
   (let [owner (get-in g [:occupied space])]
     (a/require! (or (nil? owner) (occupied-permission g pid space)) "That action space is occupied."))
+  (when (and (= :head-of-family (occupied-permission g pid space)) (:accumulate (a/action-definition g space)))
+    (a/require! (some pos? (vals (get-in g [:piles space]))) "Head of the Family cannot use an empty accumulation space."))
   (when (and (:second? (:lasso g)) (:must-animal? (:lasso g)))
     (a/require! (#{:sheep :boar :cattle :animal-market} space) "The second Lasso action must use an animal market.")))
 (defn mark-worker [g pid space]
@@ -1002,7 +1216,7 @@
 (defn action-events [before after pid cmd]
   (let [p0 (p before pid) p1 (p after pid) space (:space cmd)
         context {:space space :repeated-accumulation? (repeated-accumulation? before pid space) :previous-house (:house p0) :old-pastures (a/pastures p0)
-                 :before-goods (:goods p0) :source-goods (source-action-goods before cmd)
+                 :before-goods (:goods p0) :before-received (:received p0) :source-goods (source-action-goods before cmd)
                  :worker-index (or (get-in before [:action-context :worker-index]) (count (:worker-spaces p0)))
                  :placed-person (- (:family p1) (:newborn p1 0) (:remaining p1))
                  :building-pile-size (reduce + (map #(get-in before [:piles space %] 0) [:wood :clay :reed :stone]))
@@ -1043,20 +1257,26 @@
      (when (and (= 5 (count (:players before))) (seq (set/difference (:improvements p1) (:improvements p0)))) [(event :major-built pid context)])
      (when (and (pos? (or (:bake-grain cmd) 0))
                 (or (#{:sow-bake :side-job} space)
-                    (and (#{:improvement :renovate} space)
+                    (and (#{:improvement :renovate :meeting :growth} space)
                          (:oven (a/improvements (:improvement cmd)))
                          (contains? (:improvements p1) (:improvement cmd)))))
        [(event :bake pid (assoc context :grain-baked (:bake-grain cmd)))])
+     (when (seq (set/difference (:improvements p1) (:improvements p0)))
+       [(improvement-finished-event pid {:kinds (if (#{:meeting :growth} space) #{:minor} #{:major :minor})} false)])
      (when-not (= :minstrel (get-in before [:action-context :mode]))
-       [(event :use-space pid context) (event :after-use-space pid context) (event :turn-end pid context)])
+       [(event :use-space pid context) (event :after-use-space pid context) (event :turn-end pid context) (event :after-action pid context)])
      [(step :check-all)]
      (when-not (:action-context before) [(step :advance)]))))
 (defn take-action-complete [g pid {:keys [space card lasso?] :as source-cmd}]
   (let [plan (:freshman-plan g)
         replacement? (and (= pid (:player plan)) (= space (:space plan)) (:card plan))
-        cmd (cond-> source-cmd replacement? (assoc :bake-grain 0))]
+        cmd (cond-> source-cmd replacement? (assoc :bake-grain 0 :cook-with-bake {}))]
   (validate-space g pid space)
   (a/require! (not (and card (:improvement cmd))) "Choose one major or minor improvement, not both.")
+  (when (:improvement cmd)
+    (a/require! (or (#{:improvement :renovate} space)
+                    (and (#{:meeting :growth} space) (a/major-as-minor? (p g pid) (:improvement cmd))))
+                "This action does not allow that supply improvement."))
   (when lasso?
     (a/require! (and (owned? g pid :b024) (not (:lasso g))) "Lasso is unavailable.")
     (a/require! (>= (:remaining (p g pid)) 2) "Lasso requires two people available to place.")
@@ -1064,7 +1284,9 @@
                     (some #(and (some #{%} (:active g)) (not (contains? (:occupied g) %))) [:sheep :boar :cattle :animal-market]))
                 "There is no free animal market for the Lasso's second action."))
   (let [occupied (get-in g [:occupied space])
+        head-linked (when (head-family-permission? g pid space) (head-family-linked-space g space))
         base (five/refresh g)
+        base (cond-> base head-linked (update :occupied dissoc head-linked))
         base (cond-> (assoc-in base [:players pid] (if (= :minstrel (get-in g [:action-context :mode])) (p base pid) (before-use-player base pid space cmd))) occupied (update :occupied dissoc space))
         base (if (:master-hora? cmd)
                (do (a/require! (and (owned? g pid :a174) (five/linked-groups space)) "Master Hora needs a linked extension space.")
@@ -1081,6 +1303,8 @@
         after (if special?
                 (mark-worker (cond-> base (= space :meeting) (assoc :starting-player pid)) pid space)
                 (a/apply-action base pid cmd))
+        after (if (and (:improvement cmd) (#{:meeting :growth} space))
+                (a/build-improvement after pid cmd) after)
         after (cond-> after
                 (:animal-brander? cmd) (update-in [:players pid] #(-> % (a/pay (if (= :cattle (:choice cmd)) {:food 1} {}))
                                                                               (a/gain (merge {(:choice cmd) 1} (when (= :sheep (:choice cmd)) {:food 1})))))
@@ -1088,6 +1312,8 @@
                 (:part-time? cmd) (update-in [:players pid] a/gain {({2 :sheep 4 :boar 6 :cattle} total) 1})
                 (and (= 5 (count (:players g))) (seq (set/difference (:improvements (p after pid)) (:improvements (p g pid))))) (update-in [:major-builds pid] (fnil inc 0)))
         after (cond-> after occupied (assoc-in [:occupied space] (conj (space-owners g space) pid))
+                      (and head-linked (contains? (:occupied g) head-linked))
+                      (assoc-in [:occupied head-linked] (get-in g [:occupied head-linked]))
                       lasso? (assoc :lasso {:player pid :must-animal? (not (#{:sheep :boar :cattle :animal-market} space)) :second? false}))
         after (queue-front (record-placement g (if (= :minstrel (get-in g [:action-context :mode])) after (record-accumulation after pid space)) pid space) (action-events g after pid cmd))
         count-occ (count (:occupations (p g pid)))
@@ -1112,8 +1338,8 @@
                                    pid (:card plan) (:options plan)) after)
                                  :cancelled-sowing :plow-plan :freshman-plan)
                     (and (= pid (get-in g [:plow-plan :player])) (= space (get-in g [:plow-plan :space]))
-                         (#{:plow :cultivation} space) (seq (get-in g [:plow-plan :cells])))
-                    (update-in [:players pid :card-state (c/id :a018) :uses] dec)) true)))))
+                         (#{:plow :cultivation} space) (seq (get-in g [:plow-plan :cells])) (get (:plow-plan g) :card (c/id :a018)))
+                    (update-in [:players pid :card-state (get (:plow-plan g) :card (c/id :a018)) :uses] dec)) true)))))
 (defn staged-sowing? [g pid space]
   (and (#{:sow-bake :cultivation} space)
        (or (and (= :sow-bake space) (get-in g [:freshman-plan :card]) (get-in g [:freshman-plan :sow-before?]))
@@ -1130,7 +1356,7 @@
         (a/require! (and (owned? g pid :b024) (not (:lasso g)) (>= (:remaining (p g pid)) 2)) "Lasso is unavailable.")
         (a/require! (some #(and (some #{%} (:active g)) (not (contains? (:occupied g) %))) [:sheep :boar :cattle :animal-market])
                     "There is no free animal market for the Lasso's second action."))
-      (let [source (select-keys command (cond-> [:space :cell :lasso? :shaving-horse?] (= space :sow-bake) (conj :bake-grain)))
+      (let [source (select-keys command (cond-> [:space :cell :lasso? :shaving-horse?] (= space :sow-bake) (conj :bake-grain :cook-with-bake)))
             effect {:op :sow-offer :optional? true :unconditional? true :source-command source}]
         ;; Validate a planned plow now, before any other player commits a gift.
         (sowing-player g pid effect)
@@ -1144,30 +1370,39 @@
     (and (#{:plow :cultivation} space) (owned? g pid :a018)
          (pos? (get-in player [:card-state (c/id :a018) :uses] 0))
          (zero? (- (:family player) (:newborn player 0) (:remaining player))))))
+(defn plow-options [g pid space]
+  (let [player (p g pid)]
+    (if-not (#{:plow :cultivation} space) {:plows [] :plow-maker? false}
+      {:plows (vec (concat (when (wheel-plow-available? g pid space) [(c/id :a018)])
+                           (sort (for [cid (c/active-owned player)
+                                       :when (and (get-in (c/card cid) [:passive :action-plow])
+                                                  (pos? (get-in player [:card-state cid :uses] 0)))] cid))))
+       :plow-maker? (and (some #(get-in (c/card %) [:passive :plow-maker]) (c/active-owned player))
+                        (pos? (a/amount player :food)))})))
 (defn take-action-with-plowing [g pid {:keys [space] :as command}]
-  (if (and (wheel-plow-available? g pid space) (nil? (:plow-plan g)))
-    (do
-      (validate-space g pid space)
-      (a/require! (not-any? #(get command %) [:card :improvement :master-hora? :animal-brander? :part-time?]) "That option is unavailable on this plowing action.")
-      (when (some? (:cell command)) (a/place-tile (p g pid) :field (:cell command)))
-      ;; Probe a legal completion before opening a saved choice. A Cultivation
-      ;; source with no base field can still be made legal by the extra fields.
-      (a/require! (or (try (take-action-with-sowing g pid command) true
-                          (catch #?(:clj clojure.lang.ExceptionInfo :cljs :default) _ false))
-                      (some (fn [cell]
-                              (try (take-action-with-sowing
-                                    (assoc g :plow-plan {:player pid :space space :cells [cell]}) pid command) true
-                                   (catch #?(:clj clojure.lang.ExceptionInfo :cljs :default) _ false)))
-                            (range 15)))
-                  "Choose a legal action before using Wheel Plow.")
-      (queue-front g [(task pid (c/id :a018)
-                           {:op :wheel-plow :optional? true
-                            :source-command (select-keys command [:space :cell :plantings :lasso? :shaving-horse?])} {})]))
-    (take-action-with-sowing g pid command)))
+  (let [options (plow-options g pid space)]
+    (if (and (or (seq (:plows options)) (:plow-maker? options)) (nil? (:plow-plan g)))
+      (do
+        (validate-space g pid space)
+        (a/require! (not-any? #(get command %) [:card :improvement :master-hora? :animal-brander? :part-time?]) "That option is unavailable on this plowing action.")
+        (when (some? (:cell command)) (a/place-tile (p g pid) :field (:cell command)))
+        ;; Choices remain uncommitted until the complete plow/sow placement is legal.
+        (a/require! (or (try (take-action-with-sowing g pid command) true
+                            (catch #?(:clj clojure.lang.ExceptionInfo :cljs :default) _ false))
+                        (some (fn [cell]
+                                (try (take-action-with-sowing
+                                      (assoc g :plow-plan {:player pid :space space :cells [cell] :card nil}) pid command) true
+                                     (catch #?(:clj clojure.lang.ExceptionInfo :cljs :default) _ false)))
+                              (range 15)))
+                    "Choose a legal action before using a plow.")
+        (queue-front g [(task pid (or (first (:plows options)) :catalog/original-base-e-195-plow-maker)
+                             (merge options {:op :wheel-plow :optional? true
+                                             :source-command (select-keys command [:space :cell :plantings :lasso? :shaving-horse?])}) {})]))
+      (take-action-with-sowing g pid command))))
 (defn freshman-source? [g pid command]
   (and (freshman-available? g pid)
        (or (#{:sow-bake :side-job} (:space command))
-           (and (#{:improvement :renovate} (:space command)) (:oven (a/improvements (:improvement command)))))))
+           (and (#{:improvement :renovate :meeting :growth} (:space command)) (:oven (a/improvements (:improvement command)))))))
 (defn resume-freshman-source [g pid effect choice]
   (let [source (:source-command effect) cid (:card choice)
         _ (when cid (a/require! (freshman-available? g pid) "Freshman has already been used this turn.")
@@ -1175,7 +1410,7 @@
                     (paid-card-player g pid cid 0 choice))
         grain (if cid 0 (:grain choice 0))
         _ (a/require! (a/natural? grain) "Choose a nonnegative number of grain to bake.")
-        command (assoc source :bake-grain grain)
+        command (assoc source :bake-grain grain :cook-with-bake (if cid {} (:cook-with-bake choice)))
         planned (assoc g :freshman-plan {:player pid :space (:space source) :card cid :sow-before? (:sow-before? choice)
                                          :options (select-keys choice [:paper-maker?])})]
     (try (if (and cid (= :sow-bake (:space source)) (not (:sow-before? choice)))
@@ -1190,8 +1425,8 @@
     (do
       (validate-space g pid space)
       ;; Every embedded key is a public action option; never save a game copy.
-      (let [source (select-keys command [:space :cell :plantings :stables :improvement :upgrade :renovate-to
-                                         :frame? :brushwood? :lasso? :bake-grain :shaving-horse? :mummys-boy?])]
+      (let [source (select-keys command [:space :cell :plantings :stables :improvement :upgrade :discount-resource :renovate-to
+                                         :frame? :brushwood? :clay-reed :clay-supports? :room-options :lasso? :bake-grain :cook-with-bake :shaving-horse? :mummys-boy?])]
         (a/require! (not (:card command)) "Choose either the baking substitution or an improvement from your hand.")
         (a/require! (some (fn [cid] (try (resume-freshman-source g pid {:source-command source} {:card cid}) true
                                        (catch #?(:clj clojure.lang.ExceptionInfo :cljs :default) _ false)))
@@ -1202,7 +1437,7 @@
 (defn card-spaces [g pid]
   (vec (for [owner (:players g) cid (c/active-owned owner)
              :let [kind (:action-space (c/card cid))]
-             :when (and kind (or (= pid (:id owner)) (#{:fold-builder :chapel} kind) (occupied-permission g pid cid)))]
+             :when (and kind (or (= pid (:id owner)) (#{:fold-builder :chapel :master-forester} kind) (occupied-permission g pid cid)))]
          {:card cid :owner (:id owner) :kind kind})))
 (defn card-space-error [g pid cid]
   (let [{:keys [kind owner]} (first (filter #(= cid (:card %)) (card-spaces g pid)))
@@ -1211,6 +1446,7 @@
       (nil? kind) "You cannot use this card action space."
       (and (contains? (:occupied g) cid) (not (occupied-permission g pid cid))) "This card action space is occupied."
       (and (= kind :chapel) (not= pid owner) (zero? (a/amount (p g pid) :grain))) "Pay the Chapel owner one grain to use this space."
+      (and (= kind :master-forester) (not= pid owner) (< (a/amount (p g pid) :food) 2)) "Pay the Master Forester owner two food before taking wood."
       (and (= kind :forest-tallyman) (not-every? #(contains? (:occupied g) %) [:wood :clay])) "Forest and Clay Pit must both be occupied."
       (and (= kind :greenhouse) (not-any? (set (:active g)) [:fences :renovate :vegetable])) "None of this card's actions have been revealed."
       (and (= kind :substitute-teacher) (not-every? #(contains? (:occupied g) %) five/lessons)) "All three Lessons spaces must be occupied, not merely blocked."
@@ -1242,9 +1478,15 @@
           :chapel (-> (if (= pid owner) base
                         (-> base (update-in [:players pid] a/pay {:grain 1}) (update-in [:players owner] a/gain {:grain 1})))
                       (update-in [:players pid :bonus-points] (fnil + 0) 3) (mark-worker pid card-space))
+          :master-forester
+          (do (a/require! (not (or (:card cmd) (:improvement cmd))) "This space only collects wood.")
+              (-> (if (= pid owner) base
+                      (-> base (update-in [:players pid] a/pay {:food 2}) (update-in [:players owner] a/gain {:food 2})))
+                  (update-in [:players pid] a/gain (get-in base [:piles card-space] {:wood 0}))
+                  (assoc-in [:piles card-space] {:wood 0}) (mark-worker pid card-space)))
           :forest-tallyman (-> base (update-in [:players pid] a/gain {:clay 2 :wood 3}) (mark-worker pid card-space)))
         after (cond-> after (seq (set/difference (:improvements (p after pid)) (:improvements (p g pid)))) (update-in [:major-builds pid] (fnil inc 0)))]
-    (-> (cond-> (record-placement g after pid card-space)
+    (-> (cond-> (record-placement g (record-accumulation after pid card-space) pid card-space)
           (contains? (:occupied g) card-space) (assoc-in [:occupied card-space] (conj (space-owners g card-space) pid)))
         (dissoc :cancelled-sowing) (queue-front (action-events g after pid (assoc cmd :space card-space)))
         (finish-action-context true) with-housing)))
@@ -1308,7 +1550,7 @@
   (let [space (first (sort (for [[space children] (:newborn-spaces g) :when (some #{pid} children)] space)))
         children (get-in g [:newborn-spaces space])
         index (first (keep-indexed #(when (= pid %2) %1) children))
-        g (assoc-in g [:players pid :tracked-newborns] (:newborn (p g pid) 0))]
+        g (apply-ratcatcher (assoc-in g [:players pid :tracked-newborns] (:newborn (p g pid) 0)))]
     (if (some? index)
       (let [left (vec (concat (take index children) (drop (inc index) children)))
             g (assoc-in g [:newborn-spaces space] left)]
@@ -1319,6 +1561,16 @@
     (a/require! (some #{card} (c/active-owned player)) "You do not own that card.")
     (a/require! (#{:preparation :work :return-home :field-harvest :feeding :breeding :housing :finish-round} (:phase g)) "This ability is unavailable during the current phase.")
     (case op
+      :return-animal-loan (return-animal-loan g pid card (:return-animals cmd))
+      :claim-goods
+      (do (a/require! (claim-available? g player card) "Claim this card only once, while you are the last player with exactly two rooms.")
+          (-> g (update-in [:players pid] a/gain (get-in (c/card card) [:ability :goods]))
+              (assoc-in [:players pid :card-state card :claimed?] true)))
+      :renovate-wood-clay
+      (do (a/require! (and (= :wood (:house player)) (trowel-boundary? g)
+                           (not= :stone (:renovate-to cmd)))
+                      "Builder's Trowel renovates wood to clay between actions; finish the current action first.")
+          (run-effect g (task pid card {:op :renovate} {}) (assoc cmd :renovate-to :clay)))
       :free-room
       (do (a/require! (free-room-available? player card) "This free room needs the printed house size and material, an empty adjacent space, and its unused room tile.")
           (-> (run-effect g (task pid card {:op :build-rooms :max-rooms 1 :free? true} {}) cmd)

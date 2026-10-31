@@ -1,0 +1,15 @@
+;; Original English E-deck animal cards. Rules checked against the printed faces
+;; and Agricola Norge compendium: E29/E58/E59 capacity interactions, E208's one
+;; unfenced stable, and E162's continuing requirement for an owned oven.
+{:catalog/original-base-e-29-shepherd-s-pipe
+ {:passive {:sheep-pasture-capacity 2 :unfenced-sheep-capacity 2}}
+ :catalog/original-base-e-58-animal-yard
+ {:passive {:animal-yard true}}
+ :catalog/original-base-e-162-meat-seller
+ {:passive {:oven-animal-cooking {:sheep 2 :boar 3 :cattle 4}}}
+ :catalog/original-base-e-203-shepherd
+ {:passive {:double-sheep-breeding true}}
+ :catalog/original-base-e-208-stablemaster
+ {:passive {:one-unfenced-stable-capacity 3}}
+ :catalog/original-base-e-216-animal-keeper
+ {:passive {:mixed-pastures true}}}

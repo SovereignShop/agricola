@@ -1,0 +1,19 @@
+{:catalog/original-base-e-149-master-baker
+ {:triggers [{:event :bake :scope :others :condition [:test [:not [:already-baked-response]]]
+              :effect {:op :bake :optional? true :reactive-bake? true}}
+             {:event :bake :condition [:test [:not [:= [:context :bake-source-card] :catalog/original-base-e-149-master-baker]]]
+              :effect {:op :gain :goods {:food 1}}}]}
+ :catalog/original-base-e-159-head-of-the-family {:passive {:share-family-spaces true}}
+ :catalog/original-base-e-163-field-warden {:passive {:share-field-spaces true}}
+ :catalog/original-base-e-169-storyteller
+ {:triggers [{:event :after-use-space :spaces #{:traveling} :condition [:test [:> [:taken :food] 0]]
+              :effect {:op :return-goods :optional? true :from-taken? true :cost {:food 1}
+                       :goods {:vegetable 1 :food [:if [:and [:owns-card :catalog/original-base-e-212-dancer] [:<= [:taken :food] 4]] 1 0]}}}]}
+ :catalog/original-base-e-198-ratcatcher
+ {:passive {:ratcatcher true}
+  :play [{:op :conditional :condition [:test [:> [:round] 9]] :effect {:op :discard-self}}]}
+ :catalog/original-base-e-210-stone-carrier
+ {:triggers [{:event :after-action :condition [:test [:> [:source-goods :stone] 0]]
+              :effect {:op :gain :optional? true
+                       :cost {:food [:if [:> [:+ [:received-since :wood] [:received-since :clay] [:received-since :reed]] 0] 1 0]}
+                       :goods {:stone 1}}}]}}

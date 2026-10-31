@@ -1,0 +1,5 @@
+;; Original English E19/E26; Agricola Norge compendium pp162/166.
+{:catalog/original-base-e-19-gypsy-s-crock
+ {:passive {:cooking-pair-food true}}
+ :catalog/original-base-e-26-plane
+ {:passive {:plane true}}}

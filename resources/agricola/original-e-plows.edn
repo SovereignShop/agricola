@@ -1,0 +1,6 @@
+;; Original printed E61/E62 plows, plus the compatible E195 occupation.
+{:catalog/original-base-e-61-riding-plow
+ {:passive {:action-plow {:extra-fields 2}} :play [{:op :set-uses :uses 2}]}
+ :catalog/original-base-e-62-turnwrest-plow
+ {:passive {:action-plow {:extra-fields 2}} :play [{:op :set-uses :uses 1}]}
+ :catalog/original-base-e-195-plow-maker {:passive {:plow-maker true}}}

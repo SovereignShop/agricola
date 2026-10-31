@@ -1,0 +1,8 @@
+;; Original English prints; v9 compendium entries Baking Tray and Ceramics.
+{:catalog/original-base-e-15-baking-tray
+ {:passive {:major-as-minor #{:clay-oven :stone-oven}
+            :choice-improvement-discount #{:clay-oven :stone-oven :catalog/original-base-e-27-wood-fired-oven}}}
+ :catalog/original-base-e-33-ceramics
+ {:requires [:> [:ovens] 0]
+  :play [{:op :gain :goods {:food 2}}]
+  :passive {:major-as-minor #{:pottery} :free-improvements #{:pottery}}}}

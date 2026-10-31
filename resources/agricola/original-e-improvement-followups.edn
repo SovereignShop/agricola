@@ -1,0 +1,9 @@
+;; Original English E38; compendium v9 returns majors to the public supply.
+{:catalog/original-base-e-38-madonna-statue
+ {:cost :return-two-improvements :requires [:>= [:improvements] 2]}
+ :catalog/original-base-e-179-merchant
+ {:triggers [{:event :improvement-action-finished
+              :condition [:test [:and [:context :minor-action-allowed?]
+                                [:not [:context :merchant-repeat?]]]]
+              :effect {:op :card-action :optional? true :cost {:food 1}
+                       :inherit-improvement-action? true :merchant-repeat? true}}]}}

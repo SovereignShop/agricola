@@ -11,10 +11,14 @@
 (rf/reg-event-db :draft
   (fn [db [_ key value]]
     (cond-> (assoc-in db [:draft key] value)
-      (= key :improvement) (update :draft dissoc :upgrade :bake-grain :card)
-      (= key :card) (update :draft dissoc :improvement :upgrade :bake-grain :payment-option :return-improvement :as-major?))))
+      (= key :improvement) (update :draft dissoc :upgrade :bake-grain :card :discount-resource :return-improvement :return-improvements :as-major?)
+      (= key :card) (update :draft dissoc :improvement :upgrade :bake-grain :payment-option :return-improvement :return-improvements :as-major? :discount-resource))))
 ;; Apply multi-control edits to the latest draft, not the render-time snapshot.
 ;; Several DOM changes can arrive before Reagent renders the next frame.
+(rf/reg-event-db :draft-map-entry
+  (fn [db [_ key entry value]]
+    (if (nil? value) (update-in db [:draft key] dissoc entry)
+        (assoc-in db [:draft key entry] value))))
 (rf/reg-event-db :draft-planting
   (fn [db [_ cell crop]]
     (update-in db [:draft :plantings]
@@ -48,7 +52,7 @@
                (fn [selection]
                  (let [cells (vec selection)]
                    (if (some? cell)
-                     (assoc (vec (take 2 (concat cells (repeat "")))) index cell)
+                     (assoc (vec (take (max 2 (inc index) (count cells)) (concat cells (repeat "")))) index cell)
                      (subvec cells 0 (min index (count cells)))))))))
 (rf/reg-event-db :select-action (fn [db [_ space]] (assoc db :draft {:space space :rooms [] :stables [] :fences [] :plantings [] :bake-grain 0} :error nil)))
 (rf/reg-event-db :inspect-player (fn [db [_ pid]] (assoc db :inspect-player pid)))

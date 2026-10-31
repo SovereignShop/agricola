@@ -85,7 +85,7 @@
      ]))
 (defn card-markers [cid p]
   (let [field (get-in p [:card-fields cid]) state (get-in p [:card-state cid])
-        animals (reduce (fn [m slot] (update m (:animal slot) (fnil + 0) (:count slot))) {}
+        animals (reduce (fn [m slot] (merge-with + m (a/housing-animals slot))) {}
                         (filter #(and (= :card (:kind %)) (= cid (:card %))) (when p (a/animal-housing p))))
         goods (merge-with + (:stored-goods state) (when (:food state) {:food (:food state)})
                           (when (pos? (:count field 0)) (a/field-crops field)) animals)]

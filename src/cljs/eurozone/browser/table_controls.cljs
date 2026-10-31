@@ -113,16 +113,16 @@
    [:input {:type "number" :min 0 :max max-value :value n
             :on-change #(update (max 0 (min max-value (or (js/parseInt (.. % -target -value)) 0))))}]])
 (defn harvest-planner [room pid]
-  (r/with-let [convert (r/atom {}) craft (r/atom []) offspring (r/atom nil) queue-breed? (r/atom true)]
+  (r/with-let [convert (r/atom {}) craft (r/atom []) plane-extra? (r/atom false) offspring (r/atom nil) queue-breed? (r/atom true)]
     (let [ui @(rf/subscribe [:ui]) permission @(rf/subscribe [:permission]) s (:state room) p (get-in s [:players pid])
           eligible? (and (some #{pid} (:seats permission)) (#{:feeding :breeding} (:phase s)))
           fed? (or (= :breeding (:phase s)) (contains? (set (:fed s)) pid))
           bred? (contains? (set (:bred s)) pid) queued (get-in ui [:private-plans (:id room) pid])
-          feed {:type :feed :convert @convert :craft @craft}
+          feed {:type :feed :convert @convert :craft @craft :plane-extra? (and (some #{:joinery} @craft) @plane-extra?)}
           preview (try {:player (if (or fed? (not eligible?)) p (get-in (flow/feed-preview s pid feed) [:players pid]))}
                        (catch :default e {:error (.-message e)}))
           after (:player preview) options (when after (a/breeding-options after))
-          babies (or @offspring (when after (if (a/animal-housing (a/gain after options)) options {})))
+          babies (or @offspring (when after (a/default-breeding after)))
           disabled? (or (:busy? ui) (not (:connected? ui)) (seq (:takeback room)))]
       (when (and eligible? (not bred?))
         [:section.panel.harvest-planner {:aria-label (str (:name p) " harvest plan")}
@@ -143,6 +143,9 @@
                  [:label.checkbox [:input {:type "checkbox" :checked (boolean (some #{id} @craft))
                                            :on-change #(swap! craft (fn [xs] (if (some #{id} xs) (vec (remove #{id} xs)) (conj xs id))))}]
                   (str "Use " (:name (a/improvements id)))])
+               (when (and (a/plane? p) (some #{:joinery} @craft))
+                 [:label.checkbox [:input {:type "checkbox" :checked @plane-extra? :on-change #(reset! plane-extra? (.. % -target -checked))}]
+                  "Plane: use 2 wood for 4 food (otherwise 1 wood for 3 food)"])
                (when after [:p.feeding-total (let [marks (- (:begging after) (:begging p))]
                                              (if (pos? marks) (str marks " begging marks (−" (* 3 marks) " points)") "Enough food for everyone"))])])
             (when-not fed? [:label.checkbox [:input {:type "checkbox" :checked @queue-breed? :on-change #(reset! queue-breed? (.. % -target -checked))}] "Also queue breeding after feeding"])

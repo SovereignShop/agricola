@@ -1,0 +1,12 @@
+;; Original E construction printings; partial reed replacement and per-room bases.
+{:catalog/original-base-e-36-clay-roof {:passive {:clay-roof true}}
+ :catalog/original-base-e-37-clay-supports {:passive {:clay-supports true}}
+ :catalog/original-base-e-50-builder-s-trowel {:ability {:op :renovate-wood-clay}}
+ :catalog/original-base-e-157-thatcher
+ {:passive {:reed-construction-discount 1
+            :reed-discount-for-improvements #{:catalog/original-base-i-103-water-mill
+                                               :catalog/original-base-e-21-half-timbered-house
+                                               :catalog/original-base-i-84-chicken-coop
+                                               :catalog/original-base-i-71-holiday-house
+                                               :catalog/original-base-k-144-mansion
+                                               :catalog/original-base-i-86-corn-storehouse}}}}

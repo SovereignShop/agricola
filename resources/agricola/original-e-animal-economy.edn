@@ -1,0 +1,9 @@
+;; Original English E156/E215; Agricola Norge compendium pp3/24.
+{:catalog/original-base-e-156-brush-maker
+ {:triggers [{:event :convert-food :condition [:test [:> [:context :cooked-boar] 0]]
+              :effect {:op :collect-cooked-animal :optional? true :resource :boar}}]
+  :score {:type :collected-animals :resource :boar :thresholds [2 3 4]}}
+ :catalog/original-base-e-215-tenant-farmer
+ {:play [{:op :gain :goods {:sheep 1 :boar 1 :cattle 1}}]
+  :ability {:op :return-animal-loan}
+  :score {:type :unreturned-animals}}}

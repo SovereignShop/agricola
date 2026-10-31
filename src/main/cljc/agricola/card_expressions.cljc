@@ -1,11 +1,14 @@
 (ns agricola.card-expressions
   "Small, explicit numeric/predicate language shared by card rules and previews.
    Unknown forms fail closed; card prose is never an executable effect."
-  (:require [agricola.engine :as a] [clojure.string :as str]))
+  (:require [agricola.engine :as a] [agricola.card-rules :as cards] [clojure.string :as str]))
 (declare evaluate evaluate*)
 (defn field-list [player] (concat (filter #(= :field (:type %)) (:farm player)) (vals (:card-fields player))))
 (defn mixed-fields [player] (filter #(and (pos? (a/field-crop-count % :grain)) (pos? (a/field-crop-count % :vegetable))) (field-list player)))
-(defn dual-improvements [player] (filter #(get-in (a/improvement-definition %) [:major-or-minor]) (:minors player)))
+(defn minor-supply-improvements [player] (filter #(a/major-as-minor? player %) (:improvements player)))
+(defn dual-improvements [player]
+  (concat (filter #(get-in (a/improvement-definition %) [:major-or-minor]) (:minors player))
+          (minor-supply-improvements player)))
 (defn references? [form op] (boolean (some #(and (vector? %) (= op (first %))) (tree-seq coll? seq form))))
 (defn classification-options [player form]
   {:mixed-fields (when (and (references? form :grain-fields) (references? form :vegetable-fields)) (count (mixed-fields player)))
@@ -43,8 +46,10 @@
           :fences (count (:fences p)) :fences-left (a/fences-available p)
           :occupation-hand (count (get-in p [:hand :occupation]))
           :stables (count (filter :stable (:farm p)))
-          :occupations (count (:occupations p)) :minors (- (count (:minors p)) (:dual-as-major context 0))
-          :majors (+ (count (:improvements p)) (get context :dual-as-major (count (dual-improvements p))))
+          :occupations (cards/occupation-count p (:occupation-purpose context))
+          :minors (- (+ (count (:minors p)) (count (minor-supply-improvements p))) (:dual-as-major context 0))
+          :majors (+ (- (count (:improvements p)) (count (minor-supply-improvements p)))
+                     (get context :dual-as-major (count (dual-improvements p))))
           :improvements (+ (count (:minors p)) (count (:improvements p)))
           :cards (+ (count (:minors p)) (count (:improvements p)) (count (:occupations p)))
           :animals (reduce + (map #(a/amount p %) a/animals))
@@ -57,6 +62,8 @@
           :card-state (get-in p [:card-state x (second args)] 0)
           :other-occupations-below (boolean (some #(< (count (:occupations %)) (ev x))
                                          (if (= 1 (count (:players g))) [p] (remove #(= pid (:id %)) (:players g)))))
+          :other-owned-cards (reduce + 0 (for [other (:players g) :when (not= pid (:id other))]
+                                          (count (filter x (cards/owned other)))))
           :baking-improvements (count (a/baking-improvement-ids p))
           :ovens (count (a/returnable-ovens p))
           :cooking-improvements (count (filter #(:cook (a/improvement-definition %)) (a/owned-improvement-ids p)))
@@ -74,9 +81,13 @@
           :taken (get-in context [:taken x] 0)
           :source-goods (get-in context [:source-goods x] 0)
           :before-goods (get-in context [:before-goods x] 0)
+          :received-since (max 0 (- (get-in p [:received x] 0) (get-in context [:before-received x] 0)))
+          :already-baked-response (contains? (set (:bake-responders context)) pid)
           :context (get context x 0)
+          :event-card-id (or (:card context) (:improvement context))
+          :event-card-property (get (a/improvement-definition (or (:card context) (:improvement context))) x 0)
           :pile (get-in g [:piles x (second args)] 0)
-          :space-pile-count (count (for [space (:active g)
+          :space-pile-count (count (for [space (a/accumulation-spaces g)
                                        :let [amount (get-in g [:piles space x] 0)]
                                        :when (and (:accumulate (a/action-definition g space))
                                                   (apply (case (second args) := = :>= >= :> >) [amount (ev (nth args 2))]))] space))

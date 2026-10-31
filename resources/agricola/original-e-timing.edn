@@ -1,0 +1,35 @@
+;; Original E occupations, checked against English scans and Agricola Norge compendium.
+{:catalog/original-base-e-148-academic
+ {:passive {:academic true}}
+ :catalog/original-base-e-165-yeoman-farmer
+ {:score {:type :no-negative-points}}
+ :catalog/original-base-e-173-chief-s-daughter
+ {:public-hand-response {:event :occupation :scope :others
+                         :condition [:test [:= [:event-card-id] :catalog/original-base-e-172-chief]]}
+  :score {:type :house :values {:wood 0 :clay 1 :stone 3}}}
+ :catalog/original-base-e-178-hut-builder
+ {:play [{:op :set-card-state :values {:played-round [:round]}}]
+  :triggers [{:event :round-start :once? true
+              :condition [:test [:and [:= [:round] 11] [:<= [:card-state :catalog/original-base-e-178-hut-builder :played-round] 4]
+                                     [:not [:= [:house] :stone]]]]
+              :effect {:op :build-rooms :max-rooms 1 :free? true :optional? true}}]}
+ :catalog/original-base-e-180-hobby-farmer
+ {:play [{:op :gain :goods {:vegetable 1}}
+         {:op :sow-offer :max-fields 1 :allowed-crops #{:vegetable} :optional? true :unconditional? false}]}
+ :catalog/original-base-e-182-charcoal-burner
+ {:triggers [{:event :build-improvement :scope :all
+              :condition [:test [:> [:event-card-property :bake] 0]]
+              :effect {:op :gain :goods {:wood 1 :food 1}}}]}
+ :catalog/original-base-e-193-pastor
+ {:ability {:op :claim-goods :condition [:only-two-rooms] :goods {:wood 3 :clay 2 :reed 1 :stone 1}}}
+ :catalog/original-base-e-341-guildmaster
+ {:play [{:op :gain :goods {:wood [:* 2 [:+ [:if [:or [:owns-major :joinery] [:owns-card :catalog/original-base-k-122-sawmill]] 1 0]
+                                           [:if [:owns-card :catalog/original-base-i-258-cabinetmaker] 1 0]]]
+                           :clay [:* 2 [:+ [:if [:owns-major :pottery] 1 0] [:if [:owns-card :catalog/original-base-e-214-potter] 1 0]]]
+                           :reed [:* 2 [:+ [:if [:owns-major :basketry] 1 0] [:if [:owns-card :catalog/original-base-e-183-basketmaker] 1 0]]]}}]
+  :triggers [{:event :build-improvement :condition [:test [:= [:event-card-id] :joinery]] :effect {:op :gain :goods {:wood 4}}}
+             {:event :build-improvement :condition [:test [:= [:event-card-id] :pottery]] :effect {:op :gain :goods {:clay 4}}}
+             {:event :build-improvement :condition [:test [:= [:event-card-id] :basketry]] :effect {:op :gain :goods {:reed 3}}}
+             {:event :occupation :condition [:test [:= [:event-card-id] :catalog/original-base-i-258-cabinetmaker]] :effect {:op :gain :goods {:wood 4}}}
+             {:event :occupation :condition [:test [:= [:event-card-id] :catalog/original-base-e-214-potter]] :effect {:op :gain :goods {:clay 4}}}
+             {:event :occupation :condition [:test [:= [:event-card-id] :catalog/original-base-e-183-basketmaker]] :effect {:op :gain :goods {:reed 3}}}]}}

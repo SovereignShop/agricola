@@ -222,3 +222,15 @@
     (is (empty? (:effect-queue same-turn)))
     (is (= :stable (get-in next-turn [:effect-queue 0 :effect :op])))
     (is (true? (get-in (resolve! next-turn {:cell 2}) [:players 0 :farm 2 :stable])))))
+
+(deftest complete-original-e-deck-is-dealable-with-native-rules
+  (let [printed (set (for [[cid card] c/metadata
+                          :when (and (= "Original" (:edition card)) (= "Base" (:pack card)) (= "E" (:deck card)))] cid))
+        enabled (set (for [[cid card] c/cards
+                          :when (and (= "Original" (:edition card)) (= "Base" (:pack card)) (= "E" (:deck card)))] cid))
+        pool (filter #(= "original · base · e" (:pack-id %)) (store/hand-pool 5))]
+    (is (= printed enabled))
+    (is (= 126 (count enabled)))
+    (is (= {:minor 53 :occupation 73} (frequencies (map :kind pool))))
+    (doseq [card pool]
+      (is (seq (c/original-definitions (:id card))) (str "Native rules for " (:name card))))))

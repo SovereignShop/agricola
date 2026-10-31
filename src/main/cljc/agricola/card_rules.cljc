@@ -53,12 +53,30 @@
 (def expansion-definitions (read-edn "agricola/expansion-cards.edn"))
 (def original-definitions (merge (read-edn "agricola/original-cards.edn")
                                  (read-edn "agricola/original-e-minors-extra.edn")
-                                 (read-edn "agricola/original-e-occupations-extra.edn")))
+                                 (read-edn "agricola/original-e-occupations-extra.edn")
+                                 (read-edn "agricola/original-e-construction.edn")
+                                 (read-edn "agricola/original-e-improvement-permissions.edn")
+                                 (read-edn "agricola/original-e-animals.edn")
+                                 (read-edn "agricola/original-e-timing.edn")
+                                 (read-edn "agricola/original-e-plows.edn")
+                                 (read-edn "agricola/original-e-animal-economy.edn")
+                                 (read-edn "agricola/original-e-improvement-followups.edn")
+                                 (read-edn "agricola/original-e-action-occupations.edn")
+                                 (read-edn "agricola/original-e-resource-actions.edn")
+                                 (read-edn "agricola/original-e-conversions.edn")))
 (def definitions (merge (into {} (map (fn [[code rule]] [(id code) rule]) legacy-definitions)) expansion-definitions original-definitions))
 (def cards (into {} (for [[cid definition] definitions] [cid (merge (metadata cid) definition)])))
+(def public-hand-response-cards (vec (sort (for [[cid rule] cards :when (:public-hand-response rule)] cid))))
 (defn card [cid] (get cards cid))
 (defn owned [p] (concat (:occupations p) (:minors p)))
 (defn has? [p code] (boolean (some #{(id code)} (owned p))))
 (defn passives [p key] (keep #(get-in (card %) [:passive key]) (owned p)))
+(defn occupation-count
+  "Academic is two only for minor prerequisites and original Tutor/Reeve.
+   Playing it, occupation costs, and all other counts still see one card."
+  [p purpose]
+  (+ (count (:occupations p))
+     (if (#{:minor-prerequisite :original-tutor :original-reeve} purpose)
+       (count (filter true? (passives p :academic))) 0)))
 
 (defn active-owned [p] (remove #(get-in p [:card-state % :face-down?]) (owned p)))

@@ -8,7 +8,7 @@
 (defn p [g pid] (get-in g [:players pid]))
 (defn occupied-wood [g]
   (count (filter #(and (contains? (:occupied g) %) (:accumulate (a/action-definition g %))
-                      (get-in (a/action-definition g %) [:gain :wood])) (:active g))))
+                      (get-in (a/action-definition g %) [:gain :wood])) (a/accumulation-spaces g))))
 (defn wood-space? [g space] (and (:accumulate (a/action-definition g space)) (get-in (a/action-definition g space) [:gain :wood])))
 (defn resource-taken [context resource] (get-in context [:taken resource] 0))
 (defn stage-left [g space]

@@ -2020,7 +2020,13 @@ summary {
 
 /* Discord owns the outer window; use every pixel of the available Activity frame. */
 .discord-activity, .discord-activity body { min-height: 100%; }
-.discord-activity .app { min-height: 100dvh; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+.discord-activity {
+  --eurozone-safe-top: var(--discord-safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --eurozone-safe-right: var(--discord-safe-area-inset-right, env(safe-area-inset-right, 0px));
+  --eurozone-safe-bottom: var(--discord-safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  --eurozone-safe-left: var(--discord-safe-area-inset-left, env(safe-area-inset-left, 0px));
+}
+.discord-activity .app { min-height: 100dvh; padding: var(--eurozone-safe-top) var(--eurozone-safe-right) var(--eurozone-safe-bottom) var(--eurozone-safe-left); }
 .discord-activity .app > footer, .discord-activity .tagline { display: none; }
 .discord-activity .site-header { padding-block: 8px; }
 .discord-activity .game { max-width: none; }

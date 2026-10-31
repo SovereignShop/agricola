@@ -75,7 +75,7 @@ def check(base):
         guest.get_by_placeholder('Your name').fill('Ben')
         guest.get_by_role('button',name='Take a seat',exact=True).click()
         host.get_by_role('button',name='Start the game →').click()
-        expect(guest.get_by_role('heading',name='Make your move.')).to_be_visible()
+        expect(guest.locator('.tt-game')).to_be_visible()
         outsider=context('333'); page=outsider.new_page();page.goto(link)
         expect(page.locator('body')).to_contain_text('limited to invited Discord users')
         outsider.close();host_ctx.close();guest_ctx.close()
@@ -94,10 +94,10 @@ def check(base):
                 frame.get_by_role('button',name='Take a seat',exact=True).click()
         frames[0].get_by_role('button',name='Start the game →').click()
         for frame in frames:
-            expect(frame.get_by_role('heading',name='Make your move.')).to_be_visible()
-            expect(frame.locator('.hand-panel .hand-card')).to_have_count(7)
-            expect(frame.get_by_text('Fullscreen: use Discord’s controls')).to_be_visible()
-        actor=next(f for f in frames if f.get_by_role('button',name='Forest',exact=False).is_enabled())
+            expect(frame.locator('.tt-game')).to_be_visible()
+            expect(frame.locator('[data-deck="hand-occupation"] .tt-card-face:not(.tt-card-back)')).to_have_count(7)
+            expect(frame.locator('.tt-viewport')).to_be_visible()
+        actor=next(f for f in frames if f.locator('.action-card[data-action="wood"]').is_enabled())
         choose_action(actor,'Forest');confirm_action(actor)
         for frame in frames:
             expect(frame.locator('[data-piece-key^="worker::wood:"]')).to_have_count(1)
@@ -146,8 +146,8 @@ def check(base):
                 expect(frame.get_by_label('Players expected')).to_have_count(0)
                 if count==5: expect(frame.locator('.draw-packet .hand-card')).to_have_count(17)
                 else:
-                    expect(frame.get_by_role('heading',name='Make your move.')).to_be_visible()
-                    expect(frame.locator('.hand-panel .hand-card')).to_have_count(7)
+                    expect(frame.locator('.tt-game')).to_be_visible()
+                    expect(frame.locator('[data-deck="hand-occupation"] .tt-card-face:not(.tt-card-back)')).to_have_count(7)
             for ctx in contexts: ctx.close()
             print(f'{count}-player Activity: host settings, guest synchronization, readiness, reload and start passed')
         assert not errors,errors

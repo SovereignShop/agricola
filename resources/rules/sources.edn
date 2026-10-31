@@ -24,7 +24,13 @@
    :url "http://playagricola.com/forums/index.php?board=23.0"
    :note "Check card edition and printing. Separate expansion boards are linked from the forum index."}]
  :open-questions
- [{:id :lazy-sowman-empty-sow-action
+ [{:id :original-ratcatcher-adoption
+   :cards [:catalog/original-base-e-198-ratcatcher :revised-base/a092]
+   :question "How does Ratcatcher interact with a newborn adopted during rounds ten or twelve?"
+   :current-behavior "Ratcatcher suppresses one adult offspring's placement. An adopted newborn becomes eligible if no offspring was already suppressed; guests are excluded. An already suppressed worker remains idle after later family growth."
+   :status :implementation-assumption
+   :sources ["https://agricola.no/wp-content/uploads/2024/07/compendium.pdf"]}
+  {:id :lazy-sowman-empty-sow-action
    :cards [:catalog/revised-artifex-expansion-a-94-lazy-sowman]
    :question "May Lazy Sowman use Grain Utilization solely to decline Sow, without sowing or baking, including when no sowing plan is possible?"
    :current-behavior "A board placement must still perform a legal action. Declining Sow completes Cultivation when a field is plowed, or Grain Utilization when bread is baked; otherwise the uncommitted placement is cancelled. Generic Sow offers without sowing potential are omitted."
@@ -41,7 +47,79 @@
    :status :unresolved
    :note "No explicit publisher or designer clarification was found. Do not present either interpretation as a verified ruling."}]
  :regressions
- [{:id :original-e-printed-cost-corrections :cards [:catalog/original-base-e-11-field :catalog/original-base-e-24-animal-pen]
+ [{:id :original-room-payments :cards [:catalog/original-base-e-36-clay-roof :catalog/original-base-e-37-clay-supports :catalog/original-base-e-157-thatcher]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Clay Supports supplies an alternate base price per clay room; it does not combine with Carpenter's base price. Clay Roof replacements and Thatcher discounts apply afterward. Different rooms can use different payments."
+   :test agricola.original-e-construction-test/clay-supports-sets-an-alternative-base-with-optional-cost-modifiers}
+  {:id :original-trowel-boundary :cards [:catalog/original-base-e-50-builder-s-trowel]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Builder's Trowel permits a paid wooden-to-clay renovation between actions, including after a harvest. It cannot interrupt another action or use Conservator to jump to stone. Renovation triggers still apply."
+   :test agricola.original-e-construction-test/builders-trowel-is-a-paid-boundary-action-that-triggers-renovation-cards}
+  {:id :original-exclusive-plows :cards [:catalog/original-base-e-61-riding-plow :catalog/original-base-e-62-turnwrest-plow :catalog/original-base-e-195-plow-maker]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Only one plow is used per plowing-space action. Plow Maker can add a paid fourth field. All fields exist before sowing, and the chosen plow loses only one use after the placement commits."
+   :test agricola.original-e-plows-test/cultivation-can-sow-all-four-fields-in-the-same-action}
+  {:id :original-academic-counts :cards [:catalog/original-base-e-148-academic]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Academic counts twice for minor-improvement prerequisites, Tutor and Reeve, but is one played occupation for ordinary counts and triggers."
+   :test agricola.original-e-timing-test/academic-counts-twice-only-in-the-printed-contexts}
+  {:id :original-chief-response :cards [:catalog/original-base-e-173-chief-s-daughter]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Another player's Chief offers a free Chief's Daughter play with normal play triggers. Public response windows must not disclose whether a private hand contains her."
+   :test agricola.original-e-timing-test/chief-response-window-does-not-reveal-whether-daughter-is-held}
+  {:id :original-late-hut-builder :cards [:catalog/original-base-e-178-hut-builder]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Hut Builder can be played after round four and still counts as an occupation, but then grants no round-eleven room."
+   :test agricola.original-e-timing-test/hut-builder-is-a-single-round-eleven-offer}
+  {:id :original-pastor-choice :cards [:catalog/original-base-e-193-pastor]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Pastor's owner can choose when to claim the materials once every other player has at least three rooms, provided the owner still has only two. The claim can happen only once."
+   :test agricola.original-e-timing-test/pastor-can-wait-until-chosen-and-cannot-claim-twice}
+  {:id :original-guildmaster-timing :cards [:catalog/original-base-e-341-guildmaster]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Guildmaster rewards existing workshops on play and later workshop acquisitions after their purchase price is paid; the reward cannot fund its triggering purchase."
+   :test agricola.original-e-timing-test/guildmaster-counts-existing-cards-and-later-acquisitions-separately}
+  {:id :original-mixed-animal-housing :cards [:catalog/original-base-e-29-shepherd-s-pipe :catalog/original-base-e-58-animal-yard :catalog/original-base-e-208-stablemaster :catalog/original-base-e-216-animal-keeper]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Animal Yard and Animal Keeper allow mixed species. Shepherd's Pipe requires a sheep in ordinary capacity before its extra sheep slots apply. Stablemaster upgrades exactly one unfenced stable; Pipe does not modify that stable."
+   :test agricola.original-animals-test/animal-yard-pipe-and-trough-preserve-a-normal-slot-for-sheep}
+  {:id :original-shepherd-offspring :cards [:catalog/original-base-e-203-shepherd]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Four parent sheep can produce two lambs, subject to available accommodation. A player can accept fewer; feeding and queued breeding choices enumerate the same legal counts."
+   :test agricola.original-animals-test/shepherd-breeds-up-to-two-only-from-four-parent-sheep}
+  {:id :original-tenant-final-settlement :cards [:catalog/original-base-e-215-tenant-farmer]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Repayment is an explicit one-time choice, including a mandatory saved choice before final scoring. Partial early repayment settles the whole loan; each missing species loses one point unless Yeoman Farmer exempts it."
+   :test agricola.original-animal-economy-test/early-partial-settlement-is-final-and-never-cooks-returned-animals}
+  {:id :original-brush-cooking-receipts :cards [:catalog/original-base-e-156-brush-maker]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Brush Maker may collect actually cooked wild boars, including feeding and surplus cooking. Payments, returned loan animals and uncooked releases never create markers."
+   :test agricola.original-animal-economy-test/brush-maker-receives-feeding-and-overflow-cooking-but-not-release}
+  {:id :original-crock-batches :cards [:catalog/original-base-e-19-gypsy-s-crock]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Gypsy's Crock counts pairs of goods converted together using a Fireplace-family improvement. A single baking action may combine grain and other cooked goods; oven-only baking does not qualify."
+   :test agricola.original-conversions-test/simultaneous-baking-and-cooking-can-make-a-pair}
+  {:id :original-plane-choice :cards [:catalog/original-base-e-26-plane]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Plane adds one food to the qualifying wood conversion or allows a second wood for exactly two food instead. This choice is submitted with the harvest conversion, not silently assumed."
+   :test agricola.original-conversions-test/plane-offers-a-real-extra-wood-choice-only-for-joinery}
+  {:id :original-madonna-returns :cards [:catalog/original-base-e-38-madonna-statue]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Madonna Statue discards two distinct owned improvements. Discarded majors return to supply; minors leave play. Their continuing effects, remaining deliveries, fields and animal capacity are removed."
+   :test agricola.original-e-improvement-followups-test/madonna-returns-majors-removes-minors-and-cancels-their-future-deliveries}
+  {:id :original-merchant-action-scope :cards [:catalog/original-base-e-179-merchant]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Merchant offers one paid additional improvement action after the first action's immediate effects. It inherits minor-only or major/minor permission and cannot trigger itself recursively."
+   :test agricola.original-e-improvement-followups-test/merchant-inherits-granted-action-restrictions-and-triggers-through-scholar}
+  {:id :original-fisherman-fees :cards [:catalog/original-base-e-161-fisherman]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Fisherman doubles only the Fishing pile, then pays each other owner once per named improvement. Fees can exceed the bonus and must be payable. Mixed-edition play explicitly treats the equivalent Revised Canoe as a fee-bearing physical copy."
+   :test agricola.original-e-resource-actions-test/fisherman-recognizes-the-equivalent-revised-canoe-print}
+  {:id :original-forester-payment :cards [:catalog/original-base-e-164-master-forester]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation
+   :rule "Master Forester starts with an empty public space and adds two wood each later round. Other players pay two food before collecting wood; subsequent card income cannot fund that fee. Its owner pays nothing."
+   :test agricola.original-e-resource-actions-test/master-forester-owner-free-other-players-pay-before-the-bonus}
+  {:id :original-e-printed-cost-corrections :cards [:catalog/original-base-e-11-field :catalog/original-base-e-24-animal-pen]
    :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf"
    :rule "Original Field costs one food; Animal Pen costs two wood. Catalogue omissions must not make them free."
    :test agricola.original-cards-test/printed-prerequisites-and-costs-are-enforced-before-play}
@@ -57,7 +135,7 @@
    :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf"
    :rule "Original Hedge Keeper supplies up to three additional fences once per turn, after a first fence supplied by the player or another card. Mini Pasture's fences and the extra fences are validated together."
    :test agricola.original-fencing-test/mini-pasture-validates-the-complete-pasture-layout}
-  {:id :original-bakers-oven :cards [:catalog/original-base-e-14-bakers-oven]
+  {:id :original-bakers-oven :cards [:catalog/original-base-e-14-baker-s-oven]
    :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf"
    :rule "Baker's Oven returns an oven, not any baking improvement. Returned major ovens reenter the supply; the new oven bakes at most two grain for five food each per baking action. Other retained ovens can also bake."
    :test agricola.original-e-minors-extra-test/bakers-oven-immediate-bake-uses-the-new-oven-and-other-retained-ovens}

@@ -1,0 +1,18 @@
+;; Original English E deck; Compendium v9 Fisherman / Master Forester.
+;; Revised A078 is the equivalent Canoe print and pays the same named-card fee.
+{:catalog/original-base-e-161-fisherman
+ {:triggers [{:event :use-space :spaces #{:fishing}
+              :effect {:op :fisherman :optional? true
+                       :recipients #{:catalog/original-base-e-12-fishing-rod :catalog/original-base-e-22-raft
+                                     :catalog/original-base-e-30-canoe :catalog/original-base-i-95-fish-trap
+                                     :catalog/original-base-k-126-landing-net :revised-base/a078}
+                       ;; Only the shortfall is paid before distributing the bonus.
+                       :cost {:food [:max 0 [:- [:other-owned-cards #{:catalog/original-base-e-12-fishing-rod
+                                                                    :catalog/original-base-e-22-raft
+                                                                    :catalog/original-base-e-30-canoe
+                                                                    :catalog/original-base-i-95-fish-trap
+                                                                    :catalog/original-base-k-126-landing-net :revised-base/a078}]
+                                               [:taken :food]]]}}}]}
+ :catalog/original-base-e-164-master-forester
+ {:action-space :master-forester
+  :play [{:op :open-accumulation :goods {:wood 0}}]}}
