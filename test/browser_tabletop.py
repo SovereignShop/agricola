@@ -94,6 +94,33 @@ def check(base, fixtures):
         page.mouse.move(x+120,y+90)
         assert camera.evaluate('e=>[e.scrollLeft,e.scrollTop]')==pan_end
         expect(page.get_by_role('dialog')).to_have_count(0)
+        # Holding the RIGHT button remaps wheel input only while held. Browser
+        # menu handling must not swallow the gesture; zoom retains precedence.
+        camera.evaluate("e=>e.addEventListener('contextmenu',event=>window.tableMenuPrevented=event.defaultPrevented)")
+        page.mouse.move(x,y);page.mouse.down(button='right')
+        assert page.evaluate('tableMenuPrevented') is True
+        wheel_start=camera.evaluate('e=>[e.scrollLeft,e.scrollTop]')
+        page.mouse.wheel(0,120)
+        page.wait_for_function('(x)=>Math.abs(document.querySelector(".tt-viewport").scrollLeft-x)<2',arg=wheel_start[0]+120)
+        assert camera.evaluate('e=>e.scrollTop')==wheel_start[1]
+        page.mouse.wheel(0,-60)
+        page.wait_for_function('(x)=>Math.abs(document.querySelector(".tt-viewport").scrollLeft-x)<2',arg=wheel_start[0]+60)
+        z=camera.get_attribute('data-zoom')
+        page.keyboard.down('Control');page.mouse.wheel(0,-40);page.keyboard.up('Control')
+        expect(camera).not_to_have_attribute('data-zoom',z)
+        page.mouse.up(button='right')
+        # A release outside the table also clears the right-button modifier.
+        page.mouse.move(x,y);page.mouse.down(button='right')
+        page.mouse.move(12,12);page.mouse.up(button='right');page.mouse.move(x,y)
+        wheel_end=camera.evaluate('e=>[e.scrollLeft,e.scrollTop]')
+        page.mouse.wheel(0,60)
+        page.wait_for_function('(y)=>document.querySelector(".tt-viewport").scrollTop>y',arg=wheel_end[1])
+        assert camera.evaluate('e=>e.scrollLeft')==wheel_end[0]
+        expect(page.get_by_role('dialog')).to_have_count(0)
+        # Shift + right-click still allows the normal context menu.
+        page.keyboard.down('Shift');page.mouse.click(x,y,button='right');page.keyboard.up('Shift')
+        assert page.evaluate('tableMenuPrevented') is False
+        page.keyboard.press('Escape')
         focus('Ada')
         deck=page.locator('[data-owner="0"][data-deck="hand-occupation"]')
         expect(deck).to_have_attribute('data-mode','spread')

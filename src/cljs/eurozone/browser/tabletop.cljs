@@ -305,10 +305,39 @@
       (fn [e] (when (< (.now js/Date) @suppress-until) (.preventDefault e) (.stopImmediatePropagation e)))
       #js {:capture true})))
 
+(defn wheel-camera! [el zoom! pan auto-fit? animation]
+  ;; WheelEvent.buttons is not reliable in every browser, so remember pointer
+  ;; state and clear it even when release happens outside the table.
+  (let [right? (atom false)
+        track! (fn [e] (when (not= "touch" (.-pointerType e))
+                         (reset! right? (and (not (.-shiftKey e)) (pos? (bit-and 2 (.-buttons e)))))))
+        clear! (fn [_] (reset! right? false))
+        wheel! (fn [e]
+                 (cond
+                   (or (.-ctrlKey e) (.-metaKey e))
+                   (do (.preventDefault e) (zoom! (js/Math.exp (* -0.003 (.-deltaY e))) (.-clientX e) (.-clientY e)))
+                   @right?
+                   (let [before (.-scrollLeft el)
+                         unit (case (.-deltaMode e) 1 16 2 (.-clientWidth el) 1)
+                         delta (if (zero? (.-deltaY e)) (.-deltaX e) (.-deltaY e))]
+                     (.preventDefault e)
+                     (reset! auto-fit? false)
+                     (when @animation (js/cancelAnimationFrame @animation) (reset! animation nil))
+                     (set! (.-scrollLeft el) (+ before (* unit delta)))
+                     ;; Preserve any simultaneous drag's origin after scrolling.
+                     (when @pan (swap! pan update 2 + (- (.-scrollLeft el) before))))))
+        menu! (fn [e] (when (and (not (.-shiftKey e)) (or @right? (= 2 (.-button e)))) (.preventDefault e)))
+        listeners [[el "wheel" wheel! #js {:passive false}]
+                   [el "pointerdown" track! true] [el "pointermove" track! true]
+                   [js/window "pointerup" track! true] [js/window "pointercancel" clear! true]
+                   [js/window "blur" clear! false] [el "contextmenu" menu! false]]]
+    (doseq [[target event handler options] listeners] (.addEventListener target event handler options))
+    (fn [] (doseq [[target event handler options] listeners] (.removeEventListener target event handler options)))))
+
 (defn table [room renderers]
   (r/with-let [prefs (r/atom (load-arrangement)) gesture (r/atom nil) zoom (r/atom 0.3)
                view (r/atom :board) nodes (atom {}) geometry (atom nil) animation (atom nil)
-               popup (r/atom nil) dismissed (r/atom nil) pan (atom nil) auto-fit? (atom true) observer (atom nil) shared-height (r/atom 2100) shared-observer (atom nil)
+               popup (r/atom nil) dismissed (r/atom nil) pan (atom nil) auto-fit? (atom true) wheel-cleanup (atom nil) observer (atom nil) shared-height (r/atom 2100) shared-observer (atom nil)
                fit! (fn [animate?] (let [geo @geometry target (if (number? @view) (some #(when (= @view (get-in % [:player :id])) %) (:players geo)) nil)]
                                      (camera! nodes zoom (or target (assoc geo :x 0 :y 0)) animate? animation)))
                focus! (fn [id] (reset! auto-fit? true) (reset! view id) (dispatch :inspect-player (when (number? id) id))
@@ -362,7 +391,7 @@
        [:div.tt-turn-line [:span.tt-round (str "Round " (:round g) " / 14")]
         [controls/turn-banner room open-decision!]
         (when (number? @view) [button "Farm actions" #(do (reset! dismissed decision-key) (reset! popup {:kind :farm :pid @view}))])]
-       [:div.tt-viewport {:tab-index 0 :aria-label "Tabletop. Drag to pan; pinch or Control or Command wheel to zoom."
+       [:div.tt-viewport {:tab-index 0 :aria-label "Tabletop. Drag to pan; hold right mouse button and scroll to pan horizontally; pinch or Control or Command wheel to zoom."
                           :data-zoom @zoom
                           :on-key-down (fn [e] (when (and (not (or (.-ctrlKey e) (.-metaKey e))) (= (.-target e) (.-currentTarget e)))
                                                 (case (.-key e)
@@ -373,8 +402,8 @@
                                  (when (and el (not= el (:viewport @nodes)))
                                    (swap! nodes assoc :viewport el)
                                    (touch-camera! el nodes zoom animation auto-fit? gesture)
-                                   (.addEventListener el "wheel" (fn [e] (when (or (.-ctrlKey e) (.-metaKey e))
-                                                                         (.preventDefault e) (zoom! (js/Math.exp (* -0.003 (.-deltaY e))) (.-clientX e) (.-clientY e)))) #js {:passive false})
+                                   (when @wheel-cleanup (@wheel-cleanup))
+                                   (reset! wheel-cleanup (wheel-camera! el zoom! pan auto-fit? animation))
                                    ;; Event names must survive advanced property renaming.
                                    (.addEventListener el "pointerdown"
                                          (fn [e] (when (and (not= "touch" (.-pointerType e)) (or (= 1 (.-button e)) (and (= 0 (.-button e)) (not (.closest (.-target e) "button,a,input,select,textarea,[role=button]")))))
@@ -429,7 +458,7 @@
                                       :data-piece-key (str "goods:" pid ":" resource) :data-piece-type (name resource) :data-piece-count amount}
                    [art/piece resource] [:b.pile-count amount]])])
              (for [d decks] ^{:key (:path d)} [deck d player prefs gesture zoom open-deck!])])]]]
-       [:div.tt-table-edge [:span "Drag to pan · pinch or Ctrl / ⌘ + wheel to zoom · drag ⠿ to arrange"]
+       [:div.tt-table-edge [:span {:title "Shift + right-click opens the browser menu."} "Drag to pan · right button + scroll to pan sideways · pinch or Ctrl / ⌘ + wheel to zoom"]
         [button "Chat" #(do (reset! dismissed decision-key) (reset! popup {:kind :chat}))]
         (when (and decision? (= decision-key @dismissed)) [button decision-title #(reset! dismissed nil)])]
        [:div.tt-modal
@@ -484,5 +513,6 @@
         ;; Kept outside the menu so votes and results can arrive while the table is visible.
         [:div.tt-takeback {:on-click-capture #(when (.closest (.-target %) "button") (close!))} [controls/takeback room]]]] )
     (finally (when @observer (.disconnect @observer))
+             (when @wheel-cleanup (@wheel-cleanup))
              (when @shared-observer (.disconnect @shared-observer))
              (when @animation (js/cancelAnimationFrame @animation)))))
