@@ -375,18 +375,19 @@
                                    (touch-camera! el nodes zoom animation auto-fit? gesture)
                                    (.addEventListener el "wheel" (fn [e] (when (or (.-ctrlKey e) (.-metaKey e))
                                                                          (.preventDefault e) (zoom! (js/Math.exp (* -0.003 (.-deltaY e))) (.-clientX e) (.-clientY e)))) #js {:passive false})
-                                   (set! (.-onpointerdown el)
+                                   ;; Event names must survive advanced property renaming.
+                                   (.addEventListener el "pointerdown"
                                          (fn [e] (when (and (not= "touch" (.-pointerType e)) (or (= 1 (.-button e)) (and (= 0 (.-button e)) (not (.closest (.-target e) "button,a,input,select,textarea,[role=button]")))))
                                                    (.preventDefault e) (.setPointerCapture el (.-pointerId e))
                                                    (when @animation (js/cancelAnimationFrame @animation) (reset! animation nil))
                                                    (reset! auto-fit? false)
                                                    (reset! pan [(.-clientX e) (.-clientY e) (.-scrollLeft el) (.-scrollTop el)])
                                                    (.add (.-classList el) "is-panning"))))
-                                   (set! (.-onpointermove el) (fn [e] (when-let [[x y sx sy] @pan]
+                                   (.addEventListener el "pointermove" (fn [e] (when-let [[x y sx sy] @pan]
                                                                                      (set! (.-scrollLeft el) (- sx (- (.-clientX e) x)))
                                                                                      (set! (.-scrollTop el) (- sy (- (.-clientY e) y))))))
-                                   (doseq [event ["onpointerup" "onpointercancel" "onlostpointercapture"]]
-                                     (aset el event (fn [_] (reset! pan nil) (.remove (.-classList el) "is-panning"))))
+                                   (doseq [event ["pointerup" "pointercancel" "lostpointercapture"]]
+                                     (.addEventListener el event (fn [_] (reset! pan nil) (.remove (.-classList el) "is-panning"))))
                                    (reset! observer (js/ResizeObserver. (fn [_] (when @auto-fit? (fit! false)))))
                                    (.observe @observer el)
                                    (js/requestAnimationFrame #(when @auto-fit? (fit! false)))))}

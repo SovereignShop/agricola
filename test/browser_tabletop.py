@@ -80,6 +80,20 @@ def check(base, fixtures):
         scrollables=page.locator('.tt-world *').evaluate_all('els=>els.filter(e=>{const s=getComputedStyle(e);return [s.overflowX,s.overflowY].some(v=>v==="auto"||v==="scroll")}).map(e=>e.className)')
         assert not scrollables,scrollables
         page.screenshot(path='/tmp/eurozone-tabletop-board.png')
+        # Exercise real mouse dragging against the advanced build. Property-
+        # assigned pointer handlers can be renamed away even when touch works.
+        camera=page.locator('.tt-viewport')
+        pan_start=camera.evaluate('e=>[e.scrollLeft,e.scrollTop]')
+        x=viewport['x']+12;y=viewport['y']+60
+        page.mouse.move(x,y);page.mouse.down();page.mouse.move(x+80,y+50,steps=8)
+        expect(camera).to_have_class(re.compile(r'\bis-panning\b'))
+        page.mouse.up()
+        pan_end=camera.evaluate('e=>[e.scrollLeft,e.scrollTop]')
+        assert abs(pan_start[0]-pan_end[0]-80)<2 and abs(pan_start[1]-pan_end[1]-50)<2,(pan_start,pan_end)
+        expect(camera).not_to_have_class(re.compile(r'\bis-panning\b'))
+        page.mouse.move(x+120,y+90)
+        assert camera.evaluate('e=>[e.scrollLeft,e.scrollTop]')==pan_end
+        expect(page.get_by_role('dialog')).to_have_count(0)
         focus('Ada')
         deck=page.locator('[data-owner="0"][data-deck="hand-occupation"]')
         expect(deck).to_have_attribute('data-mode','spread')
