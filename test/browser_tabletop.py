@@ -9,7 +9,7 @@ from browser_smoke import main
 
 
 def check(base, fixtures):
-    five, online, optional, major, upgrade = fixtures.split(',')
+    five, online, optional, major, upgrade, online_five = fixtures.split(',')
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=True, executable_path=os.environ['EUROZONE_BROWSER'])
         context = browser.new_context(viewport={'width':1680,'height':1050})
@@ -292,6 +292,21 @@ def check(base, fixtures):
         expect(guest.locator('.tt-shared .action-card:not(:disabled)')).to_have_count(0)
         expect(guest.locator('.tt-game')).to_have_attribute('data-material','tan')
         assert guest.evaluate('Object.keys(localStorage).some(k=>k.startsWith("eurozone-tabletop-v1:"))')  # Host prefs exist, but are not used for this user.
+        # A taller hand on the left must not leave an empty row on the right.
+        open_game(online_five)
+        areas=page.locator('.tt-player').evaluate_all('els=>els.map(e=>({x:e.offsetLeft,y:e.offsetTop,w:e.offsetWidth,h:e.offsetHeight}))')
+        assert len(areas)==5
+        for upper,lower in [(0,2),(1,3)]:
+            assert areas[lower]['y']==areas[upper]['y']+areas[upper]['h']+32
+        assert areas[3]['y']<areas[2]['y']
+        assert areas[0]['x']+areas[0]['w']==areas[2]['x']+areas[2]['w']
+        assert areas[1]['x']==areas[3]['x']
+        shared=page.locator('.tt-shared').evaluate('e=>({x:e.offsetLeft,y:e.offsetTop,w:e.offsetWidth,h:e.offsetHeight})')
+        assert 0<areas[4]['y']-shared['y']-shared['h']<=33
+        for i,a in enumerate(areas):
+            for b in areas[i+1:]+[shared]:
+                assert a['x']+a['w']<=b['x'] or b['x']+b['w']<=a['x'] or a['y']+a['h']<=b['y'] or b['y']+b['h']<=a['y']
+        page.screenshot(path='/tmp/eurozone-compact-five-players.png')
         assert not errors,errors
         print('PASS: five-player camera, no subpanel scroll, deck stack/spread popups, drag/snap/save, surfaces, placement confirmation, spatial action, mobile, optional effect, takeback, online privacy and per-user isolation',flush=True)
         browser.close()

@@ -36,5 +36,12 @@
                                      upgrade? (update :available-improvements disj :fireplace-2)
                                      (not upgrade?) (update-in [:players 0] a/gain {:clay 2}))]
                          (store/save! s (swap! (:rooms s) assoc-in [mid :state] state)) mid))
-          major (make-major false) upgrade (make-major true)]
-      (println (str/join "," [id online effect-id major upgrade])))))
+          major (make-major false) upgrade (make-major true)
+          online-five (:id (store/transact! s token {:event :create :mode :online :name "Ada" :expected-players 5
+                                                     :title "Five-player table" :setup {:mode :random}}))]
+      (doseq [pid (range 1 5)]
+        (store/transact! s (apply str (repeat 64 (nth "abcde" pid)))
+                         {:event :join :id online-five :revision (dec pid) :name (nth names pid)}))
+      (store/transact! s token {:event :start :id online-five :revision 4})
+      (store/save! s (swap! (:rooms s) assoc-in [online-five :state] g))
+      (println (str/join "," [id online effect-id major upgrade online-five])))))

@@ -202,16 +202,23 @@
 (defn table-geometry [players center-height]
   (let [sides (take 4 players) left-w (apply max 732 (map :w (take-nth 2 sides)))
         right-w (if (next sides) (apply max 732 (map :w (take-nth 2 (rest sides)))) 0)
-        row-heights (mapv #(apply max (map :h %)) (partition-all 2 sides))
-        upper-h (+ 120 (reduce + row-heights) (* 64 (max 0 (dec (count row-heights)))))
         center-x (+ left-w 80) center-w 2100
         lower (nth players 4 nil)
-        placements (mapv (fn [i p] (assoc p :x (if (even? i) 48 (+ center-x center-w 64))
-                                        :y (+ 64 (reduce + (take (quot i 2) row-heights)) (* 64 (quot i 2))))) (range) sides)
-        bottom-y (max (+ 128 center-height) upper-h)
-        placements (cond-> placements lower (conj (assoc lower :x (+ center-x (/ (- center-w (:w lower)) 2)) :y bottom-y)))]
+        ;; Each side follows its own contents instead of inheriting the taller
+        ;; hand area across the table. Align farms toward the shared board.
+        placements (reduce (fn [placed [i p]]
+                             (let [above (get placed (- i 2))]
+                               (conj placed (assoc p :x (if (even? i) (+ 48 (- left-w (:w p))) (+ center-x center-w 64))
+                                                    :y (if above (+ (:y above) (:h above) 32) 64)))))
+                           [] (map-indexed vector sides))
+        lower-x (when lower (+ center-x (/ (- center-w (:w lower)) 2)))
+        overlapping (when lower (filter #(and (< (:x %) (+ lower-x (:w lower)))
+                                                (< lower-x (+ (:x %) (:w %)))) placements))
+        bottom-y (+ 32 (apply max (+ 64 center-height) (map #(+ (:y %) (:h %)) overlapping)))
+        placements (cond-> placements lower (conj (assoc lower :x lower-x :y bottom-y)))]
     {:players placements :board {:x center-x :y 64 :w center-w :h center-height}
-     :w (+ center-x center-w 64 right-w 48) :h (+ (if lower (+ bottom-y (:h lower)) (max (+ 64 center-height) upper-h)) 64)}))
+     :w (+ center-x center-w 64 right-w 48)
+     :h (+ 64 (apply max (+ 64 center-height) (map #(+ (:y %) (:h %)) placements)))}))
 
 (defn apply-camera! [viewport canvas world zoom x y]
   (when (and viewport canvas world)
