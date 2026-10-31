@@ -182,25 +182,29 @@
 (defn player-objects [p hand prefs focus]
   (let [pid (:id p) names [[:hand-occupation "Hand · occupations" :occupation] [:hand-minor "Hand · minors" :minor]
                          [:occupations "Played · occupations" nil] [:improvements "Played · improvements" nil]]
+        hand-width (first (deck-size (count (:occupation hand)) (= :spread (get-in prefs [pid :hand-occupation :mode] (if (= pid focus) :spread :stack)))))
         played-width (first (deck-size (count (:occupations p)) (= :spread (get-in prefs [pid :occupations :mode] :stack))))
+        improvements-x (if (or (some? hand) (seq (:occupations p))) (+ 760 played-width) 736)
         decks (for [[i [id label kind]] (map-indexed vector names)
-                    :let [hidden? (and kind (nil? hand))
-                          ids (vec (if kind (if hidden? (range (get-in p [:hand-counts kind] 0)) (get hand kind))
+                    :let [ids (vec (if kind (get hand kind)
                                      (if (= id :occupations) (:occupations p) (concat (sort (:improvements p)) (:minors p)))))
-                          path [pid id] spread? (= :spread (get-in prefs (conj path :mode) (if (and kind (= pid focus)) :spread :stack)))]]
-                {:path path :label label :ids ids :hidden? hidden? :spread? spread?
-                 :xy (position prefs path (nth [[24 704] [376 704] [752 160] [(+ 792 played-width) 160]] i)) :size (deck-size (count ids) spread?)})
+                          path [pid id] spread? (= :spread (get-in prefs (conj path :mode) (if (and kind (= pid focus)) :spread :stack)))]
+                    ;; Opponents need only their public pieces; omitted decks also
+                    ;; leave the camera bounds, including old saved hand positions.
+                    :when (if kind (some? hand) (or (some? hand) (seq ids)))]
+                {:path path :label label :ids ids :spread? spread?
+                 :xy (position prefs path (nth [[24 704] [(+ 48 hand-width) 704] [736 160] [improvements-x 160]] i)) :size (deck-size (count ids) spread?)})
         inventory {:path [pid :inventory] :xy (position prefs [pid :inventory] [24 80]) :size [680 64]}
         objects (conj (vec decks) inventory)]
-    {:decks decks :inventory inventory :w (max 1080 (+ 28 (apply max (map #(+ (first (:xy %)) (first (:size %))) objects))))
-     :h (max 1000 (+ 40 (apply max (map #(+ (second (:xy %)) (second (:size %))) objects))))}))
+    {:decks decks :inventory inventory :w (max 732 (+ 28 (apply max (map #(+ (first (:xy %)) (first (:size %))) objects))))
+     :h (max 700 (+ 40 (apply max (map #(+ (second (:xy %)) (second (:size %))) objects))))}))
 
 (defn table-geometry [players center-height]
-  (let [sides (take 4 players) left-w (apply max 1080 (map :w (take-nth 2 sides)))
-        right-w (if (next sides) (apply max 1080 (map :w (take-nth 2 (rest sides)))) 0)
+  (let [sides (take 4 players) left-w (apply max 732 (map :w (take-nth 2 sides)))
+        right-w (if (next sides) (apply max 732 (map :w (take-nth 2 (rest sides)))) 0)
         row-heights (mapv #(apply max (map :h %)) (partition-all 2 sides))
         upper-h (+ 120 (reduce + row-heights) (* 64 (max 0 (dec (count row-heights)))))
-        center-x (+ left-w 104) center-w 2100
+        center-x (+ left-w 80) center-w 2100
         lower (nth players 4 nil)
         placements (mapv (fn [i p] (assoc p :x (if (even? i) 48 (+ center-x center-w 64))
                                         :y (+ 64 (reduce + (take (quot i 2) row-heights)) (* 64 (quot i 2))))) (range) sides)

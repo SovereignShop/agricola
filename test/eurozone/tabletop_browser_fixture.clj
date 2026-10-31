@@ -17,7 +17,8 @@
         _ (store/transact! s token {:event :start :id online :revision 1})
         private-game (-> (cards/initialize (a/new-game ["Ada" "Ben"] (vec (mapcat identity a/stages)) 0))
                          (assoc-in [:players 0 :hand] {:occupation [(rules/id :a112)] :minor []})
-                         (assoc-in [:players 1 :hand] {:occupation (mapv rules/id [:a116 :a115]) :minor []}))
+                         (assoc-in [:players 1 :hand] {:occupation [(rules/id :a115)] :minor []})
+                         (assoc-in [:players 1 :occupations] [(rules/id :a116)]))
         effect-id (:id (store/transact! s token {:event :create :mode :local :name "Ada" :names ["Ada" "Ben"]
                                                :title "Optional effect" :setup {:mode :random}}))
         horse (-> (cards/initialize (a/new-game ["Ada" "Ben"] (vec (mapcat identity a/stages)) 0))
