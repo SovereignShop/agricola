@@ -61,7 +61,8 @@
 .tt-player-title>span {font-size:calc(15px * var(--text-scale,1))}
 .tt-turn-token {font:calc(16px * var(--text-scale,1)) var(--tt-font);color:#f8eed5;background:#5d6947;padding:4px 12px;border-radius:20px}
 .tt-farm {position:absolute;filter:drop-shadow(2px 6px 4px #31421a48)}
-.tt-farm svg.farm {display:block;width:100%;max-width:none;height:auto;border-radius:3px;background:none}
+/* Table pieces keep their proportions; the camera handles small screens. */
+.tt-farm svg.farm {display:block;width:100%;max-width:none;max-height:none;height:auto;border-radius:3px;background:none}
 .tt-farm-caption {display:flex;gap:20px;margin-top:10px;color:#4c563f;font:calc(16px * var(--text-scale,1)) var(--tt-font)}
 .tt-handle {width:25px;min-width:25px;min-height:28px;padding:0;border:0;background:transparent;color:#626b4c;opacity:.38;cursor:grab;touch-action:none;font-size:22px;line-height:1}
 .tt-handle:hover,.tt-handle:focus-visible,.tt-deck:hover .tt-handle {opacity:1;background:#f5edce60}
