@@ -1774,7 +1774,7 @@ summary {
 .physical-board .accumulation {font-size:calc((7px) * var(--text-scale, 1))}
 .future-round-resources {position:absolute; display:flex; flex-direction:column; padding:4px; gap:3px; background:#fff7d9ed; border:1px solid #7e6f42; border-radius:5px; box-shadow:1px 2px 3px #34371760; overflow:hidden; color:#3e492d;}
 .future-round-label {font-size:calc((10px) * var(--text-scale, 1)); line-height:1.2; flex:none;}
-.future-round-owners {min-height:0; overflow:auto; overscroll-behavior:contain;}
+.future-round-owners {min-height:0; overflow:visible;}
 .future-round-owner {border-left:3px solid; padding-left:3px; margin-bottom:3px;}
 .future-owner-name {display:block; font-size:calc((9px) * var(--text-scale, 1)); line-height:1.2; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 .future-goods {display:flex; flex-wrap:wrap; gap:2px 4px;}

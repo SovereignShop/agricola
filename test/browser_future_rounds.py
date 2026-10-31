@@ -34,7 +34,8 @@ def check_future_rounds(base, fixture_id):
         expect(ada.locator("b")).to_have_text("1")
         expect(ben.locator("b")).to_have_text("2")
         choose_action(page, "Meeting Place")
-        page.get_by_label("Minor improvement", exact=True).select_option(":revised-base/a044")
+        page.get_by_role("group", name="Playable minor improvements", exact=True).locator(".card-choice").first.click()
+        page.get_by_role("button", name="Select card", exact=True).click()
         confirm_action(page)
         expect(ada.locator("b")).to_have_text("2")
         expect(ben.locator("b")).to_have_text("2")
@@ -42,7 +43,7 @@ def check_future_rounds(base, fixture_id):
         page.reload()
         expect(ada.locator("b")).to_have_text("2")
         page.wait_for_function("[...document.querySelectorAll('.future-resource img')].every(e => e.complete && e.naturalWidth > 0)")
-        expect(board.locator('[data-resource="field"] svg')).to_have_count(1)
+        expect(board.locator('[data-resource="field"] img')).to_have_count(1)
         board.screenshot(path="/tmp/eurozone-future-rounds.png")
         for width in [1440, 390]:
             page.set_viewport_size({"width": width, "height": 1000})

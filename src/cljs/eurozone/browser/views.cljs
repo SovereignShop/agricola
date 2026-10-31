@@ -1,6 +1,7 @@
 (ns eurozone.browser.views
   (:require [reagent.core :as r] [re-frame.core :as rf] [clojure.string :as str]
             [cljs.reader :as reader] [agricola.recording :as recording] [eurozone.browser.table-controls :as controls]
+            [eurozone.round-markers :as round-markers]
             [agricola.engine :as a] [agricola.card-expressions :as expr] [agricola.five-player :as five] [agricola.card-game :as card-game] [eurozone.catalog :as catalog] [eurozone.browser.art :as art] [eurozone.browser.board-layout :as board-layout] [agricola.card-rules :as cards] [eurozone.browser.card-art :as card-art] [eurozone.browser.layout :as layout] [eurozone.browser.tabletop :as tabletop] [eurozone.browser.readability :as readability] [eurozone.browser.comms :as comms] [eurozone.store :as store]))
 
 (def glyph {:wood "▰" :clay "◆" :reed "≋" :stone "⬟" :grain "♧" :vegetable "●" :food "◉" :sheep "♧" :boar "◆" :cattle "⬢"})
@@ -329,13 +330,13 @@
 (def round-space-position board-layout/round-position)
 (defn future-round-markers [g]
   [:<>
-   (for [[round owners] (card-game/future-round-resources g)]
+   (for [[round owners] (round-markers/by-round g)]
      ^{:key round}
      [:section.future-round-resources {:style (round-space-position round) :data-round round
                                       :aria-label (str "Resources for round " round)}
       [:strong.future-round-label (str "Round " round)]
       [:div.future-round-owners
-       (for [{:keys [player goods cards]} owners
+       (for [{:keys [player goods cards deliveries]} owners
              :let [owner (get-in g [:players player :name])
                    sources (str/join ", " (map #(or (:name (cards/card %)) (:name (a/improvements %))) cards))]]
          ^{:key player}
@@ -343,19 +344,25 @@
                                    :title (str owner " · " sources)}
           [:span.future-owner-name owner]
           [:div.future-goods
-           (for [resource (into a/resources [:field :stable :person]) :let [n (get goods resource 0)] :when (pos? n)]
+           (for [resource (into a/resources [:field :stable :person :guest :fence])
+                 :let [n (get goods resource 0)
+                       details (str/join "; " (for [{:keys [card goods optional? cost]} deliveries :when (pos? (get goods resource 0))]
+                                               (str (or (:name (cards/card card)) (:name (a/improvements card)))
+                                                    (when optional? " · optional")
+                                                    (when (seq cost) (str " · pay " (str/join ", " (for [[r n] cost] (str n " " (name r)))))))))]
+                 :when (pos? n)]
              ^{:key resource}
              [:span.future-resource {:data-resource (name resource)
-                                     :aria-label (str owner ": " n " " (name resource) " in round " round)
-                                     :title (str owner " · " sources " · " n " " (name resource))}
+                                     :aria-label (str owner ": " n " " (name resource) " in round " round " · " details)
+                                     :title (str owner " · " n " " (name resource) " · " details)}
               (case resource
-                :person [:img.piece {:src (art/worker-url player) :alt "Temporary person"}]
+                (:person :guest) [:img.piece {:src (art/worker-url player) :alt (if (= resource :guest) "Guest" "Temporary person") :draggable false}]
+                :fence [:svg.piece {:viewBox "0 0 24 24" :aria-label "Fence" :role "img"}
+                        [:path {:d "M3 7H21V11H3Z M3 14H21V18H3Z" :fill (colors player) :stroke "#493c2d"}]]
                 :stable [:svg.piece {:viewBox "0 0 24 24" :aria-label "Stable" :role "img"}
                          [:path {:d "M2 9L12 2L22 9V22H2Z" :fill "#b07949" :stroke "#704729"}]]
                 :field
-                [:svg.piece {:viewBox "0 0 24 24" :aria-label "Field" :role "img"}
-                 [:rect {:x 1 :y 1 :width 22 :height 22 :rx 2 :fill "#b78246"}]
-                 [:path {:d "M5 3v18 M10 3v18 M15 3v18 M20 3v18" :stroke "#79502e" :stroke-width 2}]]
+                [:img.piece {:src (art/url "plow.png") :alt "Field" :draggable false}]
                 [art/piece resource])
               [:b n]])]])]])])
 (defn board-position [_ id]
