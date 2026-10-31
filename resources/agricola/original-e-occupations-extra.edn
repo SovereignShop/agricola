@@ -1,0 +1,72 @@
+;; Original E-deck occupations. English prints and original compendium v9.
+;; Generic options are real anytime abilities; no printed-text execution.
+{:catalog/original-base-e-151-master-builder
+ {:ability {:op :free-room :minimum-rooms 5}}
+ :catalog/original-base-e-155-bread-seller
+ {:triggers [{:event :bake :scope :all :effect {:op :gain :goods {:food [:context :grain-baked]}}}]}
+ :catalog/original-base-e-158-turner
+ {:ability {:op :exchange-options :options [{:label "1 wood → 1 food" :cost {:wood 1} :goods {:food 1}}]}}
+ :catalog/original-base-e-160-farmer
+ {:triggers [{:event :fence :once? true :condition [:test [:not [:used-this-turn :catalog/original-base-e-160-farmer]]]
+              :effect {:op :gain :once-per-turn? true :goods {:boar 1}}}
+             {:event :fence :condition [:test [:and [:= [:card-state :catalog/original-base-e-160-farmer :triggered?] true]
+                                                       [:not [:used-this-turn :catalog/original-base-e-160-farmer]]]]
+              :effect {:op :gain :once-per-turn? true :goods {:cattle 1}}}]}
+ :catalog/original-base-e-170-estate-manager {:score {:type :most-of-each-animal}}
+ :catalog/original-base-e-171-dock-worker
+ {:ability {:op :exchange-options
+            :options [{:label "3 wood → 1 clay" :cost {:wood 3} :goods {:clay 1}}
+                      {:label "3 wood → 1 reed" :cost {:wood 3} :goods {:reed 1}}
+                      {:label "3 wood → 1 stone" :cost {:wood 3} :goods {:stone 1}}
+                      {:label "2 clay → 1 wood" :cost {:clay 2} :goods {:wood 1}}
+                      {:label "2 clay → 1 reed" :cost {:clay 2} :goods {:reed 1}}
+                      {:label "2 clay → 1 stone" :cost {:clay 2} :goods {:stone 1}}
+                      {:label "2 reed → 1 wood" :cost {:reed 2} :goods {:wood 1}}
+                      {:label "2 reed → 1 clay" :cost {:reed 2} :goods {:clay 1}}
+                      {:label "2 reed → 1 stone" :cost {:reed 2} :goods {:stone 1}}
+                      {:label "2 stone → 1 wood" :cost {:stone 2} :goods {:wood 1}}
+                      {:label "2 stone → 1 clay" :cost {:stone 2} :goods {:clay 1}}
+                      {:label "2 stone → 1 reed" :cost {:stone 2} :goods {:reed 1}}]}}
+ :catalog/original-base-e-172-chief
+ {:additional-food-cost 2 :score {:type :expression :value [:if [:= [:house] :stone] [:rooms] 0]}}
+ :catalog/original-base-e-176-woodcutter
+ {:triggers [{:event :use-space :condition [:test [:> [:source-goods :wood] 0]] :effect {:op :gain :goods {:wood 1}}}]}
+ :catalog/original-base-e-181-cook {:passive {:adult-feeding-cap 2}}
+ :catalog/original-base-e-185-clay-firer
+ {:ability {:op :exchange-options :options [{:label "2 clay → 1 stone" :cost {:clay 2} :goods {:stone 1}}
+                                           {:label "3 clay → 2 stone" :cost {:clay 3} :goods {:stone 2}}]}}
+ :catalog/original-base-e-186-clay-seller
+ {:ability {:op :exchange-options :options [{:label "2 clay → 1 sheep" :cost {:clay 2} :goods {:sheep 1}}
+                                           {:label "2 clay → 1 reed" :cost {:clay 2} :goods {:reed 1}}
+                                           {:label "3 clay → 1 wild boar" :cost {:clay 3} :goods {:boar 1}}
+                                           {:label "3 clay → 1 stone" :cost {:clay 3} :goods {:stone 1}}
+                                           {:label "4 clay → 1 cattle" :cost {:clay 4} :goods {:cattle 1}}]}}
+ :catalog/original-base-e-188-clay-mixer
+ {:triggers [{:event :use-space
+              :condition [:test [:and [:> [:source-goods :clay] 0]
+                                 [:= [:+ [:source-goods :wood] [:source-goods :reed] [:source-goods :stone]
+                                       [:source-goods :food] [:source-goods :grain] [:source-goods :vegetable]
+                                       [:source-goods :sheep] [:source-goods :boar] [:source-goods :cattle]] 0]]]
+              :effect {:op :gain :goods {:clay 2}}}]}
+ :catalog/original-base-e-189-lord-of-the-manor {:score {:type :maximum-basic-categories}}
+ :catalog/original-base-e-190-maid
+ {:triggers [{:event :check-state :condition [:not-house :wood] :once? true
+              :effect {:op :schedule :rounds [1 2 3 4 5 6 7 8 9 10 11 12 13 14] :goods {:food 1}}}]}
+ :catalog/original-base-e-191-mason
+ {:ability {:op :free-room :minimum-rooms 4 :house :stone}}
+ :catalog/original-base-e-192-patron {:passive {:occupation-food 2}}
+ :catalog/original-base-e-196-mushroom-collector
+ {:triggers [{:event :after-use-space :condition [:test [:> [:taken :wood] 0]]
+              :effect {:op :return-goods :optional? true :from-taken? true :cost {:wood 1} :goods {:food 2}}}]}
+ :catalog/original-base-e-199-renovator {:passive {:renovation-discount 2}}
+ :catalog/original-base-e-200-conservator {:passive {:direct-stone true}}
+ :catalog/original-base-e-209-quarryman
+ {:ability {:op :exchange-options :options [{:label "1 stone → 2 food" :cost {:stone 1} :goods {:food 2}}]}}
+ :catalog/original-base-e-211-stonecutter {:passive {:stone-discount 1}}
+ :catalog/original-base-e-217-reeve
+ {:play [{:op :house-steward}] :score {:type :most-original-occupations} :global-score? true}
+ :catalog/original-base-e-213-stockman
+ {:triggers [{:event :stables-created
+              :effect {:op :gain :goods {:cattle [:if [:and [:>= [:stables] 2] [:< [:- [:stables] [:context :stables-built]] 2]] 1 0]
+                                        :boar [:if [:and [:>= [:stables] 3] [:< [:- [:stables] [:context :stables-built]] 3]] 1 0]
+                                        :sheep [:if [:and [:>= [:stables] 4] [:< [:- [:stables] [:context :stables-built]] 4]] 1 0]}}}]}}

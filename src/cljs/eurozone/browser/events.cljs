@@ -12,7 +12,7 @@
   (fn [db [_ key value]]
     (cond-> (assoc-in db [:draft key] value)
       (= key :improvement) (update :draft dissoc :upgrade :bake-grain :card)
-      (= key :card) (update :draft dissoc :improvement :upgrade :bake-grain :payment-option))))
+      (= key :card) (update :draft dissoc :improvement :upgrade :bake-grain :payment-option :return-improvement :as-major?))))
 ;; Apply multi-control edits to the latest draft, not the render-time snapshot.
 ;; Several DOM changes can arrive before Reagent renders the next frame.
 (rf/reg-event-db :draft-planting

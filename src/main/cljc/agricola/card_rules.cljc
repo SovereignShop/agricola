@@ -51,7 +51,10 @@
 ;; in the decision queue until their owner resolves them; they never auto-spend.
 (def legacy-definitions (merge (read-edn "agricola/cards.edn") (read-edn "agricola/five-player-cards.edn")))
 (def expansion-definitions (read-edn "agricola/expansion-cards.edn"))
-(def definitions (merge (into {} (map (fn [[code rule]] [(id code) rule]) legacy-definitions)) expansion-definitions))
+(def original-definitions (merge (read-edn "agricola/original-cards.edn")
+                                 (read-edn "agricola/original-e-minors-extra.edn")
+                                 (read-edn "agricola/original-e-occupations-extra.edn")))
+(def definitions (merge (into {} (map (fn [[code rule]] [(id code) rule]) legacy-definitions)) expansion-definitions original-definitions))
 (def cards (into {} (for [[cid definition] definitions] [cid (merge (metadata cid) definition)])))
 (defn card [cid] (get cards cid))
 (defn owned [p] (concat (:occupations p) (:minors p)))

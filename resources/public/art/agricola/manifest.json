@@ -1,6 +1,6 @@
 {
   "artwork": "Agricola, Uwe Rosenberg; illustrations by Klemens Franz; Lookout Games. Third-party artwork is not covered by the application source code license.",
-  "edition": "English original-edition three-segment board, majors and round cards; Korean Revised Edition farm and pieces; English Revised hand cards. Revised Edition rules.",
+  "edition": "English original-edition three-segment board, majors and round cards; Korean Revised Edition farm and pieces; English Revised and original E-deck hand cards. Revised Edition board rules with individually implemented original cards.",
   "files": [
     {
       "file": "board.png",
@@ -781,6 +781,27 @@
       "reference": "https://github.com/SNiLD/TabletopSimulatorAgricola/blob/5e675a143d7192b271615d9f1a406fd04a1913f1/src/workshop.json",
       "sha256": "b0e917c8e76d4f358e83b3a87a3dec0f06b449b5be460c1edf4eb304666ecf47",
       "note": "Unmodified original English major improvements supply board. Available cards occupy their printed slots; purchased slots remain visible."
+    },
+    {
+      "file": "original-e-minors.jpg",
+      "source": "https://dl.dropboxusercontent.com/s/b8lyaslr030xdjr/E-Deck%20%28Minor%20Imp%20A%29.jpg",
+      "reference": "https://github.com/SNiLD/TabletopSimulatorAgricola/blob/5e675a143d7192b271615d9f1a406fd04a1913f1/src/workshop.json",
+      "sha256": "01fec6766332fb2f1511d2c98d07a55fa7ba0dd0e4d2bd8c9ea5ddc0268eedc3",
+      "note": "Unmodified English original E-deck sheet, 10 columns by 7 rows. Card title and number visually checked for CSS sprite mapping. Artwork availability does not imply implemented card rules."
+    },
+    {
+      "file": "original-e-occupations-1.jpg",
+      "source": "https://dl.dropboxusercontent.com/s/swu4hy15qhed1au/E-Deck%20%28Occupations1a%29.jpg",
+      "reference": "https://github.com/SNiLD/TabletopSimulatorAgricola/blob/5e675a143d7192b271615d9f1a406fd04a1913f1/src/workshop.json",
+      "sha256": "ff50baf19f7d1d6c9aa3708beaa406e58ca71ed97c56554d838b68e8d0a7ec20",
+      "note": "Unmodified English original E-deck sheet, 10 columns by 7 rows. Card title and number visually checked for CSS sprite mapping. Artwork availability does not imply implemented card rules."
+    },
+    {
+      "file": "original-e-occupations-2.jpg",
+      "source": "https://dl.dropboxusercontent.com/s/m548sxkcjxpoglk/E-Deck%20%28Occupations2A%29.jpg",
+      "reference": "https://github.com/SNiLD/TabletopSimulatorAgricola/blob/5e675a143d7192b271615d9f1a406fd04a1913f1/src/workshop.json",
+      "sha256": "68ede1672d3a8f55f0dd77daf0caeb4c06959ed4416dff78c574ae979b4a528b",
+      "note": "Unmodified English original E-deck sheet, 10 columns by 7 rows. Card title and number visually checked for CSS sprite mapping. Artwork availability does not imply implemented card rules."
     }
   ]
 }

@@ -80,7 +80,7 @@
      (cond hidden? [:span "Agricola"]
            used? [:div [:span "Agricola"] [:small (str name " · used")]]
            (= kind :major) [art/major-card cid]
-           image [:img {:src image :alt name :draggable false :loading "lazy"}]
+           (card-art/available? cid) [card-art/face cid name]
            :else [:div.tt-printed-card [:strong name] [:small (some-> kind cljs.core/name str/capitalize)] [:p text]])
      ]))
 (defn card-markers [cid p]

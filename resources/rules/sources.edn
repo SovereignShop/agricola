@@ -1,7 +1,15 @@
 {:edition :revised-2016
- :reviewed "2026-10-29"
+ :reviewed "2026-10-30"
  :sources
- [{:id :printed-rules :authority :publisher
+ [{:id :original-printed-rules :authority :publisher :edition :original
+   :url "https://www.lookout-spiele.de/upload/de_agricola.html_Rules_Agricola_EN.pdf"}
+  {:id :original-english-cards :authority :printed-card-scans :edition :original
+   :url "https://github.com/SNiLD/TabletopSimulatorAgricola/blob/5e675a143d7192b271615d9f1a406fd04a1913f1/src/workshop.json"
+   :note "English E/I/K sheets. E-deck atlas mappings, original download URLs and file hashes are in the artwork manifest. Card art does not imply executable coverage."}
+  {:id :original-compendium-v9 :authority :unofficial-compilation :edition :original
+   :url "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf"
+   :note "Edition-specific clarifications checked alongside the English prints; this is a community compilation, not a new publisher rulebook."}
+  {:id :printed-rules :authority :publisher
    :url "https://www.lookout-spiele.de/upload/en_agricolare.html_Rules_Agricola-RE_EN.pdf"}
   {:id :printed-appendix :authority :publisher
    :url "https://lookout-spiele.de/upload/en_agricolare.html_Appendix_Agricola-RE_EN.pdf"}
@@ -33,7 +41,31 @@
    :status :unresolved
    :note "No explicit publisher or designer clarification was found. Do not present either interpretation as a verified ruling."}]
  :regressions
- [{:id :lodger-person-supply-and-choice
+ [{:id :original-e-printed-cost-corrections :cards [:catalog/original-base-e-11-field :catalog/original-base-e-24-animal-pen]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf"
+   :rule "Original Field costs one food; Animal Pen costs two wood. Catalogue omissions must not make them free."
+   :test agricola.original-cards-test/printed-prerequisites-and-costs-are-enforced-before-play}
+  {:id :original-source-wood :cards [:catalog/original-base-e-34-basket :catalog/original-base-e-196-mushroom-collector]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf"
+   :rule "Original return-to-pile effects share the wood actually taken from the space; existing supply and extra card income cannot supply the returned wood. Revised reprints instead permit an exchange from supply."
+   :test agricola.original-e-minors-extra-test/basket-and-mushroom-collector-cannot-return-the-same-source-wood}
+  {:id :original-stablehand-once :cards [:catalog/original-base-e-207-stablehand]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf"
+   :rule "Stablehand grants at most one stable per turn, including fencing initiated by Mini Pasture."
+   :test agricola.original-cards-test/stablehand-builds-once-per-turn-including-after-mini-pasture}
+  {:id :original-hedge-keeper-mini-pasture :cards [:catalog/original-base-e-175-hedge-keeper :catalog/original-base-e-40-mini-pasture]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf"
+   :rule "Original Hedge Keeper supplies up to three additional fences once per turn, after a first fence supplied by the player or another card. Mini Pasture's fences and the extra fences are validated together."
+   :test agricola.original-fencing-test/mini-pasture-validates-the-complete-pasture-layout}
+  {:id :original-bakers-oven :cards [:catalog/original-base-e-14-bakers-oven]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf"
+   :rule "Baker's Oven returns an oven, not any baking improvement. Returned major ovens reenter the supply; the new oven bakes at most two grain for five food each per baking action. Other retained ovens can also bake."
+   :test agricola.original-e-minors-extra-test/bakers-oven-immediate-bake-uses-the-new-oven-and-other-retained-ovens}
+  {:id :original-edition-scoring :cards [:catalog/original-base-e-23-manger :catalog/original-base-e-197-braggart]
+   :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf"
+   :rule "Original Manger awards 1/2/3/4 points at 6/7/8/9 pasture spaces; original Braggart awards 1/3/5/7/9 at 5/6/7/8/9 improvements."
+   :test agricola.original-cards-test/original-scoring-thresholds}
+  {:id :lodger-person-supply-and-choice
    :cards [:catalog/revised-artifex-expansion-a-127-lodger]
    :source "https://docs.google.com/document/d/1WUl0HlzX6Yx0ume75UmpaIMhoHukx9XufM_LbV1oZ6E/edit"
    :authority :unofficial-compilation

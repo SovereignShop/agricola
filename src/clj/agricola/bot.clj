@@ -33,15 +33,15 @@
 (defn payment-options [p]
   (for [frame? (if (c/has? p :a123) [false true] [false])
         brushwood? (if (c/has? p :b145) [false true] [false])
-        stone? (if (c/has? p :a087) [false true] [false])]
+        stone? (if (some true? (c/passives p :direct-stone)) [false true] [false])]
     (cond-> {} frame? (assoc :frame? true) brushwood? (assoc :brushwood? true)
             stone? (assoc :renovate-to :stone))))
 (defn hand-options [p kind]
   (for [cid (get-in p [:hand kind])
         paper? (if (and (= kind :occupation) (c/has? p :b109)) [false true] [false])
         payment (if-let [costs (:cost-options (c/card cid))] (range (count costs)) [nil])
-        wood (if (and (= kind :occupation) (c/has? p :a028)) (range 4) [0])
-        returned (if (= :return-cooking (:cost (c/card cid))) (a/returnable-cooking p) [nil])
+        wood (if (and (= kind :occupation) (c/has? p :a028)) (range (+ 4 (:additional-food-cost (c/card cid) 0))) [0])
+        returned (if (#{:return-cooking :return-oven} (:cost (c/card cid))) (g/card-return-options p cid) [nil])
         major? (if (get-in (c/card cid) [:passive :major-or-minor]) [false true] [false])]
     (cond-> {:card cid} paper? (assoc :paper-maker? true) (some? payment) (assoc :payment-option payment) returned (assoc :return-improvement returned) major? (assoc :as-major? true) (pos? wood) (assoc :occupation-wood wood))))
 (defn sow-plans [p]
@@ -66,6 +66,15 @@
          :let [boundary (->> cells (mapcat a/edges) frequencies (keep (fn [[e n]] (when (= n 1) e))) set)
                additions (vec (sort (set/difference boundary (:fences p))))]
          :when (seq additions)] additions))))
+(defn mini-pasture-choices [p]
+  (mapcat (fn [cell]
+            (cons {:cell cell}
+                  (when (pos? (a/turn-free-fences-available p))
+                    (let [base (set (a/edges cell)) staged (update p :fences into base)]
+                      (for [extra (fence-plans staged)
+                            :when (<= (count extra) (a/turn-free-fences-available p))]
+                        {:cell cell :fences extra})))))
+          (filter #(and (= :empty (get-in p [:farm % :type])) (not ((a/pasture-cells p) %))) (range 15))))
 (defn major-options [state p]
   (for [cid (sort (:available-improvements state))
         upgrade (if (:upgrade (a/improvements cid))
@@ -128,7 +137,8 @@
 (defn decision-candidates [state pid]
   (let [p (g/p state pid) head (first (:effect-queue state)) effect (:effect head)
         options (case (:op effect)
-                  (:plow :stable :mini-pasture :corral-builder :amateur-fencer :plowsmith) (map #(hash-map :cell %) (range 15))
+                  (:plow :stable :plowsmith) (map #(hash-map :cell %) (range 15))
+                  (:mini-pasture :corral-builder :amateur-fencer) (mini-pasture-choices p)
                   (:plow-many :wheel-plow) (concat (map #(hash-map :cells [%]) (range 15))
                                                  (for [x (range 15) y (range 15) :when (not= x y)] {:cells [x y]}))
                   :paper-knife (let [hand (vec (get-in p [:hand :occupation]))]
@@ -222,6 +232,12 @@
             (case (get-in (c/card cid) [:ability :op])
               (:adopt :buy-stock :cash-card :reed-food) [{}]
               :free-placement-fences (map #(hash-map :fences %) (fence-plans p))
+              :free-room (map #(hash-map :rooms [%]) (range 15))
+              :exchange-options
+              (for [[index option] (map-indexed vector (get-in (c/card cid) [:ability :options]))
+                    :let [maximum (apply min (map (fn [[resource n]] (quot (a/amount p resource) n)) (:cost option)))]
+                    times (distinct (filter pos? [1 maximum]))]
+                {:option index :times times})
               :porcelain (map #(hash-map :amount %) [2 3 4])
               :sheep-exchange (map #(hash-map :resource %) [:boar :vegetable :stone])
               :move-crop (for [from (field-ids p) to (field-ids p)] {:from from :to to})

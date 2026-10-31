@@ -1,0 +1,116 @@
+;; Original E deck. Edition-specific rules; no Revised aliases.
+;; Printed costs E11 and E24 corrected against the English scans and compendium.
+{
+ ;; E11 Field
+ :catalog/original-base-e-11-field {:printed-cost {:food 1} :cost-text "1 Food" :requires-effect? true :play [{:op :plow}]}
+ ;; E12 Fishing Rod
+ :catalog/original-base-e-12-fishing-rod {:triggers [{:event :use-space :spaces #{:fishing} :effect {:op :gain :goods {:food [:if [:>= [:round] 8] 2 1]}}}]}
+ ;; E13 Axe
+ :catalog/original-base-e-13-axe {:passive {:wood-room-cost 2}}
+ ;; E16 Building Material
+ :catalog/original-base-e-16-building-material {:play [{:op :choose-good :choices [:wood :clay]}]}
+ ;; E17 Windmill
+ :catalog/original-base-e-17-windmill {:passive {:cook {:grain 2}}}
+ ;; E18 Bean Field
+ :catalog/original-base-e-18-bean-field {:passive {:card-field :vegetable}}
+ ;; E20 Simple Fireplace
+ :catalog/original-base-e-20-simple-fireplace {:passive {:cook {:vegetable 2 :sheep 1 :boar 2 :cattle 3} :bake 2 :fireplace true}}
+ ;; E22 Raft
+ :catalog/original-base-e-22-raft {:triggers [{:event :use-space :spaces #{:fishing} :effect {:op :choose-good :choices [:food :reed]}}]}
+ ;; E23 Manger
+ :catalog/original-base-e-23-manger {:score {:type :pasture-spaces :thresholds [6 7 8 9]}}
+ ;; E24 Animal Pen
+ :catalog/original-base-e-24-animal-pen {:printed-cost {:wood 2} :cost-text "2 Wood" :play [{:op :schedule :rounds [1 2 3 4 5 6 7 8 9 10 11 12 13 14] :goods {:food 2}}]}
+ ;; E27 Wood-Fired Oven
+ :catalog/original-base-e-27-wood-fired-oven {:passive {:bake 3 :oven true} :play [{:op :bake :optional? true}]}
+ ;; E28 Clogs
+ :catalog/original-base-e-28-clogs {:score {:type :house :values {:wood 0 :clay 1 :stone 2}}}
+ ;; E30 Canoe
+ :catalog/original-base-e-30-canoe {:triggers [{:event :use-space :spaces #{:fishing} :effect {:op :gain :goods {:food 1 :reed 1}}}]}
+ ;; E31 Carp Pond
+ :catalog/original-base-e-31-carp-pond {:play [{:op :schedule :rounds [1 3 5 7 9 11 13] :goods {:food 1}}]}
+ ;; E35 Corn Scoop
+ :catalog/original-base-e-35-corn-scoop {:triggers [{:event :use-space :spaces #{:grain} :effect {:op :gain :goods {:grain 1}}}]}
+ ;; E39 Market Stall
+ :catalog/original-base-e-39-market-stall {:play [{:op :gain :goods {:vegetable 1}}]}
+ ;; E40 Mini Pasture
+ :catalog/original-base-e-40-mini-pasture {:requires-effect? true :play [{:op :mini-pasture}]}
+ ;; E41 Millstone
+ :catalog/original-base-e-41-millstone {:triggers [{:event :bake :effect {:op :gain :goods {:food 2}}}]}
+ ;; E42 Helpful Neighbors
+ :catalog/original-base-e-42-helpful-neighbors {:cost-options [{:wood 1} {:clay 1}] :play [{:op :choose-good :choices [:stone :reed]}]}
+ ;; E43 Fruit Tree
+ :catalog/original-base-e-43-fruit-tree {:play [{:op :schedule :rounds [8 9 10 11 12 13 14] :goods {:food 1}}]}
+ ;; E45 Private Forest
+ :catalog/original-base-e-45-private-forest {:play [{:op :schedule :rounds [2 4 6 8 10 12 14] :goods {:wood 1}}]}
+ ;; E46 Sack Cart
+ :catalog/original-base-e-46-sack-cart {:play [{:op :schedule :rounds [5 8 11 14] :goods {:grain 1}}]}
+ ;; E48 Reed Pond
+ :catalog/original-base-e-48-reed-pond {:play [{:op :schedule :offsets [1 2 3] :goods {:reed 1}}]}
+ ;; E51 Spindle
+ :catalog/original-base-e-51-spindle {:triggers [{:event :field-phase :effect {:op :gain :goods {:food [:if [:>= [:goods :sheep] 5] 2 [:if [:>= [:goods :sheep] 3] 1 0]]}}}]}
+ ;; E52 Stable
+ :catalog/original-base-e-52-stable {:requires-effect? true :play [{:op :stable}]}
+ ;; E53 Butter Churn
+ :catalog/original-base-e-53-butter-churn {:triggers [{:event :field-phase :effect {:op :gain :goods {:food [:+ [:quot [:goods :sheep] 3] [:quot [:goods :cattle] 2]]}}}]}
+ ;; E54 Quarry
+ :catalog/original-base-e-54-quarry {:triggers [{:event :use-space :spaces #{:labor} :effect {:op :gain :goods {:stone 3}}}]}
+ ;; E56 Stone Tongs
+ :catalog/original-base-e-56-stone-tongs {:triggers [{:event :use-space :spaces #{:stone-west :stone-east} :effect {:op :gain :goods {:stone 1}}}]}
+ ;; E57 Dovecote
+ :catalog/original-base-e-57-dovecote {:play [{:op :schedule :rounds [10 11 12 13 14] :goods {:food 1}}]}
+ ;; E59 Drinking Trough
+ :catalog/original-base-e-59-drinking-trough {:passive {:pasture-capacity 2}}
+ ;; E60 Cattle Market
+ :catalog/original-base-e-60-cattle-market {:play [{:op :gain :goods {:cattle 1}}]}
+ ;; E147 Land Agent
+ :catalog/original-base-e-147-land-agent {:play [{:op :gain :goods {:vegetable 1}}] :triggers [{:event :use-space :spaces #{:vegetable} :effect {:op :gain :goods {:grain 1}}}]}
+ ;; E150 Baker
+ :catalog/original-base-e-150-baker {:play [{:op :bake :optional? true}] :triggers [{:event :feeding-start :effect {:op :bake :optional? true}}]}
+ ;; E152 Berry Picker
+ :catalog/original-base-e-152-berry-picker {:triggers [{:event :building-material :condition [:test [:> [:source-goods :wood] 0]] :effect {:op :gain :goods {:food 1}}} {:event :use-space :condition [:test [:> [:source-goods :wood] 0]] :effect {:op :gain :goods {:food 1}}}]}
+ ;; E153 Mendicant
+ :catalog/original-base-e-153-mendicant {:score {:type :expression :value [:* 3 [:min 2 [:begging]]]}}
+ ;; E154 Master Brewer
+ :catalog/original-base-e-154-master-brewer {:triggers [{:event :feeding-start :effect {:op :exchange :optional? true :cost {:grain 1} :goods {:food 3}}}]}
+ ;; E166 Undergardener
+ :catalog/original-base-e-166-undergardener {:triggers [{:event :use-space :spaces #{:labor} :effect {:op :gain :goods {:vegetable 1}}}]}
+ ;; E167 Conjurer
+ :catalog/original-base-e-167-conjurer {:triggers [{:event :use-space :spaces #{:traveling} :effect {:op :gain :goods {:grain 1}}}]}
+ ;; E168 Greengrocer
+ :catalog/original-base-e-168-greengrocer {:triggers [{:event :use-space :spaces #{:grain} :effect {:op :gain :goods {:vegetable 1}}}]}
+ ;; E174 Tutor
+ :catalog/original-base-e-174-tutor {:play [{:op :tutor-start}] :score {:type :tutor}}
+ ;; E175 Hedge Keeper
+ :catalog/original-base-e-175-hedge-keeper {:passive {:turn-free-fences 3}}
+ ;; E177 Wooden Hut Builder
+ :catalog/original-base-e-177-wooden-hut-builder {:score {:type :expression :value [:if [:= [:house] :wood] [:rooms] 0]}}
+ ;; E183 Basketmaker
+ :catalog/original-base-e-183-basketmaker {:triggers [{:event :feeding-start :effect {:op :exchange :optional? true :cost {:reed 1} :goods {:food 3}}}]}
+ ;; E184 Grocer
+ :catalog/original-base-e-184-grocer {:play [{:op :stock :goods [:vegetable :reed :clay :wood :vegetable :stone :grain :reed]}] :ability {:op :buy-stock :cost {:food 1}}}
+ ;; E187 Clay Deliveryman
+ :catalog/original-base-e-187-clay-deliveryman {:play [{:op :schedule :rounds [6 7 8 9 10 11 12 13 14] :goods {:clay 1}}]}
+ ;; E194 Plow Driver
+ :catalog/original-base-e-194-plow-driver {:scholar-round-start? true :triggers [{:event :round-start :condition [:house :stone] :effect {:op :plow :optional? true :cost {:food 1}}}]}
+ ;; E197 Braggart
+ :catalog/original-base-e-197-braggart {:score {:type :improvements :thresholds [5 6 7 8 9] :values [1 3 5 7 9]}}
+ ;; E201 Cattle Whisperer
+ :catalog/original-base-e-201-cattle-whisperer {:play [{:op :schedule :offsets [5 9] :goods {:cattle 1}}]}
+ ;; E202 Seasonal Worker
+ :catalog/original-base-e-202-seasonal-worker {:triggers [{:event :use-space :spaces #{:labor} :effect {:op :choose :options [{:label "1 grain" :effects [{:op :gain :goods {:grain 1}}]} {:label "1 vegetable" :when [:>= [:round] 6] :effects [{:op :gain :goods {:vegetable 1}}]}]}}]}
+ ;; E204 Master Shepherd
+ :catalog/original-base-e-204-master-shepherd {:play [{:op :schedule :offsets [1 2 3] :goods {:sheep 1}}]}
+ ;; E205 Reed Collector
+ :catalog/original-base-e-205-reed-collector {:play [{:op :schedule :offsets [1 2 3 4] :goods {:reed 1}}]}
+ ;; E206 Swineherd
+ :catalog/original-base-e-206-swineherd {:triggers [{:event :use-space :spaces #{:boar} :effect {:op :gain :goods {:boar 1}}}]}
+ ;; E207 Stablehand
+ :catalog/original-base-e-207-stablehand {:triggers [{:event :fence :condition [:test [:not [:used-this-turn :catalog/original-base-e-207-stablehand]]] :effect {:op :stable :once-per-turn? true}}]}
+ ;; E212 Dancer
+ :catalog/original-base-e-212-dancer {:triggers [{:event :use-space :spaces #{:traveling} :effect {:op :gain :goods {:food [:max 0 [:- 4 [:taken :food]]]}}}]}
+ ;; E214 Potter
+ :catalog/original-base-e-214-potter {:triggers [{:event :feeding-start :effect {:op :exchange :optional? true :cost {:clay 1} :goods {:food 2}}}]}
+ ;; E218 Carpenter
+ :catalog/original-base-e-218-carpenter {:passive {:room-material-cost 3}}
+}

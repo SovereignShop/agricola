@@ -1,0 +1,57 @@
+;; Original E-deck printings checked against the English scans and v9 compendium.
+;; Original IDs intentionally remain distinct from Revised reprints.
+{
+ :catalog/original-base-e-14-baker-s-oven
+ {:cost :return-oven :requires [:> [:ovens] 0]
+  :passive {:bake 5 :limit 2 :oven true}
+  :play [{:op :bake :optional? true}]}
+
+ :catalog/original-base-e-21-half-timbered-house
+ {:score {:type :expression
+          :value [:if [:and [:= [:house] :stone]
+                      [:not [:owns-card :catalog/original-base-k-144-mansion]]]
+                  [:rooms] 0]}}
+
+ :catalog/original-base-e-25-spices
+ {:passive {:vegetable-cooking-bonus 1}}
+
+ :catalog/original-base-e-32-potato-dibber
+ {:passive {:extra-sown-vegetable 1}}
+
+ :catalog/original-base-e-34-basket
+ {:triggers [{:event :after-use-space
+              :condition [:test [:> [:taken :wood] 0]]
+              :effect {:op :return-goods :optional? true :from-taken? true
+                       :cost {:wood 2} :goods {:food 3}}}]}
+
+ :catalog/original-base-e-44-outhouse
+ {:requires [:other-occupations-below 2]}
+
+ :catalog/original-base-e-47-lettuce-patch
+ {:passive {:card-field :vegetable}
+  :triggers [{:event :harvest-crop
+              :condition [:test [:and [:= [:context :cell] :catalog/original-base-e-47-lettuce-patch]
+                                [:= [:context :crop] :vegetable]]]
+              :effect {:op :exchange :optional? true :cost {:vegetable 1} :goods {:food 4}}}]}
+
+ :catalog/original-base-e-49-writing-desk
+ {:triggers [{:event :after-use-space
+              :spaces #{:lessons :lessons-extra :lessons-copse :lessons-growth}
+              :effect {:op :card-action :optional? true :kinds #{:occupation} :occupation-cost 2}}]}
+
+ :catalog/original-base-e-55-stone-house-extension
+ {:requires [:= [:house] :stone]
+  :requires-effect? true
+  :play [{:op :build-rooms :max-rooms 1 :free? true}]}
+
+ :catalog/original-base-e-338-feed-pellets
+ {:triggers [{:event :feeding-start
+              :condition [:test [:> [:animals] 0]]
+              :effect {:op :choose :optional? true :cost {:vegetable 1}
+                       :options [{:label "One sheep" :when [:> [:goods :sheep] 0]
+                                  :effects [{:op :gain :goods {:sheep 1}}]}
+                                 {:label "One wild boar" :when [:> [:goods :boar] 0]
+                                  :effects [{:op :gain :goods {:boar 1}}]}
+                                 {:label "One cattle" :when [:> [:goods :cattle] 0]
+                                  :effects [{:op :gain :goods {:cattle 1}}]}]}}]}
+}

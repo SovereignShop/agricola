@@ -492,12 +492,13 @@
                (filter #(get-in (cards/card %) [:passive :major-or-minor]) hand) hand)]
     [:div
      (when (and (= kind :occupation) (cards/has? p :a028))
-       [field "Wood for occupation cost" [number-input (get draft :occupation-wood 0) #(draft! :occupation-wood %) 3]])
+       [field "Wood for occupation cost" [number-input (get draft :occupation-wood 0) #(draft! :occupation-wood %)
+                                         (+ 3 (:additional-food-cost (cards/card (:card draft)) 0))]])
      [:div.card-choice-picker
       [:h4 (if (= kind :occupation) "Occupation" "Minor improvement")]
       (when optional? [button (if (= :freshman-bake (get-in g [:effect-queue 0 :effect :op])) "Bake bread instead" "No hand card")
                        #(draft! :card nil) "text-button"])
-      (let [choices (mapv (fn [id] {:id id :reason (card-action-error g pid (-> draft (assoc :card id) (dissoc :improvement :upgrade :bake-grain :payment-option)) ui)}) hand)]
+      (let [choices (mapv (fn [id] {:id id :reason (card-action-error g pid (-> draft (assoc :card id) (dissoc :improvement :upgrade :bake-grain :payment-option :return-improvement :as-major?)) ui)}) hand)]
         [:div
          [:div.card-choice-spread {:role "group" :aria-label (if (= kind :occupation) "Playable occupations" "Playable minor improvements")}
           (for [{:keys [id reason]} choices :when (nil? reason)] ^{:key id}
@@ -506,13 +507,14 @@
          (when (some :reason choices)
            [:details.unavailable-cards [:summary "Unavailable cards"]
             (for [{:keys [id reason]} choices :when reason] ^{:key id} [:p.small (str (:name (cards/card id)) ": " reason)])])])]
-     (when (= :return-cooking (:cost (cards/card (:card draft))))
+     (when (#{:return-cooking :return-oven} (:cost (cards/card (:card draft))))
        [:div
-        [:h4 "Return cooking improvement"]
-        [:div.card-choice-spread {:role "group" :aria-label "Return cooking improvement"}
-         (for [id (a/returnable-cooking p)] ^{:key id}
-           [card-choice id (= id (or (:return-improvement draft) (first (a/returnable-cooking p)))) #(draft! :return-improvement id)])]
-        (when-not (= #{:major} (get-in g [:effect-queue 0 :effect :kinds]))
+        [:h4 (if (= :return-oven (:cost (cards/card (:card draft)))) "Return an oven" "Return cooking improvement")]
+        [:div.card-choice-spread {:role "group" :aria-label "Return improvement"}
+         (for [id (card-game/card-return-options p (:card draft))] ^{:key id}
+           [card-choice id (= id (or (:return-improvement draft) (first (card-game/card-return-options p (:card draft))))) #(draft! :return-improvement id)])]
+        (when (and (get-in (cards/card (:card draft)) [:passive :major-or-minor])
+                   (not= #{:major} (get-in g [:effect-queue 0 :effect :kinds])))
           [:label.checkbox [:input {:type "checkbox" :checked (boolean (:as-major? draft))
                                     :on-change #(draft! :as-major? (.. % -target -checked))}]
            "Count this play as a major improvement for build effects"])])
@@ -527,7 +529,7 @@
   [:div
    (when (cards/has? p :a123) [:label.checkbox [:input {:type "checkbox" :checked (boolean (:frame? draft)) :on-change #(draft! :frame? (.. % -target -checked))}] "Frame Builder: replace 2 clay/stone with 1 wood"])
    (when (cards/has? p :b145) [:label.checkbox [:input {:type "checkbox" :checked (boolean (:brushwood? draft)) :on-change #(draft! :brushwood? (.. % -target -checked))}] "Brushwood Collector: replace reed with 1 wood"])
-   (when (and (cards/has? p :a087) (= :wood (:house p)))
+   (when (and (some true? (cards/passives p :direct-stone)) (= :wood (:house p)))
      [field "Renovate to" [:select {:value (name (or (:renovate-to draft) :clay)) :on-change #(draft! :renovate-to (keyword (.. % -target -value)))} [:option {:value "clay"} "Clay"] [:option {:value "stone"} "Stone (Conservator)"]]])])
 (defn action-editor [g p draft disabled? & [submit]]
   (let [space (:space draft) action (a/action-definition g space) bake? (or (#{:sow-bake :side-job} space) (:oven (a/improvements (:improvement draft))))
@@ -740,9 +742,17 @@
      (when (= op :cottage)
        [field "Cottager action" [:select {:value (name (or (:effect-action draft) :room)) :on-change #(draft! :effect-action (keyword (.. % -target -value)))} [:option {:value "room"} "Build one room"] [:option {:value "renovate"} "Renovate"]]])
      (when (or (#{:plow :mini-pasture :stable :corral-builder :amateur-fencer :plowsmith} op) (and (= op :cottage) (not= :renovate (:effect-action draft))))
-       [field "Farm space" [:select {:aria-label "Farm space" :value (if (some? (:cell draft)) (:cell draft) "") :on-change #(draft! :cell (js/parseInt (.. % -target -value)))}
+       [field "Farm space" [:select {:aria-label "Farm space" :value (if (some? (:cell draft)) (:cell draft) "")
+                                    :on-change #(do (draft! :cell (js/parseInt (.. % -target -value)))
+                                                    (when (#{:mini-pasture :corral-builder :amateur-fencer} op) (draft! :fences [])))}
                             [:option {:value ""} "Choose a space…"]
                             (for [i (range 15) :when (= :empty (get-in p [:farm i :type]))] ^{:key i} [:option {:value i} (str "Space " (inc i))])]])
+     (when (and (#{:mini-pasture :corral-builder :amateur-fencer} op)
+                (pos? (a/turn-free-fences-available p)) (a/cell? (:cell draft)))
+       [:div.mini-pasture-fences
+        [:p.small "The chosen space is fenced for free. Hedge Keeper may add up to three extra fences; select their edges below."]
+        [farm (update p :fences into (a/edges (:cell draft))) (assoc draft :space :fences) true]
+        [:p.small (str (count (:fences draft)) " / " (a/turn-free-fences-available p) " extra fences")]])
      (when (#{:plow-many :wheel-plow} op)
        [:div
         [:p.small (if (= op :wheel-plow) "Choose up to two additional fields, in plowing order." "Choose up to two fields, in plowing order.")]
@@ -873,7 +883,7 @@
       (when (card-game/optional-effect? g head) [button "Skip this effect" #(dispatch :command {:type :resolve :decision (:decision-id g) :skip? true}) "text-button" busy?])]]))
 
 (defn card-ability [g p cid]
-  (r/with-let [selection (r/atom {:amount 2 :resource :boar})]
+  (r/with-let [selection (r/atom {:amount 2 :resource :boar :option 0 :times 1})]
     (let [card (cards/card cid) op (get-in card [:ability :op]) ui @(rf/subscribe [:ui])
           cmd (merge @selection {:type :ability :player (:id p) :card cid})
           reason (try (card-game/ability g (:id p) cmd) nil (catch :default error (.-message error)))
@@ -884,6 +894,15 @@
          :free-placement-fences [farm p {:space :fences :fences (:fences @selection)} true #(swap! selection assoc %1 %2)]
          :adopt [:p.small "Pay 1 food to let a newborn take an action this work phase. That child will need adult feeding."]
          :cash-card [:p.small (str "Collect " (get-in p [:card-state cid :food] 0) " food and turn this card face down.")]
+         :free-room [:div [:p.small "Choose one empty space beside your house for the free room."]
+                           [farm p {:space :build :rooms (:rooms @selection)} true #(swap! selection assoc %1 %2)]]
+         :exchange-options
+         [:div
+          [field "Exchange" [:select {:value (:option @selection) :on-change #(swap! selection assoc :option (js/parseInt (.. % -target -value)))}
+                             (for [[index option] (map-indexed vector (get-in card [:ability :options]))] ^{:key index}
+                               [:option {:value index} (:label option)])]]
+          [field "Times" [:input {:type "number" :min 1 :step 1 :value (:times @selection)
+                                  :on-change #(swap! selection assoc :times (js/parseInt (.. % -target -value)))}]]]
          :reed-food [:p.small "Exchange 1 reed for 2 food."]
          :buy-stock [:p.small (str "Next good: " (or (some-> (get-in p [:card-state cid :stock]) peek labels) "sold out") " · 1 food")]
          :porcelain [field "Clay to exchange" [:select {:value (:amount @selection) :on-change #(swap! selection assoc :amount (js/parseInt (.. % -target -value)))}
@@ -953,7 +972,7 @@
           [:button.played-card {:class (str (when open? "exposed ") (when (get-in p [:card-state cid :face-down?]) "spent-card")) :data-face-down (boolean (get-in p [:card-state cid :face-down?])) :aria-label (:name card) :aria-pressed open?
                                 :style (when-not @all? {:top (str (* i 31) "px") :left (if open? "min(162px, calc(100% - 150px))" (str (* i 2) "px")) :z-index (if open? 20 i)})
                                 :on-click #(reset! exposed (when-not open? cid))}
-           (if-let [url (card-art/url cid)] [:img {:src url :alt (:name card) :draggable false}]
+           (if (card-art/available? cid) [card-art/face cid (:name card)]
              [:div.text-card [:h3 (:name card)] [:p (:text card)]])
            [:span.card-name (:name card) (when (get-in p [:card-state cid :face-down?]) " · used")]
            (when (#{(cards/id :b169) (cards/id :a148)} cid)
@@ -1115,8 +1134,8 @@
 (defn hand-card [cid & [attrs]]
   (let [card (cards/card cid)]
     [:button.hand-card (merge {:type "button" :class (name (:kind card)) :aria-label (:name card)} attrs)
-     (if-let [url (card-art/url cid)]
-       [:img {:src url :alt (str (:name card) " · original card image") :loading "lazy" :draggable false}]
+     (if (card-art/available? cid)
+       [card-art/face cid (:name card)]
        [:div.text-card [:span.small (str/upper-case (name (:kind card)))] [:h3 (:name card)] [:p (:text card)]])
      [:strong (:name card)]
      [:span.small (str (if (= :occupation (:kind card)) "Occupation" "Minor improvement")

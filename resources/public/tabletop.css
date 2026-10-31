@@ -241,3 +241,5 @@
 .tt-major-slot:hover,.tt-major-slot:focus-visible {outline:3px solid #ead49e;outline-offset:2px;z-index:2}
 .tt-major-owner {position:absolute;bottom:6%;left:4%;right:4%;padding:6px;background:#f5e8c9ed;border-left:4px solid;border-radius:3px;font:calc(14px * var(--text-scale,1))/1.15 var(--tt-font)}
 .tt-major-area .tt-round-note {left:920px;margin-left:0}
+
+.tt-card-face>.card-sheet-art {width:100%;height:100%;aspect-ratio:auto}

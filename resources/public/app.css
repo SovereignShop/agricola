@@ -2121,3 +2121,9 @@ input,select{background:#fffaf0;border-color:#c8b68f;border-radius:3px}
 @media(max-width:650px){.site-header{min-height:60px;padding:10px 16px;}.header-right{gap:6px;}.layout-view-controls{margin-left:0;}.text-size-controls{max-width:100%;}}
 .game-toolbar>.text-button {max-width:none;}
 .physical-board .action-card strong,.closed-board-space {overflow-wrap:anywhere;}
+
+/* Unmodified original English hand-card sheets, displayed one face at a time. */
+.card-sheet-art {display:block;width:100%;aspect-ratio:337.5 / 517.57;background-size:1000% 700%;background-repeat:no-repeat;border-radius:4px;pointer-events:none}
+.hand-card>.card-sheet-art {height:220px;width:auto;max-width:100%;align-self:center;flex-shrink:0}
+.played-card.spent-card>.card-sheet-art {filter:grayscale(1);opacity:.35}
+@media(max-width:600px) {.hand-card>.card-sheet-art {height:170px}}
