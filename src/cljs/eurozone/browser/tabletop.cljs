@@ -110,7 +110,7 @@
          (for [[round n] (sort (:reserved-fences p))] ^{:key round}
            [:span (str "Round " round ": " n " fences")]))])))
 (defn deck-size [n spread?]
-  [(if spread? 288 128) (if spread? (+ 72 (* 154 (max 1 (js/Math.ceil (/ n 3))))) (+ 250 (* 24 (max 0 (dec n)))))])
+  [(if spread? 384 128) (if spread? (+ 72 (* 192 (max 1 (js/Math.ceil (/ n 3))))) (+ 250 (* 24 (max 0 (dec n)))))])
 (defn deck [descriptor p prefs gesture zoom open-deck!]
   (let [{:keys [path label ids hidden? spread? xy size]} descriptor
         [x y] (if (= path (:path @gesture)) (:position @gesture) xy)
@@ -134,7 +134,7 @@
           [:button.tt-card {:type "button" :aria-label (if hidden? (str "Private card " (inc i)) (:name (card-info cid)))
                             :aria-haspopup "dialog"
                             :style (if spread?
-                                     {:left (px (* (mod i 3) 96)) :top (px (* (quot i 3) 154))}
+                                     {:left (px (* (mod i 3) 128)) :top (px (* (quot i 3) 192))}
                                      {:left "0px" :top (px (* i 24)) :z-index i :--stack-index i})
                             :on-click #(open-deck! path)}
            [card-face cid hidden? p]
@@ -183,8 +183,10 @@
   (let [pid (:id p) names [[:hand-occupation "Hand · occupations" :occupation] [:hand-minor "Hand · minors" :minor]
                          [:occupations "Played · occupations" nil] [:improvements "Played · improvements" nil]]
         hand-width (first (deck-size (count (:occupation hand)) (= :spread (get-in prefs [pid :hand-occupation :mode] (if (= pid focus) :spread :stack)))))
+        minor-width (first (deck-size (count (:minor hand)) (= :spread (get-in prefs [pid :hand-minor :mode] (if (= pid focus) :spread :stack)))))
+        played-x (if hand (max 736 (+ 72 hand-width minor-width)) 736)
         played-width (first (deck-size (count (:occupations p)) (= :spread (get-in prefs [pid :occupations :mode] :stack))))
-        improvements-x (if (or (some? hand) (seq (:occupations p))) (+ 760 played-width) 736)
+        improvements-x (if (or (some? hand) (seq (:occupations p))) (+ played-x 24 played-width) played-x)
         decks (for [[i [id label kind]] (map-indexed vector names)
                     :let [ids (vec (if kind (get hand kind)
                                      (if (= id :occupations) (:occupations p) (concat (sort (:improvements p)) (:minors p)))))
@@ -193,7 +195,7 @@
                     ;; leave the camera bounds, including old saved hand positions.
                     :when (if kind (some? hand) (or (some? hand) (seq ids)))]
                 {:path path :label label :ids ids :spread? spread?
-                 :xy (position prefs path (nth [[24 704] [(+ 48 hand-width) 704] [736 160] [improvements-x 160]] i)) :size (deck-size (count ids) spread?)})
+                 :xy (position prefs path (nth [[24 704] [(+ 48 hand-width) 704] [played-x 160] [improvements-x 160]] i)) :size (deck-size (count ids) spread?)})
         inventory {:path [pid :inventory] :xy (position prefs [pid :inventory] [24 80]) :size [680 64]}
         objects (conj (vec decks) inventory)]
     {:decks decks :inventory inventory :w (max 732 (+ 28 (apply max (map #(+ (first (:xy %)) (first (:size %))) objects))))

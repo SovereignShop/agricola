@@ -115,7 +115,7 @@ def check(base, fixtures):
         close()
         deck.get_by_role('button',name='Spread Hand · occupations',exact=True).click()
         expect(deck).to_have_attribute('data-mode','spread')
-        assert deck.evaluate('el=>el.offsetWidth')==288
+        assert deck.evaluate('el=>el.offsetWidth')==384
         # The supply keeps ten printed slots. Inspecting it cannot buy a card.
         revision=page.locator('.game').get_attribute('data-revision')
         supply=page.locator('.tt-major-board')

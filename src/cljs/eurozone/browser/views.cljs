@@ -57,6 +57,17 @@
       (for [{:keys [id label implemented total]} store/card-pack-coverage] ^{:key id}
         [:p.small (str label ": " implemented " / " total)])]
      (when problem [:p.warning {:role "status"} problem])]))
+(defn android-battery-notice []
+  (when (or (= "Android" (some-> (.-userAgentData js/navigator) (aget "platform")))
+            (re-find #"(?i)Android" (or (.-userAgent js/navigator) "")))
+    (let [activity? (.-EUROZONE_ACTIVITY js/window)]
+      [:aside.mobile-battery-notice {:role "note" :aria-label "Android background battery setting"}
+       [:strong "Switching apps on Android"]
+       [:p "To help keep your game connected, open "
+        [:b (str "Android Settings → Apps → " (if activity? "Discord" "your browser") " → Battery / App battery usage")]
+        ". Enable " [:b "Allow background usage"] " and choose " [:b "Unrestricted"] " if available."]
+       [:p.small (str "Setting names vary by phone. This may reduce disconnects, but "
+                     (if activity? "Android or Discord can still close the Activity." "Android can still suspend the game."))]])))
 (defn create-form []
   (let [name (r/atom (or (.getItem js/sessionStorage "eurozone-name") (.getItem js/localStorage "eurozone-name") "")) title (r/atom "") mode (r/atom :local) setup (r/atom :beginner) extra (r/atom 2) count (r/atom 2) bots (r/atom 0) seconds (r/atom 0) excluded (r/atom []) others (r/atom ["Farmer 2" "Farmer 3" "Farmer 4" "Farmer 5"])]
     (fn []
@@ -64,6 +75,7 @@
         [:section.panel.create-panel
          [:h2 "Create a table"]
          [:p.muted "Play together on one screen, or invite friends to join from their browsers."]
+         [android-battery-notice]
          [:form {:on-submit (fn [e] (.preventDefault e) (.setItem js/sessionStorage "eurozone-name" @name) (.setItem js/localStorage "eurozone-name" @name)
                               (dispatch :send {:event :create :name @name :title (if (str/blank? @title) (str @name "'s farm") @title)
                                                :mode @mode :expected-players @count :turn-seconds @seconds :bots (if (= @mode :peer) @bots 0) :setup {:mode @setup :extra @extra :excluded-packs @excluded} :names (into [@name] (take (dec @count) @others))}))}
@@ -141,6 +153,7 @@
          [:div.lobby-grid
           [:section.panel [:div.eyebrow "AGRICOLA"] [:h1 (:title room)]
            [:p.muted "Choose your settings and wait for everyone to be ready."]
+           [android-battery-notice]
            (when (and (:host? permission) (= :online (:mode room)))
              [:div.lobby-settings
               [:h2 "Table settings"]
@@ -1595,6 +1608,7 @@
        [:div.section-heading
         [:div [:div.eyebrow "AGRICOLA"] [:h1 "Activity tables"] [:p "Join a table or start a new game with people in this Activity."]]
         [button "Create a new table" #(dispatch :activity/enter "create" nil) "button primary" (:busy? ui)]]
+       [android-battery-notice]
        [:div.section-heading [:h2 "Tables"]
         [button "Refresh tables" #(dispatch :activity/load) "text-button" (:busy? ui)]]
        (if (seq (:activity-tables ui))
