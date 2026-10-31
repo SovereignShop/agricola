@@ -1,7 +1,13 @@
 {:edition :revised-2016
- :reviewed "2026-10-30"
+ :reviewed "2026-10-31"
  :sources
- [{:id :original-publisher-card-list :authority :publisher :edition :original
+ [{:id :wizkids-white-publisher :authority :publisher :edition :revised-2016
+   :url "https://wizkids.com/agricola-game-expansion/"
+   :note "White pack SKU 72868 contains twenty cards. The complete pack has nine minors and eleven occupations in the catalogue and scans."}
+  {:id :wizkids-white-english-prints :authority :printed-card-scans :edition :revised-2016
+   :url "https://github.com/JiaYouChen2003/agricola.tools/tree/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img"
+   :note "All twenty C/D faces checked visually against costs, prerequisites and effects. Exact files and hashes are in the artwork manifest. C078 has the printed title Reed-Hatted Toad; the catalogue calls it Toad."}
+  {:id :original-publisher-card-list :authority :publisher :edition :original
    :url "https://lookout-spiele.de/upload/archive/agricola-cards-completelist-v7.pdf"
    :note "Official original card list used to cross-check printing discrepancies, including Brushwood Roof's two-occupation requirement."}
   {:id :original-printed-rules :authority :publisher :edition :original
@@ -64,7 +70,32 @@
    :status :unresolved
    :note "No explicit publisher or designer clarification was found. Do not present either interpretation as a verified ruling."}]
  :regressions
- [{:id :original-k-reed-hut-worker-order
+ [{:id :white-puppeteer-payment
+   :cards [:catalog/revised-wizkids-white-expansion-c-152-puppeteer]
+   :source "https://github.com/JiaYouChen2003/agricola.tools/tree/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img"
+   :authority :printed-card-scans
+   :rule "Revised Puppeteer pays one food to the player using Traveling Players, then plays an occupation without an occupation fee. Additional printed costs still apply. Declining transfers no food. Original Puppeteer remains a separate printing."
+   :test agricola.wizkids-white-occupations-test/revised-puppeteer-pays-the-acting-player-and-not-the-bank}
+  {:id :white-bellfounder-return-home
+   :cards [:catalog/revised-wizkids-white-expansion-d-107-bellfounder]
+   :source "https://github.com/JiaYouChen2003/agricola.tools/tree/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img"
+   :authority :printed-card-scans
+   :rule "Bellfounder requires at least one clay and discards all current clay for either three food or one bonus point. Its optional return-home choice can be funded by another effect in the same timing window."
+   :test agricola.wizkids-white-occupations-test/bellfounder-trades-all-current-clay-on-return-home-only}
+  {:id :white-wooden-hut-stage-price
+   :cards [:catalog/revised-wizkids-white-expansion-c-128-wooden-hut-extender]
+   :source "https://github.com/JiaYouChen2003/agricola.tools/tree/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img"
+   :authority :printed-card-scans
+   :rule "Wooden Hut Extender sets wooden room costs to one reed plus five wood through round five, four wood in rounds six and seven, and three wood afterward. The new round's cost applies before preparation choices; clay and stone room prices are unaffected."
+   :test agricola.wizkids-white-occupations-test/wooden-hut-extender-prices-follow-the-current-stage-before-preparation}
+  {:id :white-half-timbered-mixed-editions
+   :cards [:catalog/revised-wizkids-white-expansion-c-30-half-timbered-house]
+   :source "https://github.com/JiaYouChen2003/agricola.tools/tree/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img"
+   :authority :printed-card-scans
+   :rule "The White printing limits its stone-house bonus to one scoring card. In mixed-edition games, use the existing equal-or-better Original Half-Timbered House, Chief or Mansion bonus instead of adding the White bonus. Original-only combinations retain their Original rules."
+   :note "Cross-edition application of the printed restriction; no separate publisher ruling for these mixed-edition combinations is claimed."
+   :test agricola.wizkids-white-minors-test/white-half-timbered-house-keeps-its-one-card-stone-house-limit}
+  {:id :original-k-reed-hut-worker-order
    :cards [:catalog/original-base-k-138-reed-hut :catalog/original-base-i-227-church-warden]
    :source "https://boardgames.stackexchange.com/questions/14935/church-warden-vs-reed-hut-in-round-14" :authority :community-discussion
    :rule "Reed Hut's occupant acts after family and Guest, must be fed and receives no family points until adopted. Another family member must perform adoption; the occupant cannot adopt itself. Church Warden counts actual placements, so adoption that removes the occupant's remaining placement does not create a fifth placement. The discussion cites the compendium; its original publisher-forum links are unavailable."

@@ -1,6 +1,6 @@
 {
   "artwork": "Agricola, Uwe Rosenberg; illustrations by Klemens Franz; Lookout Games. Third-party artwork is not covered by the application source code license.",
-  "edition": "English original-edition three-segment board, majors and round cards; Korean Revised Edition farm and pieces; English Revised and original E-deck hand cards. Revised Edition board rules with individually implemented original cards.",
+  "edition": "English original-edition three-segment board, majors and round cards; Korean Revised Edition farm and pieces; English Revised, Original E/I/K, and WizKids White hand cards. Revised Edition board rules with individually implemented original cards.",
   "files": [
     {
       "file": "board.png",
@@ -830,6 +830,126 @@
       "reference": "https://github.com/SNiLD/TabletopSimulatorAgricola/blob/5e675a143d7192b271615d9f1a406fd04a1913f1/src/workshop.json",
       "sha256": "f699c66e5f487b16ab233ad54740f114ea98a9feebb7d9cc34a94b76139f1fc9",
       "note": "Unmodified English original K-deck sheet. Titles and card positions visually checked; documented publisher corrections take precedence over printing errors."
+    },
+    {
+      "file": "cards/wizkids-white-c025.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/steammachine.png",
+      "sha256": "76eb44e41ccee863ab841dff1c944ef4c1c8d914b8e38de6ed7b860a1f7de2b9",
+      "note": "Unmodified English printed card image; visually checked against the White pack card number and effect."
+    },
+    {
+      "file": "cards/wizkids-white-c030.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/halftimberedhouse.png",
+      "sha256": "f9aec526db01288459f9a0c8c31b168809875f2b24f979d5d230bb5c1704b4b6",
+      "note": "Unmodified English printed card image; visually checked against the White pack card number and effect."
+    },
+    {
+      "file": "cards/wizkids-white-c059.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/schnappsdistillery.png",
+      "sha256": "52bb8f395ae9f84f9c22ffc13941d52f899a34f2b20d9c5501afbe327c2a224f",
+      "note": "Unmodified English printed card image; visually checked against the White pack card number and effect."
+    },
+    {
+      "file": "cards/wizkids-white-c077.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/claysupply.png",
+      "sha256": "a262901382041c246b1568cd683c2f33f1d1c2aeb2d0b0ed41d2ee1f7bef05ef",
+      "note": "Unmodified English printed card image; visually checked against the White pack card number and effect."
+    },
+    {
+      "file": "cards/wizkids-white-c078.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/reedhattedtoad.png",
+      "sha256": "758394439f1a7a4eb75c6ef0fb83e064d5083543754618b1f214df2a5da03c29",
+      "note": "Unmodified English printed card image; visually checked against the White pack card number and effect. Printed title is Reed-Hatted Toad; the catalogue uses Toad for the same C078 effect."
+    },
+    {
+      "file": "cards/wizkids-white-c089.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/stablemaster.png",
+      "sha256": "2bb3fe15b2c88c0d4818432d535aea01a90b6bf3a57c0b77d67e9798231a720e",
+      "note": "Unmodified English printed card image; visually checked against the White pack card number and effect."
+    },
+    {
+      "file": "cards/wizkids-white-c113.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/wintercaretaker.png",
+      "sha256": "7b377ab040b130d54467f28045ee6aeb4cb7e7e5f8f6fbb7dd0837b02709f736",
+      "note": "Unmodified English printed card image; visually checked against the White pack card number and effect."
+    },
+    {
+      "file": "cards/wizkids-white-c118.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/woodcollector.png",
+      "sha256": "e33d1fda5f17804a2b8a600a54e9fe30a131956794d1a576f6fb6848d516e73f",
+      "note": "Unmodified English printed card image; visually checked against the White pack card number and effect."
+    },
+    {
+      "file": "cards/wizkids-white-c126.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/excavator.png",
+      "sha256": "e437212478dae3c21b1f5f313cb24dac8b4c655f0e80769af7966f07cb69a5da",
+      "note": "Unmodified English printed card image; visually checked against the White pack card number and effect."
+    },
+    {
+      "file": "cards/wizkids-white-c128.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/woodenhutextender.png",
+      "sha256": "c3a0af03751cd321e55c0844067c44e9a8aef68e22a14af4216b02a747905c53",
+      "note": "Unmodified English printed card image; visually checked against the White pack card number and effect."
+    },
+    {
+      "file": "cards/wizkids-white-c152.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/puppeteer.png",
+      "sha256": "8c973cbf04024931686eaa064c6377c46c15b259276e03e7fad947238f72bb3a",
+      "note": "Unmodified English printed card image; visually checked against the White pack card number and effect."
+    },
+    {
+      "file": "cards/wizkids-white-c166.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/cattlewhisperer.png",
+      "sha256": "5f23f6d1a65373e1dcbc9ac2a3e53463adf2ad2511135c5b11a859811e543c5b",
+      "note": "Unmodified English printed card image; visually checked against the White pack card number and effect."
+    },
+    {
+      "file": "cards/wizkids-white-d004.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/crosscutwood.png",
+      "sha256": "a3bf0df17e21d1ade0db66340e108e80e1df7baf2d79359c7c8a22cc15993d61",
+      "note": "Unmodified English printed card image; visually checked against the White pack card number and effect."
+    },
+    {
+      "file": "cards/wizkids-white-d038.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/milkingstool.png",
+      "sha256": "8b881a4b1c4f0fe9b05a39787d1e768e82d132fcd84571bc886a45355c93cd78",
+      "note": "Unmodified English printed card image; visually checked against the White pack card number and effect."
+    },
+    {
+      "file": "cards/wizkids-white-d041.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/horsedrawnboat.png",
+      "sha256": "e081864d651d5223a31e7ab5f964bff2cb03f7923809c1af3f2e1f1b469e0733",
+      "note": "Unmodified English printed card image; visually checked against the White pack card number and effect."
+    },
+    {
+      "file": "cards/wizkids-white-d043.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/hutch.png",
+      "sha256": "f6077cbab95d1608882319053231be8bc7b4086ebfe747ff37da58d68ecd164c",
+      "note": "Unmodified English printed card image; visually checked against the White pack card number and effect."
+    },
+    {
+      "file": "cards/wizkids-white-d090.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/plowmaker.png",
+      "sha256": "74e663c4a3974ceb6a7d5d10ec5d666c70dff938ecade5fe0178671e334894cf",
+      "note": "Unmodified English printed card image; visually checked against the White pack card number and effect."
+    },
+    {
+      "file": "cards/wizkids-white-d107.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/bellfounder.png",
+      "sha256": "09e5df66667eee77197697641f20f098b6c8eb7dde86d8674fb77785932999ba",
+      "note": "Unmodified English printed card image; visually checked against the White pack card number and effect."
+    },
+    {
+      "file": "cards/wizkids-white-d121.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/clayplasterer.png",
+      "sha256": "212b79cadc56b261154516d67025ada656a7db0bd3e60d9f7a4071541545040a",
+      "note": "Unmodified English printed card image; visually checked against the White pack card number and effect."
+    },
+    {
+      "file": "cards/wizkids-white-d132.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/hidefarmer.png",
+      "sha256": "b65bfccb62361d34c1e15ce891c6c1ba4d81aeb3fd4e18f47032dfac23b6f160",
+      "note": "Unmodified English printed card image; visually checked against the White pack card number and effect."
     }
   ]
 }

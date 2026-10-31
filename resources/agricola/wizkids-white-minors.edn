@@ -1,0 +1,33 @@
+;; English WizKids White C/D printings; keep separate from Consul Dirigens reprints.
+{:catalog/revised-wizkids-white-expansion-c-25-steam-machine
+ {:triggers [{:event :after-action
+              :condition [:test [:and [:source-accumulation] [:= [:context :last-person?] true]]]
+              :effect {:op :bake :optional? true}}]}
+ :catalog/revised-wizkids-white-expansion-c-30-half-timbered-house
+ {:score {:type :expression
+          :value [:if [:and [:= [:house] :stone]
+                      [:not [:owns-card :catalog/original-base-e-21-half-timbered-house]]
+                      [:not [:owns-card :catalog/original-base-e-172-chief]]
+                      [:not [:owns-card :catalog/original-base-k-144-mansion]]]
+                  [:rooms] 0]}}
+ :catalog/revised-wizkids-white-expansion-c-59-schnapps-distillery
+ {:triggers [{:event :feeding-start :effect {:op :exchange :optional? true :cost {:vegetable 1} :goods {:food 5}}}]
+  :score {:type :expression :value [:max 0 [:min 2 [:- [:total-crops :vegetable] 4]]]}}
+ :catalog/revised-wizkids-white-expansion-c-77-clay-supply
+ {:play [{:op :schedule :offsets [1 2 3] :goods {:clay 1}}]}
+ :catalog/revised-wizkids-white-expansion-c-78-toad
+ {:play [{:op :schedule :offsets [5 7 9 11 13] :goods {:reed 1}}]}
+ :catalog/revised-wizkids-white-expansion-d-4-cross-cut-wood
+ {:play [{:op :gain :goods {:wood [:goods :stone]}}]}
+ :catalog/revised-wizkids-white-expansion-d-38-milking-stool
+ {:triggers [{:event :before-field-phase
+              :effect {:op :gain :goods {:food [:min 3 [:quot [:+ [:goods :cattle] 1] 2]]}}}]
+  :score {:type :animals :resource :cattle :divisor 2}}
+ :catalog/revised-wizkids-white-expansion-d-41-horse-drawn-boat
+ {:play [{:op :schedule :offsets [1 3 5 7 9 11 13] :goods {:food 1}}
+         {:op :schedule :offsets [2 4 6 8 10 12 14] :goods {:sheep 1}}]}
+ :catalog/revised-wizkids-white-expansion-d-43-hutch
+ {:play [{:op :schedule :offsets [1] :goods {:food 0}}
+         {:op :schedule :offsets [2] :goods {:food 1}}
+         {:op :schedule :offsets [3] :goods {:food 2}}
+         {:op :schedule :offsets [4] :goods {:food 3}}]}}

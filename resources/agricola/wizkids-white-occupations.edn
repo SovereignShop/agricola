@@ -1,0 +1,35 @@
+;; English WizKids White occupations retain their own printing identities.
+{:catalog/revised-wizkids-white-expansion-c-89-stable-master
+ {:play [{:op :stable :cost {:wood 1} :optional? true}]
+  :passive {:one-unfenced-stable-capacity 3}}
+ :catalog/revised-wizkids-white-expansion-c-113-winter-caretaker
+ {:play [{:op :gain :goods {:grain 1}}]
+  :triggers [{:event :harvest-end :effect {:op :gain :goods {:vegetable 1} :cost {:food 2} :optional? true}}]}
+ :catalog/revised-wizkids-white-expansion-c-118-wood-collector
+ {:play [{:op :schedule :offsets [1 2 3 4 5] :goods {:wood 1}}]}
+ :catalog/revised-wizkids-white-expansion-c-126-excavator
+ {:triggers [{:event :use-space :spaces #{:labor}
+              :effects [{:op :gain :goods {:wood 1 :clay 1}}
+                        {:op :gain :goods {:stone 1} :cost {:food 1} :optional? true}]}]}
+ :catalog/revised-wizkids-white-expansion-c-128-wooden-hut-extender
+ {:passive {:staged-wood-room-cost true :wood-room-reed-cost 1}
+  :play [{:op :set-card-state :values {:wood-room-cost [:if [:<= [:round] 5] 5 [:if [:<= [:round] 7] 4 3]]}}]}
+ :catalog/revised-wizkids-white-expansion-c-152-puppeteer
+ {:triggers [{:event :after-action :scope :others :spaces #{:traveling}
+              :effect {:op :card-action :kinds #{:occupation} :occupation-cost 0
+                       :cost {:food 1} :pay-actor? true :optional? true}}]}
+ :catalog/revised-wizkids-white-expansion-c-166-cattle-whisperer
+ {:play [{:op :schedule :offsets [5 8] :goods {:cattle 1}}]}
+ :catalog/revised-wizkids-white-expansion-d-90-plow-maker
+ {:passive {:plow-maker true}}
+ :catalog/revised-wizkids-white-expansion-d-107-bellfounder
+ {:triggers [{:event :return-home
+              :effect {:op :choose :optional? true :available-when [:> [:goods :clay] 0]
+                       :options [{:label "Discard all clay for 3 food" :cost {:clay [:goods :clay]}
+                                  :when [:> [:goods :clay] 0] :effects [{:op :gain :goods {:food 3}}]}
+                                 {:label "Discard all clay for 1 bonus point" :cost {:clay [:goods :clay]}
+                                  :when [:> [:goods :clay] 0] :effects [{:op :points :amount 1}]}]}}]}
+ :catalog/revised-wizkids-white-expansion-d-121-clay-plasterer
+ {:passive {:clay-room-cost 3 :wood-clay-renovation-cost 1}}
+ :catalog/revised-wizkids-white-expansion-d-132-hide-farmer
+ {:final-choice {:op :cover-unused :optional? true}}}

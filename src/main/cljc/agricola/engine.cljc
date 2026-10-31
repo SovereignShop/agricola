@@ -113,10 +113,15 @@
   (let [material (:house p)
         base (apply min 5 (concat (cards/passives p :room-material-cost)
                                   (when (= material :clay) (cards/passives p :clay-room-cost))
-                                  (when (= material :wood) (cards/passives p :wood-room-cost))))
+                                  (when (= material :wood)
+                                    (concat (cards/passives p :wood-room-cost)
+                                            (for [cid (cards/active-owned p)
+                                                  :when (get-in (cards/card cid) [:passive :staged-wood-room-cost])]
+                                              (get-in p [:card-state cid :wood-room-cost] 5))))))
         _ (when (:clay-supports? options)
             (require! (and (= material :clay) (some true? (cards/passives p :clay-supports))) "Clay Supports requires that card and a clay house."))
-        cost (if (:clay-supports? options) {:clay 2 :wood 1 :reed 1} {material base :reed 2})
+        reed (if (= material :wood) (apply min 2 (cards/passives p :wood-room-reed-cost)) 2)
+        cost (if (:clay-supports? options) {:clay 2 :wood 1 :reed 1} {material base :reed reed})
         cost (cond-> cost (some true? (cards/passives p :no-construction-reed)) (assoc :reed 0))
         cost (discounted cost (cond-> {:stone (reduce + 0 (cards/passives p :stone-discount))
                                        :reed (reduce + 0 (cards/passives p :reed-construction-discount))}
@@ -634,7 +639,12 @@
                   (let [a (action-definition g id)]
                     (if (:accumulate a) (update-in g [:piles id] #(merge-with + (or % {}) (:gain a))) g))) g ids)
         (update :players #(mapv (fn [p]
-                                 (let [food (+ (if (contains? (:well-rounds p) r) 1 0) (get-in p [:well-deliveries r] 0))]
+                                 (let [food (+ (if (contains? (:well-rounds p) r) 1 0) (get-in p [:well-deliveries r] 0))
+                                       ;; Stage prices apply before any optional start-round action.
+                                       p (reduce (fn [player cid]
+                                                   (if (get-in (cards/card cid) [:passive :staged-wood-room-cost])
+                                                     (assoc-in player [:card-state cid :wood-room-cost] (cond (<= r 5) 5 (<= r 7) 4 :else 3)) player))
+                                                 p (cards/active-owned p))]
                                    (cond-> (assoc p :remaining (if (holiday-house? p r) 0 (+ (:family p) (reed-hut-count p))) :newborn 0 :guests 0
                                                    :reed-hut-placed? false :reed-hut-acting? false :wood-carver-used? false)
                                      (pos? food) (gain {:food food})))) %))

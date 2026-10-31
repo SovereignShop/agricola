@@ -635,7 +635,12 @@
                 (a/require! (businessman-available? g pid context) "Businessman has already been used for this action."))
             _ (when (:once-per-turn? effect)
                 (a/require! (not= (freshman-turn-key g) (get-in current [:card-state card :last-turn])) "This card was already used this turn."))
+            _ (when (:pay-actor? effect)
+                (a/require! (and (integer? (:actor context)) (<= 0 (:actor context))
+                                 (< (:actor context) (count (:players g))) (not= pid (:actor context)))
+                            "This effect pays another player's action."))
             g (cond-> (if deferred-sidekick? g (update-in g [:players pid] a/pay cost))
+                (:pay-actor? effect) (update-in [:players (:actor context)] a/gain cost)
                 (:businessman? effect) (assoc-in [:players pid :card-state card (if (:merchant-repeat? context) :repeat-turn :last-turn)] (freshman-turn-key g))
                 (:once-per-turn? effect) (assoc-in [:players pid :card-state card :last-turn] (freshman-turn-key g)))]
         (case op
@@ -1318,6 +1323,7 @@
                   (= :take-field-crop op) (map #(hash-map :cell %) (concat (a/tiles (p g player) :field) (keys (:card-fields (p g player)))))
                   :else nil)]
     (and (five/eligible? g player op (:context head))
+         (expr/evaluate g player (:context head) (get effect :available-when true))
          (or (not= :adopt op) (and (= :work (:phase g)) (pos? (:newborn (p g player) 0))))
          (or (not (optional-effect? g head)) (some? conversion))
          (or (not= :extra-action op) (seq (extra-action-spaces g player effect (:context head))))
@@ -2100,7 +2106,8 @@
                                      (catch #?(:clj clojure.lang.ExceptionInfo :cljs :default) _ false)))
                               (range 15)))
                     "Choose a legal action before using a plow.")
-        (queue-front g [(task pid (or (first (:plows options)) :catalog/original-base-e-195-plow-maker)
+        (queue-front g [(task pid (or (first (:plows options))
+                                     (first (filter #(get-in (c/card %) [:passive :plow-maker]) (c/active-owned (p g pid)))))
                              (merge options {:op :wheel-plow :optional? true
                                              :source-command (select-keys command [:space :cell :plantings :lasso? :shaving-horse?])}) {})]))
       (take-action-with-sowing g pid command))))

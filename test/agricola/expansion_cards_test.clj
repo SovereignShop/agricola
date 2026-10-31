@@ -17,7 +17,7 @@
 (deftest catalogue-and-playability-are-separate
   (let [report (coverage/report)]
     (is (= 2214 (:catalogue-entries report)))
-    (is (= (+ 264 (count c/original-definitions)) (:native-hand-cards report)))
+    (is (= (+ 264 (count c/original-definitions) (count c/wizkids-white-definitions)) (:native-hand-cards report)))
     (is (= 10 (:native-major-cards report)))
     (is (= (set (keys a/improvements)) (set (keep coverage/engine-major (vals c/metadata)))))
     (is (= 120 (:total (first (filter #(= "revised · artifex expansion" (:id %)) store/card-pack-coverage)))))

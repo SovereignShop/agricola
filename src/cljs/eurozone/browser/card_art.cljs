@@ -1,6 +1,31 @@
 (ns eurozone.browser.card-art)
 (def available #{:revised-base/a002 :revised-base/a005 :revised-base/a009 :revised-base/a012 :revised-base/a016 :revised-base/a019 :revised-base/a024 :revised-base/a026 :revised-base/a032 :revised-base/a033 :revised-base/a038 :revised-base/a044 :revised-base/a050 :revised-base/a053 :revised-base/a055 :revised-base/a056 :revised-base/a063 :revised-base/a067 :revised-base/a069 :revised-base/a071 :revised-base/a075 :revised-base/a078 :revised-base/a080 :revised-base/a086 :revised-base/a087 :revised-base/a088 :revised-base/a090 :revised-base/a098 :revised-base/a102 :revised-base/a108 :revised-base/a110 :revised-base/a112 :revised-base/a114 :revised-base/a116 :revised-base/a119 :revised-base/a120 :revised-base/a123 :revised-base/a125 :revised-base/a143 :revised-base/a147 :revised-base/a155 :revised-base/a160 :revised-base/a165 :revised-base/b002 :revised-base/b008 :revised-base/b010 :revised-base/b013 :revised-base/b016 :revised-base/b019 :revised-base/b024 :revised-base/b025 :revised-base/b033 :revised-base/b036 :revised-base/b039 :revised-base/b045 :revised-base/b047 :revised-base/b050 :revised-base/b056 :revised-base/b057 :revised-base/b061 :revised-base/b062 :revised-base/b066 :revised-base/b068 :revised-base/b074 :revised-base/b077 :revised-base/b080 :revised-base/b084 :revised-base/b087 :revised-base/b089 :revised-base/b091 :revised-base/b095 :revised-base/b097 :revised-base/b098 :revised-base/b099 :revised-base/b102 :revised-base/b104 :revised-base/b107 :revised-base/b108 :revised-base/b109 :revised-base/b114 :revised-base/b121 :revised-base/b123 :revised-base/b126 :revised-base/b136 :revised-base/b142 :revised-base/b145 :revised-base/b156 :revised-base/b163 :revised-base/b164 :revised-base/b166})
-(defn url [id] (when (available id) (str "/art/agricola/cards/" (name id) ".png")))
+;; Exact pack identities keep reprints and Original cards separate.
+(def printed-files
+  {
+   :catalog/revised-wizkids-white-expansion-c-25-steam-machine "wizkids-white-c025.png"
+   :catalog/revised-wizkids-white-expansion-c-30-half-timbered-house "wizkids-white-c030.png"
+   :catalog/revised-wizkids-white-expansion-c-59-schnapps-distillery "wizkids-white-c059.png"
+   :catalog/revised-wizkids-white-expansion-c-77-clay-supply "wizkids-white-c077.png"
+   :catalog/revised-wizkids-white-expansion-c-78-toad "wizkids-white-c078.png"
+   :catalog/revised-wizkids-white-expansion-c-89-stable-master "wizkids-white-c089.png"
+   :catalog/revised-wizkids-white-expansion-c-113-winter-caretaker "wizkids-white-c113.png"
+   :catalog/revised-wizkids-white-expansion-c-118-wood-collector "wizkids-white-c118.png"
+   :catalog/revised-wizkids-white-expansion-c-126-excavator "wizkids-white-c126.png"
+   :catalog/revised-wizkids-white-expansion-c-128-wooden-hut-extender "wizkids-white-c128.png"
+   :catalog/revised-wizkids-white-expansion-c-152-puppeteer "wizkids-white-c152.png"
+   :catalog/revised-wizkids-white-expansion-c-166-cattle-whisperer "wizkids-white-c166.png"
+   :catalog/revised-wizkids-white-expansion-d-4-cross-cut-wood "wizkids-white-d004.png"
+   :catalog/revised-wizkids-white-expansion-d-38-milking-stool "wizkids-white-d038.png"
+   :catalog/revised-wizkids-white-expansion-d-41-horse-drawn-boat "wizkids-white-d041.png"
+   :catalog/revised-wizkids-white-expansion-d-43-hutch "wizkids-white-d043.png"
+   :catalog/revised-wizkids-white-expansion-d-90-plow-maker "wizkids-white-d090.png"
+   :catalog/revised-wizkids-white-expansion-d-107-bellfounder "wizkids-white-d107.png"
+   :catalog/revised-wizkids-white-expansion-d-121-clay-plasterer "wizkids-white-d121.png"
+   :catalog/revised-wizkids-white-expansion-d-132-hide-farmer "wizkids-white-d132.png"})
+(defn url [id]
+  (when-let [file (or (printed-files id) (when (available id) (str (name id) ".png")))]
+    (str "/art/agricola/cards/" file)))
 
 ;; The original English E, I and K decks are printed on unmodified 10-column, 7-row sheets.
 ;; Indices are visually checked against the card titles, not catalogue order.
@@ -314,7 +339,7 @@
    :catalog/original-base-k-311-magician ["original-k-occupations.jpg" 1]
    :catalog/original-base-k-312-fence-overseer ["original-k-occupations.jpg" 0]
    :catalog/original-base-k-342-animal-trainer ["original-k-occupations.jpg" 3]})
-(defn available? [id] (boolean (or (available id) (original-sprites id))))
+(defn available? [id] (boolean (or (available id) (printed-files id) (original-sprites id))))
 (defn face [id label]
   (if-let [[sheet index] (original-sprites id)]
     [:span.card-sheet-art
