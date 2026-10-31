@@ -43,6 +43,7 @@ def check_replay(base, fixture_id):
         page.goto(base + "/#" + fixture_id)
         choose_action(page, "Forest")
         confirm_action(page)
+        page.get_by_role("button", name="Table menu", exact=True).click()
         with page.expect_download() as download:
             page.get_by_role("button", name="Save recording", exact=True).click()
         saved = download.value.path()
