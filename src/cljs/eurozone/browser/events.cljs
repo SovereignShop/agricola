@@ -59,6 +59,15 @@
     (-> db (assoc :draft {:space space :rooms [] :stables [] :fences [] :plantings [] :bake-grain 0} :error nil)
         (update :action-selection (fnil inc 0)))))
 (rf/reg-event-db :inspect-player (fn [db [_ pid]] (assoc db :inspect-player pid)))
+(rf/reg-fx :observer/preference comms/remember-observer!)
+(rf/reg-event-fx :table/enter
+  (fn [{:keys [db]} [_ id observe? activity?]]
+    {:db (update db :observer-choice-version (fnil inc 0))
+     :fx [[:observer/preference [id observe?]]
+          [:dispatch (if activity? [:activity/enter "join" id] [:navigate id])]]}))
+(rf/reg-event-fx :table/observer-choice
+  (fn [{:keys [db]} [_ id observe?]]
+    {:db (update db :observer-choice-version (fnil inc 0)) :observer/preference [id observe?]}))
 (rf/reg-fx :navigate #(cond
                          (and (nil? %) (.-EUROZONE_ACTIVITY js/window)) (.EUROZONE_ACTIVITY_HOME js/window)
                          (and (nil? %) (comms/peer?)) (set! (.-href js/location) "/")

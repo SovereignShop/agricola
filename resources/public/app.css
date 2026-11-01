@@ -2194,3 +2194,14 @@ input,select{background:#fffaf0;border-color:#c8b68f;border-radius:3px}
 .card-test-tables summary { cursor: pointer; font: 600 18px Georgia, serif; }
 .card-test-tables[open] summary { margin-bottom: 12px; }
 .card-test-tables select { max-width: 100%; }
+
+.table-list-row { display: flex; align-items: center; gap: 12px; }
+.table-list-row .table-entry { flex: 1; min-width: 0; }
+.observer-entry { flex-shrink: 0; }
+.observer-status { color: #716148; font-size: 12px; white-space: nowrap; }
+.observer-lobby { margin: 16px 0; }
+@media (max-width: 600px) {
+  .table-list-row { flex-wrap: wrap; gap: 6px; }
+  .table-list-row .table-entry { flex-basis: 100%; }
+  .observer-entry { margin-bottom: 12px; }
+}

@@ -418,3 +418,30 @@
     (is (= ["Ben" "Cy" "Ada"] (mapv :name (:seats next-game))))
     (doseq [game [first-game next-game]]
       (is (= 1 (get-in game [:state :starting-player]) (get-in game [:state :turn]))))))
+
+(deftest observers-receive-only-public-state-and-cannot-play
+  (doseq [mode [:random :draw]]
+    (let [service (s/make-store nil)
+          id (:id (s/transact! service "host" {:event :create :name "Ada" :mode :online :expected-players 2 :setup {:mode mode}}))
+          _ (s/transact! service "guest" {:event :join :id id :revision 0 :name "Ben"})
+          _ (s/transact! service "host" {:event :start :id id :revision 1})
+          room (get @(:rooms service) id)
+          view (s/snapshot service "observer")
+          private-ids (if (= mode :draw) (mapcat identity (get-in room [:state :draw :packets]))
+                          (mapcat #(mapcat val (:hand %)) (get-in room [:state :players])))
+          public-values (set (tree-seq coll? seq (:datoms view)))]
+      (is (= {:host? false :seats []} (get-in view [:permissions id])))
+      (is (= {} (get-in view [:private-hands id])))
+      (is (empty? (get-in view [:private-draws id])))
+      (is (empty? (get-in view [:private-plans id])))
+      (is (seq private-ids))
+      (is (not-any? public-values private-ids) "No hidden hand or packet IDs enter the observer projection")
+      (is (thrown? clojure.lang.ExceptionInfo (s/export-recording service "observer" id)))
+      (doseq [message [{:event :command :command {:type :action :space :wood}}
+                       {:event :configure :expected-players 3 :setup {:mode :random}}
+                       {:event :ready :ready? true}
+                       {:event :request-takeback}
+                       {:event :draw-pick :player 0 :wave (get-in room [:state :draw :wave]) :card (first private-ids)}]]
+        (is (thrown? clojure.lang.ExceptionInfo
+                     (s/transact! service "observer" (merge {:id id :revision (:revision room)} message)))))
+      (is (= room (get @(:rooms service) id)) "Watching and rejected commands do not alter the game"))))

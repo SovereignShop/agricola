@@ -4,6 +4,16 @@
 (defonce timer (atom nil))
 (defonce peer-sender (atom nil))
 (defn peer? [] (some? @peer-sender))
+(defn observer-key [id] (str "eurozone-observer:" id))
+(defn observing? [id]
+  (try (= "true" (.getItem js/sessionStorage (observer-key id)))
+       (catch :default _ false)))
+(defn remember-observer! [[id observe?]]
+  ;; This only remembers the lobby choice. Seat ownership on the host remains
+  ;; the authority for private data and commands; watching never takes a seat.
+  (try (if observe? (.setItem js/sessionStorage (observer-key id) "true")
+           (.removeItem js/sessionStorage (observer-key id)))
+       (catch :default _ nil)))
 (defn use-peer! [sender]
   (reset! peer-sender sender)
   (when @timer (js/clearTimeout @timer))

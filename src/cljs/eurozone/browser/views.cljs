@@ -156,16 +156,19 @@
                         (if (= @count 5) "Revised base cards + all 48 five-player occupations · linked action spaces and private hands." "Revised Edition base cards · private hands and card-effect decisions."))]
           [:button.button.primary {:type "submit" :disabled (or (:busy? ui) (not (:connected? ui)) (some? (store/pool-error @count {:mode @setup :extra @extra :excluded-packs @excluded :house-rules @house-rules})))} "Create table →"]]]))))
 (defn table-list []
-  (let [rooms @(rf/subscribe [:games])]
+  (let [rooms @(rf/subscribe [:games]) ui @(rf/subscribe [:ui])]
     [:section.tables
      [:div.section-heading [:h2 "The tables"] [:span.muted (str (count rooms) " saved")]]
      (if (seq rooms)
        [:div.table-list
         (for [room rooms] ^{:key (:id room)}
-          [:button.table-entry {:on-click #(dispatch :navigate (:id room))}
-           [:span.table-icon "♧"] [:span [:strong (:title room)] [:small (str/join " · " (map :name (:seats room)))]]
-           [:span.table-status (case (:status room) :lobby "Open table" :draw "Drawing cards" :finished "Finished" (str "Round " (get-in room [:state :round])))]
-           [:span "↗"]])]
+          [:div.table-list-row
+           [:button.table-entry {:on-click #(dispatch :table/enter (:id room) false false)}
+            [:span.table-icon "♧"] [:span [:strong (:title room)] [:small (str/join " · " (map :name (:seats room)))]]
+            [:span.table-status (case (:status room) :lobby "Open table" :draw "Drawing cards" :finished "Finished" (str "Round " (get-in room [:state :round])))]
+            [:span "↗"]]
+           (when-not (seq (get-in ui [:permissions (:id room) :seats]))
+             [button "Join as observer" #(dispatch :table/enter (:id room) true false) "button observer-entry" (:busy? ui)])])]
        [:div.empty-state [:p "No saved tables."]])]))
 (defn card-test-tables []
   (r/with-let [selected (r/atom (:id (first scenarios/scenarios)))]
@@ -205,6 +208,7 @@
   (let [name (r/atom (or (.getItem js/sessionStorage "eurozone-name") (.getItem js/localStorage "eurozone-name") "")) copied? (r/atom false)]
     (fn [room]
       (let [permission @(rf/subscribe [:permission]) ui @(rf/subscribe [:ui]) seated? (seq (:seats permission))
+            observing? (and (not seated?) (comms/observing? (:id room)))
             expected (let [n (:expected-players room)] (if (pos? (or n 0)) n (count (:seats room))))
             online (set (get-in ui [:presence (:id room)]))
             ready (:seat-readiness room) bot-seats (set (:bot-seats room)) bot-count (or (:bots room) 0)
@@ -290,7 +294,14 @@
               [button (if (get ready (first (:seats permission))) "Mark not ready" "I'm ready")
                #(dispatch :send {:event :ready :ready? (not (get ready (first (:seats permission))))}) "button secondary" (:busy? ui)]
               (when-not (:host? permission) [button "Leave seat" #(dispatch :send {:event :leave}) "text-button" (:busy? ui)])])
-           (when (and (= :online (:mode room)) (not seated?) (< (count (:seats room)) expected))
+           (when (and (= :online (:mode room)) (not seated?))
+             [:div.observer-lobby
+              (if observing?
+                [:<> [:p "You’re observing. The game will appear here when the host starts. Hands and draft picks stay private."]
+                 (when (< (count (:seats room)) expected)
+                   [button "Join as a player" #(dispatch :table/observer-choice (:id room) false) "text-button" (:busy? ui)])]
+                [button "Join as observer" #(dispatch :table/observer-choice (:id room) true) "button" (:busy? ui)])])
+           (when (and (= :online (:mode room)) (not seated?) (not observing?) (< (count (:seats room)) expected))
              [:form.form-row {:on-submit (fn [e] (.preventDefault e)
                                           (let [chosen (.-value (.namedItem (.-elements (.-currentTarget e)) "player-name"))]
                                             (.setItem js/sessionStorage "eurozone-name" chosen)
@@ -1805,8 +1816,11 @@
                         (:host? table) "Your table"
                         (:hostOnline? table) "Host connected"
                         :else "Waiting for the host to return")]]
-             [button (if (:host? table) "Open table" "Join table")
-              #(dispatch :activity/enter "join" (:room table)) "button" (or (:busy? ui) unavailable?)]])]
+             [:div.form-row
+              [button (if (:host? table) "Open table" "Join table")
+               #(dispatch :table/enter (:room table) false true) "button" (or (:busy? ui) unavailable?)]
+              (when-not (:host? table)
+                [button "Join as observer" #(dispatch :table/enter (:room table) true true) "button secondary" (:busy? ui)])]])]
          [:section.panel [:p (if (:busy? ui) "Loading tables…" "No tables yet. Create one to get started.")]])])
     (finally (js/clearInterval refresh))))
 (defn app []
@@ -1815,7 +1829,11 @@
         focused? (and @replay-data (:focus? (layout/layout ui (:id room))))]
     [:div.app {:aria-busy (boolean (:busy? ui)) :class (str (when playing? "playing ") (when focused? "table-focused"))}
      [:header.site-header [:button.wordmark {:on-click #(do (reset! replay-data nil) (reset! recordings-open? false) (dispatch :navigate nil))} "eurozone" [:span "✳"]]
-      [:div.header-right (when-not playing? [readability/controls]) [:span.connection {:class (when (:connected? ui) "online")} [:i] (if (:activity-lobby? ui) "Discord Activity" (or (:peer-status ui) (if (:connected? ui) "Connected" "Reconnecting…")))]]]
+      [:div.header-right
+       (when (and room (not (:activity-lobby? ui)) (not @replay-data) (not @recordings-open?)
+                  (empty? (get-in ui [:permissions (:id room) :seats])))
+         [:span.observer-status {:role "status" :title "Watching the public table. Private hands and draft choices are hidden."} "Observing"])
+       (when-not playing? [readability/controls]) [:span.connection {:class (when (:connected? ui) "online")} [:i] (if (:activity-lobby? ui) "Discord Activity" (or (:peer-status ui) (if (:connected? ui) "Connected" "Reconnecting…")))]]]
      (when (:error ui) [:div.toast {:role "alert"} [:span (:error ui)] [button "×" #(dispatch :dismiss-error) "text-button"]])
      (cond @replay-data [replay-view]
            @recordings-open? [recordings-library]
