@@ -1,6 +1,6 @@
 (ns eurozone.discord
   "Discord interaction verification, OAuth and Activity rendezvous. No game engine."
-  (:require [clojure.data.json :as json] [clojure.string :as str] [eurozone.peer :as peer])
+  (:require [clojure.data.json :as json] [clojure.string :as str] [eurozone.peer :as peer] [eurozone.card-scenarios :as scenarios])
   (:import [java.net URI URLEncoder URLDecoder]
            [java.net.http HttpClient HttpRequest HttpRequest$BodyPublishers HttpResponse$BodyHandlers]
            [java.time Duration] [java.util Base64 UUID]
@@ -136,7 +136,7 @@
           {:room room :invite invite :token (if preset (user-token config (:host-user preset)) (:token session))
            :options (or (:options preset) (table-options (:name session) [])) :source :activity :instance instance})))
     {:room room :invite invite :relay true}))
-(defn activity-lobby [app config session {:keys [instance action room requestId]}]
+(defn activity-lobby [app config session {:keys [instance action room requestId scenario]}]
   (peer/require! (and (seq (:bot-token config)) (string? instance) (re-matches #"[a-zA-Z0-9_-]{1,200}" instance)) "Invalid Discord Activity.")
   (let [verified (*request* "GET" (str "https://discord.com/api/v10/applications/" (:client-id config) "/activity-instances/" instance)
                             {"Authorization" (str "Bot " (:bot-token config))} nil)
@@ -161,12 +161,14 @@
         "create" (do
                    (peer/require! (and (string? requestId) (re-matches #"[a-f0-9-]{36}" requestId)) "Invalid new-table request.")
                    (let [id (str (UUID/nameUUIDFromBytes (utf8 (str (:client-id config) ":activity:" instance ":" (:userId session) ":" requestId))))
+                         test-options (when scenario (scenarios/options scenario (:name session)))
                          preset (get @(:activity-options app) (get-in verified [:location :channel_id]))
                          preset (when (and preset (= (:userId session) (:host-user preset)) (< (- (now) (:time preset)) 600)) preset)]
                      (when-not (get @(:tables service) id)
                        (peer/create-table! service {:room id :invite (invitation-for id) :token (:token session)
-                                                    :options (assoc (or (:options preset) (table-options (:name session) []))
-                                                                    :title (str (subs (:name session) 0 (min 30 (count (:name session)))) "’s table"))
+                                                    :options (or test-options
+                                                                 (assoc (or (:options preset) (table-options (:name session) []))
+                                                                    :title (str (subs (:name session) 0 (min 30 (count (:name session)))) "’s table")))
                                                     :source :activity :instance instance}))
                      (assoc (describe (get @(:tables service) id)) :invite (invitation-for id) :relay true)))
         (throw (ex-info "Choose list, join or create." {}))))))

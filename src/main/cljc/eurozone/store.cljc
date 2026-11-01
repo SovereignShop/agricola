@@ -1,6 +1,6 @@
 (ns eurozone.store
   (:require [agricola.engine :as agricola] [agricola.house-rules :as house] [agricola.draw :as draw] [agricola.card-game :as card-game] [agricola.card-rules :as cards] [eurozone.model :as model]
-            [agricola.recording :as recording] [agricola.card-impact :as impact] [eurozone.table-flow :as flow]
+            [agricola.recording :as recording] [agricola.card-impact :as impact] [eurozone.table-flow :as flow] [eurozone.card-scenarios :as scenarios]
             #?(:clj [agricola.simulation :as simulation])
             #?(:clj [clojure.edn :as edn] :cljs [cljs.reader :as edn]) #?(:clj [clojure.java.io :as io]) [clojure.string :as str]
             [datascript.core :as d])
@@ -221,7 +221,13 @@
                             (or (:recording room) [(recording-header room (:state room) true)])))})))
 (defn transition [rooms token {:keys [event id revision name title mode names command setup expected-players bots ready? player wave card] :as msg}]
   (if (= event :create)
-    (let [id (str (random-uuid)) mode (or mode :online) name (valid-name name)
+    (if-let [scenario (:scenario msg)]
+      (let [options (scenarios/options scenario (valid-name name))
+            [rooms room] (transition rooms token (assoc (dissoc options :scenario) :event :create))
+            state (scenarios/initial-state scenario (:names options))
+            room (assoc room :state state :recording [(recording-header room state true)])]
+        [(assoc rooms (:id room) room) room])
+      (let [id (str (random-uuid)) mode (or mode :online) name (valid-name name)
           _ (agricola/require! (#{:online :local} mode) "Choose online or pass-and-play mode.")
           names (if (= mode :local) (mapv valid-name names) [name])
           _ (agricola/require! (and (<= 1 (count names) 5) (= (count names) (count (set names)))) "Choose 1–5 distinct player names.")
@@ -232,7 +238,7 @@
                 :expected-players (if (= mode :local) (count names) expected-players)
                 :seats (mapv #(hash-map :name % :owner token :ready? true) names) :history []}
           room (with-bots room (or bots 0))]
-      [(assoc rooms id room) room])
+      [(assoc rooms id room) room]))
     (let [room (get rooms id)]
       (agricola/require! room "This table does not exist.")
       (agricola/require! (or (#{:draw-pick :harvest-plan :cancel-harvest-plan :takeback-vote :cancel-takeback :expire-takeback} event)

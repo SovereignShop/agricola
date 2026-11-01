@@ -492,7 +492,11 @@
           recording-allowed? (or (:host? permission) (seq owned))
           recording-busy? (or (:busy? ui) (:recording-request ui) (not (:connected? ui)))
           can-play? (and (:connected? ui) (owned actor) (not= :finished (:phase g)) (not (seq (:takeback room))))
-          objects (mapv (fn [p] (assoc (player-objects p (get-in ui [:private-hands (:id room) (:id p)]) @prefs @view) :player p)) (:players g))
+          ;; Rotate the tabletop around the viewer, without changing seats, tabs,
+          ;; card ownership or saved arrangements (all remain keyed by player ID).
+          anchor (or (first (filter #(owned (:id %)) (:players g))) (first (:players g)))
+          [before after] (split-with #(not= (:id anchor) (:id %)) (:players g))
+          objects (mapv (fn [p] (assoc (player-objects p (get-in ui [:private-hands (:id room) (:id p)]) @prefs @view) :player p)) (concat after before))
           geo (table-geometry objects @shared-height) _ (reset! geometry geo)
           decision? (and can-play? (or (seq (:effect-queue g)) (#{:feeding :breeding :housing} (:phase g)) (:space (:draft ui))))
           decision-key [(:id room) (:revision room) actor (:phase g) (:space (:draft ui)) (get-in g [:effect-queue 0 :id]) (:action-selection ui)]

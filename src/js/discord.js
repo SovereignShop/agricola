@@ -61,7 +61,7 @@ async function openDiscord() {
   progress('Opening your Activity…');
   remember(identity.session);
   // List/join/create all verify Activity membership with Discord on the server.
-  window.EUROZONE_ACTIVITY_TABLES = (action, room, requestId) => json('/discord/activity/tables', {method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer ' + identity.session.auth}, body:JSON.stringify({instance:sdk.instanceId,action,room,requestId})});
+  window.EUROZONE_ACTIVITY_TABLES = (action, room, requestId, scenario) => json('/discord/activity/tables', {method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer ' + identity.session.auth}, body:JSON.stringify({instance:sdk.instanceId,action,room,requestId,scenario})});
   window.EUROZONE_SET_ACTIVITY_URL = table => {
     const url=new URL(location.href);
     if (table) {

@@ -2,7 +2,7 @@
   (:require [reagent.core :as r] [re-frame.core :as rf] [clojure.string :as str]
             [cljs.reader :as reader] [agricola.recording :as recording] [eurozone.browser.table-controls :as controls]
             [eurozone.round-markers :as round-markers] [agricola.draw :as draw]
-            [agricola.engine :as a] [agricola.house-rules :as house] [agricola.card-expressions :as expr] [agricola.five-player :as five] [agricola.card-game :as card-game] [eurozone.catalog :as catalog] [eurozone.browser.art :as art] [eurozone.browser.board-layout :as board-layout] [agricola.card-rules :as cards] [eurozone.browser.card-art :as card-art] [eurozone.browser.layout :as layout] [eurozone.browser.tabletop :as tabletop] [eurozone.browser.readability :as readability] [eurozone.browser.chat-dock :as chat-dock] [eurozone.browser.comms :as comms] [eurozone.store :as store]))
+            [agricola.engine :as a] [agricola.house-rules :as house] [agricola.card-expressions :as expr] [agricola.five-player :as five] [agricola.card-game :as card-game] [eurozone.catalog :as catalog] [eurozone.browser.art :as art] [eurozone.browser.board-layout :as board-layout] [agricola.card-rules :as cards] [eurozone.browser.card-art :as card-art] [eurozone.browser.layout :as layout] [eurozone.browser.tabletop :as tabletop] [eurozone.browser.readability :as readability] [eurozone.browser.chat-dock :as chat-dock] [eurozone.browser.comms :as comms] [eurozone.store :as store] [eurozone.card-scenarios :as scenarios]))
 
 (def glyph {:wood "▰" :clay "◆" :reed "≋" :stone "⬟" :grain "♧" :vegetable "●" :food "◉" :sheep "♧" :boar "◆" :cattle "⬢"})
 (def labels {:wood "Wood" :clay "Clay" :reed "Reed" :stone "Stone" :grain "Grain" :vegetable "Vegetables" :food "Food" :sheep "Sheep" :boar "Wild boar" :cattle "Cattle"})
@@ -167,6 +167,23 @@
            [:span.table-status (case (:status room) :lobby "Open table" :draw "Drawing cards" :finished "Finished" (str "Round " (get-in room [:state :round])))]
            [:span "↗"]])]
        [:div.empty-state [:p "No saved tables."]])]))
+(defn card-test-tables []
+  (r/with-let [selected (r/atom (:id (first scenarios/scenarios)))]
+    (let [ui @(rf/subscribe [:ui]) definition (scenarios/scenario @selected)]
+      [:details.panel.card-test-tables
+       [:summary "Card test tables"]
+       [:p.small "Open a fresh prepared position at a card effect. Existing games are kept."]
+       [field "Card to test"
+        [:select {:value @selected :on-change #(reset! selected (.. % -target -value))}
+         (for [{:keys [id name]} scenarios/scenarios] ^{:key id} [:option {:value id} name])]]
+       [:p (:description definition)]
+       [button "Open test table"
+        #(if (:activity-lobby? ui)
+           (dispatch :activity/enter "create" nil @selected)
+           (dispatch :send {:event :create :scenario @selected
+                            :name (or (not-empty (.getItem js/sessionStorage "eurozone-name"))
+                                      (not-empty (.getItem js/localStorage "eurozone-name")) "Tester")}))
+        "button" (or (:busy? ui) (and (not (:activity-lobby? ui)) (not (:connected? ui))))]])))
 (defn library []
   [:main.library
    [:div.hero
@@ -182,6 +199,7 @@
      [:a.text-link {:href (:rules (first catalog/games)) :target "_blank" :rel "noreferrer"} "Read the official rules ↗"]]
     [create-form]]
    [:div.form-row [recordings-button] [recording-picker]]
+   [card-test-tables]
    [table-list]])
 (defn lobby [room]
   (let [name (r/atom (or (.getItem js/sessionStorage "eurozone-name") (.getItem js/localStorage "eurozone-name") "")) copied? (r/atom false)]
@@ -1772,6 +1790,7 @@
         [:div.form-row [recordings-button]
          [button "Create a new table" #(dispatch :activity/enter "create" nil) "button primary" (:busy? ui)]]]
        [android-battery-notice]
+       [card-test-tables]
        [:div.section-heading [:h2 "Tables"]
         [button "Refresh tables" #(dispatch :activity/load) "text-button" (:busy? ui)]]
        (if (seq (:activity-tables ui))

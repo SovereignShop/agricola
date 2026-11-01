@@ -96,3 +96,21 @@
     (with-redefs [discord/*request* (fn [& _] {:application_id "123" :instance_id "lobby" :users []})]
       (doseq [action ["list" "create" "join"]]
         (is (thrown? clojure.lang.ExceptionInfo (discord/activity-lobby application config host (assoc message :action action))))))))
+
+(deftest every-admitted-user-can-host-prepared-card-tables
+  (let [application (app) service (:peer-service application)
+        message {:instance "card-tests" :action "create" :scenario "swing-plow"
+                 :requestId "00000000-0000-0000-0000-000000000002"}]
+    (with-redefs [discord/*request* (fn [& _] {:application_id "123" :instance_id "card-tests" :users ["111" "222"]})]
+      (doseq [[uid name] [["111" "Ada"] ["222" "Ben"]]]
+        (let [session (discord/session-view config (discord/auth config {:id uid :username name}))
+              result (discord/activity-lobby application config session message)
+              table (get @(:tables service) (:room result))]
+          (is (:host? result))
+          (is (= "Test · Swing Plow" (:title result)))
+          (is (= "swing-plow" (get-in table [:options :scenario])))
+          (is (= name (get-in table [:options :name])))
+          (is (= result (discord/activity-lobby application config session message)))
+          (is (thrown? clojure.lang.ExceptionInfo
+                       (discord/activity-lobby application config session (assoc message :scenario "unknown"))))))
+      (is (= 2 (count @(:tables service)))))))

@@ -208,11 +208,11 @@
 (rf/reg-event-fx :activity/refresh (fn [_ _] {:activity/load true}))
 (rf/reg-event-db :activity/tables (fn [db [_ tables]] (cond-> (assoc db :activity-tables tables) (not (:activity-opening? db)) (assoc :busy? false))))
 (rf/reg-event-fx :activity/enter
-  (fn [{:keys [db]} [_ action room]]
-    {:db (assoc db :busy? true :activity-opening? true :error nil) :activity/enter {:action action :room room :request-id (str (random-uuid))}}))
+  (fn [{:keys [db]} [_ action room scenario]]
+    {:db (assoc db :busy? true :activity-opening? true :error nil) :activity/enter {:action action :room room :scenario scenario :request-id (str (random-uuid))}}))
 (rf/reg-fx :activity/enter
-  (fn [{:keys [action room request-id]}]
-    (-> (.EUROZONE_ACTIVITY_TABLES js/window action room request-id)
+  (fn [{:keys [action room request-id scenario]}]
+    (-> (.EUROZONE_ACTIVITY_TABLES js/window action room request-id scenario)
         (.then #(.EUROZONE_ENTER_ACTIVITY_TABLE js/window %))
         (.catch error!))))
 

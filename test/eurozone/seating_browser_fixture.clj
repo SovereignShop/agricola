@@ -5,6 +5,12 @@
       _ (with-redefs [clojure.core/shuffle (comp vec reverse)
                      store/new-state (fn [_ names] (a/new-game names (vec (mapcat identity a/stages)) 1))]
           (store/transact! service host {:event :start :id online :revision 1}))
+      five (:id (store/transact! service host {:event :create :name "Ada" :mode :online :expected-players 5}))
+      _ (doseq [[i name] (map-indexed vector ["Ben" "Cleo" "Dan" "Eve"])]
+          (store/transact! service (if (zero? i) guest (apply str (repeat 64 (str (+ i 2)))))
+                           {:event :join :id five :revision i :name name}))
+      _ (with-redefs [clojure.core/shuffle (comp vec reverse)]
+          (store/transact! service host {:event :start :id five :revision 4}))
       seller :catalog/original-base-k-310-resource-seller
       local (:id (store/transact! service host {:event :create :name "Ada" :mode :local :names ["Ada" "Ben"]}))
       state (-> (g/initialize (a/new-game ["Ada" "Ben"] (vec (mapcat identity a/stages)) 0))
@@ -16,4 +22,4 @@
                    (store/recorded-command 0 {:type :action :space :wood})
                    (update-in [:recording 1 :impacts] conj {:player 0 :card seller :round 1 :op :set-card-state :changes []}))]
   (store/save! service (swap! (:rooms service) assoc local recorded))
-  (println (str online "," local)))
+  (println (str online "," local "," five)))

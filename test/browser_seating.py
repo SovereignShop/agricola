@@ -5,7 +5,7 @@ from browser_smoke import main
 
 
 def check(base, ids):
-    online, seller = ids.split(',')
+    online, seller, five = ids.split(',')
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=True, executable_path=os.environ['EUROZONE_BROWSER'])
         pages=[]; errors=[]
@@ -20,6 +20,11 @@ def check(base, ids):
             expect(tabs.get_by_role('button')).to_have_text(['Board view','Ben','Ada1st'])
             expect(tabs.locator('[data-starting-player="true"]')).to_have_count(1)
             expect(tabs.get_by_role('button',name='Ada player view',exact=True).get_by_role('img',name='Starting player')).to_have_text('1st')
+            expect(page.locator('.tt-player').first).to_have_attribute('data-player',seat)
+            positions=page.locator('.tt-player').evaluate_all('(els)=>els.map(e=>({id:e.dataset.player,x:parseFloat(e.style.left),y:parseFloat(e.style.top)}))')
+            own=positions[0]
+            assert own['y']==min(p['y'] for p in positions)
+            assert own['x']==min(p['x'] for p in positions if p['y']==own['y'])
             expect(page.locator('[data-deck="hand-occupation"]')).to_have_count(1)
             expect(page.locator('[data-deck="hand-occupation"]')).to_have_attribute('data-owner',seat)
         host.locator('.action-card[data-action="grain"]').click()
@@ -46,6 +51,20 @@ def check(base, ids):
         expect(history.locator('li')).to_have_count(1)
         expect(history).not_to_contain_text('Effect resolved')
         host.screenshot(path='/tmp/eurozone-resource-seller-impact.png')
+        for page,seat in [(host,'4'),(guest,'3')]:
+            page.goto(base+'/#'+five)
+            expect(page.locator('.tt-player')).to_have_count(5)
+            expect(page.locator('.tt-player').first).to_have_attribute('data-player',seat)
+            expect(page.get_by_role('navigation',name='Table views').get_by_role('button')).to_have_count(6)
+            ids=page.locator('.tt-player').evaluate_all('(els)=>els.map(e=>Number(e.dataset.player))')
+            assert ids==[(int(seat)+i)%5 for i in range(5)],ids
+            positions=page.locator('.tt-player').evaluate_all('(els)=>els.map(e=>({x:parseFloat(e.style.left),y:parseFloat(e.style.top)}))')
+            assert positions[0]['y']==min(p['y'] for p in positions)
+            assert positions[0]['x']<positions[1]['x']
+            name='Ada' if seat=='4' else 'Ben'
+            page.get_by_role('button',name=name+' player view',exact=True).click()
+            expect(page.locator('.tt-game')).to_have_attribute('data-view','player-'+seat)
+            expect(page.locator('.tt-player[data-player="'+seat+'"] .tt-farm')).to_be_in_viewport(ratio=0.8,timeout=10000)
         assert not errors,errors
         browser.close()
         print('PASS: randomized seat ownership/private hands, live 1st marker, reconnect/mobile and Resource Seller history cleanup')
