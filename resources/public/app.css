@@ -2145,3 +2145,12 @@ input,select{background:#fffaf0;border-color:#c8b68f;border-radius:3px}
 .draw-view .hand-card>img {display:block;width:100%;height:auto;aspect-ratio:337.5 / 517.57;object-fit:contain;flex-shrink:0}
 .draw-view .draw-choices .hand-grid {grid-template-columns:repeat(auto-fill,minmax(min(100%,160px),1fr))}
 .draw-view .draw-kind+.draw-kind {margin-top:24px}
+
+.replay-draft-pool .hand-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,165px),1fr));gap:14px}
+.replay-draft-kind+.replay-draft-kind{margin-top:24px}
+.replay-pool-card{min-width:0;padding:6px;border:2px solid transparent;border-radius:8px}
+.replay-pool-card.picked{border-color:#597747;background:#e8eddf}
+.replay-pool-card .hand-card{width:100%;height:auto}
+.replay-pool-card .hand-card>.card-sheet-art{width:100%;height:auto;max-width:none;aspect-ratio:337.5 / 517.57;flex-shrink:0}
+.replay-pool-card .hand-card>img{width:100%;height:auto;aspect-ratio:337.5 / 517.57;object-fit:contain}
+.replay-pick-label{display:block;color:#365940}

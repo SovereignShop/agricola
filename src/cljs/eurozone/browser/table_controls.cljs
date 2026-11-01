@@ -46,12 +46,12 @@
 
 (defn modal [title children & [close]]
   (r/with-let [previous (.-activeElement js/document)
-               node (atom nil)
+               node (atom nil) current-close (atom close)
                outside-press? (atom false)
                top? (fn [] (= @node (last (array-seq (.querySelectorAll js/document ".table-dialog")))))
                handler (fn [e]
                          (when (and (top?) (= "Escape" (.-key e)))
-                           (.stopImmediatePropagation e) (when close (close)))
+                           (.stopImmediatePropagation e) (when-let [dismiss @current-close] (dismiss)))
                          (when (and (top?) (= "Tab" (.-key e)))
                            (when-let [dialog @node]
                              (let [nodes (.querySelectorAll dialog "button:not([disabled]),select:not([disabled]),input:not([disabled]),[tabindex='0']")
@@ -60,6 +60,7 @@
                                                    (and (not (.-shiftKey e)) (= (.-activeElement js/document) last))))
                                  (.preventDefault e) (.focus (if (.-shiftKey e) last first)))))))
                _ (.addEventListener js/document "keydown" handler)]
+    (reset! current-close close)
     [:div.dialog-backdrop
      {:on-mouse-down #(reset! outside-press? (= (.-target %) (.-currentTarget %)))
       :on-touch-start #(reset! outside-press? (= (.-target %) (.-currentTarget %)))

@@ -685,6 +685,11 @@ No model is automatically promoted.
 
 ## Record a review corpus
 
+During replay, each draft pick shows the exact packet before that pick, grouped
+into occupations and minor improvements. The chosen card is highlighted; cards
+whose type quota was full are labeled. Click any card for a read-only inspection.
+The final pick's packet remains visible after the draft transitions to round 1.
+
 `python3 scripts/record_review.py --output data/reviews/review-20261031 --per-group 40`
 records 320 games across 2–5 players and random/draft setups. Eight isolated JVM
 workers use the deployed bot policy; every fifth game includes one random-policy

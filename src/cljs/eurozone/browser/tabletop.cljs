@@ -458,7 +458,7 @@
           objects (mapv (fn [p] (assoc (player-objects p (get-in ui [:private-hands (:id room) (:id p)]) @prefs @view) :player p)) (:players g))
           geo (table-geometry objects @shared-height) _ (reset! geometry geo)
           decision? (and can-play? (or (seq (:effect-queue g)) (#{:feeding :breeding :housing} (:phase g)) (:space (:draft ui))))
-          decision-key [(:id room) (:revision room) actor (:phase g) (:space (:draft ui)) (get-in g [:effect-queue 0 :id])]
+          decision-key [(:id room) (:revision room) actor (:phase g) (:space (:draft ui)) (get-in g [:effect-queue 0 :id]) (:action-selection ui)]
           simple-action? (and (:space (:draft ui)) (empty? (:effect-queue g))
                               (not (#{:build :house-building :side-job :plow :cultivation :sow-bake :fences :redevelop} (:space (:draft ui)))))
           decision-title (cond (seq (:effect-queue g)) (str "Resolve " (or (:name (cards/card (get-in g [:effect-queue 0 :card]))) "card effect"))
@@ -470,7 +470,14 @@
                              (< (- (+ (if (seq vote-result) @controls/wall-time (.now js/Date)) (:server-offset ui 0)) (:at vote-result 0)) 120000))
           active-popup (or @popup (when (and finished? (not= (:revision room) @finished-dismissed)) {:kind :scores})
                            (when (and decision? (not= decision-key @dismissed)) {:kind :decision}))
-          close! #(do (reset! popup nil) (reset! dismissed decision-key) (when finished? (reset! finished-dismissed (:revision room))))
+          close! #(do
+                    ;; Dismissing a placement is Cancel, not a hidden selected action.
+                    ;; Committed effects stay pending until explicitly resolved.
+                    (when (and (#{:decision :farm} (:kind active-popup))
+                               (= :work (:phase g)) (:space (:draft ui)) (empty? (:effect-queue g)))
+                      (dispatch :select-action nil))
+                    (reset! popup nil) (reset! dismissed decision-key)
+                    (when finished? (reset! finished-dismissed (:revision room))))
           open-decision! (fn [pid] (focus! pid) (reset! dismissed nil) (when-not decision? (reset! popup {:kind :farm :pid pid})))
           board (:board geo)
           major-xy (position @prefs [:shared :major-board] [0 0])

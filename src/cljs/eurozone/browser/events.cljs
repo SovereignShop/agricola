@@ -54,7 +54,10 @@
                    (if (some? cell)
                      (assoc (vec (take (max 2 (inc index) (count cells)) (concat cells (repeat "")))) index cell)
                      (subvec cells 0 (min index (count cells)))))))))
-(rf/reg-event-db :select-action (fn [db [_ space]] (assoc db :draft {:space space :rooms [] :stables [] :fences [] :plantings [] :bake-grain 0} :error nil)))
+(rf/reg-event-db :select-action
+  (fn [db [_ space]]
+    (-> db (assoc :draft {:space space :rooms [] :stables [] :fences [] :plantings [] :bake-grain 0} :error nil)
+        (update :action-selection (fnil inc 0)))))
 (rf/reg-event-db :inspect-player (fn [db [_ pid]] (assoc db :inspect-player pid)))
 (rf/reg-fx :navigate #(cond
                          (and (nil? %) (.-EUROZONE_ACTIVITY js/window)) (.EUROZONE_ACTIVITY_HOME js/window)

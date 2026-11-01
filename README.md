@@ -54,6 +54,10 @@ playing costs, passive discounts, and final scoring are not included. Older
 recordings recover fixed rewards where possible and label unrecorded amounts
 as unavailable.
 
+Closing an unsubmitted action with X, Escape, or the backdrop cancels its draft
+choices, so clicking the same action opens a fresh choice. Committed card effects
+remain pending and can be reopened with **Go to my decision**.
+
 For testing on one machine, use **Open another player in a new tab** in the lobby.
 That link creates an independent seat in session storage; reloading keeps it.
 Ordinary tabs return to the browser’s default seat. Remote players open the normal

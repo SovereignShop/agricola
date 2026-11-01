@@ -1,7 +1,7 @@
 (ns eurozone.browser.views
   (:require [reagent.core :as r] [re-frame.core :as rf] [clojure.string :as str]
             [cljs.reader :as reader] [agricola.recording :as recording] [eurozone.browser.table-controls :as controls]
-            [eurozone.round-markers :as round-markers]
+            [eurozone.round-markers :as round-markers] [agricola.draw :as draw]
             [agricola.engine :as a] [agricola.house-rules :as house] [agricola.card-expressions :as expr] [agricola.five-player :as five] [agricola.card-game :as card-game] [eurozone.catalog :as catalog] [eurozone.browser.art :as art] [eurozone.browser.board-layout :as board-layout] [agricola.card-rules :as cards] [eurozone.browser.card-art :as card-art] [eurozone.browser.layout :as layout] [eurozone.browser.tabletop :as tabletop] [eurozone.browser.readability :as readability] [eurozone.browser.comms :as comms] [eurozone.store :as store]))
 
 (def glyph {:wood "▰" :clay "◆" :reed "≋" :stone "⬟" :grain "♧" :vegetable "●" :food "◉" :sheep "♧" :boar "◆" :cattle "⬢"})
@@ -1626,8 +1626,28 @@
           [:p "Packets pass once everyone who has a legal choice has picked. Completed hands and blocked packets pass automatically."]])
        [:p.small "Every player finishes with 7 occupations and 7 minor improvements. Remaining cards are discarded only after every hand is complete."]]
       [chat-panel room]]]))
+(defn replay-draft-pool [before move inspect!]
+  (when (and (= :pick (get-in move [:command :type])) (= :draw (:phase before)))
+    (let [pid (:player move) d (:draw before) packet (get-in d [:packets pid])
+          picked (get-in move [:command :card]) legal (set (draw/legal-cards d pid))]
+      [:section.panel.replay-draft-pool {:aria-label "Draft pick pool"}
+       [:h2 (str (get-in before [:players pid :name]) " · draft pick · wave " (:wave d))]
+       [:p (str "Picked " (:name (cards/card picked)) " from " (count packet) " cards. Click a card to read it.")]
+       (for [[kind label] [[:occupation "Occupations"] [:minor "Minor improvements"]]
+             :let [ids (filter #(= kind (get-in d [:types %])) packet)] :when (seq ids)] ^{:key kind}
+         [:div.replay-draft-kind
+          [:h3 (str label " · " (count ids))]
+          [:div.hand-grid
+           (for [cid ids] ^{:key cid}
+             [:div.replay-pool-card {:class (when (= cid picked) "picked") :data-card (str cid) :data-picked (= cid picked)}
+              [hand-card cid {:on-click #(inspect! cid) :aria-label (:name (cards/card cid))}]
+              (cond (= cid picked) [:strong.replay-pick-label "Picked"]
+                    (not (legal cid)) [:span.small "Quota already filled"]
+                    :else [:span.small "Available"] )])]])])))
+
 (defn replay-view []
   (r/with-let [player (r/atom 0)
+               inspection (r/atom nil)
                timer (js/setInterval
                       #(when (:playing? @replay-data)
                          (swap! replay-data (fn [r]
@@ -1635,7 +1655,8 @@
                                                (assoc r :index index :playing? (< index (count (:moves r)))))))) 650)]
     (let [{:keys [frames moves index file status playing?]} @replay-data
           g (nth frames index) p (get-in g [:players @player]) move (when (pos? index) (nth moves (dec index)))
-          seek #(swap! replay-data assoc :index % :playing? false)]
+          seek #(do (reset! inspection nil) (swap! replay-data assoc :index % :playing? false))
+          inspect! #(do (swap! replay-data assoc :playing? false) (reset! inspection %))]
       [:main.game.replay-view {:data-motion-table (str "replay:" file) :data-motion-revision index}
        [:div.section-heading [:div [:div.eyebrow "VERIFIED RECORDING · READ ONLY"] [:h1 file]]
         [button "Close playback" #(reset! replay-data nil)]]
@@ -1649,6 +1670,14 @@
                  :on-change #(seek (js/parseInt (.. % -target -value)))}]
         [:strong (str "Move " index " / " (count moves) " · Round " (:round g) " · " (name status))]]
        [:p.replay-command (if move (str (get-in g [:players (:player move) :name]) " · " (pr-str (:command move))) "Initial position")]
+       (when move [replay-draft-pool (nth frames (dec index)) move inspect!])
+       (when-let [cid @inspection]
+         [:div.tt-modal
+          [controls/modal (:name (cards/card cid))
+           [:div.tt-inspection [tabletop/card-face cid false nil]
+            [:div [:p (:text (cards/card cid))]
+             [button "Back to draft pool" #(reset! inspection nil)]]]
+           #(reset! inspection nil)]])
        [:div.replay-grid
         [:div.tabletop-main
          (if (= :draw (:phase g))
