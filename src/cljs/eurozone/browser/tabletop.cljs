@@ -565,7 +565,7 @@
                     [controls/harvest-planner room (:pid active-popup)]]
              :deck [deck-spread popup-deck (get-in g [:players (first deck-path)]) inspect-from-deck!]
              :card (if (:hidden? popup-deck) [:p.small "This player's hand is private."]
-                     (let [cid (:id active-popup) p (:player active-popup) card (card-info cid)]
+                     (let [cid (:id active-popup) p (or (get-in g [:players (:id (:player active-popup))]) (:player active-popup)) card (card-info cid)]
                      [:div.tt-inspection [card-face cid false p]
                       [:div
                        (when deck-path [button "Back to spread" #(open-deck! deck-path) {:class "tt-back-to-spread"}])
@@ -573,7 +573,11 @@
                        (if (= :major (:kind card)) [(:improvement-effects renderers) card]
                            [:div [:p (:text card)] [house-card-note (:house-rules g) card] (when (seq (:cost-text card)) [:p (str "Cost: " (:cost-text card))])
                             (when (seq (:prerequisites card)) [:p (str "Requires: " (:prerequisites card))])])
-                       [card-markers cid p]]]))
+                       [card-markers cid p]
+                       (when (and p (owned (:id p)) (not finished?)
+                                  (not (game/committed-action? g (:id p)))
+                                  (some #{cid} (cards/active-owned p)) (:ability card))
+                         [(:card-ability renderers) g p cid true])]]))
              :cloth [:div.tt-material-picker
                      (for [[id label] materials] ^{:key id}
                        [button [:<> [:span.tt-material-swatch {:style {:background-image (str "url(/art/tablecloths/" (name id) ".webp)")}}] [:strong label]]

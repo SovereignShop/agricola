@@ -289,16 +289,16 @@
                        "Beginner variant: no hand cards. Meeting Place accumulates food; Side Job lets you build a stable or bake bread."
                        "Occupations and minor improvements from the selected packs are enabled. Prerequisites and payment are enforced; card effects trigger automatically and pause when you have a choice.")]]]]))))
 
-(defn select-cell! [draft i]
-  (let [space (:space draft) tool (or (:tool draft) (case space (:build :house-building) :room :side-job :stable (:sow-bake) :grain :field))]
+(defn select-cell! [draft i & [edit!]]
+  (let [edit! (or edit! draft!) space (:space draft) tool (or (:tool draft) (case space (:build :house-building) :room :side-job :stable (:sow-bake) :grain :field))]
     (case tool
-      :room (draft! :rooms (toggle-value (:rooms draft) i))
-      :stable (draft! :stables (toggle-value (:stables draft) i))
-      :field (draft! :cell (when-not (= (:cell draft) i) i))
+      :room (edit! :rooms (toggle-value (:rooms draft) i))
+      :stable (edit! :stables (toggle-value (:stables draft) i))
+      :field (edit! :cell (when-not (= (:cell draft) i) i))
       (:grain :vegetable)
       (let [old (some #(when (= i (:cell %)) %) (:plantings draft))
             rest (vec (remove #(= i (:cell %)) (:plantings draft)))]
-        (draft! :plantings (if (= tool (:crop old)) rest (conj rest {:cell i :crop tool}))))
+        (edit! :plantings (if (= tool (:crop old)) rest (conj rest {:cell i :crop tool}))))
       nil)))
 (defn farm [p draft editable? & [edit!]]
   (let [fenced (a/pasture-cells p) housed (a/animal-housing p) selection (set (concat (:rooms draft) (:stables draft) [(:cell draft)] (map :cell (:plantings draft))))
@@ -311,8 +311,8 @@
        ^{:key i}
        [:g {:role (when editable? "button") :tab-index (when editable? 0)
             :aria-label (str "Farm space " (inc i) ": " (name tile) (when (fenced i) ", pasture"))
-            :on-click #(when editable? (select-cell! draft i))
-            :on-key-down #(when (and editable? (#{"Enter" " "} (.-key %))) (.preventDefault %) (select-cell! draft i))}
+            :on-click #(when editable? (select-cell! draft i edit!))
+            :on-key-down #(when (and editable? (#{"Enter" " "} (.-key %))) (.preventDefault %) (select-cell! draft i edit!))}
         (when (or (= tile :field) (= tile :room))
           [:image {:href (art/url (str (if (= tile :field) "plow" ({:wood "wood_room" :clay "soil_room" :stone "rock_room"} (:house p))) ".png"))
                    :x (+ x 4) :y (+ y 4) :width 92 :height 92 :preserveAspectRatio "none"}])
@@ -1269,14 +1269,15 @@
        #(dispatch :command choice) "button primary" (or busy? (boolean reason))])
       (when (card-game/optional-effect? g head) [button (if (= :play-hand-response op) "Continue" "Skip this effect") #(dispatch :command {:type :resolve :decision (:decision-id g) :skip? true}) "text-button" busy?])]]))
 
-(defn card-ability [g p cid]
+(defn card-ability [g p cid & [expanded?]]
   (r/with-let [selection (r/atom {:amount 2 :resource :boar :option 0 :times 1})]
     (let [card (cards/card cid) op (get-in card [:ability :op]) ui @(rf/subscribe [:ui])
           cmd (merge @selection {:type :ability :player (:id p) :card cid})
           reason (try (card-game/ability g (:id p) cmd) nil (catch :default error (.-message error)))
           field-ids (concat (a/tiles p :field) (keys (:card-fields p)))
           parse-id (fn [value] (if (str/starts-with? value ":") (keyword (subs value 1)) (js/parseInt value)))]
-      [:details.card-ability [:summary (:name card)] [:p.small (:text card)]
+      [(if expanded? :div.card-ability :details.card-ability)
+       [(if expanded? :h3 :summary) (:name card)] [:p.small (:text card)]
        (case op
          :tinsmith [field "Clay to exchange" [number-input (:amount @selection) #(swap! selection assoc :amount %) (a/amount p :clay)]]
          :return-animal-loan [animal-loan-controls p @selection #(swap! selection assoc-in [:return-animals %1] %2)]
@@ -1521,7 +1522,7 @@
 (defn game [room]
   ^{:key (:id room)} [tabletop/table room {:farm farm :action-board action-board :board-action board-action
                         :player-panel player-panel :action-editor action-editor :improvement-effects improvement-effects
-                        :chat chat-panel :scores score-table :rules rules-panel
+                        :card-ability card-ability :chat chat-panel :scores score-table :rules rules-panel
                         :recording-picker recording-picker :recordings-button recordings-button}])
 (defn hand-card [cid & [attrs]]
   (let [card (cards/card cid)]
