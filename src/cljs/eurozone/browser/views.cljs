@@ -1096,6 +1096,7 @@
                      (str "Space " (inc i))])])
      (when (= op :cottage)
        [field "Cottager action" [:select {:value (name (or (:effect-action draft) :room)) :on-change #(draft! :effect-action (keyword (.. % -target -value)))} [:option {:value "room"} "Build one room"] [:option {:value "renovate"} "Renovate"]]])
+     (when (= op :plow) [:p.small "Click an empty space on your farm to choose the new field, then confirm below."])
      (when (or (#{:plow :mini-pasture :fence-overseer :stable :corral-builder :amateur-fencer :plowsmith} op) (and (= op :cottage) (not= :renovate (:effect-action draft))))
        [field "Farm space" [:select {:aria-label "Farm space" :value (if (some? (:cell draft)) (:cell draft) "")
                                     :on-change #(do (draft! :cell (js/parseInt (.. % -target -value)))
@@ -1323,11 +1324,13 @@
      [:span.player-dot {:style {:background (colors (:id p))}}]]
     [:div.farm-info [:span (str (:family p) " family members")] [:span (str (count (a/tiles p :room)) " " (name (:house p)) " rooms")]]
     [farm p (case (get-in g [:effect-queue 0 :effect :op])
+              :plow (assoc draft :space :plow :tool :field)
               :sidekick (assoc draft :space (five/stage-left g (get-in g [:effect-queue 0 :context :space])))
               :extra-action (extra-action-draft g draft)
               draft)
      (and can-play? (= (:id p) (card-game/acting-player g))
-          (or (= :work (:phase g)) (= :extra-action (get-in g [:effect-queue 0 :effect :op]))))]
+          (not busy?)
+          (or (= :work (:phase g)) (#{:extra-action :plow} (get-in g [:effect-queue 0 :effect :op]))))]
     [:div.farm-stats [:span (str (count (:fences p)) "/15 fences")] [:span (str (count (filter :stable (:farm p))) "/4 stables" (when (seq (:reserved-stables p)) (str " · " (reduce + (vals (:reserved-stables p))) " reserved")))]
      [:span (str "Pet: " (or (some #(when (= :pet (:kind %)) (labels (:animal %))) (a/animal-housing p)) "none"))]]
     [:div.inventory (for [resource a/resources] ^{:key resource} [badge resource (a/amount p resource) (:id p)])]
