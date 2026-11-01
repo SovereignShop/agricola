@@ -1,7 +1,7 @@
 (ns eurozone.browser.tabletop
   "A single, continuous table. Arrangements are private presentation preferences;
   the server remains the only authority for moves, hands and card decisions."
-  (:require [reagent.core :as r] [re-frame.core :as rf] [cljs.reader :as reader]
+  (:require [reagent.core :as r] [react-dom :as react-dom] [re-frame.core :as rf] [cljs.reader :as reader]
             [clojure.string :as str] [agricola.engine :as a] [agricola.house-rules :as house]
             [agricola.card-game :as game] [agricola.card-rules :as cards]
             [eurozone.browser.art :as art] [eurozone.browser.card-art :as card-art]
@@ -114,6 +114,62 @@
        (when (= cid :catalog/original-base-i-265-fence-deliveryman)
          (for [[round n] (sort (:reserved-fences p))] ^{:key round}
            [:span (str "Round " round ": " n " fences")]))])))
+(defn table-card [cid hidden? p attrs]
+  ;; The preview lives outside the scaled/clipped camera. It never intercepts
+  ;; input: the original card remains the hover target and click target.
+  (r/with-let [preview (r/atom nil)
+               timer (atom nil)
+               clear-timer! (fn [] (when @timer (js/clearTimeout @timer) (reset! timer nil)))
+               cancel! (fn [& _] (clear-timer!) (reset! preview nil))
+               escape! (fn [e] (when (= "Escape" (.-key e)) (cancel!)))
+               unlisten! (fn []
+                           (doseq [event ["scroll" "wheel" "resize" "blur" "pointerdown"]]
+                             (.removeEventListener js/window event cancel! true))
+                           (.removeEventListener js/window "keydown" escape!))
+               leave! (fn [& _]
+                        (clear-timer!) (unlisten!)
+                        (when @preview
+                          (swap! preview assoc :closing? true)
+                          (reset! timer (js/setTimeout #(reset! preview nil) 160))))
+               enter! (fn [e]
+                        (when (and (= "mouse" (.-pointerType e)) (zero? (.-buttons e)))
+                          (cancel!) (unlisten!)
+                          (doseq [event ["scroll" "wheel" "resize" "blur" "pointerdown"]]
+                            (.addEventListener js/window event cancel! true))
+                          (.addEventListener js/window "keydown" escape!)
+                          (let [el (.-currentTarget e)]
+                            (reset! timer
+                                    (js/setTimeout
+                                     (fn []
+                                       (reset! timer nil)
+                                       (when (and (.-isConnected el) (.matches el ":hover")
+                                                  (nil? (.querySelector js/document "[role=dialog]")))
+                                         (let [rect (.getBoundingClientRect el)
+                                               w (min 410 (- (.-innerWidth js/window) 24) (* 0.66 (- (.-innerHeight js/window) 24)))
+                                               h (/ w 0.66)
+                                               cx (+ (.-left rect) (/ (.-width rect) 2))
+                                               cy (+ (.-top rect) (/ (.-height rect) 2))
+                                               x (clamp (- cx (/ w 2)) 12 (- (.-innerWidth js/window) w 12))
+                                               y (clamp (- cy (/ h 2)) 12 (- (.-innerHeight js/window) h 12))]
+                                           (reset! preview {:left (px x) :top (px y) :width (px w) :height (px h)
+                                                            :--card-return-x (px (- cx (+ x (/ w 2))))
+                                                            :--card-return-y (px (- cy (+ y (/ h 2))))
+                                                            :--card-return-scale-x (/ (.-width rect) w)
+                                                            :--card-return-scale-y (/ (.-height rect) h)})))) 350)))))]
+    [:<>
+     [:button.tt-card (merge attrs {:ref (native-ref {"onpointerenter" #(when-not hidden? (enter! %))
+                                                      "onpointerleave" leave! "onpointercancel" cancel!})})
+      [card-face cid hidden? p]
+      (when-not hidden? [card-markers cid p])]
+     (when (and @preview (not hidden?))
+       (react-dom/createPortal
+        (r/as-element
+         [:div.tt-card-hover {:aria-hidden true :data-card (str cid)
+                              :class (when (:closing? @preview) "is-returning")
+                              :style (dissoc @preview :closing?)}
+          [card-face cid false p]]) (.-body js/document)))]
+    (finally (clear-timer!) (unlisten!))))
+
 (defn deck-size [n spread?]
   [(if spread? 384 128) (if spread? (+ 72 (* 192 (max 1 (js/Math.ceil (/ n 3))))) (+ 250 (* 24 (max 0 (dec n)))))])
 (defn deck [descriptor p prefs gesture zoom open-deck!]
@@ -136,14 +192,12 @@
      (if (zero? n) [:div.tt-empty-deck "—"]
        [:div.tt-deck-cards {:class (if spread? "spread" "stack")}
         (for [[i cid] (map-indexed vector ids)] ^{:key (str cid "-" i)}
-          [:button.tt-card {:type "button" :aria-label (if hidden? (str "Private card " (inc i)) (:name (card-info cid)))
+          [table-card cid hidden? p {:type "button" :aria-label (if hidden? (str "Private card " (inc i)) (:name (card-info cid)))
                             :aria-haspopup "dialog"
                             :style (if spread?
                                      {:left (px (* (mod i 3) 128)) :top (px (* (quot i 3) 192))}
                                      {:left "0px" :top (px (* i 24)) :z-index i :--stack-index i})
-                            :on-click #(open-deck! path)}
-           [card-face cid hidden? p]
-           (when-not hidden? [card-markers cid p])])])]))
+                            :on-click #(open-deck! path)}])])]))
 
 (def major-board-order [:fireplace-2 :fireplace-3 :hearth-4 :hearth-5 :well
                         :clay-oven :stone-oven :joinery :pottery :basketry])

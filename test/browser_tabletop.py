@@ -127,6 +127,51 @@ def check(base, fixtures):
         expect(deck.locator('.tt-card')).to_have_count(7)
         area=page.locator('.tt-player[data-player="0"]').bounding_box()
         assert abs((area['x']+area['width']/2)-(viewport['x']+viewport['width']/2))<4
+        # Delayed previews stay readable at camera scale and leave stack hit
+        # targets intact, including the exposed title strip of a covered card.
+        preview=page.locator('.tt-card-hover')
+        hover_revision=page.locator('.game').get_attribute('data-revision')
+        for kind,label in [('hand-occupation','occupations'),('hand-minor','minors')]:
+            hover_deck=page.locator('[data-owner="0"][data-deck="'+kind+'"]')
+            for mode in ['spread','stack']:
+                if mode=='stack':
+                    hover_deck.get_by_role('button',name='Stack Hand · '+label,exact=True).click()
+                page.wait_for_timeout(250)  # Let deck rearrangement finish before measuring.
+                card=hover_deck.locator('.tt-card').first
+                box=card.bounding_box()
+                x,y=box['x']+box['width']/2,box['y']+min(4,box['height']/10)
+                page.mouse.move(x,y)
+                page.wait_for_timeout(100)
+                expect(preview).to_have_count(0)
+                page.mouse.move(2,2)
+                page.wait_for_timeout(400)
+                expect(preview).to_have_count(0)
+                page.mouse.move(x,y)
+                expect(preview).to_have_count(1)
+                page.wait_for_timeout(200)
+                enlarged=preview.bounding_box()
+                assert enlarged['width']>=400 and enlarged['height']>=600,enlarged
+                assert enlarged['width']>box['width']*3
+                assert enlarged['x']>=10 and enlarged['y']>=10
+                assert enlarged['x']+enlarged['width']<=1680-10
+                assert enlarged['y']+enlarged['height']<=1050-10
+                page.screenshot(path='/tmp/eurozone-hover-'+kind+'-'+mode+'.png')
+                # The overlaid face cannot steal the mouse or activate a card.
+                assert preview.evaluate('e=>getComputedStyle(e).pointerEvents')=='none'
+                page.mouse.move(2,2)
+                expect(preview).to_have_count(0)
+                assert abs(card.bounding_box()['x']-box['x'])<1,(box,card.bounding_box())
+                if mode=='stack':
+                    hover_deck.get_by_role('button',name='Spread Hand · '+label,exact=True).click()
+        expect(page.locator('.game')).to_have_attribute('data-revision',hover_revision)
+        focus('Ada')
+        card=deck.locator('.tt-card').first
+        box=card.bounding_box();x=box['x']+box['width']/2;y=box['y']+box['height']/2
+        page.mouse.move(x,y);expect(preview).to_have_count(1)
+        page.keyboard.press('Escape');expect(preview).to_have_count(0)
+        page.mouse.move(2,2);page.mouse.move(x,y);expect(preview).to_have_count(1)
+        page.mouse.wheel(0,10);expect(preview).to_have_count(0)
+        focus('Ada')
         played=page.locator('[data-owner="0"][data-deck="occupations"]')
         improvements=page.locator('[data-owner="0"][data-deck="improvements"]')
         expect(played).to_have_attribute('data-mode','stack')
@@ -140,7 +185,8 @@ def check(base, fixtures):
         expect(page.get_by_role('dialog',name='Wood Cutter',exact=True)).to_be_visible()
         page.get_by_role('button',name='Back to spread',exact=True).click()
         expect(spread.locator('.card-choice')).to_have_count(7)
-        close()
+        page.locator('.dialog-backdrop').click(position={'x':3,'y':3})
+        expect(page.get_by_role('dialog')).to_have_count(0)
         deck.get_by_role('button',name='Stack Hand · occupations',exact=True).click()
         expect(deck).to_have_attribute('data-mode','stack')
         assert deck.evaluate('el=>el.offsetWidth')==128
@@ -265,10 +311,13 @@ def check(base, fixtures):
         expect(preview.locator('.tt-card-face')).to_be_visible()
         expect(occupations.get_by_role('button',name='Wood Cutter',exact=True)).to_have_attribute('aria-pressed','false')
         expect(page.locator('.game')).to_have_attribute('data-revision',revision)
-        # Escape closes only the preview; the action and draft remain intact.
-        page.keyboard.press('Escape')
+        # Outside clicks close only the top preview, preserving the action draft.
+        preview.locator('.tt-card-face').click()
+        expect(preview).to_be_visible()
+        page.locator('.dialog-backdrop').last.click(position={'x':3,'y':3})
         expect(preview).to_have_count(0)
         expect(page.get_by_role('dialog')).to_have_count(1)
+        expect(page.locator('.game')).to_have_attribute('data-revision',revision)
         occupations.get_by_role('button',name='Wood Cutter',exact=True).click()
         preview.get_by_role('button',name='Select card',exact=True).click()
         expect(occupations.get_by_role('button',name='Wood Cutter',exact=True)).to_have_attribute('aria-pressed','true')
@@ -324,6 +373,7 @@ def check(base, fixtures):
         expect(page.get_by_role('heading',name='Place a family member here?',exact=True)).to_be_visible()
         page.get_by_role('button',name='Choose another space',exact=True).click()
         expect(page.locator('.game')).to_have_attribute('data-revision',touch_revision)
+        expect(page.locator('.tt-card-hover')).to_have_count(0)
         touch.detach()
         z=page.locator('.tt-viewport').get_attribute('data-zoom')
         page.locator('.tt-viewport').focus();page.keyboard.press('Control+=')
@@ -340,7 +390,7 @@ def check(base, fixtures):
         expect(page.locator('.game')).not_to_have_attribute('data-revision',revision)
         expect(page.get_by_role('dialog')).to_have_count(0)
         expect(page.locator('.tt-player[data-player="0"] [data-goods="wood"] .pile-count')).to_have_text('4')
-        expect(page.locator('.tt-player[data-player="0"] [data-goods="food"] .pile-count')).to_have_text('5')
+        expect(page.locator('.tt-player[data-player="0"] [data-goods="food"] .pile-count')).to_have_text('6')
         # Only affordable English major cards are offered, including returning a fireplace.
         open_game(major)
         action('Major or Minor Improvement')

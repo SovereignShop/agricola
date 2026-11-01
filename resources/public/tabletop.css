@@ -258,3 +258,14 @@
 .discord-activity .tt-game {height:calc(100dvh - 42px - var(--eurozone-safe-top) - var(--eurozone-safe-bottom))}
 .discord-activity .tt-takeback>.takeback-controls>button {bottom:calc(5px + var(--eurozone-safe-bottom));right:calc(20px + var(--eurozone-safe-right))}
 .discord-activity .tt-modal .dialog-backdrop {padding: max(12px,var(--eurozone-safe-top)) max(12px,var(--eurozone-safe-right)) max(12px,var(--eurozone-safe-bottom)) max(12px,var(--eurozone-safe-left))}
+
+/* Read at screen scale without lifting stack hit targets or moving table pieces. */
+.tt-card-hover {--tt-font:Georgia,'Times New Roman',serif;color:#392d1d;position:fixed;z-index:190;pointer-events:none;transform-origin:center;animation:tt-card-unfold .16s ease-out both;filter:drop-shadow(0 12px 22px #18200c70)}
+.tt-card-hover.is-returning {animation:tt-card-refold .16s ease-in both}
+.tt-card-hover .tt-printed-card {padding:18px}
+.tt-card-hover .tt-printed-card>strong {font-size:calc(25px * var(--text-scale,1));margin:12px 0}
+.tt-card-hover .tt-printed-card>small {font-size:calc(13px * var(--text-scale,1))}
+.tt-card-hover .tt-printed-card>p {font-size:calc(18px * var(--text-scale,1));line-height:1.45;margin:12px 0}
+@keyframes tt-card-unfold {from {transform:translate(var(--card-return-x),var(--card-return-y)) scale(var(--card-return-scale-x),var(--card-return-scale-y))} to {transform:none}}
+@keyframes tt-card-refold {from {transform:none} to {transform:translate(var(--card-return-x),var(--card-return-y)) scale(var(--card-return-scale-x),var(--card-return-scale-y));opacity:0}}
+@media(prefers-reduced-motion:reduce) {.tt-card-hover,.tt-card-hover.is-returning {animation:none}.tt-card-hover.is-returning {opacity:0}}

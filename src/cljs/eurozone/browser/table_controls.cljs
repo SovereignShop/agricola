@@ -47,6 +47,7 @@
 (defn modal [title children & [close]]
   (r/with-let [previous (.-activeElement js/document)
                node (atom nil)
+               outside-press? (atom false)
                top? (fn [] (= @node (last (array-seq (.querySelectorAll js/document ".table-dialog")))))
                handler (fn [e]
                          (when (and (top?) (= "Escape" (.-key e)))
@@ -60,6 +61,13 @@
                                  (.preventDefault e) (.focus (if (.-shiftKey e) last first)))))))
                _ (.addEventListener js/document "keydown" handler)]
     [:div.dialog-backdrop
+     {:on-mouse-down #(reset! outside-press? (= (.-target %) (.-currentTarget %)))
+      :on-touch-start #(reset! outside-press? (= (.-target %) (.-currentTarget %)))
+      :on-click (fn [e]
+                  (.stopPropagation e)
+                  (when (and close (top?) @outside-press? (= (.-target e) (.-currentTarget e)))
+                    (close))
+                  (reset! outside-press? false))}
      [:section.table-dialog {:role "dialog" :aria-modal true :aria-label title :tab-index -1
                              :ref #(when % (reset! node %) (when (and (top?) (not (.contains % (.-activeElement js/document)))) (.focus %)))}
       [:div.section-heading [:h2 title] (when close [:button.text-button {:aria-label "Close dialog" :on-click close} "×"])]
