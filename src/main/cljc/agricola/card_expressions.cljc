@@ -50,6 +50,7 @@
           :house (:house p) :round (:round g) :family (:family p) :newborn (:newborn p 0) :remaining (:remaining p 0) :begging (:begging p 0)
           :rooms (count (a/tiles p :room)) :fields (count (field-list p)) :field-tiles (count (a/tiles p :field))
           :grain-fields (count-crop p :grain context) :vegetable-fields (count-crop p :vegetable context)
+          :planted-farm-fields (count (filter #(some pos? (vals (a/field-crops %))) (filter #(= :field (:type %)) (:farm p))))
           :planted-fields (count (filter #(pos? (:count % 0)) (field-list p)))
           :empty-fields (count (filter #(zero? (:count % 0)) (field-list p)))
           :unused (count (filter #(a/empty-cell? p %) (range 15)))

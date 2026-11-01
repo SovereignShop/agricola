@@ -1,0 +1,25 @@
+;; Original World Championship (WM / G2), first native batch.
+{:catalog/original-expansion-wm-3-apple-picker
+ {:triggers [{:event :use-space :spaces #{:grain :vegetable} :effect {:op :gain :goods {:wood 1 :food 1}}}]}
+ :catalog/original-expansion-wm-67-buried-treasure
+ {:triggers [{:event :use-space :spaces #{:plow :cultivation} :effect {:op :gain :goods {:stone 1}}}]}
+ :catalog/original-expansion-wm-76-drained-pond
+ {:play [{:op :schedule :offsets [4] :effect {:op :plow :cost {:food 1} :optional? true}}]}
+ :catalog/original-expansion-wm-82-flower-pots
+ {:play [{:op :conditional :condition [:test [:<= [:round] 6]]
+          :effect {:op :schedule :rounds [8] :goods {:vegetable 1}}}]}
+ :catalog/original-expansion-wm-95-mountain-cave
+ {:triggers [{:event :feeding-start :effect {:op :exchange :cost {:wood 1} :goods {:stone 1} :optional? true}}]}
+ :catalog/original-expansion-wm-97-open-gate
+ {:triggers [{:event :feeding-start :effect {:op :points :cost {:sheep 1} :amount 1 :optional? true}}]}
+ :catalog/original-expansion-wm-98-petting-zoo
+ {:score {:type :expression :value [:if [:= [:animal-types] 3]
+                                  [:+ [:if [:>= [:goods :sheep] 2] 1 0] [:if [:>= [:goods :boar] 2] 1 0]] 0]}}
+ :catalog/original-expansion-wm-100-plum-patch
+ {:requires [:and [:>= [:grain-fields] 1] [:>= [:vegetable-fields] 1]]
+  :play [{:op :schedule :offset-count [:planted-farm-fields] :goods {:food 1}}]}
+ :catalog/original-expansion-wm-109-steel-plow
+ {:passive {:action-plow {:extra-fields 3}} :play [{:op :set-uses :uses 1}]}
+ :catalog/original-expansion-wm-111-undisturbed-pond
+ {:requires [:= [:occupations] 0]
+  :play [{:op :schedule :offset-count [:- [:round] 1] :goods {:food 1}}]}}

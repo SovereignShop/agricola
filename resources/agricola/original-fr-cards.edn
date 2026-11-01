@@ -1,0 +1,30 @@
+;; Original France (FR / G3), first native batch.
+{:catalog/original-expansion-fr-3-amusement-park
+ {:play [{:op :schedule :offset-count [:min 5 [:+ [:pastures] 1]] :goods {:food 1}}]}
+ :catalog/original-expansion-fr-10-breakfast-outdoors
+ {:cost-options [{:vegetable 1} {:grain 2}]
+  :triggers [{:event :feeding-start :effect {:op :gain :goods {:food 1}}}]}
+ :catalog/original-expansion-fr-16-cornrick
+ {:play [{:op :schedule :rounds [7 9] :goods {:grain 1}}]}
+ :catalog/original-expansion-fr-17-diary
+ {:triggers [{:event :occupation :effect {:op :gain :goods {:wood 1}}}]}
+ :catalog/original-expansion-fr-38-orchard
+ {:play [{:op :schedule :offset-count [:planted-farm-fields] :goods {:food 1}}]}
+ :catalog/original-expansion-fr-39-par-force-hunting
+ {:play [{:op :schedule :offsets [4 7] :effect {:op :gain :goods {:boar 1} :cost {:food 1} :optional? true}}]}
+ :catalog/original-expansion-fr-43-sofa
+ {:score {:type :expression :value [:if [:<= [:rooms] 2] 4 [:if [:= [:rooms] 3] 2 0]]}}
+ :catalog/original-expansion-fr-44-star-classification-meal
+ {:requires [:= [:house] :stone]
+  :play [{:op :schedule :offset-count [:rounds-left] :goods {:food 1}}]}
+ :catalog/original-expansion-fr-48-swimming-studio
+ {:triggers [{:event :use-space :spaces #{:fishing}
+              :effect {:op :exchange :cost {:wood 1} :goods {:food 3} :optional? true}}]}
+ :catalog/original-expansion-fr-53-trip-to-the-lake
+ {:triggers [{:event :use-space :spaces #{:fishing} :effect {:op :gain :goods {:food 1 :wood 1}}}]}
+ :catalog/original-expansion-fr-57-wild-game
+ {:play [{:op :gain :goods {:food 5}}]}
+ :catalog/original-expansion-fr-100-pipe-smoker
+ {:triggers [{:event :before-field-phase
+              :condition [:test [:and [:not [:= [:context :manure?] true]] [:> [:grain-fields] 0]]]
+              :effect {:op :gain :goods {:wood 2}}}]}}

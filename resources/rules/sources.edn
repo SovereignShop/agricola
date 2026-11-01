@@ -1,7 +1,20 @@
 {:edition :revised-2016
  :reviewed "2026-10-31"
  :sources
- [{:id :wizkids-white-publisher :authority :publisher :edition :revised-2016
+ [{:id :g-wm-fr-english-prints :authority :printed-card-scans :edition :original
+   :url "http://playagricola.com/Agricola/Cards/index.php"
+   :note "First native batch: G005/010/021/029/051/069/075/081/087/093; WM003/067/076/082/095/097/098/100/109/111; FR003/010/016/017/038/039/043/044/048/053/057/100. All 32 English faces checked visually. Exact source URLs and byte hashes are in the artwork manifest; no proposed/rebalanced faces substituted."}
+  {:id :community-compendium-v11-web :authority :unofficial-compilation :edition :original
+   :url "https://www.reedstonefood.com/agricola/compendium"
+   :note "Community clarifications cross-checked with the G/WM/FR printings, especially Plentiful Fields excluding card fields, passing cards, and Open Gate retaining earned points when discarded."}
+  {:id :gamers-publisher :authority :publisher :edition :original
+   :url "https://www.lookout-spiele.de/de/games/agricola_gamer.html"
+   :note "G has 59 minors and 60 occupations."}
+  {:id :world-championship-publisher :authority :publisher :edition :original
+   :url "https://www.lookout-spiele.de/en/games/agricola_wm.html"}
+  {:id :france-publisher :authority :publisher :edition :original
+   :url "https://www.lookout-spiele.de/en/games/agricola_france.html"}
+  {:id :wizkids-white-publisher :authority :publisher :edition :revised-2016
    :url "https://wizkids.com/agricola-game-expansion/"
    :note "White pack SKU 72868 contains twenty cards. The complete pack has nine minors and eleven occupations in the catalogue and scans."}
   {:id :wizkids-white-english-prints :authority :printed-card-scans :edition :revised-2016
@@ -70,7 +83,25 @@
    :status :unresolved
    :note "No explicit publisher or designer clarification was found. Do not present either interpretation as a verified ruling."}]
  :regressions
- [{:id :white-puppeteer-payment
+ [{:id :community-planted-farm-fields
+   :cards [:catalog/original-expansion-g-93-plentiful-fields :catalog/original-expansion-wm-100-plum-patch :catalog/original-expansion-fr-38-orchard]
+   :source "https://www.reedstonefood.com/agricola/compendium"
+   :authority :printed-card-and-community-clarification
+   :rule "These effects count planted farm tiles once each, excluding card fields and additional crop stacks. Food schedules snapshot that count when played. Plum Patch still requires a grain field and a distinct vegetable field; card fields may satisfy the prerequisite."
+   :test agricola.community-decks-test/orchard-and-plum-patch-count-farm-fields-once-and-snapshot-the-count}
+  {:id :community-future-optional-payments
+   :cards [:catalog/original-expansion-wm-76-drained-pond :catalog/original-expansion-fr-39-par-force-hunting]
+   :source "http://playagricola.com/Agricola/Cards/index.php"
+   :authority :printed-card-scans
+   :rule "The field or boar is promised on the printed future rounds. On arrival, pay one food or decline. Future board markers show the piece and payment; no field or animal is granted merely by playing the card."
+   :test agricola.community-decks-test/future-field-and-animal-payments-are-visible-optional-and-reloadable}
+  {:id :community-steel-plow
+   :cards [:catalog/original-expansion-wm-109-steel-plow :catalog/original-expansion-g-69-clear-cutting :catalog/original-expansion-wm-67-buried-treasure]
+   :source "http://playagricola.com/Agricola/Cards/index.php"
+   :authority :printed-card-scans
+   :rule "Steel Plow can replace one plowed field with up to four once per game on Plow or Cultivation. Clear Cutting rewards every new field; Buried Treasure rewards using the space once. Declining leaves the plow use available."
+   :test agricola.community-decks-test/steel-plow-is-once-per-game-combines-with-clear-cutting-and-does-not-multiply-treasure}
+  {:id :white-puppeteer-payment
    :cards [:catalog/revised-wizkids-white-expansion-c-152-puppeteer]
    :source "https://github.com/JiaYouChen2003/agricola.tools/tree/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img"
    :authority :printed-card-scans

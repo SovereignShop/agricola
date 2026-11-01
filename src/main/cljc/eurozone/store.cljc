@@ -34,6 +34,9 @@
              :let [implemented (filter #(contains? cards/cards (:id %)) all) card (first all)]]
          {:id id :label (case id "base-a" "Base game · A cards" "base-b" "Base game · B cards"
                                   "five-player" "5–6 Player Expansion"
+                                  "original · expansion · g" "Gamers’ deck · G (Original)"
+                                  "original · expansion · wm" "World Championship · WM/G2 (Original)"
+                                  "original · expansion · fr" "France · FR/G3 (Original)"
                                   (str (:pack card) (when (= "Original" (:edition card)) (str " · " (:deck card) " (Original)"))))
           :min-players (apply min (map :min-players all))
           :implemented (count implemented) :total (count all)})))
@@ -141,7 +144,10 @@
   ;; food and printed scoring; only newly created games use the new defaults.
   ;; Network packets still require an exact match between running clients.
   (or (= @engine-fingerprint fingerprint)
-      (= "c392563c1a00c063ed0975f223d2dae2adafc1aa84eba60c7d1c22f625a897f3" fingerprint)))
+      (contains? #{"c392563c1a00c063ed0975f223d2dae2adafc1aa84eba60c7d1c22f625a897f3"
+                   ;; 6fede24 adds optional rules; the first G/WM/FR batch adds
+                   ;; new cards without changing any existing card effects.
+                   "25cf1f4860710b725f2d99e416bf45b4e2ff0f49c6241735600728e54ddd3f1c"} fingerprint)))
 (defn recording-header [room state partial-start?]
   {:record :header :format 1 :initial state :hash (recording/state-hash state)
    :rules-hash @engine-fingerprint :options (:setup room) :partial-start? partial-start?})

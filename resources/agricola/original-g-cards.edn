@@ -1,0 +1,25 @@
+;; Original Gamers' deck, first native batch. English faces and compendium
+;; references are recorded in the art manifest and rules/source ledger.
+{:catalog/original-expansion-g-5-architect
+ {:triggers [{:event :build-rooms :effect {:op :gain :goods {:food [:* 2 [:context :rooms-built]]}}}
+             {:event :stables-created :effect {:op :gain :goods {:food [:context :stables-built]}}}]}
+ :catalog/original-expansion-g-10-bard
+ {:triggers [{:event :use-space :scope :others :spaces #{:traveling}
+              :effect {:op :gain :goods {:food 1 :wood 1}}}]}
+ :catalog/original-expansion-g-21-hermit
+ {:score {:type :expression :value [:if [:= [:occupations] 1] 6 0]}}
+ :catalog/original-expansion-g-29-harbor-master
+ {:triggers [{:event :use-space :spaces #{:fishing} :effect {:op :gain :goods {:reed 1}}}
+             {:event :use-space :scope :others :spaces #{:fishing} :effect {:op :gain :goods {:reed 1 :food 1}}}]}
+ :catalog/original-expansion-g-51-stone-deliveryman
+ {:play [{:op :schedule :rounds [8 10 12 14] :goods {:stone 1}}]}
+ :catalog/original-expansion-g-69-clear-cutting
+ {:triggers [{:event :plow :effect {:op :gain :goods {:wood [:context :fields-plowed]}}}]}
+ :catalog/original-expansion-g-75-farmers-market
+ {:play [{:op :gain :goods {:vegetable 1}}]}
+ :catalog/original-expansion-g-81-hayloft
+ {:score {:type :expression :value [:min 2 [:max 0 [:- [:stables] 2]]]}}
+ :catalog/original-expansion-g-87-magic-beans
+ {:play [{:op :gain :goods {:vegetable 2}}]}
+ :catalog/original-expansion-g-93-plentiful-fields
+ {:play [{:op :gain :goods {:food [:planted-farm-fields]}}]}}

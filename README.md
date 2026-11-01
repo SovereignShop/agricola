@@ -7,6 +7,13 @@ A browser-based home for board games, with **Agricola Revised Edition** as the f
 playable game, including a beginner mode and the 96 base hand cards. Built in Clojure and ClojureScript, following
 the shared-schema, DataScript, re-frame and Reagent architecture of `../codenames`.
 
+The first Original G, World Championship (WM/G2), and France (FR/G3) batches
+add 32 playable cards with English printed faces: G **10/119**, WM **10/115**,
+and FR **12/120**. These packs are partial; only implemented cards enter games.
+Their rules include optional decision popups, future-round pieces, passing cards,
+printed prerequisites/costs, and end-game scoring. Pack exclusions and the optional
+banlist also apply to these decks.
+
 ## Run
 
 Requires a JDK (17 or newer), Clojure CLI, Python 3, and Node.js 20+ with npm

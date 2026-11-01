@@ -950,6 +950,198 @@
       "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/hidefarmer.png",
       "sha256": "b65bfccb62361d34c1e15ce891c6c1ba4d81aeb3fd4e18f47032dfac23b6f160",
       "note": "Unmodified English printed card image; visually checked against the White pack card number and effect."
+    },
+    {
+      "file": "cards/original-g005.jpg",
+      "source": "http://playagricola.com/Agricola/Images/occg1architect_v4.jpg",
+      "sha256": "4abb5ecd830627084d78da9803b489b963298e1f378090312d7b616ecea5684e",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-g010.jpg",
+      "source": "http://playagricola.com/Agricola/Images/occg4bard.jpg",
+      "sha256": "c9e2c735d52fecf4819e95810bacf923dff118f9af9fc8522a416db210b20aac",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-g021.jpg",
+      "source": "http://playagricola.com/Agricola/Images/occg4hermit.jpg",
+      "sha256": "3d1efb4e4c9daadd38f06089b641e20682e488c3d43a5e9dccbe9741e685aaa1",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-g029.jpg",
+      "source": "http://playagricola.com/Agricola/Images/occg3harbormaster.jpg",
+      "sha256": "dd3b20cf1c8d590c31085e34d3b77fa17c5884e454bf3bf082cea35ffd086734",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-g051.jpg",
+      "source": "http://playagricola.com/Agricola/Images/occg3stonedeliveryman.jpg",
+      "sha256": "0adfcbbe0e45618511c247f43184e5730c0585b1b8acedbba587e7ca97303981",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-g069.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminorclearcutting_v3.jpg",
+      "sha256": "56d7a495ff134fa899e46887a386996b1193aa633b37e75bd161317af62bc04f",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-g075.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminorfarmersmarket.jpg",
+      "sha256": "0bce86623ffe6e746ed9f8c66175727f41f3c08733a649bc558b7b57668d13f0",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-g081.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminorhayloft_v2.jpg",
+      "sha256": "95fce4e295dc2121649d07cc38bddbd9198da7a156522b60a1f6311f096fd574",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-g087.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminormagicbeans.jpg",
+      "sha256": "ef66a411b94860e39eca203ee4c7f502d79ed61a240c29e06e4fc07f8e1026e3",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-g093.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminorplentifulfields.jpg",
+      "sha256": "848b3db236ca7003b9a66de805f57f270f676b4233591d97c18a3b6509227c8f",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-wm003.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx1ApplePicker_963_6.jpg",
+      "sha256": "fcc443a928478324a1a1999c35d08c8e3e788ba62f8f2a9155aefbb9fa047e98",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-wm067.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorBuriedTreasure_291_7.jpg",
+      "sha256": "b5ab755bed525647c9ec9398d7a1812039bd448dfa646e268e13c40cf10a79a9",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-wm076.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorDrainedPond_586_6.jpg",
+      "sha256": "c499b8acedb153857728a4c925bd8407121c287c7e44e442cc641b3d031ecfac",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-wm082.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorFlowerPots_1296_6.jpg",
+      "sha256": "7ba7c644fa0b1259da0df6f195c964e57d37775f82ab92a4e523e9e6b4b6eba4",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-wm095.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorMountainCave_1100_15.jpg",
+      "sha256": "37c8ce2427805b7ca485945e6f9818d7b6d7446467235c6f802fc728913c02d1",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-wm097.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorOpenGate_353_7.jpg",
+      "sha256": "d5772b20761910125e52fb6c1fda780b3313fb843a7ae2d2b74880d4bcc460f4",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-wm098.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorPettingZoo_695_8.jpg",
+      "sha256": "88d7a652fd324cf64bfdfa6857751c412c90ee698d0357de9f5ef6b36375e7b9",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-wm100.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorPlumPatch_620_9.jpg",
+      "sha256": "2bba563f3e0da4f894311037b4e9fc44fda9c617dd0b35c8e05b3b131817712d",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-wm109.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorSteelPlow_596_7.jpg",
+      "sha256": "bd12663078b75fc7d3a51609d366fa0135407e032446ca0519896fb18ba6fbb8",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-wm111.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorUndisturbedPond_709_13.jpg",
+      "sha256": "d9729f3130176a22d232bf500272bf4515317b48753e46ec2d3219eb29461bf5",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-fr003.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorAmusementPark_3774_11.jpg",
+      "sha256": "c6cc0f94c5483ed1233bad069e56a3f4b7bd4e8e7ddbac457ec05b162d902438",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-fr010.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorBreakfastOutdoors_2863_5.jpg",
+      "sha256": "54eb0d8597bceda26c82ce9917b11618d71950e6924043bc82b07a6782874254",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-fr016.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorCornrick_4011_10.jpg",
+      "sha256": "f8c690ead14e143818edd2e27991b423dedc98723720f8cf650f556e000e041a",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-fr017.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorDiary_2436_2.jpg",
+      "sha256": "384dd6ea22242dd61d2614fadbb3938c651337334bb1d92c3050938de16a91dc",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-fr038.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorOrchard_3861_7.jpg",
+      "sha256": "fee54cccd46ee25facc6e727ba8a067dbcb077e46f7122880d7bf2a25b4ba36a",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-fr039.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorParForceHunting_3785_3.jpg",
+      "sha256": "ce94dc2fbc238e5bb05a2438a33bd36978679967210892af3024c26e3efd3c64",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-fr043.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorSofa_3939_9.jpg",
+      "sha256": "4d0d00fafaeaccca428c149da486aae2cdeb111bdd1e897eb70b4b6e8a166ffe",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-fr044.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorStarClassificationMe_3479_2.jpg",
+      "sha256": "013d2b9aae1f1336985b6e2508b872adf06a24361bf05add08f02e4dcbb25e96",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-fr048.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorSwimmingStudio_2763_5.jpg",
+      "sha256": "0b2b700f14603c1921dd923fb31267bd71a662548bccf6ede768b40603f9edc8",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-fr053.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorTriptotheLake_2464_5.jpg",
+      "sha256": "80fc6dcc0981e242ef31717b09aa8e9b88610c05de5e7d48591ff691e40d66d8",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-fr057.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorWildGame_2960_3.jpg",
+      "sha256": "1435603aa16f6191bc5b5f057933f753a03ee9769fd781383a7cc137d9641e35",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-fr100.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx1PipeSmoker_3313_4.jpg",
+      "sha256": "e3f3794200aead524b4bd0d0badbe40d4ada776199410973eed00a857700d734",
+      "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
     }
   ]
 }
