@@ -1,7 +1,7 @@
 (ns eurozone.model
   "Shared normalized facts and queries. The rules aggregate is projected into
    game -> player -> farm-cell entities; views never depend on entity paths."
-  (:require [datascript.core :as d] [agricola.draw :as draw] [clojure.string :as str]))
+  (:require [datascript.core :as d] [agricola.draw :as draw] [agricola.card-impact :as impact] [clojure.string :as str]))
 
 (def schema
   {:eurozone.game/id {:db/unique :db.unique/identity}
@@ -21,6 +21,7 @@
              :eurozone.game/bots (count (filter :bot? seats))
              :eurozone.game/turn-seconds (get room :turn-seconds 0)
              :eurozone.game/clocks (or (:clocks room) {})
+             :eurozone.game/card-impact (impact/history (:recording room) state)
              :eurozone.game/takeback (or (:takeback room) {})
              :eurozone.game/takeback-result (or (:takeback-result room) {})
              :eurozone.game/can-takeback? (boolean (seq (:history room)))

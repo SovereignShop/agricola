@@ -269,3 +269,8 @@
 @keyframes tt-card-unfold {from {transform:translate(var(--card-return-x),var(--card-return-y)) scale(var(--card-return-scale-x),var(--card-return-scale-y))} to {transform:none}}
 @keyframes tt-card-refold {from {transform:none} to {transform:translate(var(--card-return-x),var(--card-return-y)) scale(var(--card-return-scale-x),var(--card-return-scale-y));opacity:0}}
 @media(prefers-reduced-motion:reduce) {.tt-card-hover,.tt-card-hover.is-returning {animation:none}.tt-card-hover.is-returning {opacity:0}}
+.card-impact {border-top:1px solid #b8aa8570;margin-top:20px;padding-top:12px}
+.card-impact h3 {margin:0 0 10px}
+.impact-earned {font-size:calc(18px * var(--text-scale,1))}
+.impact-events {padding-left:22px;margin:12px 0}
+.impact-events li {margin:10px 0;font-size:calc(14px * var(--text-scale,1));line-height:1.45}

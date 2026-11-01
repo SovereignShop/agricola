@@ -3,7 +3,7 @@
   the server remains the only authority for moves, hands and card decisions."
   (:require [reagent.core :as r] [react-dom :as react-dom] [re-frame.core :as rf] [cljs.reader :as reader]
             [clojure.string :as str] [agricola.engine :as a] [agricola.house-rules :as house]
-            [agricola.card-game :as game] [agricola.card-rules :as cards]
+            [agricola.card-game :as game] [agricola.card-impact :as impact] [agricola.card-rules :as cards]
             [eurozone.browser.art :as art] [eurozone.browser.card-art :as card-art]
             [eurozone.browser.readability :as readability]
             [eurozone.browser.table-controls :as controls]))
@@ -78,6 +78,34 @@
     [:p.house-rule-note {:role "note"}
      (str "House rule: " (str/join "/" (map inc (get-in card [:score :thresholds])))
           " improvements for " (str/join "/" (get-in card [:score :values])) " bonus points.")]))
+(def impact-labels {:fields "fields" :rooms "rooms" :stables "stables" :fences "fences" :family "family members" :bonus-points "bonus points"})
+(defn impact-amounts [amounts]
+  (str/join ", " (for [[kind n] (sort-by (comp str key) amounts) :when (not (zero? n))]
+                  (str n " " (get impact-labels kind (name kind))))))
+(defn card-impact [room pid cid]
+  (let [events (get-in room [:card-impact pid cid] [])
+        totals (impact/totals events pid)]
+    [:section.card-impact {:aria-label "Card impact history"}
+     [:h3 "Impact history"]
+     (when (seq (:gained totals)) [:p.impact-earned [:strong "Received: "] (impact-amounts (:gained totals))])
+     (when (seq (:spent totals)) [:p [:strong "Spent during effects: "] (impact-amounts (:spent totals))])
+     (when (seq (:farm totals)) [:p [:strong "Farm changes: "] (impact-amounts (:farm totals))])
+     (if (empty? events) [:p.small "No resolved effects recorded for this card yet."]
+       [:ol.impact-events
+        (for [e events] ^{:key [(:move e) (:index e)]}
+          [:li
+           [:strong (str "Round " (:round e))]
+           (when-let [space (:space e)] [:span (str " · " (or (:name (a/action-definition (:state room) space)) (name space)))])
+           (cond (:skipped? e) [:span " · Declined"]
+                 (:unknown? e) [:span " · Effect resolved; this older recording has no measured amounts."]
+                 (empty? (:changes e)) [:span (str " · " (case (:op e) :schedule "Scheduled future delivery" "Effect resolved"))]
+                 :else [:div (for [change (:changes e)] ^{:key (:player change)}
+                               [:div
+                                (when (not= pid (:player change)) [:span (str (get-in room [:state :players (:player change) :name]) ": ")])
+                                (when (seq (:gained change)) [:span (str "Received " (impact-amounts (:gained change)) ". ")])
+                                (when (seq (:spent change)) [:span (str "Spent " (impact-amounts (:spent change)) ". ")])
+                                (when (seq (:farm change)) [:span (str "Farm: " (impact-amounts (:farm change)) ".")])])])])])
+     [:p.small "Tracks resolved effects and card abilities. Playing costs, passive discounts and final scoring are not included."]]))
 (defn card-face [cid hidden? p]
   (let [{:keys [name image text kind]} (when-not hidden? (card-info cid))
         used? (get-in p [:card-state cid :face-down?])]
@@ -574,6 +602,7 @@
                            [:div [:p (:text card)] [house-card-note (:house-rules g) card] (when (seq (:cost-text card)) [:p (str "Cost: " (:cost-text card))])
                             (when (seq (:prerequisites card)) [:p (str "Requires: " (:prerequisites card))])])
                        [card-markers cid p]
+                       (when (and p (some #{cid} (cards/owned p))) [card-impact room (:id p) cid])
                        (when (and p (owned (:id p)) (not finished?)
                                   (not (game/committed-action? g (:id p)))
                                   (some #{cid} (cards/active-owned p)) (:ability card))

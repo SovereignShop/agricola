@@ -46,6 +46,14 @@ Solo starts with 0 food either way. Rules are fixed when the game starts and
 persist in saves, peer reconnects, and recordings. View them under **Table menu →
 Rules**. Existing games retain their original food and scoring.
 
+Open a played card to see its **Impact history**: resources received and spent
+during its effects, farm changes, and the round and action space for each trigger.
+For example, Fish Trap totals the food it has earned. Histories survive saves,
+reconnects, and takebacks. This tracks resolved effects and card abilities;
+playing costs, passive discounts, and final scoring are not included. Older
+recordings recover fixed rewards where possible and label unrecorded amounts
+as unavailable.
+
 For testing on one machine, use **Open another player in a new tab** in the lobby.
 That link creates an independent seat in session storage; reloading keeps it.
 Ordinary tabs return to the browser’s default seat. Remote players open the normal

@@ -6,8 +6,10 @@
 (def ^:dynamic *effect-observer*
   "Optional diagnostic sink. It observes committed effects, never legality probes."
   nil)
+(def ^:dynamic *impact-observer* nil)
 (def ^:dynamic *perpetual-draw?* false)
-(defn observe-effect! [head choice]
+(defn observe-effect! [head choice before after]
+  (when *impact-observer* (*impact-observer* before after head choice))
   (when *effect-observer*
     (*effect-observer* (assoc (select-keys head [:player :card :effect :context :window]) :choice choice))))
 (defn p [g pid] (get-in g [:players pid]))
@@ -1555,7 +1557,7 @@
                     (needs-input? g head) g
                     :else
                       (let [g (run-effect rest-state head {})
-                            _ (observe-effect! head {})
+                            _ (observe-effect! head {} rest-state g)
                             g (cond-> g (:once? head) (assoc-in [:players (:player head) :card-state (:card head) :triggered?] true))]
                         (recur (with-housing g) (inc steps))))))
       g))))
@@ -1580,7 +1582,7 @@
     (let [next (-> g (update :effect-queue #(vec (rest %))) (run-effect head choice)
                    (update :decision-id (fnil inc 0)))
           next (cond-> next (:once? head) (assoc-in [:players pid :card-state (:card head) :triggered?] true))]
-      (observe-effect! head choice)
+      (observe-effect! head choice g next)
       (with-housing next))))
 (defn reset-turn-fence-bonuses [g]
   (update g :players #(mapv a/reset-turn-fence-bonus %)))
@@ -2430,7 +2432,10 @@
           :card-action (card-action (prepare-placement g) pid cmd)
           ;; Hayward places fences without taking a fencing action. Check state
           ;; milestones here, but do not synthesize action triggers from deltas.
-          :ability (-> (note-gain-receipts g (ability g pid cmd) (:kind (c/card (:card cmd)))) (queue-front [(step :check-all)]) with-housing)
+          :ability (let [after (ability g pid cmd)]
+                     (when *impact-observer*
+                       (*impact-observer* g after {:player pid :card (:card cmd) :effect {:op :ability}} cmd))
+                     (-> (note-gain-receipts g after (:kind (c/card (:card cmd)))) (queue-front [(step :check-all)]) with-housing))
           :feed (a/feed g pid cmd)
           :breed (let [next (a/breed g pid cmd)]
                    (if (= :finish-round (:phase next))

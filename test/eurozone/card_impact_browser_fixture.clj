@@ -1,0 +1,20 @@
+(require '[eurozone.store :as store] '[agricola.engine :as a] '[agricola.card-game :as g]
+         '[agricola.card-rules :as c] '[agricola.draw :as draw] '[clojure.string :as str])
+(def trap :catalog/original-base-i-95-fish-trap)
+(let [service (store/make-store (System/getenv "EUROZONE_DATA")) token (apply str (repeat 64 "a"))
+      id (:id (store/transact! service token {:event :create :mode :local :name "Ada" :names ["Ada" "Ben"] :setup {:mode :random}}))
+      state (-> (g/initialize (a/new-game ["Ada" "Ben"] (vec (mapcat identity a/stages)) 0))
+                (assoc-in [:players 0 :minors] [trap]))
+      room (-> (get @(:rooms service) id) (assoc :state state :history []) (dissoc :recording)
+               (store/recorded-command 0 {:type :action :space :reed})
+               (store/recorded-command 1 {:type :action :space :labor})
+               (store/recorded-command 0 {:type :action :space :fishing}))
+      draft-id (:id (store/transact! service token {:event :create :mode :online :name "Ada" :expected-players 2 :setup {:mode :draw :extra 2}}))
+      _ (store/transact! service (apply str (repeat 64 "b")) {:event :join :id draft-id :revision 0 :name "Ben"})
+      _ (store/transact! service token {:event :start :id draft-id :revision 1})
+      priority #{trap :catalog/original-base-e-191-mason :catalog/original-expansion-g-5-architect :catalog/original-expansion-wm-76-drained-pond}
+      pool (sort-by (juxt #(if (priority (:id %)) 0 1) :id) (store/hand-pool 2))
+      supply (vec (mapcat (fn [kind] (take 18 (filter #(= kind (:kind %)) pool))) draw/kinds))
+      packets (draw/new-draw 2 2 supply)]
+  (store/save! service (swap! (:rooms service) #(-> % (assoc id room) (assoc-in [draft-id :state :draw] packets))))
+  (println (str id "," draft-id)))

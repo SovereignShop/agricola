@@ -2138,3 +2138,10 @@ input,select{background:#fffaf0;border-color:#c8b68f;border-radius:3px}
 .end-game-recording .form-row {display:flex; flex-wrap:wrap; gap:12px; margin-bottom:8px;}
 .recordings-library {max-width:1600px; margin:auto; padding:16px;}
 .recording-library-frame {display:block; width:100%; height:calc(100dvh - 180px); min-height:420px; border:1px solid #c7baa1; border-radius:8px; background:#e9e2d3;}
+
+/* Printed draft faces scale as a whole; fixed heights distort sprite sheets
+   when the draft/kept-card columns become narrower than a full-size card. */
+.draw-view .hand-card>.card-sheet-art {width:100%;height:auto;max-width:none;aspect-ratio:337.5 / 517.57;align-self:stretch;flex-shrink:0}
+.draw-view .hand-card>img {display:block;width:100%;height:auto;aspect-ratio:337.5 / 517.57;object-fit:contain;flex-shrink:0}
+.draw-view .draw-choices .hand-grid {grid-template-columns:repeat(auto-fill,minmax(min(100%,160px),1fr))}
+.draw-view .draw-kind+.draw-kind {margin-top:24px}

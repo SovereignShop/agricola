@@ -1,6 +1,6 @@
 (ns eurozone.store
   (:require [agricola.engine :as agricola] [agricola.house-rules :as house] [agricola.draw :as draw] [agricola.card-game :as card-game] [agricola.card-rules :as cards] [eurozone.model :as model]
-            [agricola.recording :as recording] [eurozone.table-flow :as flow]
+            [agricola.recording :as recording] [agricola.card-impact :as impact] [eurozone.table-flow :as flow]
             #?(:clj [agricola.simulation :as simulation])
             #?(:clj [clojure.edn :as edn] :cljs [cljs.reader :as edn]) #?(:clj [clojure.java.io :as io]) [clojure.string :as str]
             [datascript.core :as d])
@@ -147,18 +147,23 @@
                    ;; new cards without changing any existing card effects.
                    "25cf1f4860710b725f2d99e416bf45b4e2ff0f49c6241735600728e54ddd3f1c"
                    ;; Draft setup changed only; saved packets and pick rules remain intact.
-                   "c9b0d1da72a9504b0c2664ffacb256062bee606a66be8e532806f8f2b52a59ca"} fingerprint)))
+                   "c9b0d1da72a9504b0c2664ffacb256062bee606a66be8e532806f8f2b52a59ca"
+                   ;; Impact observation adds presentation data, not game-state changes.
+                   "18155c414ce2fb354c26bdd3829a1dc67117ab9e4c3888befd76e8ad7832c5e1"} fingerprint)))
 (defn recording-header [room state partial-start?]
   {:record :header :format 1 :initial state :hash (recording/state-hash state)
    :rules-hash @engine-fingerprint :options (:setup room) :partial-start? partial-start?})
 (defn recorded-command [room pid command]
-  (let [before (:state room) effects (atom [])
-        after (binding [card-game/*effect-observer* #(swap! effects conj %)]
+  (let [before (:state room) effects (atom []) impacts (atom [])
+        after (binding [card-game/*effect-observer* #(swap! effects conj %)
+                        card-game/*impact-observer* (fn [before after head choice]
+                                                     (when-let [entry (impact/event before after head choice)]
+                                                       (swap! impacts conj entry)))]
                 (recording/apply-command before pid command))
         records (or (:recording room) [(recording-header room before true)])
         index (dec (count records))
         records (conj records {:record :move :index index :player pid :round (:round before) :phase (:phase before)
-                               :command command :effects @effects :hash (recording/state-hash after)})]
+                               :command command :effects @effects :impacts @impacts :hash (recording/state-hash after)})]
     (assoc room :state after :history (vec (take-last 100 (conj (:history room) before))) :recording
            (cond-> records
              (= :finished (:phase after))
