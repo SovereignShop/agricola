@@ -58,6 +58,11 @@ Closing an unsubmitted action with X, Escape, or the backdrop cancels its draft
 choices, so clicking the same action opens a fresh choice. Committed card effects
 remain pending and can be reopened with **Go to my decision**.
 
+Card selection popups can confirm the action directly: place a worker and play
+the card, resolve a card-play effect, or keep a draft card and pass. **Select
+card** remains available for adjusting payment, baking, or other options first;
+reopening the same card preserves those choices.
+
 For testing on one machine, use **Open another player in a new tab** in the lobby.
 That link creates an independent seat in session storage; reloading keeps it.
 Ordinary tabs return to the browser’s default seat. Remote players open the normal

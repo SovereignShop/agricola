@@ -514,8 +514,8 @@
          [round-card g round (get revealed (dec round)) can-play? draft busy?])
        [future-round-markers g]]]
      [card-action-spaces g can-play? busy?]]))
-(declare card-action-error improvement-effects)
-(defn card-selection-preview [cid choose! close!]
+(declare card-action-error improvement-effects direct-card-action)
+(defn card-selection-preview [cid choose! close! & [action]]
   (let [card (tabletop/card-info cid)]
     [:div.tt-modal.tt-card-selection
      [controls/modal (:name card)
@@ -527,18 +527,27 @@
              [tabletop/house-card-note (get-in @(rf/subscribe [:game]) [:state :house-rules]) card]
              (when (seq (:cost-text card)) [:p (str "Cost: " (:cost-text card))])
              (when (seq (:prerequisites card)) [:p (str "Requires: " (:prerequisites card))])])
+        (when (:hint action) [:p.small (:hint action)])
+        (when (:reason action) [:p.card-unavailable {:role "status"} (:reason action)])
         [:div.dialog-actions
          [button "Back to cards" close!]
-         [button "Select card" #(do (choose!) (close!)) "button primary"]]]]
+         [button "Select card" #(do (choose!) (close!)) (if action "text-button" "button primary")]
+         (when action
+           [button (:label action) #(when-not (:disabled? action) ((:submit! action)) (close!))
+            "button primary" (:disabled? action)])]]]
       close!]]))
-(defn card-choice [cid selected? choose! & [attrs]]
+(defn card-choice [cid selected? choose! & [attrs action]]
   (r/with-let [preview? (r/atom false)]
     [:<>
      [:button.card-choice (merge {:type "button" :aria-label (:name (tabletop/card-info cid))
                                  :aria-pressed (boolean selected?) :on-click #(reset! preview? true)} attrs)
       [tabletop/card-face cid false nil]]
      (when (and @preview? (not (:disabled attrs)))
-       [card-selection-preview cid choose! #(reset! preview? false)])]))
+       [card-selection-preview cid choose! #(reset! preview? false) action])]))
+(defn hand-card-draft [draft cid]
+  (if (= cid (:card draft)) draft
+    (-> draft (assoc :card cid)
+        (dissoc :improvement :upgrade :bake-grain :cook-with-bake :payment-option :return-improvement :return-improvements :as-major? :discount-resource))))
 (defn improvement-discount-select [p cid draft]
   [:div
    (when-let [resources (seq (a/improvement-discount-resources p cid))]
@@ -568,7 +577,8 @@
                          :when (or (nil? (:major-ids effect)) (contains? (:major-ids effect) id))
                          :when (or (nil? (:kinds effect)) (contains? (:kinds effect) :major)
                                    (and (contains? (:kinds effect) :minor) (a/major-as-minor? p id)))
-                         :let [base (-> draft (assoc :improvement id :bake-grain 0) (dissoc :card :upgrade :discount-resource :return-improvement :return-improvements :as-major?))
+                         :let [base (if (= id (:improvement draft)) draft
+                                      (-> draft (assoc :improvement id :bake-grain 0) (dissoc :card :upgrade :cook-with-bake :discount-resource :return-improvement :return-improvements :as-major?)))
                                options (cons base (when (:upgrade (a/improvements id))
                                                     (map #(assoc base :upgrade %) (a/fireplace-upgrades p))))
                                playable (first (filter #(nil? (card-action-error g (:id p) % ui)) options))]]
@@ -578,7 +588,8 @@
      [:div.card-choice-spread {:role "group" :aria-label "Playable major improvements"}
       (for [{:keys [id playable]} candidates :when playable] ^{:key id}
         [card-choice id (= id (:improvement draft))
-         #(do (draft! :improvement id) (when (:upgrade playable) (draft! :upgrade (:upgrade playable))))])]
+         #(do (draft! :improvement id) (when (:upgrade playable) (draft! :upgrade (:upgrade playable))))
+         nil (direct-card-action g p playable)])]
      (when-not (some :playable candidates) [:p.small "No major improvements are playable with the current choices."])
      (when (some :reason candidates)
        [:details.unavailable-cards [:summary "Unavailable major improvements"]
@@ -621,6 +632,28 @@
         :else ((if (:card-space draft) card-game/card-action card-game/take-action) (card-game/prepare-placement g) pid (action-command draft))))
     nil
     (catch :default error (.-message error))))
+(defn direct-card-action [g p draft]
+  (let [ui @(rf/subscribe [:ui]) permission @(rf/subscribe [:permission]) room @(rf/subscribe [:game])
+        op (get-in g [:effect-queue 0 :effect :op])
+        supported? (or (empty? (:effect-queue g))
+                       (#{:sidekick :extra-action :young-artist :original-scholar :educator :scholar :card-action :freshman-bake} op))
+        command (cond (#{:sidekick :extra-action} op)
+                      {:type :resolve :decision (:decision-id g) :action-command (action-command draft)}
+                      (some? op) (cond-> (assoc draft :type :resolve :decision (:decision-id g))
+                                  (= op :young-artist) (assoc :action :play))
+                      :else (action-command draft))
+        reason (when supported? (card-action-error g (:id p) draft ui))
+        own-turn? (and (= (:id p) (card-game/acting-player g)) (some #{(:id p)} (:seats permission)))
+        card (tabletop/card-info (or (:card draft) (:improvement draft)))
+        verb (case (:kind card) :occupation "Play occupation" :major "Build improvement" "Play improvement")
+        returned (or (:upgrade draft) (:return-improvement draft))]
+    (when supported?
+      {:label (if (empty? (:effect-queue g)) "Place family member & play card →" (str verb " →"))
+       :hint (str (when returned (str "Return " (:name (tabletop/card-info returned)) ". "))
+                  "Confirm with the current choices, or select the card to adjust payment and other options.")
+       :reason reason
+       :disabled? (boolean (or reason (not own-turn?) (:busy? ui) (not (:connected? ui)) (seq (:takeback room))))
+       :submit! #(dispatch :command command)})))
 (defn hand-select [g p kind draft & [optional?]]
   (let [pid (:id p) ui @(rf/subscribe [:ui]) hand (get-in ui [:private-hands (:game-id ui) pid kind])
         hand (if (and (= kind :minor) (= #{:major} (get-in g [:effect-queue 0 :effect :kinds])))
@@ -637,11 +670,12 @@
       [:h4 (if (= kind :occupation) "Occupation" "Minor improvement")]
       (when optional? [button (if (= :freshman-bake (get-in g [:effect-queue 0 :effect :op])) "Bake bread instead" "No hand card")
                        #(draft! :card nil) "text-button"])
-      (let [choices (mapv (fn [id] {:id id :reason (card-action-error g pid (-> draft (assoc :card id) (dissoc :improvement :upgrade :bake-grain :payment-option :return-improvement :return-improvements :as-major? :discount-resource)) ui)}) hand)]
+      (let [choices (mapv (fn [id] {:id id :reason (card-action-error g pid (hand-card-draft draft id) ui)}) hand)]
         [:div
          [:div.card-choice-spread {:role "group" :aria-label (if (= kind :occupation) "Playable occupations" "Playable minor improvements")}
           (for [{:keys [id reason]} choices :when (nil? reason)] ^{:key id}
-            [card-choice id (= id (:card draft)) #(draft! :card id)])]
+            [card-choice id (= id (:card draft)) #(draft! :card id) nil
+             (direct-card-action g p (hand-card-draft draft id))])]
          (when-not (some #(nil? (:reason %)) choices) [:p.small "No cards of this type are playable with the current choices."])
          (when (some :reason choices)
            [:details.unavailable-cards [:summary "Unavailable cards"]
@@ -1564,7 +1598,10 @@
           counts (get-in room [:state :draw :counts pid]) choosing? (seq (:packet private))]
       [:section.draw-packet
        (when (and @preview (legal @preview) (some #{@preview} (:packet private)))
-         [card-selection-preview @preview #(reset! selected @preview) #(reset! preview nil)])
+         [card-selection-preview @preview #(reset! selected @preview) #(reset! preview nil)
+          {:label "Keep card & pass left →"
+           :disabled? (boolean (or (:busy? ui) (not (:connected? ui)) (seq (:takeback room))))
+           :submit! #(dispatch :send {:event :draw-pick :player pid :wave (get-in room [:state :draw :wave]) :card @preview})}])
        [:div.section-heading [:div [:div.eyebrow "YOUR PACKET"] [:h2 (str (get-in room [:seats pid :name]) "’s choice")]]
         [:span.small (if choosing? (str (count (:packet private)) " cards in this packet") "Waiting for the next packet")]]
        (if-not @revealed?
