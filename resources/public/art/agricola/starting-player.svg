@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 32">
+  <!-- Original vector drawing of Agricola's yellow wooden starting-player cylinder. -->
+  <defs>
+    <linearGradient id="wood" x1="0" x2="1" y1="0" y2="0">
+      <stop stop-color="#cf9718"/>
+      <stop offset=".3" stop-color="#f0c83c"/>
+      <stop offset=".65" stop-color="#e4b32b"/>
+      <stop offset="1" stop-color="#ae7710"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="14" cy="28.5" rx="11.5" ry="2.5" fill="#57390b" opacity=".18"/>
+  <path d="M4 7.5v18c0 5.7 20 5.7 20 0v-18z" fill="url(#wood)" stroke="#95650e" stroke-width="1.2"/>
+  <path d="M7 11v13m3-12v14m10-14v12" stroke="#976b16" stroke-width=".6" opacity=".2"/>
+  <ellipse cx="14" cy="7.5" rx="10" ry="4.5" fill="#f7d85a" stroke="#95650e" stroke-width="1.2"/>
+  <path d="M7 6.8c3-2.1 10-2.1 14 0" fill="none" stroke="#fff0a0" stroke-width="1" opacity=".7"/>
+</svg>

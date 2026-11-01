@@ -70,7 +70,8 @@
                                "onlostpointercapture" (fn [_] (finish true))})} "⠿"]))
 
 (defn starting-player-marker []
-  [:span.first-player-marker {:role "img" :aria-label "Starting player" :title "Starting player"} "1st"])
+  [:img.first-player-marker {:src (art/url "starting-player.svg") :alt "Starting player"
+                             :title "Starting player" :draggable false}])
 
 (defn card-info [cid]
   (if-let [card (a/improvements cid)]

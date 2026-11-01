@@ -17,9 +17,9 @@ def check(base, ids):
         host,guest=pages
         for page,seat in [(host,'1'),(guest,'0')]:
             tabs=page.get_by_role('navigation',name='Table views')
-            expect(tabs.get_by_role('button')).to_have_text(['Board view','Ben','Ada1st'])
+            expect(tabs.get_by_role('button')).to_have_text(['Board view','Ben','Ada'])
             expect(tabs.locator('[data-starting-player="true"]')).to_have_count(1)
-            expect(tabs.get_by_role('button',name='Ada player view',exact=True).get_by_role('img',name='Starting player')).to_have_text('1st')
+            expect(tabs.get_by_role('button',name='Ada player view',exact=True).get_by_role('img',name='Starting player')).to_have_attribute('src','/art/agricola/starting-player.svg')
             expect(page.locator('.tt-player').first).to_have_attribute('data-player',seat)
             positions=page.locator('.tt-player').evaluate_all('(els)=>els.map(e=>({id:e.dataset.player,x:parseFloat(e.style.left),y:parseFloat(e.style.top)}))')
             own=positions[0]
@@ -27,6 +27,10 @@ def check(base, ids):
             assert own['x']==min(p['x'] for p in positions if p['y']==own['y'])
             expect(page.locator('[data-deck="hand-occupation"]')).to_have_count(1)
             expect(page.locator('[data-deck="hand-occupation"]')).to_have_attribute('data-owner',seat)
+        for page in pages:
+            token=page.locator('.first-player-marker')
+            expect(token).to_be_visible()
+            assert token.evaluate('(img)=>img.complete && img.naturalWidth>0')
         host.locator('.action-card[data-action="grain"]').click()
         host.get_by_role('button',name='Place family member →',exact=True).click()
         expect(host.get_by_role('dialog')).to_have_count(0)
@@ -39,7 +43,7 @@ def check(base, ids):
             expect(tabs.get_by_role('button',name='Ada player view',exact=True)).to_have_attribute('data-starting-player','false')
             expect(tabs.locator('.first-player-marker')).to_have_count(1)
             page.reload()
-            expect(tabs.get_by_role('button',name='Ben player view',exact=True).locator('.first-player-marker')).to_have_text('1st')
+            expect(tabs.get_by_role('button',name='Ben player view',exact=True).locator('.first-player-marker')).to_have_attribute('src','/art/agricola/starting-player.svg')
         guest.set_viewport_size({'width':390,'height':844})
         expect(guest.locator('.first-player-marker')).to_be_in_viewport()
         guest.screenshot(path='/tmp/eurozone-first-player-mobile.png')
