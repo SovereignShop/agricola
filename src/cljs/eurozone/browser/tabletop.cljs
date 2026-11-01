@@ -345,7 +345,7 @@
           start [(.-scrollLeft v) (.-scrollTop v) @zoom] began (.now js/performance)
           duration (if (and animate? (not (.-matches (.matchMedia js/window "(prefers-reduced-motion: reduce)")))) 340 0)
           step (fn step [time]
-                 (let [t (if (zero? duration) 1 (min 1 (/ (- time began) duration))) e (- 1 (js/Math.pow (- 1 t) 3))
+                 (let [t (if (zero? duration) 1 (clamp (/ (- time began) duration) 0 1)) e (- 1 (js/Math.pow (- 1 t) 3))
                        [nx ny nz] (mapv (fn [a b] (+ a (* e (- b a)))) start [tx ty z])]
                    (apply-camera! v (:canvas @nodes) (:world @nodes) nz nx ny)
                    (if (< t 1) (reset! animation (js/requestAnimationFrame step))
@@ -415,30 +415,62 @@
   ;; WheelEvent.buttons is not reliable in every browser, so remember pointer
   ;; state and clear it even when release happens outside the table.
   (let [right? (atom false)
+        frame (atom nil) motion (atom nil)
+        reduced? (.matchMedia js/window "(prefers-reduced-motion: reduce)")
+        stop! (fn [& _]
+                (when @frame (js/cancelAnimationFrame @frame))
+                (reset! frame nil) (reset! motion nil))
+        move! (fn [x y]
+                (let [before-x (.-scrollLeft el) before-y (.-scrollTop el)]
+                  (set! (.-scrollLeft el) x) (set! (.-scrollTop el) y)
+                  ;; A wheel gesture can accompany a held drag. Advance its
+                  ;; origin too so the next pointer movement doesn't jump back.
+                  (when @pan
+                    (swap! pan (fn [[px py sx sy]]
+                                 [px py (+ sx (- (.-scrollLeft el) before-x))
+                                  (+ sy (- (.-scrollTop el) before-y))])))))
+        step! (fn step! [time]
+                (when-let [{:keys [x y tx ty began]} @motion]
+                  ;; An 85ms ease-out softens wheel notches without a long coast.
+                  ;; Interpolate from floats, not rounded DOM scroll positions.
+                  (let [t (clamp (/ (- time began) 85) 0 1) ease (- 1 (js/Math.pow (- 1 t) 3))]
+                    (move! (+ x (* ease (- tx x))) (+ y (* ease (- ty y))))
+                    (if (< t 1) (reset! frame (js/requestAnimationFrame step!))
+                        (do (reset! frame nil) (reset! motion nil))))))
+        scroll! (fn [dx dy]
+                  (let [x (.-scrollLeft el) y (.-scrollTop el)
+                        tx (clamp (+ (or (:tx @motion) x) dx) 0 (- (.-scrollWidth el) (.-clientWidth el)))
+                        ty (clamp (+ (or (:ty @motion) y) dy) 0 (- (.-scrollHeight el) (.-clientHeight el)))]
+                    (if (.-matches reduced?)
+                      (do (stop!) (move! tx ty))
+                      (do (reset! motion {:x x :y y :tx tx :ty ty :began (.now js/performance)})
+                          (when-not @frame (reset! frame (js/requestAnimationFrame step!)))))))
         track! (fn [e] (when (not= "touch" (.-pointerType e))
                          (reset! right? (and (not (.-shiftKey e)) (pos? (bit-and 2 (.-buttons e)))))))
-        clear! (fn [_] (reset! right? false))
+        clear! (fn [_] (reset! right? false) (stop!))
         wheel! (fn [e]
                  (cond
                    (or (.-ctrlKey e) (.-metaKey e))
-                   (do (.preventDefault e) (zoom! (js/Math.exp (* -0.003 (.-deltaY e))) (.-clientX e) (.-clientY e)))
-                   @right?
-                   (let [before (.-scrollLeft el)
-                         unit (case (.-deltaMode e) 1 16 2 (.-clientWidth el) 1)
-                         delta (if (zero? (.-deltaY e)) (.-deltaX e) (.-deltaY e))]
+                   (do (.preventDefault e) (stop!) (zoom! (js/Math.exp (* -0.003 (.-deltaY e))) (.-clientX e) (.-clientY e)))
+                   :else
+                   (let [horizontal? (or @right? (.-shiftKey e))
+                         dx (if horizontal? (if (zero? (.-deltaY e)) (.-deltaX e) (.-deltaY e)) (.-deltaX e))
+                         dy (if horizontal? 0 (.-deltaY e))
+                         ux (case (.-deltaMode e) 1 16 2 (.-clientWidth el) 1)
+                         uy (case (.-deltaMode e) 1 16 2 (.-clientHeight el) 1)]
                      (.preventDefault e)
                      (reset! auto-fit? false)
                      (when @animation (js/cancelAnimationFrame @animation) (reset! animation nil))
-                     (set! (.-scrollLeft el) (+ before (* unit delta)))
-                     ;; Preserve any simultaneous drag's origin after scrolling.
-                     (when @pan (swap! pan update 2 + (- (.-scrollLeft el) before))))))
+                     (scroll! (* ux dx) (* uy dy)))))
         menu! (fn [e] (when (and (not (.-shiftKey e)) (or @right? (= 2 (.-button e)))) (.preventDefault e)))
         listeners [[el "wheel" wheel! #js {:passive false}]
                    [el "pointerdown" track! true] [el "pointermove" track! true]
                    [js/window "pointerup" track! true] [js/window "pointercancel" clear! true]
+                   [js/window "pointerdown" stop! true] [js/window "touchstart" stop! #js {:passive true :capture true}]
+                   [js/window "keydown" stop! true]
                    [js/window "blur" clear! false] [el "contextmenu" menu! false]]]
     (doseq [[target event handler options] listeners] (.addEventListener target event handler options))
-    (fn [] (doseq [[target event handler options] listeners] (.removeEventListener target event handler options)))))
+    (fn [] (stop!) (doseq [[target event handler options] listeners] (.removeEventListener target event handler options)))))
 
 (defn table [room renderers]
   (r/with-let [prefs (r/atom (load-arrangement)) gesture (r/atom nil) zoom (r/atom 0.3)

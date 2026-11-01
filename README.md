@@ -453,6 +453,9 @@ picks are rejected. Picks and pending decisions survive server restarts.
 The table uses the full browser width with a compact game header. **Board view**
 shows the shared board and player farms on one pan-and-zoom tabletop. Player
 view buttons focus each farm; chat stays pinned independently of the camera.
+Wheel scrolling uses a short 85 ms ease-out, including right-button and Shift
+horizontal scrolling. Dragging stays immediate; new pointer, touch, or keyboard
+input cancels the wheel animation. Reduced-motion preferences disable easing.
 The **Text − / percentage / +** controls scale interface text from 80% to 200%
 without changing board artwork or tile widths. Ctrl+/Ctrl−/Ctrl0 (or ⌘ on Mac)
 increase, decrease, and reset text size, including inside the Discord Activity.
