@@ -35,16 +35,16 @@ def check(base, fixture_id, network=True):
             start.click()
             hands = []
             for p in pages:
-                expect(p.locator('.draw-packet .hand-card')).to_have_count(16)
+                expect(p.locator('.draw-packet .hand-card')).to_have_count(18)
                 hands.extend(p.locator('.draw-packet .hand-card > strong').all_text_contents())
-            assert len(set(hands)) == 80
+            assert len(set(hands)) == 90
             picks = 0
             for _ in range(80):
                 if host.get_by_role('heading', name='Agricola', exact=True).count():
                     break
                 for p in pages:
                     expect(p.locator('.app')).to_have_attribute('aria-busy', 'false')
-                    cards = p.locator('.draw-packet > div .hand-grid').first.locator('.hand-card:not([disabled])')
+                    cards = p.locator('.draw-choices .hand-card:not([disabled])')
                     if cards.count():
                         cards.first.click()
                         p.get_by_role('button', name='Select card', exact=True).click()
@@ -62,7 +62,7 @@ def check(base, fixture_id, network=True):
             expect(host.locator('[data-piece-type="worker:4"]')).not_to_have_count(0)
             pages[4].reload()
             expect(pages[4].locator('.player-tab')).to_have_count(5)
-            print('Five remote seats, readiness, private 14+2 draft, all farms and reconnect: passed')
+            print('Five remote seats, readiness, private 9+9 draft, all farms and reconnect: passed')
 
         c = browser.new_context(viewport={'width': 1800, 'height': 1400})
         c.add_init_script('if (location.origin === ' + repr(base) + ') sessionStorage.setItem("eurozone-session", "' + 'a'*64 + '")')

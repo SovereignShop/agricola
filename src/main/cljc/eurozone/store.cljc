@@ -67,7 +67,7 @@
 (defn pool-error [n settings]
   (when (not= :beginner (:mode settings))
     (let [pool (hand-pool n (:excluded-packs settings) (:house-rules settings)) counts (frequencies (map :kind pool))
-          needed (* 7 n) total (* n (+ 14 (if (= :draw (:mode settings)) (:extra settings 2) 0)))]
+          needed (* n (+ 7 (if (= :draw (:mode settings)) (:extra settings 2) 0))) total (* 2 needed)]
       (cond
         (< (get counts :occupation 0) needed) (str "Include more packs: " needed " occupations are needed; " (get counts :occupation 0) " are available.")
         (< (get counts :minor 0) needed) (str "Include more packs: " needed " minor improvements are needed; " (get counts :minor 0) " are available.")
@@ -80,9 +80,7 @@
          _ (agricola/require! (nil? (pool-error n settings)) (pool-error n settings))
          pool (hand-pool n excluded house-rules)
          by-type (into {} (for [kind draw/kinds] [kind (vec (shuffle (filter #(= kind (:kind %)) pool)))]))
-         required (mapcat #(take (* 7 n) (by-type %)) draw/kinds)
-         remaining (shuffle (mapcat #(drop (* 7 n) (by-type %)) draw/kinds))
-         supply (vec (shuffle (concat required (take (* extra n) remaining))))]
+         supply (vec (mapcat #(take (* (+ 7 extra) n) (by-type %)) draw/kinds))]
      (draw/new-draw n extra supply))))
 (defn deal-hands
   ([state n] (deal-hands state n []))
@@ -147,7 +145,9 @@
       (contains? #{"c392563c1a00c063ed0975f223d2dae2adafc1aa84eba60c7d1c22f625a897f3"
                    ;; 6fede24 adds optional rules; the first G/WM/FR batch adds
                    ;; new cards without changing any existing card effects.
-                   "25cf1f4860710b725f2d99e416bf45b4e2ff0f49c6241735600728e54ddd3f1c"} fingerprint)))
+                   "25cf1f4860710b725f2d99e416bf45b4e2ff0f49c6241735600728e54ddd3f1c"
+                   ;; Draft setup changed only; saved packets and pick rules remain intact.
+                   "c9b0d1da72a9504b0c2664ffacb256062bee606a66be8e532806f8f2b52a59ca"} fingerprint)))
 (defn recording-header [room state partial-start?]
   {:record :header :format 1 :initial state :hash (recording/state-hash state)
    :rules-hash @engine-fingerprint :options (:setup room) :partial-start? partial-start?})

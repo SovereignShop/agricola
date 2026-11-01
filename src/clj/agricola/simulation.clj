@@ -30,9 +30,7 @@
                (update state :players
                        #(mapv (fn [p] (assoc p :hand (into {} (for [kind draw/kinds]
                                                                [kind (mapv :id (take 7 (drop (* 7 (:id p)) (by-kind kind))))])))) %)))
-      :draw (let [required (mapcat #(take (* 7 players) (by-kind %)) draw/kinds)
-                  remaining (shuffle-with rng (mapcat #(drop (* 7 players) (by-kind %)) draw/kinds))
-                  cards (shuffle-with rng (concat required (take (* extra players) remaining)))]
+      :draw (let [cards (vec (mapcat #(take (* (+ 7 extra) players) (by-kind %)) draw/kinds))]
               (assoc state :phase :draw :round 0 :variant :cards :active [] :piles {} :log []
                            :draw (draw/new-draw players extra cards)))
       (throw (ex-info "Simulation mode must be beginner, random or draw." {:mode mode})))))

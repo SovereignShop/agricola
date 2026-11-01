@@ -67,7 +67,7 @@
       (is (= 14 (:round result)))
       (is (< 0 (:moves result) 2000))
       (is (= 14 (count (get-in result [:coverage :drafted]))))
-      (is (= 16 (count (get-in result [:coverage :dealt]))))
+      (is (= 18 (count (get-in result [:coverage :dealt]))))
       (is (seq (get-in result [:coverage :effects])))
       (spit file (apply str (map #(str (pr-str %) "\n") @events)))
       (is (= :complete (:status (sim/replay file))))

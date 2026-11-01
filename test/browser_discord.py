@@ -163,8 +163,8 @@ def check(base):
                     expect(host.get_by_role('button',name='Start the game →')).to_be_disabled()
                     if count==5:
                         host.get_by_label('Pre-game hand setup').select_option('draw')
-                        host.get_by_label('Extra cards per packet (N)').select_option('3')
-                        expect(frame.get_by_text('Draw: 14 + 3 cards',exact=False)).to_be_visible()
+                        host.get_by_label('Extra cards of each type (N)').select_option('3')
+                        expect(frame.get_by_text('Draw: 7 + 3 of each type',exact=False)).to_be_visible()
                     frame.get_by_role('button',name="I'm ready",exact=True).click()
                     expect(frame.get_by_role('button',name='Mark not ready',exact=True)).to_be_visible()
                     pages[0].frames[1].evaluate('location.reload()')

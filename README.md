@@ -416,7 +416,7 @@ Run their reproductions with `clojure -M scripts/audit_card_timing.clj`.
 
 At creation, choose **Beginner**, **Random hands**, or **Draw**. Random hands deal
 seven occupations and seven minor improvements to each player. The draw deals
-mixed packets of **14 + N** cards, with N configurable from 0 to 10. Every player
+packets of **7 + N occupations and 7 + N minor improvements**, with N configurable from 0 to 10. Every player
 keeps one legal card per wave, then packets pass left, until everyone has exactly
 seven of each type. A player whose quota prevents any pick automatically passes;
 completed players also pass. Empty and blocked packets continue around the table
@@ -551,7 +551,7 @@ hands, draft packets and unrevealed round cards are excluded. Candidate previews
 stop before revealing the next round.
 
 ```sh
-# Seeded self-play, including the mixed 14+N draw
+# Seeded self-play, including the balanced 7+N of each type draw
 clojure -J-Xmx512m -M:simulate --games 100 --players 4 --seed 1 \
   --mode draw --extra 2 --output data/simulations/draw-batch
 

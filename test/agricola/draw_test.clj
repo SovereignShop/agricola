@@ -1,5 +1,5 @@
 (ns agricola.draw-test
-  (:require [clojure.test :refer :all] [agricola.draw :as d]))
+  (:require [clojure.test :refer :all] [agricola.draw :as d] [eurozone.store :as store] [agricola.simulation :as sim]))
 (defn cards [n kind] (mapv #(hash-map :id (keyword (name kind) (str "c" %)) :kind kind) (range n)))
 (defn finish-draw [draw]
   (loop [state draw steps 0]
@@ -9,18 +9,20 @@
           (recur (d/pick state pid (:wave state) cid) (inc steps))))))
 (deftest balanced-packets-complete-with-extras
   (doseq [n (range 1 7) extra [0 1 2 5 10]]
-    (let [supply (into (cards (* n 7) :occupation) (cards (* n (+ 7 extra)) :minor))
+    (let [supply (into (cards (* n (+ 7 extra)) :occupation) (cards (* n (+ 7 extra)) :minor))
           initial (d/new-draw n extra (vec (shuffle supply)))
           final (finish-draw initial)
           selected (mapcat #(mapcat val %) (:selected final))]
+      (is (every? #(= {:occupation (+ 7 extra) :minor (+ 7 extra)} (frequencies (map (:types initial) %))) (:packets initial)))
       (is (every? #(= {:occupation 7 :minor 7} %) (:counts (d/public-view final))))
-      (is (= (* n extra) (count (:discarded final))))
+      (is (= (* 2 n extra) (count (:discarded final))))
       (is (= (set (map :id supply)) (set (concat selected (:discarded final)))))
       (is (= (count selected) (count (set selected)))))))
 (deftest completely-one-type-packets-do-not-deadlock
   ;; Everyone can finish despite receiving packets that temporarily contain only
   ;; a type they have already filled. Packets must not be thrown away early.
-  (let [initial (d/new-draw 2 0 (into (cards 14 :occupation) (cards 14 :minor)))
+  (let [initial (assoc (d/new-draw 2 0 (into (cards 14 :occupation) (cards 14 :minor)))
+                       :packets [(mapv :id (cards 14 :occupation)) (mapv :id (cards 14 :minor))])
         final (finish-draw initial)]
     (is (= :complete (:status final)))
     (is (every? #(= {:occupation 7 :minor 7} %) (:counts (d/public-view final))))))
@@ -40,7 +42,7 @@
   (let [initial (d/new-draw 2 0 (into (cards 14 :occupation) (cards 14 :minor)))
         picked (d/pick initial 0 1 :occupation/c0)]
     (is (thrown? clojure.lang.ExceptionInfo (d/pick initial 0 0 :occupation/c0)))
-    (is (thrown? clojure.lang.ExceptionInfo (d/pick initial 0 1 :minor/c0)))
+    (is (thrown? clojure.lang.ExceptionInfo (d/pick initial 0 1 :minor/c7)))
     (is (thrown? clojure.lang.ExceptionInfo (d/pick picked 0 1 :occupation/c1)))
     (is (= [:occupation/c0] (get-in picked [:selected 0 :occupation])))
     (is (= [:occupation/c1 :occupation/c2] (take 2 (get-in picked [:packets 0]))))
@@ -49,3 +51,20 @@
 (deftest invalid-supplies-fail-before-the-draw
   (is (thrown? clojure.lang.ExceptionInfo (d/new-draw 2 0 (cards 28 :minor))))
   (is (thrown? clojure.lang.ExceptionInfo (d/new-draw 2 0 (vec (repeat 28 {:id :same :kind :minor}))))))
+
+(deftest real-and-seeded-deals-balance-each-seat-and-preserve-randomness
+  (doseq [n (range 2 6) extra [0 2 10]
+          draw [(store/make-draw n extra) (:draw (sim/initial-state {:players n :extra extra :mode :draw :seed 42}))]]
+    (is (every? #(= {:occupation (+ 7 extra) :minor (+ 7 extra)}
+                    (frequencies (map (:types draw) %))) (:packets draw)))
+    (is (= (* n 2 (+ 7 extra)) (count (set (mapcat identity (:packets draw)))))))
+  (is (= (:draw (sim/initial-state {:players 5 :extra 3 :mode :draw :seed 42}))
+         (:draw (sim/initial-state {:players 5 :extra 3 :mode :draw :seed 42}))))
+  (is (not= (:draw (sim/initial-state {:players 5 :extra 3 :mode :draw :seed 42}))
+            (:draw (sim/initial-state {:players 5 :extra 3 :mode :draw :seed 43})))))
+
+(deftest pool-validation-requires-extras-of-both-types
+  (with-redefs [store/hand-pool (fn [& _] (concat (cards 14 :occupation) (cards 40 :minor)))]
+    (is (nil? (store/pool-error 2 {:mode :draw :extra 0})))
+    (is (some? (store/pool-error 2 {:mode :draw :extra 1})))
+    (is (thrown? clojure.lang.ExceptionInfo (store/make-draw 2 1)))))

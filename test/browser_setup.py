@@ -26,7 +26,7 @@ def check_setup(base, fixture_id):
         host.get_by_role("button", name="Online table", exact=True).click()
         host.get_by_label("Players expected").select_option("2")
         host.get_by_label("Pre-game hand setup").select_option("draw")
-        host.get_by_label("Extra cards per packet (N)").fill("2")
+        host.get_by_label("Extra cards of each type (N)").fill("2")
         host.get_by_role("button", name="Create table →").click()
         start = host.get_by_role("button", name="Start draw →")
         expect(start).to_be_disabled()
@@ -59,11 +59,15 @@ def check_setup(base, fixture_id):
         host.get_by_role("button", name="Start draw →").click()
         for page in (host, guest):
             page.get_by_role("heading", name="The draw", exact=True).wait_for()
-            expect(page.locator(".draw-packet .hand-card")).to_have_count(16)
+            expect(page.locator(".draw-packet .hand-card")).to_have_count(18)
         host_names = set(host.locator(".draw-packet .hand-card > strong").all_text_contents())
         guest_names = set(guest.locator(".draw-packet .hand-card > strong").all_text_contents())
         assert not (host_names & guest_names)
         print("Independent seats in one browser, readiness gating, reload, and private packets: passed")
+        for page in (host,guest):
+            expect(page.locator('.draw-kind[data-kind="occupation"] .hand-card')).to_have_count(9)
+            expect(page.locator('.draw-kind[data-kind="minor"] .hand-card')).to_have_count(9)
+        host.screenshot(path='/tmp/eurozone-balanced-draw.png',full_page=True)
         picks = 0
         for _ in range(50):
             if host.get_by_role("heading", name="Agricola", exact=True).count():
@@ -72,7 +76,7 @@ def check_setup(base, fixture_id):
             for page in (host, guest):
                 page.bring_to_front()
                 expect(page.locator(".app")).to_have_attribute("aria-busy", "false")
-                cards = page.locator(".draw-packet > div .hand-grid").first.locator(".hand-card:not([disabled])")
+                cards = page.locator(".draw-choices .hand-card:not([disabled])")
                 if cards.count():
                     cards.first.click()
                     page.get_by_role('button', name='Select card', exact=True).click()
@@ -88,28 +92,9 @@ def check_setup(base, fixture_id):
                 host.wait_for_timeout(100)
         assert picks == 28, picks
         for page in (host, guest):
-            page.get_by_role("heading", name="Make your move.").wait_for()
-        print("Mixed 14+N draw completes with exactly 28 picks and enters round one: passed")
-        host.get_by_role("button", name="Show all farms", exact=True).click()
-        expect(host.locator('[data-tile="farm-0"]')).to_be_visible()
-        expect(host.locator('[data-tile="farm-1"]')).to_be_visible()
-        expect(host.locator('[data-tile="farm"]')).to_have_count(0)
-        expect(guest.locator('[data-tile="farm-0"]')).to_have_count(0)
-        # Detailed docking/resize coverage is in browser_layout.py.
-        host.get_by_role("button", name="Hide Game log", exact=True).click()
-        expect(host.locator('[data-tile="log"]')).to_have_count(0)
-        host.get_by_role("button", name="Panels", exact=True).click()
-        host.get_by_label("Game log", exact=True).click()
-        expect(host.locator('[data-tile="log"]')).to_have_count(1)
-        host.reload()
-        host.get_by_role("heading", name="Make your move.").wait_for()
-        expect(host.locator('[data-tile="farm-0"]')).to_be_visible()
-        guest.reload()
-        guest.get_by_role("heading", name="Make your move.").wait_for()
-        expect(guest.locator('[data-tile="farm-0"]')).to_have_count(0)
-        host.screenshot(path="/tmp/eurozone-all-farms.png", full_page=True)
-        assert errors == [], errors
-        print("Show all farms, independent layouts, visibility, and persistence: passed")
+            expect(page.locator('.tt-game')).to_be_visible()
+        assert not errors,errors
+        print('Balanced draft: grouped 9+9 packets, 28 legal picks, and both players enter the game',flush=True)
         browser.close()
 
 

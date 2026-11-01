@@ -144,8 +144,8 @@
             [:option {:value "random"} "Random deal · 7 occupations + 7 minors"]
             [:option {:value "draw"} "The draw · choose one, pass left"]]]
           (when (= @setup :draw)
-            [:div [field "Extra cards per packet (N)" [number-input @extra #(reset! extra %) 10]]
-             [:p.small (str "Each player receives " (+ 14 @extra) " mixed cards. Pick one and pass left until you have 7 occupations and 7 minors. Packets with no legal pick pass automatically.")]])
+            [:div [field "Extra cards of each type (N)" [number-input @extra #(reset! extra %) 10]]
+             [:p.small (str "Each player receives " (+ 7 @extra) " occupations and " (+ 7 @extra) " minor improvements. Pick one and pass left until you have 7 occupations and 7 minors. Packets with no legal pick pass automatically.")]])
           (when (not= @setup :beginner)
             [pack-picker @count {:mode @setup :extra @extra :excluded-packs @excluded :house-rules @house-rules}
              #(reset! excluded (:excluded-packs %)) (:busy? ui)])
@@ -215,7 +215,7 @@
                  [:option {:value "random"} "Random deal · 7 occupations + 7 minors"]
                  [:option {:value "draw"} "The draw · choose one, pass left"]]]]
               (when (= :draw (get-in room [:setup :mode]))
-                [field "Extra cards per packet (N)"
+                [field "Extra cards of each type (N)"
                  [:select {:value (get-in room [:setup :extra] 2) :disabled (:busy? ui)
                            :on-change #(dispatch :send {:event :configure :expected-players expected
                                                        :setup (assoc (:setup room) :extra (js/parseInt (.. % -target -value)))})}
@@ -246,7 +246,7 @@
                           [:strong (:name seat)] [:span.muted (str (when (some #{i} (:seats permission)) "You · ")
                             (cond (bot-seats i) "Bot · Ready" (and (= :online (:mode room)) (not (online i))) "Offline" (get ready i) "Ready" :else "Not ready"))]])]
            [:p.small (str (count (:seats room)) " / " expected " players · "
-                          (case (get-in room [:setup :mode]) :draw (str "Draw: 14 + " (get-in room [:setup :extra]) " cards, pass left") :random "Random 7 + 7 hand" "Beginner game"))]
+                          (case (get-in room [:setup :mode]) :draw (str "Draw: 7 + " (get-in room [:setup :extra]) " of each type, pass left") :random "Random 7 + 7 hand" "Beginner game"))]
            (when (and (= :online (:mode room)) (not (.-EUROZONE_ACTIVITY js/window)))
              [:div.invite
               [:span.small "INVITE YOUR FRIENDS"]
@@ -1576,12 +1576,16 @@
            [button "Keep card & pass left →"
             #(dispatch :send {:event :draw-pick :player pid :wave (get-in room [:state :draw :wave]) :card card})
             "button primary" (or (:busy? ui) (seq (:takeback room)) (not (legal card)))]]
-          [:div.hand-grid
-           (for [cid (:packet private)] ^{:key cid}
-             [hand-card cid {:class (str (name (:kind (cards/card cid))) (when (= card cid) " selected"))
-                             :aria-pressed (= card cid) :disabled (not (legal cid))
-                             :title (if (legal cid) "Choose this card" "You already have seven cards of this type")
-                             :on-click #(reset! preview cid)}])]]
+          (for [[kind label] [[:occupation "Occupations"] [:minor "Minor improvements"]]
+                :let [ids (filterv #(= kind (:kind (cards/card %))) (:packet private))]] ^{:key kind}
+            [:section.draw-kind {:aria-label (str "Available " (str/lower-case label)) :data-kind (name kind)}
+             [:h3 (str label " · " (count ids))]
+             [:div.hand-grid
+              (for [cid ids] ^{:key cid}
+                [hand-card cid {:class (str (name kind) (when (= card cid) " selected"))
+                                :aria-pressed (= card cid) :disabled (not (legal cid))
+                                :title (if (legal cid) "Choose this card" "You already have seven cards of this type")
+                                :on-click #(reset! preview cid)}])]])]
             [:div.draw-waiting [:h2 "Your pick is in"]
              [:p "Your hand stays visible while the other players choose."]])]
           [:aside.draw-kept {:aria-label "Your drafted cards"}
@@ -1600,7 +1604,7 @@
     [:main.game.draw-view {:data-revision (:revision room)}
      [:div.game-heading [:div [button "← All tables" #(dispatch :navigate nil) "text-button"] [:h1 "The draw"] [:p.muted (:title room)]]
       [:div.round-heading [:div.eyebrow "BEFORE THE FIRST ROUND"] [:h3 (str "Pass " (:wave state))]
-       [:p.small (str "14 + " (:extra state) " cards · one pick · pass left")]]]
+       [:p.small (str "Keep 7 of each type · one pick · pass left")]]]
      [controls/turn-banner room]
      [:div.draw-tools [controls/takeback room]]
      [:div.draw-progress

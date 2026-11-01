@@ -34,17 +34,22 @@
               (recur (assoc d :advance? true) (inc empty-waves))))))))
 (defn new-draw
   "cards is a shuffled vector of unique {:id ... :kind ...}. Its length must be
-   n*(14+extra), with at least 7*n cards of each kind. Caller owns randomness."
+   n*2*(7+extra), with exactly n*(7+extra) cards of each kind.
+   Deal each kind separately so every seat starts balanced. Caller owns randomness."
   [n extra cards]
   (require! (and (integer? n) (<= 1 n 6) (integer? extra) (<= 0 extra 50)) "Invalid draw settings.")
-  (require! (= (count cards) (* n (+ 14 extra))) "Each packet must contain exactly 14+N cards.")
+  (require! (= (count cards) (* n 2 (+ quota extra))) "Each packet must contain 7+N occupations and 7+N minors.")
   (require! (= (count cards) (count (set (map :id cards)))) "Cards cannot occur twice in the draw.")
   (require! (every? (set kinds) (map :kind cards)) "Only occupations and minor improvements belong in the draw.")
   (doseq [kind kinds]
-    (require! (>= (count (filter #(= kind (:kind %)) cards)) (* quota n)) "Not enough cards of each type to fill every hand."))
+    (require! (= (count (filter #(= kind (:kind %)) cards)) (* (+ quota extra) n)) "Supply must contain exactly 7+N cards of each type per player."))
   (normalize {:status :drawing :wave 1 :extra extra :advance? false :ready #{} :pending #{}
               :types (into {} (map (juxt :id :kind) cards))
-              :packets (mapv vec (partition (+ 14 extra) (map :id cards)))
+              :packets (mapv (fn [pid]
+                               (vec (mapcat (fn [kind]
+                                              (take (+ quota extra) (drop (* pid (+ quota extra))
+                                                (map :id (filter #(= kind (:kind %)) cards))))) kinds)))
+                             (range n))
               :selected (vec (repeat n {:occupation [] :minor []})) :discarded []}))
 (defn pick [d pid wave card]
   (require! (= :drawing (:status d)) "This draw is already complete.")
