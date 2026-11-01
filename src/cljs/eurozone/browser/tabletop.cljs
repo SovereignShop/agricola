@@ -120,7 +120,8 @@
   (let [field (get-in p [:card-fields cid]) state (get-in p [:card-state cid])
         animals (reduce (fn [m slot] (merge-with + m (a/housing-animals slot))) {}
                         (filter #(and (= :card (:kind %)) (= cid (:card %))) (when p (a/animal-housing p))))
-        goods (merge-with + (frequencies (:resource-stack state)) (:stored-goods state) (when (:pelts state) {:food (:pelts state)}) (when (:food state) {:food (:food state)})
+        goods (merge-with + (frequencies (:resource-stack state)) (frequencies (:stock state))
+                          (:stored-goods state) (when (:pelts state) {:food (:pelts state)}) (when (:food state) {:food (:food state)})
                           (a/card-field-goods p cid)
                           (reduce (fn [goods [key slot]]
                                     (if (= cid (or (:card slot) key))
@@ -133,8 +134,9 @@
          [:img.piece {:src (art/worker-url (:id p)) :alt "Reed Hut occupant" :draggable false
                       :data-piece-key (str "hut:" (:id p)) :data-piece-type (str "worker:" (:id p))}])
        (for [[resource n] goods :when (pos? n)] ^{:key resource} [:span [art/piece resource] [:b n]])
-       (when-let [top (first (:resource-stack state))]
-         [:span {:aria-label "Next resource on Resource Seller"} "Next: " [art/piece top]])
+       (when-let [top (or (peek (:stock state)) (first (:resource-stack state)))]
+         [:span {:aria-label (str "Next resource on " (:name (card-info cid)))
+                 :data-next-resource (name top)} "Next: " [art/piece top]])
        (when (seq (:bag state))
          [:span {:aria-label "Veterinarian bag"} (str "Bag: " (count (:bag state)) " animals")])
        (when-let [space (:marked-space state)]
