@@ -115,28 +115,42 @@
          (for [[round n] (sort (:reserved-fences p))] ^{:key round}
            [:span (str "Round " round ": " n " fences")]))])))
 (defn table-card [cid hidden? p attrs]
-  ;; The preview lives outside the scaled/clipped camera. It never intercepts
-  ;; input: the original card remains the hover target and click target.
+  ;; The enlarged face is a stable hover target outside the scaled camera.
+  ;; Native leave events can fire when it covers the source; only real pointer
+  ;; movement outside both faces should return an already enlarged card.
   (r/with-let [preview (r/atom nil)
-               timer (atom nil)
+               timer (atom nil) source (atom nil) listeners (atom {})
                clear-timer! (fn [] (when @timer (js/clearTimeout @timer) (reset! timer nil)))
-               cancel! (fn [& _] (clear-timer!) (reset! preview nil))
-               escape! (fn [e] (when (= "Escape" (.-key e)) (cancel!)))
                unlisten! (fn []
-                           (doseq [event ["scroll" "wheel" "resize" "blur" "pointerdown"]]
-                             (.removeEventListener js/window event cancel! true))
-                           (.removeEventListener js/window "keydown" escape!))
-               leave! (fn [& _]
+                           (doseq [[event handler] @listeners]
+                             (.removeEventListener js/window event handler true))
+                           (reset! listeners {}))
+               cancel! (fn [& _] (clear-timer!) (unlisten!) (reset! preview nil))
+               leave! (fn []
                         (clear-timer!) (unlisten!)
                         (when @preview
                           (swap! preview assoc :closing? true)
                           (reset! timer (js/setTimeout #(reset! preview nil) 160))))
+               inside? (fn [rect e]
+                         (and rect (<= (.-left rect) (.-clientX e) (.-right rect))
+                              (<= (.-top rect) (.-clientY e) (.-bottom rect))))
+               move! (fn [e]
+                       (when (and @preview (not (:closing? @preview)))
+                         (let [face (.querySelector js/document ".tt-card-hover:not(.is-returning)")]
+                           (when (and face (not (inside? (.getBoundingClientRect face) e))
+                                      (not (inside? (some-> @source .getBoundingClientRect) e)))
+                             (leave!)))))
                enter! (fn [e]
                         (when (and (= "mouse" (.-pointerType e)) (zero? (.-buttons e)))
-                          (cancel!) (unlisten!)
-                          (doseq [event ["scroll" "wheel" "resize" "blur" "pointerdown"]]
-                            (.addEventListener js/window event cancel! true))
-                          (.addEventListener js/window "keydown" escape!)
+                          (cancel!)
+                          (reset! source (.-currentTarget e))
+                          (reset! listeners
+                                  {"pointermove" move! "wheel" cancel! "resize" cancel!
+                                   "blur" #(when (= (.-target %) js/window) (cancel!))
+                                   "pointerdown" #(when-not (.closest (.-target %) ".tt-card-hover:not(.is-returning)") (cancel!))
+                                   "keydown" #(when (= "Escape" (.-key %)) (cancel!))})
+                          (doseq [[event handler] @listeners]
+                            (.addEventListener js/window event handler true))
                           (let [el (.-currentTarget e)]
                             (reset! timer
                                     (js/setTimeout
@@ -157,8 +171,9 @@
                                                             :--card-return-scale-x (/ (.-width rect) w)
                                                             :--card-return-scale-y (/ (.-height rect) h)})))) 350)))))]
     [:<>
-     [:button.tt-card (merge attrs {:ref (native-ref {"onpointerenter" #(when-not hidden? (enter! %))
-                                                      "onpointerleave" leave! "onpointercancel" cancel!})})
+     [:button.tt-card (merge attrs {:ref (native-ref {"onpointerenter" #(when (and (not hidden?) (nil? @preview)) (enter! %))
+                                                      "onpointerleave" #(when-not @preview (cancel!))
+                                                      "onpointercancel" cancel!})})
       [card-face cid hidden? p]
       (when-not hidden? [card-markers cid p])]
      (when (and @preview (not hidden?))
@@ -166,7 +181,9 @@
         (r/as-element
          [:div.tt-card-hover {:aria-hidden true :data-card (str cid)
                               :class (when (:closing? @preview) "is-returning")
-                              :style (dissoc @preview :closing?)}
+                              :style (dissoc @preview :closing?)
+                              :on-mouse-down #(.preventDefault %)
+                              :on-click (fn [e] (.stopPropagation e) (cancel!) (when-let [click (:on-click attrs)] (click e)))}
           [card-face cid false p]]) (.-body js/document)))]
     (finally (clear-timer!) (unlisten!))))
 

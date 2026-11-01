@@ -156,8 +156,17 @@ def check(base, fixtures):
                 assert enlarged['x']+enlarged['width']<=1680-10
                 assert enlarged['y']+enlarged['height']<=1050-10
                 page.screenshot(path='/tmp/eurozone-hover-'+kind+'-'+mode+'.png')
-                # The overlaid face cannot steal the mouse or activate a card.
-                assert preview.evaluate('e=>getComputedStyle(e).pointerEvents')=='none'
+                # Remain open beyond the animation while reading anywhere on
+                # the large face, including outside the tiny original title.
+                assert preview.evaluate('e=>getComputedStyle(e).pointerEvents')=='auto'
+                page.mouse.move(enlarged['x']+20,enlarged['y']+enlarged['height']-30,steps=8)
+                page.wait_for_timeout(1200)
+                expect(preview).to_have_count(1)
+                expect(preview).not_to_have_class(re.compile('is-returning'))
+                if mode=='stack':
+                    preview.click()
+                    expect(page.get_by_role('dialog',name='Hand · '+label,exact=True)).to_be_visible()
+                    close()
                 page.mouse.move(2,2)
                 expect(preview).to_have_count(0)
                 assert abs(card.bounding_box()['x']-box['x'])<1,(box,card.bounding_box())

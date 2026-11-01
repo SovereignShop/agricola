@@ -260,8 +260,8 @@
 .discord-activity .tt-modal .dialog-backdrop {padding: max(12px,var(--eurozone-safe-top)) max(12px,var(--eurozone-safe-right)) max(12px,var(--eurozone-safe-bottom)) max(12px,var(--eurozone-safe-left))}
 
 /* Read at screen scale without lifting stack hit targets or moving table pieces. */
-.tt-card-hover {--tt-font:Georgia,'Times New Roman',serif;color:#392d1d;position:fixed;z-index:190;pointer-events:none;transform-origin:center;animation:tt-card-unfold .16s ease-out both;filter:drop-shadow(0 12px 22px #18200c70)}
-.tt-card-hover.is-returning {animation:tt-card-refold .16s ease-in both}
+.tt-card-hover {--tt-font:Georgia,'Times New Roman',serif;color:#392d1d;position:fixed;z-index:190;pointer-events:auto;cursor:pointer;transform-origin:center;animation:tt-card-unfold .16s ease-out both;filter:drop-shadow(0 12px 22px #18200c70)}
+.tt-card-hover.is-returning {pointer-events:none;animation:tt-card-refold .16s ease-in both}
 .tt-card-hover .tt-printed-card {padding:18px}
 .tt-card-hover .tt-printed-card>strong {font-size:calc(25px * var(--text-scale,1));margin:12px 0}
 .tt-card-hover .tt-printed-card>small {font-size:calc(13px * var(--text-scale,1))}
