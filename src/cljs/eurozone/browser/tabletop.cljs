@@ -69,6 +69,9 @@
                                "onpointercancel" (fn [_] (finish true))
                                "onlostpointercapture" (fn [_] (finish true))})} "⠿"]))
 
+(defn starting-player-marker []
+  [:span.first-player-marker {:role "img" :aria-label "Starting player" :title "Starting player"} "1st"])
+
 (defn card-info [cid]
   (if-let [card (a/improvements cid)]
     (assoc card :id cid :kind :major)
@@ -83,7 +86,7 @@
   (str/join ", " (for [[kind n] (sort-by (comp str key) amounts) :when (not (zero? n))]
                   (str n " " (get impact-labels kind (name kind))))))
 (defn card-impact [room pid cid]
-  (let [events (get-in room [:card-impact pid cid] [])
+  (let [events (filterv impact/display-event? (get-in room [:card-impact pid cid] []))
         totals (impact/totals events pid)]
     [:section.card-impact {:aria-label "Card impact history"}
      [:h3 "Impact history"]
@@ -528,8 +531,11 @@
         [:nav.tt-views {:aria-label "Table views"}
          [button "Board view" #(focus! :board) {:aria-pressed (= :board @view)}]
          (for [p (:players g)] ^{:key (:id p)}
-           [button [:<> [:i {:style {:background (get colors (:id p))}}] (:name p)] #(focus! (:id p))
-            {:aria-label (str (:name p) " player view") :aria-pressed (= @view (:id p)) :class (when (= actor (:id p)) "tt-active-player")}])]
+           [button [:<> [:i {:style {:background (get colors (:id p))}}] (:name p)
+                    (when (= (:id p) (:starting-player g)) [starting-player-marker])] #(focus! (:id p))
+            {:aria-label (str (:name p) " player view")
+             :data-starting-player (= (:id p) (:starting-player g))
+             :title (when (= (:id p) (:starting-player g)) "Starting player") :aria-pressed (= @view (:id p)) :class (when (= actor (:id p)) "tt-active-player")}])]
         [:div.tt-camera-tools
          [button "−" #(zoom! 0.8 nil nil) {:aria-label "Zoom out"}]
          [button (str (js/Math.round (* @zoom 100)) "%") #(do (reset! auto-fit? true) (fit! true)) {:aria-label "Fit view" :title "Fit current view"}]

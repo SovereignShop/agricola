@@ -10,5 +10,5 @@
                                                         (a/build-fences (a/edges 14))
                                                         (a/build-stables [14] 2) (a/gain {:sheep 2}))) %)))]
     (with-redefs [store/start-state (fn [& _] state)]
-      (store/transact! s (tokens 0) {:event :start :id id :revision 2})))
+      (with-redefs [store/randomize-seats identity] (store/transact! s (tokens 0) {:event :start :id id :revision 2}))))
   (println (json/write-str {:harvest id})))

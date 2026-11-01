@@ -58,3 +58,26 @@
     (is (empty? (impact/history [{:record :move :index 0 :impacts [(assoc entry :player 1)]}] before))))
   (let [unknown (impact/legacy-event {:round 4} {:card trap :player 0 :effect {:op :gain :goods {:food [:+ 2 3]}}})]
     (is (:unknown? unknown)) (is (empty? (:changes unknown)))))
+
+(deftest resource-seller-history-omits-empty-checks-and-setup-but-retains-payouts
+  (let [seller :catalog/original-base-k-310-resource-seller
+        base (-> (fresh) (assoc-in [:players 0 :occupations] [seller])
+                 (assoc-in [:players 0 :card-state seller :resource-stack] '(:wood :clay :reed :clay :stone :clay :stone)))
+        miss (store/recorded-command (room base) 0 {:type :action :space :reed})
+        other (store/recorded-command miss 1 {:type :action :space :labor})
+        hit (store/recorded-command other 0 {:type :action :space :wood})
+        setup {:player 0 :card seller :round 1 :op :set-card-state :changes []}
+        saved (-> hit (update-in [:recording 1 :impacts] conj setup) pr-str edn/read-string)
+        history (events saved 0 seller)]
+    (is (some #(= :resource-seller-receipt (:op %)) (get-in miss [:recording 1 :impacts])) "Retain diagnostics in the raw recording")
+    (is (empty? (events miss 0 seller)))
+    (is (= 1 (count history)))
+    (is (= {:wood 1} (:gained (impact/totals history 0))))
+    (is (= (get-in saved [:state :players 0 :card-state seller :resource-stack])
+           '(:clay :reed :clay :stone :clay :stone)))
+    (is (= (:state saved) (peek (:frames (rec/timeline (:recording saved))))))
+    (let [db (d/db-with (d/empty-db model/schema) (model/game-tx saved))]
+      (is (= history (get-in (model/pull-game db "impact-test") [:card-impact 0 seller]))))
+    (is (impact/display-event? {:op :schedule :changes []}))
+    (is (impact/display-event? {:op :exchange :skipped? true :changes []}))
+    (is (impact/display-event? {:op :resource-seller-receipt :unknown? true :changes []}))))

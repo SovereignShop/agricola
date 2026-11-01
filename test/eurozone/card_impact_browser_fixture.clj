@@ -11,7 +11,7 @@
                (store/recorded-command 0 {:type :action :space :fishing}))
       draft-id (:id (store/transact! service token {:event :create :mode :online :name "Ada" :expected-players 2 :setup {:mode :draw :extra 2}}))
       _ (store/transact! service (apply str (repeat 64 "b")) {:event :join :id draft-id :revision 0 :name "Ben"})
-      _ (store/transact! service token {:event :start :id draft-id :revision 1})
+      _ (with-redefs [store/randomize-seats identity] (store/transact! service token {:event :start :id draft-id :revision 1}))
       priority #{trap :catalog/original-base-e-191-mason :catalog/original-expansion-g-5-architect :catalog/original-expansion-wm-76-drained-pond}
       pool (sort-by (juxt #(if (priority (:id %)) 0 1) :id) (store/hand-pool 2))
       supply (vec (mapcat (fn [kind] (take 18 (filter #(= kind (:kind %)) pool))) draw/kinds))

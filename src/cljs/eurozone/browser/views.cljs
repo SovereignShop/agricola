@@ -289,30 +289,57 @@
                        "Beginner variant: no hand cards. Meeting Place accumulates food; Side Job lets you build a stable or bake bread."
                        "Occupations and minor improvements from the selected packs are enabled. Prerequisites and payment are enforced; card effects trigger automatically and pause when you have a choice.")]]]]))))
 
+(defn plow-draft [draft effect]
+  (let [effect (card-game/plow-effect effect)
+        selected (if (contains? draft :plow-card) (:plow-card draft) (first (:plows effect)))
+        maximum (if (= :plow-many (:op effect)) (:max-fields effect 2)
+                    (+ (if selected (get-in (cards/card selected) [:passive :action-plow :extra-fields] 2) 0)
+                       (if (:plow-maker? draft) 1 0)))]
+    (assoc draft :space :plow :tool :fields :max-fields maximum
+           :cells (vec (filter integer? (:cells draft))) :base-field (get-in effect [:source-command :cell]))))
+(defn plow-space-selectable? [p draft i]
+  (or (some #{i} (:cells draft))
+      (and (< (count (:cells draft)) (:max-fields draft))
+           (not= i (:base-field draft))
+           (try
+             (let [base (:base-field draft)
+                   staged (cond-> p (and (some? base) (not= :field (get-in p [:farm base :type]))) (a/place-tile :field base))
+                   staged (reduce #(a/place-tile %1 :field %2) staged (:cells draft))]
+               (a/place-tile staged :field i) true)
+             (catch :default _ false)))))
+
 (defn select-cell! [draft i & [edit!]]
   (let [edit! (or edit! draft!) space (:space draft) tool (or (:tool draft) (case space (:build :house-building) :room :side-job :stable (:sow-bake) :grain :field))]
     (case tool
       :room (edit! :rooms (toggle-value (:rooms draft) i))
       :stable (edit! :stables (toggle-value (:stables draft) i))
       :field (edit! :cell (when-not (= (:cell draft) i) i))
+      :fields (let [cells (vec (:cells draft)) index (first (keep-indexed #(when (= i %2) %1) cells))]
+                (edit! :cells (if (some? index) (subvec cells 0 index)
+                                 (if (< (count cells) (:max-fields draft)) (conj cells i) cells))))
       (:grain :vegetable)
       (let [old (some #(when (= i (:cell %)) %) (:plantings draft))
             rest (vec (remove #(= i (:cell %)) (:plantings draft)))]
         (edit! :plantings (if (= tool (:crop old)) rest (conj rest {:cell i :crop tool}))))
       nil)))
 (defn farm [p draft editable? & [edit!]]
-  (let [fenced (a/pasture-cells p) housed (a/animal-housing p) selection (set (concat (:rooms draft) (:stables draft) [(:cell draft)] (map :cell (:plantings draft))))
+  (let [multi-plow? (= :fields (:tool draft))
+        plow-order (when multi-plow? (vec (concat (when (some? (:base-field draft)) [(:base-field draft)]) (:cells draft))))
+        fenced (a/pasture-cells p) housed (a/animal-housing p)
+        selection (set (concat (:rooms draft) (:stables draft) (if multi-plow? plow-order [(:cell draft)]) (map :cell (:plantings draft))))
         fence-mode? (and editable? (#{:fences :redevelop} (:space draft)))]
     [:svg.farm {:viewBox "-45 -45 562 400" :role "group" :aria-label (str (:name p) "'s farm")}
      [:image {:href (art/url "farm.jpeg") :x -45 :y -45 :width 562 :height 400 :preserveAspectRatio "none"}]
      (for [i (range 15) :let [x (* 100 (mod i 5)) y (* 100 (quot i 5)) cell (get-in p [:farm i])
                              tile (:type cell) chosen? (and editable? (selection i))
+                             selectable? (and editable? (or (not multi-plow?) (plow-space-selectable? p draft i)))
                              animal (some #(when (= i (first (:cells %))) %) housed)]]
        ^{:key i}
-       [:g {:role (when editable? "button") :tab-index (when editable? 0)
+       [:g {:role (when editable? "button") :tab-index (when editable? (if selectable? 0 -1))
+            :aria-disabled (when editable? (not selectable?)) :aria-pressed (when (and editable? multi-plow?) (boolean chosen?))
             :aria-label (str "Farm space " (inc i) ": " (name tile) (when (fenced i) ", pasture"))
-            :on-click #(when editable? (select-cell! draft i edit!))
-            :on-key-down #(when (and editable? (#{"Enter" " "} (.-key %))) (.preventDefault %) (select-cell! draft i edit!))}
+            :on-click #(when selectable? (select-cell! draft i edit!))
+            :on-key-down #(when (and selectable? (#{"Enter" " "} (.-key %))) (.preventDefault %) (select-cell! draft i edit!))}
         (when (or (= tile :field) (= tile :room))
           [:image {:href (art/url (str (if (= tile :field) "plow" ({:wood "wood_room" :clay "soil_room" :stone "rock_room"} (:house p))) ".png"))
                    :x (+ x 4) :y (+ y 4) :width 92 :height 92 :preserveAspectRatio "none"}])
@@ -348,7 +375,7 @@
                (for [n (range (min 4 (:count animal)))] ^{:key n}
                  [:image {:data-piece-key (str "animal:" (:id p) ":" i ":" n) :data-piece-type (name (:animal animal)) :href (art/piece-url (:animal animal)) :x (+ x 8 (* n 17)) :y (+ y 58) :width 35 :height 30}])
                [:text {:x (+ x 85) :y (+ y 89) :text-anchor "middle" :class "animal-label"} (:count animal)]])))
-        (when chosen? [:text {:x (+ x 84) :y (+ y 20) :text-anchor "middle" :class "selected-mark"} "✓"])])
+        (when chosen? [:text {:x (+ x 84) :y (+ y 20) :text-anchor "middle" :class "selected-mark"} (if multi-plow? (inc (first (keep-indexed #(when (= i %2) %1) plow-order))) "✓")])])
      (for [edge (sort a/all-edges)
            :let [[direction rs cs] (str/split edge #":") row (js/parseInt rs) col (js/parseInt cs)
                  x (* 100 col) y (* 100 row) horizontal? (= direction "h")
@@ -1160,15 +1187,9 @@
             [:label.checkbox [:input {:type "checkbox" :checked (boolean (:plow-maker? draft))
                                       :on-change #(do (draft! :plow-maker? (.. % -target -checked)) (draft! :cells []))}]
              "Plow Maker: pay 1 food for one extra field"])
-          [:p.small (if (= op :wheel-plow) "Choose additional fields, in plowing order." "Choose fields, in plowing order.")]
-          (for [index (range maximum)] ^{:key index}
-            [field (str "Plow field " (inc index))
-             [:select {:aria-label (str "Plow field " (inc index)) :value (get (:cells draft) index "")
-                       :on-change #(let [value (.. % -target -value)]
-                                     (dispatch :draft-plow-field index (when (seq value) (js/parseInt value))))}
-              [:option {:value ""} "No field"]
-              (for [i (range 15) :when (and (a/empty-cell? p i) (not= i (get-in effect [:source-command :cell])))] ^{:key i}
-                [:option {:value i} (str "Space " (inc i))])]])]))
+          [:p.small (if (= op :wheel-plow) "Click adjacent empty spaces on your farm to choose the additional fields." "Click empty spaces on your farm in plowing order.")]
+          [:p.small (str (count (filter integer? (:cells draft))) " / " maximum " fields selected. Click a selected field to undo it and any fields after it.")]
+          (when (seq (:cells draft)) [button "Clear selected fields" #(draft! :cells []) "text-button" busy?])]))
      (when (and (= op :housing) (get-in head [:context :reclamation?]))
        [:label.checkbox [:input {:type "checkbox" :checked (get draft :accommodate-taken? true)
                                  :on-change #(draft! :accommodate-taken? (.. % -target -checked))}]
@@ -1361,12 +1382,13 @@
     [:div.farm-info [:span (str (:family p) " family members")] [:span (str (count (a/tiles p :room)) " " (name (:house p)) " rooms")]]
     [farm p (case (get-in g [:effect-queue 0 :effect :op])
               :plow (assoc draft :space :plow :tool :field)
+              (:plow-many :wheel-plow) (plow-draft draft (get-in g [:effect-queue 0 :effect]))
               :sidekick (assoc draft :space (five/stage-left g (get-in g [:effect-queue 0 :context :space])))
               :extra-action (extra-action-draft g draft)
               draft)
      (and can-play? (= (:id p) (card-game/acting-player g))
           (not busy?)
-          (or (= :work (:phase g)) (#{:extra-action :plow} (get-in g [:effect-queue 0 :effect :op]))))]
+          (or (= :work (:phase g)) (#{:extra-action :plow :plow-many :wheel-plow} (get-in g [:effect-queue 0 :effect :op]))))]
     [:div.farm-stats [:span (str (count (:fences p)) "/15 fences")] [:span (str (count (filter :stable (:farm p))) "/4 stables" (when (seq (:reserved-stables p)) (str " · " (reduce + (vals (:reserved-stables p))) " reserved")))]
      [:span (str "Pet: " (or (some #(when (= :pet (:kind %)) (labels (:animal %))) (a/animal-housing p)) "none"))]]
     [:div.inventory (for [resource a/resources] ^{:key resource} [badge resource (a/amount p resource) (:id p)])]
@@ -1535,7 +1557,7 @@
       (for [farmer (:players g) :let [id (:id farmer) current? (= id actor)]] ^{:key id}
         [:button.player-tab {:class (str (when (= selected id) "selected ") (when current? "current")) :on-click #(dispatch :inspect-player id)}
          [:span.avatar {:style {:background (colors id)}} (subs (:name farmer) 0 1)]
-         [:span [:strong (:name farmer) (when (= id (:starting-player g)) " ♛")]
+         [:span [:strong (:name farmer) (when (= id (:starting-player g)) [tabletop/starting-player-marker])]
           [:small (str (:remaining farmer) " / " (a/workers-in-play farmer) " workers ready")]]
          (when current? [:span.turn-label (if can-play? "YOUR TURN" "PLAYING")])])]
      [:div.game-toolbar

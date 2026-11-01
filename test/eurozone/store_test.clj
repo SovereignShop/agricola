@@ -219,23 +219,25 @@
         _ (s/transact! store "guest" {:event :join :id id :revision 0 :name "Guest"})
         _ (s/transact! store "host" {:event :start :id id :revision 1})
         host-view (s/snapshot store "host") guest-view (s/snapshot store "guest") spy-view (s/snapshot store "spy")
-        host-card (first (get-in host-view [:private-draws id 0 :legal]))
-        guest-card (first (get-in guest-view [:private-draws id 1 :legal]))
+        host-pid (first (get-in host-view [:permissions id :seats]))
+        guest-pid (first (get-in guest-view [:permissions id :seats]))
+        host-card (first (get-in host-view [:private-draws id host-pid :legal]))
+        guest-card (first (get-in guest-view [:private-draws id guest-pid :legal]))
         public (pr-str (:datoms host-view))]
-    (is (= #{0} (set (keys (get-in host-view [:private-draws id])))))
-    (is (= #{1} (set (keys (get-in guest-view [:private-draws id])))))
+    (is (= #{host-pid} (set (keys (get-in host-view [:private-draws id])))))
+    (is (= #{guest-pid} (set (keys (get-in guest-view [:private-draws id])))))
     (is (empty? (get-in spy-view [:private-draws id])))
     (is (not (.contains public (str host-card))))
     (is (not (.contains public (str guest-card))))
     (is (thrown? clojure.lang.ExceptionInfo
-                 (s/transact! store "guest" {:event :draw-pick :id id :revision 2 :wave 1 :player 0 :card host-card})))
-    (s/transact! store "host" {:event :draw-pick :id id :revision 2 :wave 1 :player 0 :card host-card})
+                 (s/transact! store "guest" {:event :draw-pick :id id :revision 2 :wave 1 :player host-pid :card host-card})))
+    (s/transact! store "host" {:event :draw-pick :id id :revision 2 :wave 1 :player host-pid :card host-card})
     ;; Guest's revision is now stale, but their packet has not changed. Their
     ;; independent pick must still commit, rather than racing the host.
-    (s/transact! store "guest" {:event :draw-pick :id id :revision 2 :wave 1 :player 1 :card guest-card})
+    (s/transact! store "guest" {:event :draw-pick :id id :revision 2 :wave 1 :player guest-pid :card guest-card})
     (is (= 2 (get-in @(:rooms store) [id :state :draw :wave])))
     (is (thrown? clojure.lang.ExceptionInfo
-                 (s/transact! store "host" {:event :draw-pick :id id :revision 2 :wave 1 :player 0 :card host-card})))
+                 (s/transact! store "host" {:event :draw-pick :id id :revision 2 :wave 1 :player host-pid :card host-card})))
     (loop [steps 0]
       (let [room (get @(:rooms store) id) state (:state room)]
         (when (= :draw (:phase state))
@@ -248,7 +250,7 @@
     (is (= 1 (get-in @(:rooms store) [id :state :round])))
     (is (every? #(= {:occupation 7 :minor 7} (into {} (map (fn [[k v]] [k (count v)]) (:hand %))))
                 (get-in @(:rooms store) [id :state :players])))
-    (is (= #{0} (set (keys (get-in (s/private-view store "host") [id])))))
+    (is (= #{host-pid} (set (keys (get-in (s/private-view store "host") [id])))))
     (is (not (.contains (pr-str (:datoms (s/snapshot store "spy"))) (str host-card))))))
 
 (deftest guests-can-leave-and-another-browser-can-take-the-seat
@@ -369,3 +371,50 @@
         (doseq [update [play resolve (s/snapshot store "spectator")]]
           (is (not-any? #(= :agricola.game/card-rng (second %)) (:datoms update))))
         (is (nil? (get-in (model/pull-game @(:conn store) id) [:state :card-rng])))))))
+
+(deftest shuffled-seats-keep-ownership-hands-bots-and-recordings-together
+  (doseq [n (range 2 6) mode [:beginner :random :draw] online? [false true]]
+    (let [service (s/make-store nil)
+          id (:id (s/transact! service "host" {:event :create :name "Host" :mode (if online? :online :local)
+                                              :names (vec (cons "Host" (map #(str "Local " %) (range 1 n))))
+                                              :expected-players n :bots (if online? (- n 2) 0)
+                                              :setup {:mode mode :extra 0}}))
+          send! (fn [token msg] (s/transact! service token (assoc msg :id id :revision (get-in @(:rooms service) [id :revision]))))
+          _ (when online? (send! "guest" {:event :join :name "Guest"}))
+          lobby (get @(:rooms service) id)
+          _ (with-redefs [clojure.core/shuffle (comp vec reverse)] (send! "host" {:event :start}))
+          started (get @(:rooms service) id) state (:state started)
+          projected (model/pull-game @(:conn service) id)]
+      (is (= (vec (reverse (:seats lobby))) (:seats started)))
+      (is (= "host" (:host started)))
+      (is (= (mapv :name (:seats started)) (mapv :name (:players state))))
+      (is (= (vec (range n)) (mapv :id (:players state))))
+      (is (= state (get-in started [:recording 0 :initial])))
+      (is (= (mapv :name (:seats started)) (mapv :name (:players (:state projected)))))
+      (doseq [token (if online? ["host" "guest"] ["host"])
+              :let [owned (vec (keep-indexed #(when (= token (:owner %2)) %1) (:seats started)))]]
+        (is (= owned (get-in (s/permissions service token) [id :seats])))
+        (when (= mode :random)
+          (is (= (set owned) (set (keys (get (s/private-view service token) id)))))))
+      (when online?
+        (is (= 0 (first (get-in (s/permissions service "guest") [id :seats]))))
+        (is (= (dec n) (first (get-in (s/permissions service "host") [id :seats]))))
+        (is (= (- n 2) (count (filter :bot? (:seats started))))))
+      (let [restored (edn/read-string (pr-str started))]
+        (is (= (:seats started) (:seats restored)))
+        (is (= (:starting-player state) (get-in restored [:state :starting-player]))))
+      (is (thrown-with-msg? clojure.lang.ExceptionInfo #"already started" (send! "host" {:event :start})))
+      (is (= (:seats started) (get-in @(:rooms service) [id :seats]))))))
+
+(deftest each-new-game-shuffles-independently-before-the-first-player-is-chosen
+  (let [make-room (fn [] (second (s/transition {} "host" {:event :create :name "Ada" :mode :local :names ["Ada" "Ben" "Cy"]})))
+        start (fn [room order]
+                (with-redefs [clojure.core/shuffle order
+                              s/new-state (fn [_ names] (a/new-game names (vec (mapcat identity a/stages)) 1))]
+                  (second (s/transition {(:id room) room} "host" {:event :start :id (:id room) :revision 0}))))
+        first-game (start (make-room) (comp vec reverse))
+        next-game (start (make-room) #(vec (concat (rest %) [(first %)])))]
+    (is (= ["Cy" "Ben" "Ada"] (mapv :name (:seats first-game))))
+    (is (= ["Ben" "Cy" "Ada"] (mapv :name (:seats next-game))))
+    (doseq [game [first-game next-game]]
+      (is (= 1 (get-in game [:state :starting-player]) (get-in game [:state :turn]))))))

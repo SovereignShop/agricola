@@ -97,6 +97,10 @@
                               (into {} (for [kind draw/kinds]
                                          [kind (mapv :id (take 7 (drop (* 7 (:id p)) (by-kind kind))))]))))
                      players))))))
+(defn randomize-seats [room]
+  ;; Shuffle whole seats once, before allocating player IDs and private hands.
+  ;; The persisted room then keeps ownership and bot identities in this order.
+  (update room :seats #(vec (shuffle %))))
 (defn start-state [names settings]
   (let [settings (valid-setup settings) n (count names)
         _ (agricola/require! (nil? (pool-error n settings)) (pool-error n settings))
@@ -263,7 +267,8 @@
                          (agricola/require! (nil? state) "This game has already started.")
                          (agricola/require! (or (nil? (:expected-players room)) (= (:expected-players room) (count (:seats room)))) "Wait until all expected players have joined.")
                          (agricola/require! (every? #(get % :ready? true) (:seats room)) "Wait until everyone is ready.")
-                         (let [state (start-state (mapv :name (:seats room)) (or (:setup room) {:mode :beginner :extra 2}))]
+                         (let [room (randomize-seats room)
+                               state (start-state (mapv :name (:seats room)) (or (:setup room) {:mode :beginner :extra 2}))]
                            (assoc room :state state :recording [(recording-header room state false)])))
               :draw-pick (do (agricola/require! (= :draw (:phase state)) "This table is not drawing cards.")
                              (agricola/require! (and (integer? player) (<= 0 player) (< player (count (:seats room))) (= token (get-in room [:seats player :owner]))) "You can only choose cards for your own seat.")

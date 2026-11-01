@@ -14,7 +14,7 @@
                   (g/queue-front [(g/task 0 (c/id :b097) {:op :scholar :optional? true} {})]) g/drain)
       draft (:id (store/transact! s token {:event :create :mode :online :name "Ada" :expected-players 2 :setup {:mode :draw :extra 2}}))]
   (store/transact! s (apply str (repeat 64 "b")) {:event :join :id draft :revision 0 :name "Ben"})
-  (store/transact! s token {:event :start :id draft :revision 1})
+  (with-redefs [store/randomize-seats identity] (store/transact! s token {:event :start :id draft :revision 1}))
   (store/save! s (swap! (:rooms s) #(-> % (assoc-in [minor :state] fresh) (assoc-in [scholar :state] pending)
                       (assoc-in [payment :state] (-> fresh (assoc-in [:players 0 :hand :minor] [(c/id :a004)]) (assoc-in [:players 0 :goods :grain] 1))))))
   (println (json/write-str {:occupation (first ids) :major (nth ids 3) :upgrade (nth ids 4) :minor minor :payment payment :scholar scholar :draft draft})))

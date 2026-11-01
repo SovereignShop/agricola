@@ -40,7 +40,7 @@ def check(base, fixture_ids):
         table(plow, 'Plow Maker')
         checkbox=page.get_by_role('checkbox',name='Plow Maker: pay 1 food for one extra field',exact=True)
         checkbox.click();expect(checkbox).to_be_checked()
-        page.get_by_role('combobox',name='Plow field 1',exact=True).select_option('1')
+        page.get_by_role('dialog').get_by_role('button',name='Farm space 2: empty',exact=True).click()
         resolve();expect(page.get_by_role('dialog')).to_have_count(0)
         for i in [1,2]: expect(page.locator('.tt-player[data-player="0"] [aria-label="Farm space '+str(i)+': field"]')).to_have_count(1)
         assert not errors, errors

@@ -36,6 +36,14 @@
        :changes (if (and known? (not skipped?))
                   [{:player player :gained (:goods effect) :spent {} :farm {}}] [])})))
 
+(defn display-event?
+  "Keep raw trigger diagnostics in recordings, but omit empty bookkeeping from
+   the player's history. Preserve payments, declines, schedules and unknown
+   legacy outcomes rather than guessing that they had no effect."
+  [event]
+  (or (:unknown? event) (:skipped? event) (seq (:changes event))
+      (not (#{:resource-seller-receipt :set-card-state} (:op event)))))
+
 (defn history [records state]
   ;; Publish only the owner's played cards. Private hand responses and draft
   ;; identities must never escape through this convenience projection.
@@ -43,7 +51,7 @@
     (reduce
      (fn [out [move-index event-index event]]
        (let [path [(:player event) (:card event)]]
-         (if-not (visible path) out
+         (if-not (and (visible path) (display-event? event)) out
            (update-in out path (fnil conj []) (assoc event :move move-index :index event-index)))))
      {}
      (for [move records :when (= :move (:record move))

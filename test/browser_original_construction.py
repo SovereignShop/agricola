@@ -21,7 +21,7 @@ def check(base, fixture_ids):
         maker.click()
         expect(maker).to_be_checked()
         for i, cell in enumerate([1,2,3], 1):
-            page.get_by_role('combobox', name='Plow field '+str(i), exact=True).select_option(str(cell))
+            page.get_by_role('dialog').get_by_role('button', name='Farm space '+str(cell+1)+': empty', exact=True).click()
         page.get_by_role('button', name='Resolve effect →', exact=True).click()
         expect(page.get_by_role('dialog')).to_have_count(0)
         expect(page.locator('.tt-player[data-player="0"] [data-goods="food"] .pile-count')).to_have_text('1')

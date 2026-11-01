@@ -8,7 +8,8 @@
         id (:id (store/transact! s "p0" {:event :create :name "P0" :mode :online :expected-players n :turn-seconds seconds}))]
     (doseq [pid (range 1 n)]
       (store/transact! s (str "p" pid) {:event :join :id id :revision (dec pid) :name (str "P" pid)}))
-    (with-redefs [store/start-state (fn [& _] state)]
+    (with-redefs [store/randomize-seats identity
+                  store/start-state (fn [& _] state)]
       (store/transact! s "p0" {:event :start :id id :revision (dec n)}))
     [s id]))
 (defn send! [s id token msg]

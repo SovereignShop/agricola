@@ -40,7 +40,7 @@ def check(base, fixture_ids):
         expect(page.get_by_role('dialog', name='Resolve Ox Team', exact=True)).to_be_visible()
         page.reload()
         for i, cell in enumerate([0,1,2], 1):
-            page.get_by_role('combobox', name='Plow field '+str(i), exact=True).select_option(str(cell))
+            page.get_by_role('dialog').get_by_role('button', name='Farm space '+str(cell+1)+': empty', exact=True).click()
         resolve()
         expect(page.get_by_role('dialog')).to_have_count(0)
         for cell in [1,2,3]:

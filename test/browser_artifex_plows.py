@@ -29,9 +29,9 @@ def check(base, fixtures):
             expect(page.locator("[role=alert]")).to_have_count(0)
 
         def choose_fields(first, second):
-            page.get_by_label("Plow field 1", exact=True).select_option(str(first))
+            page.get_by_role("dialog").get_by_role("button", name="Farm space "+str(first+1)+": empty", exact=True).click()
             expect(page.get_by_role("button", name="Resolve effect →", exact=True)).to_be_enabled()
-            page.get_by_label("Plow field 2", exact=True).select_option(str(second))
+            page.get_by_role("dialog").get_by_role("button", name="Farm space "+str(second+1)+": empty", exact=True).click()
             expect(page.get_by_role("button", name="Resolve effect →", exact=True)).to_be_enabled()
 
         def fields(count):

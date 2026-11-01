@@ -14,7 +14,7 @@
   (let [online (:id (store/transact! s token {:event :create :mode :online :name "Ada" :expected-players 2
                                             :title "Private hands" :setup {:mode :random}}))
         _ (store/transact! s (apply str (repeat 64 "b")) {:event :join :id online :revision 0 :name "Ben"})
-        _ (store/transact! s token {:event :start :id online :revision 1})
+        _ (with-redefs [store/randomize-seats identity] (store/transact! s token {:event :start :id online :revision 1}))
         private-game (-> (cards/initialize (a/new-game ["Ada" "Ben"] (vec (mapcat identity a/stages)) 0))
                          (assoc-in [:players 0 :hand] {:occupation [(rules/id :a112)] :minor []})
                          (assoc-in [:players 1 :hand] {:occupation [(rules/id :a115)] :minor []})
@@ -42,6 +42,6 @@
       (doseq [pid (range 1 5)]
         (store/transact! s (apply str (repeat 64 (nth "abcde" pid)))
                          {:event :join :id online-five :revision (dec pid) :name (nth names pid)}))
-      (store/transact! s token {:event :start :id online-five :revision 4})
+      (with-redefs [store/randomize-seats identity] (store/transact! s token {:event :start :id online-five :revision 4}))
       (store/save! s (swap! (:rooms s) assoc-in [online-five :state] g))
       (println (str/join "," [id online effect-id major upgrade online-five])))))
