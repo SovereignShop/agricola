@@ -2145,6 +2145,8 @@ input,select{background:#fffaf0;border-color:#c8b68f;border-radius:3px}
 .draw-view .hand-card>img {display:block;width:100%;height:auto;aspect-ratio:337.5 / 517.57;object-fit:contain;flex-shrink:0}
 .draw-view .draw-choices .hand-grid {grid-template-columns:repeat(auto-fill,minmax(min(100%,160px),1fr))}
 .draw-view .draw-kind+.draw-kind {margin-top:24px}
+.draw-view .draw-kept .hand-grid {display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,140px),140px));gap:9px;overflow:visible}
+.draw-view .draw-kept .hand-card {width:100%;min-width:0;max-width:140px}
 
 .replay-draft-pool .hand-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,165px),1fr));gap:14px}
 .replay-draft-kind+.replay-draft-kind{margin-top:24px}
