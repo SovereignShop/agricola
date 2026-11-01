@@ -713,3 +713,11 @@ are excluded rather than treated as zero. Detail rows distinguish no trigger,
 declined effects, resolved effects without measured gains, and passive/scoring
 benefits outside the tracker. Playing costs are not benefits. A benefit to another
 player counts as an impact. These are review hints, not automatic rule verdicts.
+
+Run `python3 scripts/impact_report.py <batch-directory> --watch` to refresh the
+aggregate audit each minute until the batch finishes. The report ranks cards by
+zero-benefit plays, preserves example seeds/players/moves, and includes manually
+investigated cases from `impact-investigation.json` when present. For deeper
+inspection, `clojure -M scripts/audit_card_impact.clj <batch-directory>` replays
+completed games and exports zero-benefit cases and fixed-gain receipt mismatches
+as JSON lines. Neither command changes recordings or rules.
