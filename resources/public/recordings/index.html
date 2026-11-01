@@ -56,5 +56,11 @@
         every rule interpretation is correct.</p>
     </footer>
   </main>
+  <script>
+    if (new URLSearchParams(location.search).get('embedded') === '1') {
+      document.querySelector('nav').hidden = true;
+      for (const link of document.querySelectorAll('.open')) link.search = '?embedded=1';
+    }
+  </script>
 </body>
 </html>

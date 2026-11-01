@@ -337,7 +337,7 @@
 (defn table [room renderers]
   (r/with-let [prefs (r/atom (load-arrangement)) gesture (r/atom nil) zoom (r/atom 0.3)
                view (r/atom :board) nodes (atom {}) geometry (atom nil) animation (atom nil)
-               popup (r/atom nil) dismissed (r/atom nil) pan (atom nil) auto-fit? (atom true) wheel-cleanup (atom nil) observer (atom nil) shared-height (r/atom 2100) shared-observer (atom nil)
+               popup (r/atom nil) dismissed (r/atom nil) finished-dismissed (r/atom nil) pan (atom nil) auto-fit? (atom true) wheel-cleanup (atom nil) observer (atom nil) shared-height (r/atom 2100) shared-observer (atom nil)
                fit! (fn [animate?] (let [geo @geometry target (if (number? @view) (some #(when (= @view (get-in % [:player :id])) %) (:players geo)) nil)]
                                      (camera! nodes zoom (or target (assoc geo :x 0 :y 0)) animate? animation)))
                focus! (fn [id] (reset! auto-fit? true) (reset! view id) (dispatch :inspect-player (when (number? id) id))
@@ -347,6 +347,9 @@
                open-deck! (fn [path] (reset! popup {:kind :deck :path path}))]
     (let [ui @(rf/subscribe [:ui]) permission @(rf/subscribe [:permission]) g (:state room)
           actor (game/acting-player g) owned (set (:seats permission))
+          finished? (= :finished (:phase g))
+          recording-allowed? (or (:host? permission) (seq owned))
+          recording-busy? (or (:busy? ui) (:recording-request ui) (not (:connected? ui)))
           can-play? (and (:connected? ui) (owned actor) (not= :finished (:phase g)) (not (seq (:takeback room))))
           objects (mapv (fn [p] (assoc (player-objects p (get-in ui [:private-hands (:id room) (:id p)]) @prefs @view) :player p)) (:players g))
           geo (table-geometry objects @shared-height) _ (reset! geometry geo)
@@ -361,8 +364,9 @@
           vote-visible? (and (seq vote-result) (seq owned)
                              (not= (:id vote-result) (.getItem js/sessionStorage (str "eurozone-vote-dismissed:" (:id room))))
                              (< (- (+ (if (seq vote-result) @controls/wall-time (.now js/Date)) (:server-offset ui 0)) (:at vote-result 0)) 120000))
-          active-popup (or @popup (when (and decision? (not= decision-key @dismissed)) {:kind :decision}))
-          close! #(do (reset! popup nil) (reset! dismissed decision-key))
+          active-popup (or @popup (when (and finished? (not= (:revision room) @finished-dismissed)) {:kind :scores})
+                           (when (and decision? (not= decision-key @dismissed)) {:kind :decision}))
+          close! #(do (reset! popup nil) (reset! dismissed decision-key) (when finished? (reset! finished-dismissed (:revision room))))
           open-decision! (fn [pid] (focus! pid) (reset! dismissed nil) (when-not decision? (reset! popup {:kind :farm :pid pid})))
           board (:board geo)
           major-xy (position @prefs [:shared :major-board] [0 0])
@@ -390,6 +394,7 @@
         [button "Table menu" #(do (reset! dismissed decision-key) (reset! popup {:kind :menu}))]]
        [:div.tt-turn-line [:span.tt-round (str "Round " (:round g) " / 14")]
         [controls/turn-banner room open-decision!]
+        (when finished? [button "View results" #(reset! popup {:kind :scores})])
         (when (number? @view) [button "Farm actions" #(do (reset! dismissed decision-key) (reset! popup {:kind :farm :pid @view}))])]
        [:div.tt-viewport {:tab-index 0 :aria-label "Tabletop. Drag to pan; hold right mouse button and scroll to pan horizontally; pinch or Control or Command wheel to zoom."
                           :data-zoom @zoom
@@ -465,7 +470,7 @@
         (when (and active-popup (not vote-visible?) (not (seq (:takeback room))))
           [controls/modal
            (case (:kind active-popup) :decision decision-title :deck (or (:label popup-deck) "Cards") :card (if (:hidden? popup-deck) "Private card" (:name (card-info (:id active-popup))))
-             :farm (str (get-in g [:players (:pid active-popup) :name]) "’s farm") :chat "Table chat" :scores "Scoring" :rules "Rules" :cloth "Tablecloth" "Table menu")
+             :farm (str (get-in g [:players (:pid active-popup) :name]) "’s farm") :chat "Table chat" :scores (if finished? "Game complete" "Scoring") :rules "Rules" :cloth "Tablecloth" "Table menu")
            (case (:kind active-popup)
              :decision [:div {:class (when simple-action? "tt-simple-action")}
                         (when (and (:space (:draft ui)) (empty? (:effect-queue g)))
@@ -499,15 +504,24 @@
                         #(do (swap! prefs assoc :material id) (save-arrangement! @prefs))
                         {:aria-label label :aria-pressed (= id (:material @prefs :tan))}])]
              :chat [(:chat renderers) room]
-             :scores [(:scores renderers) g]
+             :scores [:div
+                      (when (and finished? recording-allowed?)
+                        [:div.end-game-recording
+                         [:div.form-row
+                          [button "Save recording" #(dispatch :request-recording :download) {:class "button secondary" :disabled (boolean recording-busy?)}]
+                          [button "Replay game" #(dispatch :request-recording :replay) {:class "button primary" :disabled (boolean recording-busy?)}]]
+                         [:p.small "Save a copy of this game, or watch it again from the beginning."]
+                         (when (:recording-request ui) [:p.small {:role "status"} "Opening recording…"])])
+                      [(:scores renderers) g]]
              :rules [(:rules renderers) g]
              :menu [:div.tt-menu
                     [button "Scoring" #(reset! popup {:kind :scores})]
                     [button "Rules" #(reset! popup {:kind :rules})]
                     [button "Reset my arrangement" #(do (swap! prefs select-keys [:material :arrangement-version]) (save-arrangement! @prefs) (reset! popup nil) (js/requestAnimationFrame (fn [] (fit! true))))]
                     [(:recording-picker renderers)]
-                    (when (and (:host? permission) (or (= :local (:mode room)) (= :finished (:phase g))))
-                      [button "Save recording" #(dispatch :send {:event :recording/request}) {:disabled (:busy? ui)}])
+                    [(:recordings-button renderers)]
+                    (when (or (and (:host? permission) (= :local (:mode room))) (and finished? recording-allowed?))
+                      [button "Save recording" #(dispatch :request-recording :download) {:disabled (boolean recording-busy?)}])
                     [:p.small "Deck and goods positions are saved for your user in this browser. They do not change anyone else’s view."]
                     [:p.small "Move handles also accept arrow keys. Text controls change reading size; the zoom controls change the table’s scale."]]) close!])
         ;; Kept outside the menu so votes and results can arrive while the table is visible.

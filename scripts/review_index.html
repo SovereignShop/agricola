@@ -5,7 +5,7 @@
 <style>
 :root{color-scheme:light;font:16px/1.5 Georgia,serif;color:#352e24;background:#e9e2d3}*{box-sizing:border-box}body{max-width:1500px;margin:0 auto;padding:30px}h1{font-weight:normal;margin:0}header p{margin:6px 0 16px;color:#655b4d}a{color:#375c42}button,input,select,textarea{font:14px/1.5 system-ui;border:1px solid #b8ad98;border-radius:5px;padding:8px;background:#fffdf6;color:inherit}button,a{cursor:pointer}button:hover{background:#f0eadc}.filters{display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin:22px 0}label{display:flex;flex-direction:column;font:13px/1.5 system-ui}input[type=search]{min-width:260px}#summary{padding:14px 18px;background:#faf6eb;border:1px solid #c7baa1;border-radius:6px}table{border-collapse:collapse;width:100%;background:#faf7ee}th,td{text-align:left;padding:10px 12px;border-bottom:1px solid #d6cbb9;vertical-align:top}th{font:600 12px/1.5 system-ui;text-transform:uppercase;letter-spacing:.04em}td{font:14px/1.5 system-ui}small{display:block;color:#75674f}.flag{color:#8a362d;font-weight:600}.cardlist{max-width:430px}details{margin-top:5px}summary{cursor:pointer}.reviewed{opacity:.65}textarea{width:100%;min-width:180px;min-height:65px;margin-top:7px}#notice{color:#863b2b}.score{white-space:nowrap}.actions{display:flex;gap:8px;flex-wrap:wrap}.actions a{display:inline-block;padding:5px 9px;background:#e8eddf;border:1px solid #b6c3aa;border-radius:4px;text-decoration:none}@media(max-width:700px){body{padding:15px}table,tbody,tr,td{display:block}thead{display:none}tr{border-bottom:2px solid #b8ad98;padding:8px}td{border:0;padding:5px}.cardlist{max-width:none}}
 </style>
-<header><h1>Recorded games</h1><p>Current rules · 2–5 players · random hands and drafts</p></header>
+<header><a id="collections" href="../index.html">All collections</a><h1>Recorded games</h1><p>Current rules · 2–5 players · random hands and drafts</p></header>
 <div id="summary" aria-live="polite">Loading recordings…</div>
 <p>Open a replay, then use <b>Play</b>, <b>Next</b>, or the move slider to inspect it. All hands are visible. Failed games retain the position before the error. Passing replay verification checks consistency, not whether every rule interpretation is correct.</p>
 <div class="filters">
@@ -21,6 +21,8 @@
 <table><thead><tr><th>Game</th><th>Result</th><th>Cards</th><th>Review</th></tr></thead><tbody id="games"></tbody></table>
 <script>
 const $=id=>document.getElementById(id), key='eurozone-review:'+location.pathname;
+const embedded=new URLSearchParams(location.search).get('embedded')==='1';
+if(embedded)$('collections').search='?embedded=1';
 let manifest={games:[]}, notes={};try{notes=JSON.parse(localStorage.getItem(key)||'{}')}catch(e){}
 function save(){try{localStorage.setItem(key,JSON.stringify(notes))}catch(e){$('notice').textContent='Notes could not be stored. Use Export review notes before closing.'}}
 const flags=g=>[...(g.status!=='complete'?[g.error||g.status]:[]),...(g.begging?.some(n=>n>=5)?['5+ begging cards']:[]),...(g.scores?.some(n=>n<0)?['Negative score']:[]),...(g.moves>=600?['600+ commands']:[])];
@@ -35,7 +37,7 @@ $('games').replaceChildren();
 for(const g of games){const tr=element('tr');if(notes[g.seed]?.reviewed)tr.className='reviewed';const identity=cell(tr);
 identity.append(element('strong',String(g.seed)),element('div',g.players+' players · '+(g.mode==='draw'?'Draft +'+g.extra:'Random hands')));
 identity.append(element('small',g.policies.includes('random')?'Includes a random-policy seat':'Deployed bots'));
-const links=element('div',undefined,'actions');if(g.verified){const a=element('a','Watch');a.href='/?replay='+encodeURIComponent(new URL(g.file,location.href).pathname);a.target='_blank';a.rel='noopener';links.append(a)}
+const links=element('div',undefined,'actions');if(g.verified){const a=element('a','Watch'),path=new URL(g.file,location.href).pathname;a.href='/?replay='+encodeURIComponent(path);if(embedded){a.onclick=e=>{e.preventDefault();window.parent.postMessage({type:'eurozone:replay',path},location.origin)}}else{a.target='_blank';a.rel='noopener'}links.append(a)}
 const download=element('a','EDN');download.href=g.file;download.download=g.file;links.append(download);identity.append(links);
 const result=cell(tr);result.append(element('strong',g.scores?.length?g.scores.join(' / '):'Incomplete','score'),element('small',g.moves+' commands · '+(g.verified?'replay verified':'not verified')));
 for(const f of flags(g))result.append(element('div',f,'flag'));

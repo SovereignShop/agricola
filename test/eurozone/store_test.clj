@@ -118,6 +118,26 @@
     (swap! (:rooms store) assoc-in [id :mode] :online)
     (is (thrown-with-msg? clojure.lang.ExceptionInfo #"after the game finishes" (s/export-recording store "host" id)))
     (is (not (.contains (pr-str (:datoms (s/snapshot store "host"))) ":recording")))))
+(deftest finished-recordings-are-available-to-players-but-not-spectators
+  (let [store (s/make-store nil) id (create store :online)
+        state (assoc (a/new-game ["Ada" "Ben"] (vec (mapcat identity a/stages)) 0)
+                     :round 14 :phase :breeding :turn 1 :fed #{0 1} :bred #{0})
+        room (assoc (get @(:rooms store) id) :state state
+                    :seats [{:name "Ada" :owner "host"} {:name "Ben" :owner "guest"}]
+                    :recording [(s/recording-header {} state true)])]
+    (swap! (:rooms store) assoc id room)
+    (doseq [token ["host" "guest" "spectator"]]
+      (is (thrown? clojure.lang.ExceptionInfo (s/export-recording store token id))))
+    (swap! (:rooms store) assoc id (s/recorded-command room 1 {:type :breed :offspring {}}))
+    (doseq [token ["host" "guest"]]
+      (let [export (s/export-recording store token id)
+            timeline (recording/timeline (edn/read-string (str "[" (:text export) "]")))]
+        (is (= id (:id export)))
+        (is (= :complete (:status timeline)))
+        (is (= 1 (count (:moves timeline))))))
+    (is (= (:text (s/export-recording store "host" id)) (:text (s/export-recording store "guest" id))))
+    (is (thrown? clojure.lang.ExceptionInfo (s/export-recording store "spectator" id)))
+    (is (thrown? clojure.lang.ExceptionInfo (s/export-recording store "host" "missing")))))
 (deftest authority-and-versioning
   (let [store (s/make-store nil) id (create store :online)]
     (is (thrown? clojure.lang.ExceptionInfo (s/transact! store "other" {:event :start :id id :revision 0})))

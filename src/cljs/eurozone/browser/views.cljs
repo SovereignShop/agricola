@@ -18,15 +18,44 @@
 (defn draft! [k v] (dispatch :draft k v))
 (defn toggle-value [xs v] (if (some #{v} xs) (vec (remove #{v} xs)) (conj (vec xs) v)))
 (defonce replay-data (r/atom nil))
+(defonce recordings-open? (r/atom false))
+(defonce recordings-path (r/atom "/recordings/index.html?embedded=1"))
+(defn recordings-button []
+  [button "Recorded games" #(reset! recordings-open? true) "button"])
 (defn show-recording! [text filename]
   (let [timeline (recording/timeline (reader/read-string (str "[" text "]")))]
     (reset! replay-data (assoc timeline :index 0 :file filename :playing? false))))
+(rf/reg-fx :replay-recording
+  (fn [{:keys [text filename]}]
+    (try (show-recording! text filename)
+         (catch :default error (dispatch :error (str "Could not replay recording: " (.-message error)))))))
 (defn load-linked-recording! [path]
   (when (and (str/starts-with? path "/recordings/") (not (str/includes? path "..")))
     (-> (js/fetch path)
         (.then (fn [response] (if (.-ok response) (.text response) (throw (js/Error. "Recording not found.")))))
         (.then #(show-recording! % (last (str/split path #"/"))))
         (.catch #(dispatch :error (str "Could not replay recording: " (.-message %)))))))
+(defn recordings-library []
+  (r/with-let [frame (atom nil)
+               receive (fn [event]
+                         (when (and @frame (= (.-origin event) (.-origin js/location))
+                                    (= (.-source event) (.-contentWindow @frame))
+                                    (= "eurozone:replay" (some-> event .-data .-type)))
+                           (let [path (.. event -data -path)]
+                             (when (and (string? path) (str/starts-with? path "/recordings/")
+                                        (str/ends-with? path ".edn") (not (str/includes? path "..")))
+                               (load-linked-recording! path)))))
+               _ (.addEventListener js/window "message" receive)]
+    [:main.recordings-library
+     [:div.section-heading [:h1 "Recorded games"]
+      [button "Back to Eurozone" #(reset! recordings-open? false) "button"]]
+     [:iframe.recording-library-frame {:title "Recorded game collections" :src @recordings-path
+                                      :ref #(reset! frame %)
+                                      :on-load (fn [_]
+                                                 (when @frame
+                                                   (let [location (.. @frame -contentWindow -location)]
+                                                     (reset! recordings-path (str (.-pathname location) (.-search location))))))}]]
+    (finally (.removeEventListener js/window "message" receive))))
 (defn recording-picker []
   [:label.button.recording-picker "Open recording"
    [:input {:type "file" :accept ".edn" :aria-label "Open game recording"
@@ -138,7 +167,7 @@
      [:p.small "Expand your home, cultivate the land, and raise animals. Just remember: everyone needs to eat."]
      [:a.text-link {:href (:rules (first catalog/games)) :target "_blank" :rel "noreferrer"} "Read the official rules ↗"]]
     [create-form]]
-   [recording-picker]
+   [:div.form-row [recordings-button] [recording-picker]]
    [table-list]])
 (defn lobby [room]
   (let [name (r/atom (or (.getItem js/sessionStorage "eurozone-name") (.getItem js/localStorage "eurozone-name") "")) copied? (r/atom false)]
@@ -1475,7 +1504,7 @@
   ^{:key (:id room)} [tabletop/table room {:farm farm :action-board action-board :board-action board-action
                         :player-panel player-panel :action-editor action-editor :improvement-effects improvement-effects
                         :chat chat-panel :scores score-table :rules rules-panel
-                        :recording-picker recording-picker}])
+                        :recording-picker recording-picker :recordings-button recordings-button}])
 (defn hand-card [cid & [attrs]]
   (let [card (cards/card cid)]
     [:button.hand-card (merge {:type "button" :class (name (:kind card)) :aria-label (:name card)} attrs)
@@ -1614,7 +1643,8 @@
       [:main.library.activity-lobby
        [:div.section-heading
         [:div [:div.eyebrow "AGRICOLA"] [:h1 "Activity tables"] [:p "Join a table or start a new game with people in this Activity."]]
-        [button "Create a new table" #(dispatch :activity/enter "create" nil) "button primary" (:busy? ui)]]
+        [:div.form-row [recordings-button]
+         [button "Create a new table" #(dispatch :activity/enter "create" nil) "button primary" (:busy? ui)]]]
        [android-battery-notice]
        [:div.section-heading [:h2 "Tables"]
         [button "Refresh tables" #(dispatch :activity/load) "text-button" (:busy? ui)]]
@@ -1639,16 +1669,17 @@
         playing? (or @replay-data (and (:state room) (not= :draw (:status room))))
         focused? (and @replay-data (:focus? (layout/layout ui (:id room))))]
     [:div.app {:aria-busy (boolean (:busy? ui)) :class (str (when playing? "playing ") (when focused? "table-focused"))}
-     [:header.site-header [:button.wordmark {:on-click #(dispatch :navigate nil)} "eurozone" [:span "✳"]]
+     [:header.site-header [:button.wordmark {:on-click #(do (reset! replay-data nil) (reset! recordings-open? false) (dispatch :navigate nil))} "eurozone" [:span "✳"]]
       [:div.header-right (when-not playing? [readability/controls]) [:span.connection {:class (when (:connected? ui) "online")} [:i] (if (:activity-lobby? ui) "Discord Activity" (or (:peer-status ui) (if (:connected? ui) "Connected" "Reconnecting…")))]]]
      (when (:error ui) [:div.toast {:role "alert"} [:span (:error ui)] [button "×" #(dispatch :dismiss-error) "text-button"]])
-     (cond (:activity-lobby? ui) [activity-lobby]
+     (cond @replay-data [replay-view]
+           @recordings-open? [recordings-library]
+           (:activity-lobby? ui) [activity-lobby]
            (:missing-host-save ui)
            [:main.panel.activity-recovery
             [:h1 "Host save unavailable"]
             [:p "Join another table or create a new one from the Activity lobby."]
             [button "Back to Activity tables" #(.EUROZONE_ACTIVITY_HOME js/window) "button primary"]]
-           @replay-data [replay-view]
            room (cond (= :draw (:status room)) [draw-view room] (:state room) [game room] :else [lobby room])
            (and (:game-id ui) (:connected? ui)) [:main.panel.not-found [:h1 "Table not found"] [:p "This table may belong to another Eurozone server."] [button "Back to the library" #(dispatch :navigate nil) "button primary"]]
            (comms/peer?) [:main.panel [button "← All tables" #(dispatch :navigate nil) "text-button"] [:h1 "Connecting to your table"] [:p (or (:peer-status ui) "Waiting for the host…")]]

@@ -4,8 +4,8 @@
 
 (defn hash-id [] (let [h (subs (.-hash js/location) 1)] (when (seq h) h)))
 (rf/reg-event-db :initialize (fn [_ _] {:facts (d/empty-db model/schema) :permissions {} :layouts (layout/load-layouts) :text-size (readability/load-size) :connected? false :game-id (hash-id) :draft {} :panel :board}))
-(rf/reg-event-fx :connection (fn [{:keys [db]} [_ connected?]] {:db (assoc db :connected? connected? :busy? false) :dispatch (if connected? [:chat/sync] [:chat/disconnect])}))
-(rf/reg-event-db :error (fn [db [_ message]] (assoc db :error message :busy? false :activity-opening? false)))
+(rf/reg-event-fx :connection (fn [{:keys [db]} [_ connected?]] {:db (assoc db :connected? connected? :busy? false :recording-request nil) :dispatch (if connected? [:chat/sync] [:chat/disconnect])}))
+(rf/reg-event-db :error (fn [db [_ message]] (assoc db :error message :busy? false :recording-request nil :activity-opening? false)))
 (rf/reg-event-db :dismiss-error (fn [db _] (dissoc db :error)))
 (rf/reg-event-db :panel (fn [db [_ panel]] (assoc db :panel panel)))
 (rf/reg-event-db :draft
@@ -66,6 +66,13 @@
                 :panel (if (= :finished (:status (model/pull-game (:facts db) id))) :scores :board))
      :navigate id :dispatch [:chat/sync]}))
 (rf/reg-fx :send comms/send!)
+(rf/reg-event-fx :request-recording
+  (fn [{:keys [db]} [_ action]]
+    (cond
+      (:recording-request db) {}
+      (not (:connected? db)) {:db (assoc db :error "Reconnect to the table before opening its recording.")}
+      :else {:db (assoc db :busy? true :error nil :recording-request {:id (:game-id db) :action action})
+             :send {:event :recording/request :id (:game-id db) :request-id (str (random-uuid))}})))
 (rf/reg-fx :download-recording
   (fn [{:keys [text filename]}]
     (let [blob (js/Blob. #js [text] #js {:type "application/edn"}) url (.createObjectURL js/URL blob)
@@ -83,12 +90,15 @@
 (rf/reg-event-fx :server-message
   (fn [{:keys [db]} [_ message]]
     (case (:event message)
-      :recording {:db (assoc db :busy? false) :download-recording message}
+      :recording (if (and (:recording-request db) (:id message)
+                          (not= (:id message) (get-in db [:recording-request :id]))) {}
+                   {:db (assoc db :busy? false :recording-request nil)
+                    (if (= :replay (get-in db [:recording-request :action])) :replay-recording :download-recording) message})
       :snapshot {:db (assoc db :facts (d/db-with (d/empty-db model/schema) (model/datoms->tx (:datoms message))) :permissions (:permissions message) :private-hands (:private-hands message) :private-draws (:private-draws message) :private-plans (:private-plans message)
                            :server-offset (- (or (:server-time message) (.now js/Date)) (.now js/Date)) :connected? true :busy? false :presence (:presence message)) :dispatch [:chat/sync]}
       :facts {:db (assoc db :presence (:presence message) :facts (d/db-with (:facts db) (model/datoms->tx (:datoms message))) :permissions (:permissions message) :private-hands (:private-hands message) :private-draws (:private-draws message) :private-plans (:private-plans message)
                         :server-offset (- (or (:server-time message) (.now js/Date)) (.now js/Date))) :dispatch [:chat/sync]}
-      :error {:db (assoc db :error (:message message) :busy? false)}
+      :error {:db (assoc db :error (:message message) :busy? false :recording-request nil)}
       :accepted {:db (cond-> (assoc db :busy? false :draft {} :inspect-player nil :game-id (:id message))
                        (= :finished (:status (model/pull-game (:facts db) (:id message)))) (assoc :panel :scores)) :navigate (:id message) :dispatch [:chat/sync]}
       :presence {:db (assoc db :presence (:presence message))}

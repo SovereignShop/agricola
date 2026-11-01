@@ -184,10 +184,14 @@
 (defn export-recording [store token id]
   (#?(:clj locking :cljs do) (:lock store)
     (let [room (get @(:rooms store) id)]
-      (agricola/require! (and room (:state room) (= token (:host room))) "Only the host can export this recording.")
+      (agricola/require! (and room (:state room)
+                              (or (= token (:host room))
+                                  (and (= :finished (get-in room [:state :phase]))
+                                       (some #(= token (:owner %)) (:seats room)))))
+                        "Only the host or a player in a finished game can export this recording.")
       (agricola/require! (or (= :local (:mode room)) (= :finished (get-in room [:state :phase])))
                         "Online recordings can be exported after the game finishes, to keep hands private.")
-      {:event :recording :filename (str "agricola-" id ".edn")
+      {:event :recording :id id :filename (str "agricola-" id ".edn")
        :text (apply str (map #(str (pr-str %) "\n")
                             (or (:recording room) [(recording-header room (:state room) true)])))})))
 (defn transition [rooms token {:keys [event id revision name title mode names command setup expected-players bots ready? player wave card] :as msg}]

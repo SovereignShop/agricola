@@ -280,6 +280,15 @@ back to the exact command, including its current decision ID.
 
 ## Recording and playback
 
+At game end, the results dialog offers **Save recording** and **Replay game** to
+every seated player. Replay is read-only and closing it returns to the finished
+table. During a local game, the host can also export from the table menu; online
+exports remain unavailable until the game finishes. Spectators cannot export.
+
+The Discord Activity lobby and table menu include **Recorded games**. Collections
+and recording files load only when opened; selecting Watch plays inside the
+Activity, and closing playback returns to the collection.
+
 In the web app, **Save recording** exports the current game. **Open recording**
 loads an EDN file into a read-only viewer with play/pause, previous/next,
 first/last, and a move slider. The viewer verifies every command, effect trace,
@@ -289,8 +298,8 @@ line of play; subsequent moves create a new continuation.
 Games created before recording was added start their export at the first
 recorded position (`:partial-start? true`); missing historical commands are not
 invented. A partial recording can be viewed without claiming a complete game.
-Recordings contain all hands. Online exports are host-only and unavailable
-until the game finishes; pass-and-play hosts can export while playing.
+Recordings contain all hands. Online exports are available to the host and seated
+players only after the game finishes; pass-and-play hosts can export while playing.
 
 CLI verification:
 
