@@ -133,7 +133,7 @@
             (.then (fn [saved]
                      (if saved
                        (let [saved (reader/read-string saved)]
-                         (when-not (= @store/engine-fingerprint (:rules saved))
+                         (when-not (store/compatible-host-save? (:rules saved))
                            (throw (js/Error. "The saved host game uses different rules. Keep this backup and reopen it with the matching Eurozone version.")))
                          (when-not (= (:self message) (get-in saved [:table :host]))
                            (throw (js/Error. "This browser save belongs to another host.")))

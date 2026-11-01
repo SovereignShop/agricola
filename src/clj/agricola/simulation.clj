@@ -1,7 +1,7 @@
 (ns agricola.simulation
   "Seeded self-play and append-only EDN recordings. Each accepted command goes
    through the production engine. A partial file remains replayable after failure."
-  (:require [agricola.bot :as bot] [agricola.engine :as a] [agricola.card-game :as g]
+  (:require [agricola.bot :as bot] [agricola.house-rules :as house] [agricola.engine :as a] [agricola.card-game :as g]
             [agricola.card-rules :as c] [agricola.draw :as draw] [agricola.recording :as recording]
             [clojure.edn :as edn] [clojure.java.io :as io] [clojure.string :as str])
   (:import [java.util Random ArrayList Collections]
@@ -10,16 +10,18 @@
 (def canonical recording/canonical)
 (def sha recording/sha)
 (def state-hash recording/state-hash)
-(def rule-files ["agricola/wizkids-white-minors.edn" "agricola/wizkids-white-occupations.edn" "agricola/board.edn" "agricola/cards.edn" "agricola/five-player-cards.edn" "agricola/expansion-cards.edn" "agricola/original-e-construction.edn" "agricola/original-e-improvement-permissions.edn" "agricola/original-e-animals.edn" "agricola/original-e-timing.edn" "agricola/original-e-plows.edn" "agricola/original-e-animal-economy.edn" "agricola/original-e-improvement-followups.edn" "agricola/original-e-action-occupations.edn" "agricola/original-e-resource-actions.edn" "agricola/original-e-conversions.edn" "agricola/original-i-minors.edn" "agricola/original-i-occupations-a.edn" "agricola/original-i-occupations-b.edn" "agricola/original-i-crops-rounds.edn" "agricola/original-k-minors.edn" "agricola/original-k-occupations-a.edn" "agricola/original-k-occupations-b.edn" "agricola/original-k-workers-draw.edn" "agricola/original-cards.edn" "agricola/original-e-minors-extra.edn" "agricola/original-e-occupations-extra.edn" "agricola/five_player.cljc" "agricola/engine.cljc" "agricola/card_game.cljc" "agricola/card_reactive.cljc" "agricola/card_random.cljc" "agricola/card_rules.cljc" "agricola/card_expressions.cljc" "agricola/card_catalog.cljc" "agricola/draw.cljc"])
+(def rule-files ["agricola/house_rules.cljc" "agricola/wizkids-white-minors.edn" "agricola/wizkids-white-occupations.edn" "agricola/board.edn" "agricola/cards.edn" "agricola/five-player-cards.edn" "agricola/expansion-cards.edn" "agricola/original-e-construction.edn" "agricola/original-e-improvement-permissions.edn" "agricola/original-e-animals.edn" "agricola/original-e-timing.edn" "agricola/original-e-plows.edn" "agricola/original-e-animal-economy.edn" "agricola/original-e-improvement-followups.edn" "agricola/original-e-action-occupations.edn" "agricola/original-e-resource-actions.edn" "agricola/original-e-conversions.edn" "agricola/original-i-minors.edn" "agricola/original-i-occupations-a.edn" "agricola/original-i-occupations-b.edn" "agricola/original-i-crops-rounds.edn" "agricola/original-k-minors.edn" "agricola/original-k-occupations-a.edn" "agricola/original-k-occupations-b.edn" "agricola/original-k-workers-draw.edn" "agricola/original-cards.edn" "agricola/original-e-minors-extra.edn" "agricola/original-e-occupations-extra.edn" "agricola/five_player.cljc" "agricola/engine.cljc" "agricola/card_game.cljc" "agricola/card_reactive.cljc" "agricola/card_random.cljc" "agricola/card_rules.cljc" "agricola/card_expressions.cljc" "agricola/card_catalog.cljc" "agricola/draw.cljc"])
 (defn rules-hash [] (sha (apply str (map #(slurp (io/resource %)) rule-files))))
 (defn shuffle-with [^Random rng xs]
   (let [copy (ArrayList. (vec xs))] (Collections/shuffle copy rng) (vec copy)))
-(defn initial-state [{:keys [seed players mode extra] :or {seed 1 players 2 mode :random extra 2}}]
-  (let [rng (Random. (long seed))
+(defn initial-state [{:keys [seed players mode extra house-rules] :or {seed 1 players 2 mode :random extra 2}}]
+  (let [house-rules (house/validate house-rules)
+        rng (Random. (long seed))
         order (vec (mapcat #(shuffle-with rng %) a/stages))
         state (assoc (a/new-game (mapv #(str "Bot " (inc %)) (range players)) order (.nextInt rng players))
                      :card-rng (inc (mod (long seed) 2147483646)))
-        pool (filter #(<= (:min-players %) players) (sort-by :id (vals c/cards)))
+        state (house/configure-new-game state house-rules)
+        pool (filter #(and (<= (:min-players %) players) (not (house/banned? house-rules %))) (sort-by :id (vals c/cards)))
         by-kind (into {} (for [kind draw/kinds] [kind (shuffle-with rng (filter #(= kind (:kind %)) pool))]))
         state (assoc state :minor-order (mapv :id (by-kind :minor)))]
     (case mode

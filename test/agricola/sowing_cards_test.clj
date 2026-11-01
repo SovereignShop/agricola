@@ -95,7 +95,7 @@
                   (assoc-in [:players 0 :improvements] #{:clay-oven}) sow-space)
         pending (g/command state 0 {:type :action :space :sow-bake :bake-grain 1})
         done (resolve! pending {:skip? true})]
-    (is (= 7 (a/amount (g/p done 0) :food)))
+    (is (= 8 (a/amount (g/p done 0) :food)))
     (is (= 1 (get-in done [:players 0 :remaining])))))
 
 (deftest garden-hoe-requires-real-unconditional-vegetable-sowing

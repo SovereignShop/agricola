@@ -1,5 +1,5 @@
 (ns eurozone.store
-  (:require [agricola.engine :as agricola] [agricola.draw :as draw] [agricola.card-game :as card-game] [agricola.card-rules :as cards] [eurozone.model :as model]
+  (:require [agricola.engine :as agricola] [agricola.house-rules :as house] [agricola.draw :as draw] [agricola.card-game :as card-game] [agricola.card-rules :as cards] [eurozone.model :as model]
             [agricola.recording :as recording] [eurozone.table-flow :as flow]
             #?(:clj [agricola.simulation :as simulation])
             #?(:clj [clojure.edn :as edn] :cljs [cljs.reader :as edn]) #?(:clj [clojure.java.io :as io]) [clojure.string :as str]
@@ -39,12 +39,13 @@
           :implemented (count implemented) :total (count all)})))
 (def card-packs (filterv #(pos? (:implemented %)) card-pack-coverage))
 (defn valid-setup [settings]
-  (let [{:keys [mode extra excluded-packs] :or {mode :beginner extra 2}} settings]
+  (let [{:keys [mode extra excluded-packs] :or {mode :beginner extra 2}} settings
+        house-rules (house/validate (:house-rules settings))]
     (agricola/require! (#{:beginner :random :draw} mode) "Choose a valid hand setup.")
     (agricola/require! (and (integer? extra) (<= 0 extra 10)) "Choose 0–10 extra cards for the draw.")
     (agricola/require! (and (or (nil? excluded-packs) (sequential? excluded-packs))
                            (every? (set (map :id card-packs)) excluded-packs)) "Choose only supported card packs.")
-    (cond-> {:mode mode :extra extra} (seq excluded-packs) (assoc :excluded-packs (vec (sort (set excluded-packs)))))))
+    (cond-> {:mode mode :extra extra} (seq house-rules) (assoc :house-rules house-rules) (seq excluded-packs) (assoc :excluded-packs (vec (sort (set excluded-packs)))))))
 (defn with-bots [room n]
   (let [humans (vec (remove :bot? (:seats room))) expected (or (:expected-players room) 5)]
     (agricola/require! (and (integer? n) (<= 0 n 4) (< n expected)) "Choose fewer bots than total players, leaving at least one human seat.")
@@ -58,10 +59,11 @@
           {:name name :owner (str "bot:" (:id room) ":" i) :bot? true :ready? true})))))
 (defn hand-pool
   ([n] (hand-pool n []))
-  ([n excluded] (filterv #(and (#{:minor :occupation} (:kind %)) (<= (:min-players %) n) (not ((set excluded) (card-pack %)))) (vals cards/cards))))
+  ([n excluded] (hand-pool n excluded {}))
+  ([n excluded house-rules] (filterv #(and (not (house/banned? house-rules %)) (#{:minor :occupation} (:kind %)) (<= (:min-players %) n) (not ((set excluded) (card-pack %)))) (vals cards/cards))))
 (defn pool-error [n settings]
   (when (not= :beginner (:mode settings))
-    (let [pool (hand-pool n (:excluded-packs settings)) counts (frequencies (map :kind pool))
+    (let [pool (hand-pool n (:excluded-packs settings) (:house-rules settings)) counts (frequencies (map :kind pool))
           needed (* 7 n) total (* n (+ 14 (if (= :draw (:mode settings)) (:extra settings 2) 0)))]
       (cond
         (< (get counts :occupation 0) needed) (str "Include more packs: " needed " occupations are needed; " (get counts :occupation 0) " are available.")
@@ -69,10 +71,11 @@
         (< (count pool) total) (str "Include more packs or reduce extra cards: the draw needs " total " cards; " (count pool) " are available.")))))
 (defn make-draw
   ([n extra] (make-draw n extra []))
-  ([n extra excluded]
-   (let [settings {:mode :draw :extra extra :excluded-packs excluded}
+  ([n extra excluded] (make-draw n extra excluded {}))
+  ([n extra excluded house-rules]
+   (let [settings {:mode :draw :extra extra :excluded-packs excluded :house-rules house-rules}
          _ (agricola/require! (nil? (pool-error n settings)) (pool-error n settings))
-         pool (hand-pool n excluded)
+         pool (hand-pool n excluded house-rules)
          by-type (into {} (for [kind draw/kinds] [kind (vec (shuffle (filter #(= kind (:kind %)) pool)))]))
          required (mapcat #(take (* 7 n) (by-type %)) draw/kinds)
          remaining (shuffle (mapcat #(drop (* 7 n) (by-type %)) draw/kinds))
@@ -80,11 +83,12 @@
      (draw/new-draw n extra supply))))
 (defn deal-hands
   ([state n] (deal-hands state n []))
-  ([state n excluded]
-   (let [settings {:mode :random :excluded-packs excluded}
+  ([state n excluded] (deal-hands state n excluded {}))
+  ([state n excluded house-rules]
+   (let [settings {:mode :random :excluded-packs excluded :house-rules house-rules}
          _ (agricola/require! (nil? (pool-error n settings)) (pool-error n settings))
          by-kind (into {} (for [kind draw/kinds]
-                          [kind (vec (shuffle (filter #(= kind (:kind %)) (hand-pool n excluded))))]))]
+                          [kind (vec (shuffle (filter #(= kind (:kind %)) (hand-pool n excluded house-rules))))]))]
      (update state :players
              (fn [players]
                (mapv (fn [p]
@@ -95,13 +99,13 @@
 (defn start-state [names settings]
   (let [settings (valid-setup settings) n (count names)
         _ (agricola/require! (nil? (pool-error n settings)) (pool-error n settings))
-        excluded (:excluded-packs settings)
-        state (assoc (new-state :agricola names) :card-rng (inc (rand-int 2147483646))
-                     :minor-order (vec (shuffle (map :id (filter #(= :minor (:kind %)) (hand-pool n excluded))))))
+        excluded (:excluded-packs settings) house-rules (:house-rules settings)
+        state (assoc (house/configure-new-game (new-state :agricola names) house-rules) :card-rng (inc (rand-int 2147483646))
+                     :minor-order (vec (shuffle (map :id (filter #(= :minor (:kind %)) (hand-pool n excluded house-rules))))))
         mode (:mode settings)]
     (case mode
-      :draw (assoc state :phase :draw :round 0 :variant :cards :active [] :piles {} :log [] :draw (make-draw n (:extra settings) excluded))
-      :random (card-game/initialize (deal-hands state n excluded))
+      :draw (assoc state :phase :draw :round 0 :variant :cards :active [] :piles {} :log [] :draw (make-draw n (:extra settings) excluded house-rules))
+      :random (card-game/initialize (deal-hands state n excluded house-rules))
       state)))
 (defn finish-draw [state]
   (if (= :complete (get-in state [:draw :status]))
@@ -132,6 +136,12 @@
   (#?(:clj locking :cljs do) (:lock store)
     {:event :snapshot :server-time (flow/now) :datoms (mapv (juxt :e :a :v :tx :added) (d/datoms @(:conn store) :eavt)) :permissions (permissions store token) :private-hands (private-view store token) :private-draws (private-draws store token) :private-plans (private-plans store token)}))
 (def engine-fingerprint (delay #?(:clj (simulation/rules-hash) :cljs (rules-hash))))
+(defn compatible-host-save? [fingerprint]
+  ;; dfe06b8 saves predate optional house rules. Existing states keep their
+  ;; food and printed scoring; only newly created games use the new defaults.
+  ;; Network packets still require an exact match between running clients.
+  (or (= @engine-fingerprint fingerprint)
+      (= "c392563c1a00c063ed0975f223d2dae2adafc1aa84eba60c7d1c22f625a897f3" fingerprint)))
 (defn recording-header [room state partial-start?]
   {:record :header :format 1 :initial state :hash (recording/state-hash state)
    :rules-hash @engine-fingerprint :options (:setup room) :partial-start? partial-start?})

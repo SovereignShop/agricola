@@ -2,7 +2,7 @@
   (:require [reagent.core :as r] [re-frame.core :as rf] [clojure.string :as str]
             [cljs.reader :as reader] [agricola.recording :as recording] [eurozone.browser.table-controls :as controls]
             [eurozone.round-markers :as round-markers]
-            [agricola.engine :as a] [agricola.card-expressions :as expr] [agricola.five-player :as five] [agricola.card-game :as card-game] [eurozone.catalog :as catalog] [eurozone.browser.art :as art] [eurozone.browser.board-layout :as board-layout] [agricola.card-rules :as cards] [eurozone.browser.card-art :as card-art] [eurozone.browser.layout :as layout] [eurozone.browser.tabletop :as tabletop] [eurozone.browser.readability :as readability] [eurozone.browser.comms :as comms] [eurozone.store :as store]))
+            [agricola.engine :as a] [agricola.house-rules :as house] [agricola.card-expressions :as expr] [agricola.five-player :as five] [agricola.card-game :as card-game] [eurozone.catalog :as catalog] [eurozone.browser.art :as art] [eurozone.browser.board-layout :as board-layout] [agricola.card-rules :as cards] [eurozone.browser.card-art :as card-art] [eurozone.browser.layout :as layout] [eurozone.browser.tabletop :as tabletop] [eurozone.browser.readability :as readability] [eurozone.browser.comms :as comms] [eurozone.store :as store]))
 
 (def glyph {:wood "▰" :clay "◆" :reed "≋" :stone "⬟" :grain "♧" :vegetable "●" :food "◉" :sheep "♧" :boar "◆" :cattle "⬢"})
 (def labels {:wood "Wood" :clay "Clay" :reed "Reed" :stone "Stone" :grain "Grain" :vegetable "Vegetables" :food "Food" :sheep "Sheep" :boar "Wild boar" :cattle "Cattle"})
@@ -71,7 +71,7 @@
 (defn farmer-art [] [:img.farm-art {:src "/art/eurozone/farmstead.png" :alt "An illustrated farmstead, orchards and wheat fields"}])
 
 (defn pack-picker [n settings change disabled?]
-  (let [excluded (set (:excluded-packs settings)) pool (store/hand-pool n excluded)
+  (let [excluded (set (:excluded-packs settings)) pool (store/hand-pool n excluded (:house-rules settings))
         counts (frequencies (map :kind pool)) problem (store/pool-error n settings)]
     [:fieldset.pack-picker [:legend "Card packs"]
      (for [{:keys [id label min-players implemented total]} store/card-packs] ^{:key id}
@@ -87,6 +87,18 @@
       (for [{:keys [id label implemented total]} store/card-pack-coverage] ^{:key id}
         [:p.small (str label ": " implemented " / " total)])]
      (when problem [:p.warning {:role "status"} problem])]))
+(defn house-rule-picker [n settings change disabled?]
+  [:fieldset.pack-picker.house-rule-picker [:legend "Optional house rules"]
+   (for [[key label detail] [[:banlist "Use card banlist" (str/join ", " house/banlist)]
+                             [:braggart "Harder Braggart" "Each scoring tier requires one additional improvement."]
+                             [:starting-food "Adjust starting food" "Starting player: −1 food. Last player in turn order: +1 food in 3–4 player games."]]]
+     ^{:key key}
+     [:label.checkbox
+      [:input {:type "checkbox" :aria-label label :checked (true? (get-in settings [:house-rules key]))
+               :disabled disabled?
+               :on-change #(change (assoc-in settings [:house-rules key] (.. % -target -checked)))}]
+      [:span label [:small (str " · " detail)]]])
+   [:p.small.starting-food (house/food-summary n (:house-rules settings))]])
 (defn android-battery-notice []
   (when (or (= "Android" (some-> (.-userAgentData js/navigator) (aget "platform")))
             (re-find #"(?i)Android" (or (.-userAgent js/navigator) "")))
@@ -99,7 +111,7 @@
        [:p.small (str "Setting names vary by phone. This may reduce disconnects, but "
                      (if activity? "Android or Discord can still close the Activity." "Android can still suspend the game."))]])))
 (defn create-form []
-  (let [name (r/atom (or (.getItem js/sessionStorage "eurozone-name") (.getItem js/localStorage "eurozone-name") "")) title (r/atom "") mode (r/atom :local) setup (r/atom :beginner) extra (r/atom 2) count (r/atom 2) bots (r/atom 0) seconds (r/atom 0) excluded (r/atom []) others (r/atom ["Farmer 2" "Farmer 3" "Farmer 4" "Farmer 5"])]
+  (let [name (r/atom (or (.getItem js/sessionStorage "eurozone-name") (.getItem js/localStorage "eurozone-name") "")) title (r/atom "") mode (r/atom :local) setup (r/atom :beginner) extra (r/atom 2) count (r/atom 2) bots (r/atom 0) seconds (r/atom 0) excluded (r/atom []) house-rules (r/atom {}) others (r/atom ["Farmer 2" "Farmer 3" "Farmer 4" "Farmer 5"])]
     (fn []
       (let [ui @(rf/subscribe [:ui])]
         [:section.panel.create-panel
@@ -108,7 +120,7 @@
          [android-battery-notice]
          [:form {:on-submit (fn [e] (.preventDefault e) (.setItem js/sessionStorage "eurozone-name" @name) (.setItem js/localStorage "eurozone-name" @name)
                               (dispatch :send {:event :create :name @name :title (if (str/blank? @title) (str @name "'s farm") @title)
-                                               :mode @mode :expected-players @count :turn-seconds @seconds :bots (if (= @mode :peer) @bots 0) :setup {:mode @setup :extra @extra :excluded-packs @excluded} :names (into [@name] (take (dec @count) @others))}))}
+                                               :mode @mode :expected-players @count :turn-seconds @seconds :bots (if (= @mode :peer) @bots 0) :setup {:mode @setup :extra @extra :excluded-packs @excluded :house-rules @house-rules} :names (into [@name] (take (dec @count) @others))}))}
           [:div.form-row [field "Your name" [input @name #(reset! name %) {:required true :max-length 40 :placeholder "Your name" :auto-complete "nickname"}]]
            [field "Table name" [input @title #(reset! title %) {:max-length 40 :placeholder "Sunday at the farm"}]]]
           [:div.segmented
@@ -135,12 +147,14 @@
             [:div [field "Extra cards per packet (N)" [number-input @extra #(reset! extra %) 10]]
              [:p.small (str "Each player receives " (+ 14 @extra) " mixed cards. Pick one and pass left until you have 7 occupations and 7 minors. Packets with no legal pick pass automatically.")]])
           (when (not= @setup :beginner)
-            [pack-picker @count {:mode @setup :extra @extra :excluded-packs @excluded}
+            [pack-picker @count {:mode @setup :extra @extra :excluded-packs @excluded :house-rules @house-rules}
              #(reset! excluded (:excluded-packs %)) (:busy? ui)])
+          [house-rule-picker @count {:house-rules @house-rules}
+           #(reset! house-rules (:house-rules %)) (:busy? ui)]
           [controls/limit-select @seconds #(reset! seconds %) (:busy? ui)]
           [:p.small (if (= @setup :beginner) "Revised Edition beginner game · 14 rounds and 10 major improvements."
                         (if (= @count 5) "Revised base cards + all 48 five-player occupations · linked action spaces and private hands." "Revised Edition base cards · private hands and card-effect decisions."))]
-          [:button.button.primary {:type "submit" :disabled (or (:busy? ui) (not (:connected? ui)) (some? (store/pool-error @count {:mode @setup :extra @extra :excluded-packs @excluded})))} "Create table →"]]]))))
+          [:button.button.primary {:type "submit" :disabled (or (:busy? ui) (not (:connected? ui)) (some? (store/pool-error @count {:mode @setup :extra @extra :excluded-packs @excluded :house-rules @house-rules})))} "Create table →"]]]))))
 (defn table-list []
   (let [rooms @(rf/subscribe [:games])]
     [:section.tables
@@ -218,19 +232,21 @@
               (when (not= :beginner (get-in room [:setup :mode]))
                 [pack-picker expected (:setup room)
                  #(dispatch :send {:event :configure :expected-players expected :setup %}) (:busy? ui)])
+              [house-rule-picker expected (:setup room)
+               #(dispatch :send {:event :configure :expected-players expected :setup %}) (:busy? ui)]
               [controls/limit-select (get room :turn-seconds 0)
                #(dispatch :send {:event :configure :expected-players expected :setup (:setup room) :turn-seconds %}) (:busy? ui)]
               [:p.small "Settings save automatically. Seated guests need to mark themselves ready again after a change."]])
            (when (and (not= :beginner (get-in room [:setup :mode])) (not (and (:host? permission) (= :online (:mode room)))))
              [pack-picker expected (:setup room) identity true])
+           (when-not (and (:host? permission) (= :online (:mode room)))
+             [house-rule-picker expected (:setup room) identity true])
            [:div.seats (for [[i seat] (map-indexed vector (:seats room))] ^{:key i}
                          [:div.seat [:span.avatar {:style {:background (colors i)}} (subs (:name seat) 0 1)]
                           [:strong (:name seat)] [:span.muted (str (when (some #{i} (:seats permission)) "You · ")
                             (cond (bot-seats i) "Bot · Ready" (and (= :online (:mode room)) (not (online i))) "Offline" (get ready i) "Ready" :else "Not ready"))]])]
            [:p.small (str (count (:seats room)) " / " expected " players · "
                           (case (get-in room [:setup :mode]) :draw (str "Draw: 14 + " (get-in room [:setup :extra]) " cards, pass left") :random "Random 7 + 7 hand" "Beginner game"))]
-           (when (> expected 1)
-             [:p.small.starting-food "Starting food: the randomly chosen starting player gets 2 food; everyone else gets 3."])
            (when (and (= :online (:mode room)) (not (.-EUROZONE_ACTIVITY js/window)))
              [:div.invite
               [:span.small "INVITE YOUR FRIENDS"]
@@ -508,6 +524,7 @@
        [:div
         (if (= :major (:kind card)) [improvement-effects card]
             [:div [:p (:text card)]
+             [tabletop/house-card-note (get-in @(rf/subscribe [:game]) [:state :house-rules]) card]
              (when (seq (:cost-text card)) [:p (str "Cost: " (:cost-text card))])
              (when (seq (:prerequisites card)) [:p (str "Requires: " (:prerequisites card))])])
         [:div.dialog-actions
@@ -1435,7 +1452,8 @@
        [improvement-effects card]
        [:span.small (if ((:available-improvements g) id) "Available" (str "Built by " (:name (first (filter #((:improvements %) id) (:players g))))))]])]])
 (defn rules-panel [g]
-  [:section.panel.rules-panel [:div.eyebrow "A LITTLE GUIDANCE"] [:h2 "Life on the farm"]
+  [:section.panel.rules-panel [:h2 "Rules"]
+   [house-rule-picker (count (:players g)) {:house-rules (:house-rules g)} identity true]
    [:div.rules-grid
     [:div [:h3 "Place your people"] [:p "Starting with the first player, take turns placing one family member on an empty action. Use at least one offered action. Newborns work from the next round. The first player stays the same until someone visits Meeting Place."]]
     [:div [:h3 "Build a home"] [:p "Rooms cost 5 of your house material and 2 reed each. Rooms must connect. Renovation costs 1 reed plus 1 clay or stone per room, upgrading wood to clay, then stone. Up to five family members can join your farm."]]

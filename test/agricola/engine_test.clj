@@ -18,7 +18,7 @@
            (get-in (a/score beanfield) [:breakdown :unused])))))
 (deftest setup-and-turns
   (let [g (game)]
-    (is (= [2 3] (mapv #(a/amount % :food) (:players g))))
+    (is (= [3 3] (mapv #(a/amount % :food) (:players g))))
     (is (= 3 (get-in g [:piles :wood :wood])))
     (is (= 1 (get-in g [:piles :sheep :sheep])))
     (is (throws? #(a/command g 1 {:type :action :space :wood})))
@@ -98,21 +98,21 @@
     (is ((:available-improvements g) :fireplace-2))
     (is (not ((:available-improvements g) :hearth-4)))
     (is (= 28 (a/amount p :clay)))
-    (is (= 109 (a/amount (a/convert-food (a/gain p {:sheep 2 :boar 1}) {:sheep 2 :boar 1}) :food)))
-    (is (= 108 (a/amount (a/bake p 2) :food)))
+    (is (= 110 (a/amount (a/convert-food (a/gain p {:sheep 2 :boar 1}) {:sheep 2 :boar 1}) :food)))
+    (is (= 109 (a/amount (a/bake p 2) :food)))
     (is (throws? #(a/convert-food (first (:players (game))) {:sheep 1})))
     (is (throws? #(a/convert-food p {:grain -1})))
     (is (throws? #(a/build-improvement g 1 {:improvement :hearth-4}))))
   (let [g (a/build-improvement (rich (game)) 0 {:improvement :clay-oven :bake-grain 1}) p (get-in g [:players 0])]
-    (is (= 107 (a/amount p :food)))
+    (is (= 108 (a/amount p :food)))
     (is (throws? #(a/bake p 2))))
   (let [g (a/build-improvement (rich (game)) 0 {:improvement :well})]
     (is (= #{2 3 4 5 6} (get-in g [:players 0 :well-rounds])))
-    (is (= 103 (get-in (a/begin-round g) [:players 0 :goods :food])))))
+    (is (= 104 (get-in (a/begin-round g) [:players 0 :goods :food])))))
 (deftest harvest-order-and-begging
   (let [g (assoc (game) :round 4 :phase :feeding :fed #{} :bred #{})
         g (a/command g 0 {:type :feed})]
-    (is (= 2 (get-in g [:players 0 :begging])))
+    (is (= 1 (get-in g [:players 0 :begging])))
     (is (= :feeding (:phase g)))
     (let [g (a/command g 1 {:type :feed})]
       (is (= :breeding (:phase g))) (is (= 0 (:turn g)))
@@ -178,6 +178,6 @@
         g' (take-action g :renovate {:improvement :clay-oven :bake-grain 1})]
     (is (= :clay (get-in g' [:players 0 :house])))
     (is (= 25 (get-in g' [:players 0 :goods :clay])))
-    (is (= 107 (get-in g' [:players 0 :goods :food])))
+    (is (= 108 (get-in g' [:players 0 :goods :food])))
     (is (throws? #(take-action (game) :improvement {:improvement :fireplace-2})))
     (is (= :wood (get-in g [:players 0 :house])))))

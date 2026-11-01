@@ -1,7 +1,7 @@
 (ns agricola.card-game
   "Card-game orchestration around the shared farm rules. Effects and decisions
    are data, so interrupted choices survive saves and reconnects."
-  (:require [agricola.engine :as a] [agricola.card-rules :as c] [agricola.five-player :as five] [agricola.card-expressions :as expr] [agricola.card-reactive :as reactive] [agricola.card-random :as random] [clojure.set :as set]))
+  (:require [agricola.engine :as a] [agricola.house-rules :as house] [agricola.card-rules :as c] [agricola.five-player :as five] [agricola.card-expressions :as expr] [agricola.card-reactive :as reactive] [agricola.card-random :as random] [clojure.set :as set]))
 (declare possible-effect? drain run-effect play-card begin-round advance finish-game take-action take-action-complete staged-sowing? action-events take-action-with-sowing extra-action-spaces execute-extra-action finish-action-context card-spaces card-action record-newborn adopt-newborn freshman-available? resume-freshman-source resume-serf with-housing plow-options source-action-goods)
 (def ^:dynamic *effect-observer*
   "Optional diagnostic sink. It observes committed effects, never legality probes."
@@ -269,6 +269,7 @@
   [g pid cid occupation-cost options]
   (let [card (c/card cid) player (p g pid)]
     (a/require! card "That card has no native rule definition.")
+    (a/require! (not (house/banned? (:house-rules g) card)) "This card is banned by this table’s house rules.")
     (a/require! (<= (:min-players card) (count (:players g))) "This card requires more players.")
     (when (= :occupation (:kind card))
       (a/require! (not (c/has? player :b176)) "Village Idiot must remain your only occupation.")
@@ -1637,7 +1638,7 @@
                           [(step :check-all) (step :preparation-reconsider)]))))
 (defn initialize [g]
   (let [used (set (mapcat #(concat (get-in % [:hand :minor]) (:minors %)) (:players g)))
-        reserve (vec (remove used (or (:minor-order g) (sort (map :id (filter #(= :minor (:kind %)) (vals c/cards)))))))]
+        reserve (vec (remove #(or (used %) (house/banned? (:house-rules g) (c/card %))) (or (:minor-order g) (sort (map :id (filter #(= :minor (:kind %)) (vals c/cards)))))))]
   (-> (assoc g :minor-deck reserve :minor-deck-count (count reserve) :major-builds {})
       (assoc :card-rng (or (:card-rng g) (random/seed g)))
       (assoc :variant :cards :defer-advance? true :effect-queue [] :decision-id 0 :round 0
@@ -1645,7 +1646,8 @@
       (update :players #(mapv (fn [p] (merge {:occupations [] :minors [] :card-state {} :schedule {} :card-fields {} :bonus-points 0} p)) %))
       begin-round drain)))
 (defn card-bonus [g pid cid]
-  (let [p (p g pid) {:keys [type thresholds values resource divisor]} (:score (c/card cid))]
+  (let [p (p g pid) {:keys [type thresholds values resource divisor]} (:score (c/card cid))
+        thresholds (if (house/braggart? (:house-rules g) (c/card cid)) (mapv inc thresholds) thresholds)]
     (case type
       :basin-maker (let [n (get-in p [:card-state cid :stored-goods :wood] 0)] (- n (count (filter #(<= % n) [1 4 7 10]))))
       :tanner (+ (count (filter #(<= % (get-in p [:card-state cid :stored-goods :boar] 0)) [2 4 6]))

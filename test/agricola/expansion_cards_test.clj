@@ -73,7 +73,7 @@
       (doseq [resource a/resources]
         (is (= (get expected resource 0) (delta state after resource)) (str code " " resource)))))
   (let [state (assoc (own (fresh) 0 :a051) :turn 1) after (g/command state 1 {:type :action :space :fishing})]
-    (is (= 2 (a/amount (g/p after 0) :food))) "Other players' actions do not trigger owner-only cards"))
+    (is (= 3 (a/amount (g/p after 0) :food))) "Other players' actions do not trigger owner-only cards"))
 
 (deftest action-context-records-prior-animals-and-actual-fields
   (let [base (-> (fresh) (assoc :active (conj (:active (fresh)) :sheep)) (assoc-in [:piles :sheep] {:sheep 1}))

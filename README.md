@@ -23,6 +23,22 @@ table, choose the expected player count and hand setup, then share its URL.
 The host can start when every expected seat is filled, ready, and connected.
 Choose one expected player for solo play. Guests can leave before the start.
 
+Optional house rules are separate switches in table setup (including Discord):
+
+- **Use card banlist:** Ratcatcher, Late Sleeper, Remodeling, Stone Crane,
+  Wooden Hut Extension, Taster, Reed Hut, Lover, Wet Nurse, and Guest Worker.
+  The ban applies to all named printings, including future deck implementations,
+  and excludes cards from the deal, draw, and replacement-card supply.
+- **Harder Braggart:** add one improvement to every printed scoring threshold,
+  preserving the points at each tier, for both Original and Revised Braggart.
+- **Adjust starting food:** the first player gets 2 instead of 3 food. In games
+  with three or four players, the last player in initial turn order gets 4.
+
+All switches default to off; multiplayer games then give everyone 3 food.
+Solo starts with 0 food either way. Rules are fixed when the game starts and
+persist in saves, peer reconnects, and recordings. View them under **Table menu →
+Rules**. Existing games retain their original food and scoring.
+
 For testing on one machine, use **Open another player in a new tab** in the lobby.
 That link creates an independent seat in session storage; reloading keeps it.
 Ordinary tabs return to the browser’s default seat. Remote players open the normal

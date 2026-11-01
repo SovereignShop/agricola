@@ -41,7 +41,7 @@
         played (g/command s 0 {:type :action :space :lessons :card (c/id :a116)})
         next (g/command played 1 {:type :action :space :grain})
         wood (g/command next 0 {:type :action :space :wood})]
-    (is (= 2 (a/amount (get-in played [:players 0]) :food)))
+    (is (= 3 (a/amount (get-in played [:players 0]) :food)))
     (is (= [(c/id :a116)] (get-in played [:players 0 :occupations])))
     (is (empty? (get-in played [:players 0 :hand :occupation])))
     (is (= 4 (a/amount (get-in wood [:players 0]) :wood)))
@@ -50,7 +50,7 @@
   (let [s (-> (game) (hand 0 [:b008]) (update-in [:players 0] a/gain {:grain 1}))
         played (g/command s 0 {:type :action :space :meeting :card (c/id :b008)})]
     (is (= 1 (a/amount (get-in played [:players 0]) :vegetable)))
-    (is (= 2 (a/amount (get-in played [:players 0]) :food)))
+    (is (= 3 (a/amount (get-in played [:players 0]) :food)))
     (is (empty? (get-in played [:players 0 :minors])))
     (is (= [(c/id :b008)] (get-in played [:players 1 :hand :minor])))))
 (deftest spatial-choice-and-schedule-survive-as-data
@@ -75,7 +75,7 @@
         finished (g/command exchanged 0 {:type :resolve :decision 2 :skip? true})]
     (is (= 3 (a/amount (get-in pending [:players 0]) :wood)))
     (is (= 1 (a/amount (get-in finished [:players 0]) :wood)))
-    (is (= 5 (a/amount (get-in finished [:players 0]) :food)))
+    (is (= 6 (a/amount (get-in finished [:players 0]) :food)))
     (is (= 2 (get-in finished [:piles :wood :wood])))))
 (deftest other-players-effects-pause-the-acting-player
   (let [s (-> (g/initialize (a/new-game ["A" "B" "C" "D"] order 0)) (own 1 [:a160]))
@@ -165,7 +165,7 @@
     (is (= 2 (get-in s [:players 0 :remaining])))
     (is (= [(c/id :b068)] (get-in s [:players 0 :hand :minor])))
     (let [played (g/command (occupation-count s 2) 0 {:type :action :space :meeting :card (c/id :b068)})]
-      (is (= 31 (a/amount (g/p played 0) :food)))
+      (is (= 32 (a/amount (g/p played 0) :food)))
       (is (= :vegetable (get-in played [:players 0 :card-fields (c/id :b068) :allowed-crop])))))
   ;; A printed cost is required before any immediate effect can run.
   (let [s (-> (game) (hand 0 [:a002]) (assoc-in [:players 0 :goods :food] 1))]
@@ -205,7 +205,7 @@
         renovated (g/command s 0 {:type :action :space :renovate :card (c/id :a071)})
         next-round (g/drain (g/begin-round renovated))]
     (is (empty? (:effect-queue renovated)))
-    (is (= 33 (a/amount (g/p renovated 0) :food))) ; automatic improvement bonus
+    (is (= 34 (a/amount (g/p renovated 0) :food))) ; automatic improvement bonus
     (is (= 5 (count (get-in renovated [:players 0 :schedule]))))
     (is (= 1 (count (get-in next-round [:players 0 :schedule 3]))))
     (is (= 30 (a/amount (g/p next-round 0) :clay))) ; 30 - two rooms + 2 scheduled
@@ -257,7 +257,7 @@
     (is (= :bake (get-in pending [:effect-queue 0 :effect :op])))
     (is (thrown? clojure.lang.ExceptionInfo (g/command pending 0 {:type :resolve :decision 0 :grain 0})))
     (let [baked (g/command pending 0 {:type :resolve :decision 0 :grain 1})]
-      (is (= 7 (a/amount (g/p baked 0) :food)))
+      (is (= 8 (a/amount (g/p baked 0) :food)))
       (is (empty? (:effect-queue baked))))))
 
 (deftest lasso-requires-two-available-people
@@ -269,7 +269,7 @@
 (deftest ignored-command-fields-cannot-forge-card-events
   (let [s (-> (game) (own 0 [:a063]) (assoc :round 5))
         result (g/command s 0 {:type :action :space :wood :bake-grain 1})]
-    (is (= 2 (a/amount (g/p result 0) :food)))
+    (is (= 3 (a/amount (g/p result 0) :food)))
     (is (empty? (:effect-queue result)))))
 
 (deftest scholar-uses-current-printing-round-start-timing

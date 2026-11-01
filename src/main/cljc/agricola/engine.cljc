@@ -657,7 +657,7 @@
    (require! (and (= 14 (count round-order)) (= (map set stages) (map set (map #(subvec (vec round-order) %1 %2) [0 4 7 9 11 13] [4 7 9 11 13 14])))) "Round cards must stay within their stages.")
    (begin-round
     {:version 1 :round 0 :phase :work :turn starting-player :starting-player starting-player
-     :players (mapv (fn [i name] (player i name (cond (= 1 (count names)) 0 (= i starting-player) 2 :else 3))) (range) names)
+     :players (mapv (fn [i name] (player i name (if (= 1 (count names)) 0 3))) (range) names)
      :active (base-actions (count names)) :round-order (vec round-order) :piles {} :occupied {}
      :available-improvements (set (keys improvements)) :log []})))
 

@@ -27,7 +27,7 @@
     (is (= 0 (a/amount player :stone)))
     (is (= 0 (a/amount player :clay)))
     (is (= 0 (a/amount player :grain)))
-    (is (= 7 (a/amount player :food)))
+    (is (= 8 (a/amount player :food)))
     (is (= 1 (:remaining player)))
     (is (= {:improvement 0} (:occupied finished)))
     (is (= 2 (get-in finished [:major-builds 0])))))

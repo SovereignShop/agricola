@@ -2,7 +2,7 @@
   "A single, continuous table. Arrangements are private presentation preferences;
   the server remains the only authority for moves, hands and card decisions."
   (:require [reagent.core :as r] [re-frame.core :as rf] [cljs.reader :as reader]
-            [clojure.string :as str] [agricola.engine :as a]
+            [clojure.string :as str] [agricola.engine :as a] [agricola.house-rules :as house]
             [agricola.card-game :as game] [agricola.card-rules :as cards]
             [eurozone.browser.art :as art] [eurozone.browser.card-art :as card-art]
             [eurozone.browser.readability :as readability]
@@ -73,6 +73,11 @@
   (if-let [card (a/improvements cid)]
     (assoc card :id cid :kind :major)
     (assoc (cards/card cid) :id cid :image (card-art/url cid))))
+(defn house-card-note [options card]
+  (when (house/braggart? options card)
+    [:p.house-rule-note {:role "note"}
+     (str "House rule: " (str/join "/" (map inc (get-in card [:score :thresholds])))
+          " improvements for " (str/join "/" (get-in card [:score :values])) " bonus points.")]))
 (defn card-face [cid hidden? p]
   (let [{:keys [name image text kind]} (when-not hidden? (card-info cid))
         used? (get-in p [:card-state cid :face-down?])]
@@ -495,7 +500,7 @@
                        (when deck-path [button "Back to spread" #(open-deck! deck-path) {:class "tt-back-to-spread"}])
                        [:h3 (:name card)]
                        (if (= :major (:kind card)) [(:improvement-effects renderers) card]
-                           [:div [:p (:text card)] (when (seq (:cost-text card)) [:p (str "Cost: " (:cost-text card))])
+                           [:div [:p (:text card)] [house-card-note (:house-rules g) card] (when (seq (:cost-text card)) [:p (str "Cost: " (:cost-text card))])
                             (when (seq (:prerequisites card)) [:p (str "Requires: " (:prerequisites card))])])
                        [card-markers cid p]]]))
              :cloth [:div.tt-material-picker

@@ -130,7 +130,7 @@
 
 (deftest spatial-effects-and-original-construction-passives
   (let [pending (play (fresh) 11) done (resolve! (reload pending) {:cell 0})]
-    (is (= 1 (get-in pending [:players 0 :goods :food])))
+    (is (= 2 (get-in pending [:players 0 :goods :food])))
     (is (= :field (get-in done [:players 0 :farm 0 :type])))
     (is (= [(e 11)] (get-in done [:players 1 :hand :minor]))))
   (let [pending (play (assoc-in (fresh) [:players 0 :goods :wood] 1) 52) done (resolve! pending {:cell 0})]

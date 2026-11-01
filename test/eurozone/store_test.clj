@@ -11,7 +11,7 @@
           order (vec (mapcat identity a/stages))
           initial (with-redefs [s/new-state (fn [_ names] (a/new-game names order starter))]
                     (s/start-state names {:mode mode :extra 2}))
-          expected (mapv #(if (= starter %) 2 3) (range n))
+          expected (vec (repeat n 3))
           finished (if (= mode :draw)
                      (s/finish-draw
                       (loop [state initial]

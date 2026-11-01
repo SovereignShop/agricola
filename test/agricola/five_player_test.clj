@@ -13,10 +13,10 @@
 (defn illegal? [f] (try (f) false (catch clojure.lang.ExceptionInfo _ true)))
 (deftest five-player-board-and-linked-spaces
   (let [s (game) river (move s :riverbank) market (move s :market)]
-    (is (= [2 3 3 3 3] (mapv #(a/amount % :food) (:players s))))
+    (is (= [3 3 3 3 3] (mapv #(a/amount % :food) (:players s))))
     (is (= 3 (get-in s [:piles :hollow :clay])))
     (is (= {:wood 1 :reed 1} (select-keys (get-in river [:players 0 :goods]) [:wood :reed])))
-    (is (= {:wood 1 :reed 1 :stone 1 :food 2} (select-keys (get-in market [:players 0 :goods]) [:wood :reed :stone :food])))
+    (is (= {:wood 1 :reed 1 :stone 1 :food 3} (select-keys (get-in market [:players 0 :goods]) [:wood :reed :stone :food])))
     (is (illegal? #(move s :modest-growth)))
     (doseq [[space linked] [[:copse :lessons-copse] [:traveling :house-building]]]
       (let [next (move s space)]
@@ -27,7 +27,7 @@
           next (move s :lessons-copse {:card (c/id :a169)})]
       (is (a/blocked? next :copse))
       (is (= 1 (get-in next [:piles :copse :wood])))
-      (is (= 20 (a/amount (g/p next 0) :food))) ; 2 initial +20 -2
+      (is (= 21 (a/amount (g/p next 0) :food))) ; 3 initial +20 -2
       (is (= 2 (get-in (a/begin-round next) [:piles :copse :wood]))))
     (let [next (move (-> (rich s) (assoc :round 5) (update-in [:players 0] a/build-rooms [0])) :modest-growth)]
       (is (= 3 (get-in next [:players 0 :family])))
@@ -66,7 +66,7 @@
   (let [s (own (game) 0 :b173)
         banked (effect s 0 :b173 :sweeper {:space :copse} {})
         spent (g/command banked 0 {:type :ability :card (c/id :b173)})]
-    (is (= 3 (a/amount (g/p spent 0) :food)))
+    (is (= 4 (a/amount (g/p spent 0) :food)))
     (is (= 1 (count (:occupations (g/p spent 0)))))
     (is (empty? (g/trigger-tasks spent (g/event :use-space 0 {:space :copse}))))
     (is (illegal? #(g/command spent 0 {:type :ability :card (c/id :b173)})))))
@@ -104,7 +104,7 @@
     (is (= 0 (get-in next [:occupied :sheep])))
     (is (= 0 (get-in next [:players 0 :remaining])))
     (is (= 1 (:turn next)))
-    (is (= 21 (a/amount (g/p next 0) :food)))))
+    (is (= 22 (a/amount (g/p next 0) :food)))))
 (deftest tag-along-uses-person-without-skipping-the-regular-next-player
   (let [s (own (game) 3 :b178)
         pending (move s :market)
@@ -129,7 +129,7 @@
       (is (nil? (get-in next [:occupied :vegetable])))))
   (let [s (-> (rich (game)) (own 2 :d170))
         next (g/command s 0 {:type :card-action :card-space (c/id :d170) :fences (a/edges 0)})]
-    (is (= 21 (a/amount (g/p next 0) :food)))
+    (is (= 22 (a/amount (g/p next 0) :food)))
     (is (= 24 (a/amount (g/p next 2) :food)))
     (is (= 1 (a/amount (g/p next 0) :sheep)))))
 (deftest offsite-room-livestock-capacity-and-minor-reserve
@@ -143,7 +143,7 @@
         next (resolve-head s {:action :draw})]
     (is (= 2 (count (get-in next [:players 0 :hand :minor]))))
     (is (= (- (:minor-deck-count s) 2) (:minor-deck-count next)))
-    (is (= 1 (a/amount (g/p next 0) :food)))))
+    (is (= 2 (a/amount (g/p next 0) :food)))))
 
 (deftest five-player-automatic-effect-thresholds
   (doseq [[code op context expected setup]
@@ -163,7 +163,7 @@
   (let [s (-> (game) (own 0 :a169 :a176) (assoc-in [:players 0 :goods :wood] 5))]
     (is (= 15 (a/amount (g/p (effect s 0 :a176 :wheelmaker {} {}) 0) :wood))))
   (let [s (assoc-in (game) [:piles :traveling :food] 4) after (effect s 0 :c173 :top-outer {} {})]
-    (is (= 6 (a/amount (g/p after 0) :food)))
+    (is (= 7 (a/amount (g/p after 0) :food)))
     (is (zero? (get-in after [:piles :traveling :food]))))
   (let [s (game) one (effect s 0 :d176 :woodshacker {:space :wood} {})
         two (effect one 0 :d176 :woodshacker {:space :grove} {})
@@ -174,7 +174,7 @@
   (let [s (-> (game) (own 0 :d174)) pending (move s :clay) after (resolve-head pending {})]
     (is (= :exchange (get-in pending [:effect-queue 0 :effect :op])))
     (is (= 1 (a/amount (g/p after 0) :vegetable)))
-    (is (= 1 (a/amount (g/p after 0) :food))))
+    (is (= 2 (a/amount (g/p after 0) :food))))
   (let [s (-> (rich (game)) (own 0 :c169)) pending (move s :clay) after (resolve-head pending {})]
     (is (= :fast-mason (get-in pending [:effect-queue 0 :effect :op])))
     (is (= :clay (:house (g/p after 0))))
@@ -195,4 +195,4 @@
     (is (= 4 (count (:fences (g/p after 0)))))
     (is (= 1 (a/amount (g/p after 0) :cattle))))
   (let [s (-> (game) (own 0 :a172) (assoc :occupied {:fishing 1 :traveling 2}))]
-    (is (= 4 (a/amount (g/p (effect s 0 :a172 :boat-painter {} {:resource :food}) 0) :food)))))
+    (is (= 5 (a/amount (g/p (effect s 0 :a172 :boat-painter {} {:resource :food}) 0) :food)))))
