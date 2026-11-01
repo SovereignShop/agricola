@@ -330,7 +330,9 @@
               :free-room (map #(hash-map :rooms [%]) (range 15))
               :exchange-options
               (for [[index option] (map-indexed vector (get-in (c/card cid) [:ability :options]))
-                    :let [maximum (apply min (map (fn [[resource n]] (quot (a/amount p resource) n)) (:cost option)))]
+                    :let [affordable (apply min (map (fn [[resource n]] (quot (a/amount p resource) n)) (:cost option)))
+                          maximum (min affordable (or (g/exchange-remaining state p cid) affordable))]
+                    :when (pos? maximum)
                     times (distinct (filter pos? [1 maximum]))]
                 {:option index :times times})
               :porcelain (map #(hash-map :amount %) [2 3 4])

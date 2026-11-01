@@ -5,7 +5,7 @@ from browser_smoke import main
 
 
 def check(base, fixture_ids):
-    gallery, pond, gate = fixture_ids.split(',')
+    gallery, pond, gate, effort, politician = fixture_ids.split(',')
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=True, executable_path=os.environ['EUROZONE_BROWSER'])
         context = browser.new_context(viewport={'width':1680, 'height':1050}, has_touch=True)
@@ -21,7 +21,7 @@ def check(base, fixture_ids):
             expect(page.get_by_role('checkbox', name='Include '+label, exact=True)).to_be_checked()
         page.goto(base+'/#'+gallery)
         prints=set()
-        for deck, label, count in [('hand-occupation','Hand · occupations',7),('hand-minor','Hand · minors',25)]:
+        for deck, label, count in [('hand-occupation','Hand · occupations',18),('hand-minor','Hand · minors',38)]:
             page.locator('[data-owner="0"][data-deck="'+deck+'"]').get_by_role('button',name='Open '+label+' spread',exact=True).click()
             images=page.get_by_role('dialog').locator('img[src*="/cards/original-"]')
             expect(images).to_have_count(count)
@@ -29,7 +29,7 @@ def check(base, fixture_ids):
                 assert page.request.get(base+src).ok, src
                 prints.add(src)
             page.get_by_role('button',name='Close dialog',exact=True).click()
-        assert len(prints)==32
+        assert len(prints)==56
         page.set_viewport_size({'width':390,'height':844})
         page.locator('.action-card[data-action="meeting"]').click()
         page.get_by_role('group',name='Playable minor improvements',exact=True).get_by_role('button',name='Drained Pond',exact=True).click()
@@ -78,8 +78,31 @@ def check(base, fixture_ids):
         expect(page.get_by_role('dialog',name='Resolve Open Gate',exact=True)).to_have_count(0)
         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
         assert not errors, errors
+        page.set_viewport_size({'width':1440,'height':1000})
+        page.goto(base+'/#'+effort)
+        expect(page.get_by_role('dialog',name='Resolve Extra Effort',exact=True)).to_be_visible()
+        page.reload()
+        page.get_by_role('group',name='Playable major improvements',exact=True).get_by_role('button',name='Fireplace',exact=True).first.click()
+        page.get_by_role('dialog',name='Fireplace',exact=True).get_by_role('button',name='Select card',exact=True).click()
+        page.get_by_role('button',name='Resolve effect →',exact=True).click()
+        expect(page.get_by_role('dialog')).to_have_count(0)
+        expect(page.locator('[data-owner="0"][data-deck="improvements"]').get_by_role('button',name='Fireplace',exact=True)).to_have_count(1)
+        page.goto(base+'/#'+politician)
+        page.locator('[data-owner="0"][data-deck="occupations"]').get_by_role('button',name='Open Played · occupations spread',exact=True).click()
+        page.get_by_role('dialog').get_by_role('button',name='Politician',exact=True).click()
+        dialog=page.get_by_role('dialog',name='Politician',exact=True)
+        expect(dialog.get_by_text('2 exchanges remaining this round.',exact=True)).to_be_visible()
+        dialog.get_by_label('Times',exact=True).fill('2')
+        dialog.get_by_role('button',name='Use card ability',exact=True).click()
+        expect(dialog.get_by_text('0 exchanges remaining this round.',exact=True)).to_be_visible()
+        expect(dialog.get_by_role('button',name='Use card ability',exact=True)).to_be_disabled()
+        page.reload()
+        page.locator('[data-owner="0"][data-deck="occupations"]').get_by_role('button',name='Open Played · occupations spread',exact=True).click()
+        page.get_by_role('dialog').get_by_role('button',name='Politician',exact=True).click()
+        expect(page.get_by_role('dialog').get_by_text('0 exchanges remaining this round.',exact=True)).to_be_visible()
+        assert not errors, errors
+        print('G/WM/FR: 56 English images, deck setup, mobile selection, field markers, saved field/point/major decisions and exchange limits passed')
         browser.close()
-        print('G/WM/FR: 32 English images, deck setup, mobile selection, field markers, saved field/point decisions passed')
 
 
 if __name__ == '__main__':

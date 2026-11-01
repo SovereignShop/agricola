@@ -1,4 +1,4 @@
-;; Original World Championship (WM / G2), first native batch.
+;; Original World Championship (WM / G2), native batches.
 {:catalog/original-expansion-wm-3-apple-picker
  {:triggers [{:event :use-space :spaces #{:grain :vegetable} :effect {:op :gain :goods {:wood 1 :food 1}}}]}
  :catalog/original-expansion-wm-67-buried-treasure
@@ -22,4 +22,30 @@
  {:passive {:action-plow {:extra-fields 3}} :play [{:op :set-uses :uses 1}]}
  :catalog/original-expansion-wm-111-undisturbed-pond
  {:requires [:= [:occupations] 0]
-  :play [{:op :schedule :offset-count [:- [:round] 1] :goods {:food 1}}]}}
+  :play [{:op :schedule :offset-count [:- [:round] 1] :goods {:food 1}}]}
+ :catalog/original-expansion-wm-26-hedge-master
+ {:play [{:op :build-fences :optional? true}]
+  :triggers [{:event :fence :effect {:op :points :amount 1}}]}
+ :catalog/original-expansion-wm-29-hill-farmer
+ {:triggers [{:event :fence :effect {:op :gain :goods {:food [:if [:= [:rooms] 2] 2 [:if [:= [:rooms] 3] 1 0]]}}}
+             {:event :plow :effect {:op :gain :goods {:food [:if [:= [:rooms] 2] 2 [:if [:= [:rooms] 3] 1 0]]}}}]}
+ :catalog/original-expansion-wm-38-minimalist
+ {:score {:type :expression :value [:if [:= [:improvements] 0] 9 [:if [:= [:improvements] 1] 6 [:if [:= [:improvements] 2] 4 [:if [:= [:improvements] 3] 2 0]]]]}}
+ :catalog/original-expansion-wm-41-politician
+ {:play [{:op :gain :goods {:stone 1}}]
+  :ability {:op :exchange-options :limit-per-round 2
+            :options [{:label "1 reed → 1 stone" :cost {:reed 1} :goods {:stone 1}}
+                      {:label "1 stone → 1 reed" :cost {:stone 1} :goods {:reed 1}}]}}
+ :catalog/original-expansion-wm-51-tavern-keeper
+ {:triggers [{:event :before-field-phase
+              :condition [:test [:and [:not [:= [:context :manure?] true]] [:> [:rooms] [:family]]]]
+              :effect {:op :gain :goods {:food 1 :grain 1}}}]
+  :score {:type :expression :value [:max 0 [:- [:rooms] [:family]]]}}
+ :catalog/original-expansion-wm-92-keys
+ {:passive {:share-action-spaces #{:build}}}
+ :catalog/original-expansion-wm-93-kindling
+ {:passive {:major-as-minor #{:fireplace-2 :fireplace-3 :hearth-4 :hearth-5}
+            :specific-improvement-discounts {:fireplace-2 {:clay 1} :fireplace-3 {:clay 1} :hearth-4 {:clay 1} :hearth-5 {:clay 1}}}}
+ :catalog/original-expansion-wm-101-prize-winning-sheep
+ {:play [{:op :choose-good :choices [:wood :clay :reed :stone]}]}
+}

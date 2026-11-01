@@ -1307,6 +1307,7 @@
 (defn card-ability [g p cid & [expanded?]]
   (r/with-let [selection (r/atom {:amount 2 :resource :boar :option 0 :times 1})]
     (let [card (cards/card cid) op (get-in card [:ability :op]) ui @(rf/subscribe [:ui])
+          remaining (card-game/exchange-remaining g p cid)
           cmd (merge @selection {:type :ability :player (:id p) :card cid})
           reason (try (card-game/ability g (:id p) cmd) nil (catch :default error (.-message error)))
           field-ids (concat (a/tiles p :field) (keys (:card-fields p)))
@@ -1329,7 +1330,8 @@
           [field "Exchange" [:select {:value (:option @selection) :on-change #(swap! selection assoc :option (js/parseInt (.. % -target -value)))}
                              (for [[index option] (map-indexed vector (get-in card [:ability :options]))] ^{:key index}
                                [:option {:value index} (:label option)])]]
-          [field "Times" [:input {:type "number" :min 1 :step 1 :value (:times @selection)
+          (when (some? remaining) [:p.small (str remaining " exchanges remaining this round.")])
+          [field "Times" [:input {:type "number" :min 1 :max remaining :step 1 :value (:times @selection)
                                   :on-change #(swap! selection assoc :times (js/parseInt (.. % -target -value)))}]]]
          :reed-food [:p.small "Exchange 1 reed for 2 food."]
          :buy-stock [:p.small (str "Next good: " (or (some-> (get-in p [:card-state cid :stock]) peek labels) "sold out") " · 1 food")]

@@ -1,4 +1,4 @@
-;; Original Gamers' deck, first native batch. English faces and compendium
+;; Original Gamers' deck, native batches. English faces and compendium
 ;; references are recorded in the art manifest and rules/source ledger.
 {:catalog/original-expansion-g-5-architect
  {:triggers [{:event :build-rooms :effect {:op :gain :goods {:food [:* 2 [:context :rooms-built]]}}}
@@ -22,4 +22,23 @@
  :catalog/original-expansion-g-87-magic-beans
  {:play [{:op :gain :goods {:vegetable 2}}]}
  :catalog/original-expansion-g-93-plentiful-fields
- {:play [{:op :gain :goods {:food [:planted-farm-fields]}}]}}
+ {:play [{:op :gain :goods {:food [:planted-farm-fields]}}]}
+ :catalog/original-expansion-g-33-hoe-maker
+ {:triggers [{:event :fence :effect {:op :plow :cost {:food 1} :optional? true}}]}
+ :catalog/original-expansion-g-49-seed-master
+ {:ability {:op :exchange-options :options [{:label "1 grain + 1 food → 1 vegetable" :cost {:grain 1 :food 1} :goods {:vegetable 1}}
+                                           {:label "1 vegetable → 1 grain" :cost {:vegetable 1} :goods {:grain 1}}]}}
+ :catalog/original-expansion-g-73-errant-oven
+ {:passive {:oven true} :play [{:op :bake :optional? true}]}
+ :catalog/original-expansion-g-74-extra-effort
+ {:printed-cost {:food 1} :cost-text "1 Food"
+  :requires-effect? true :play [{:op :card-action :kinds #{:major}}]}
+ :catalog/original-expansion-g-86-itinerant-laborers
+ {:play [{:op :sow-offer :optional? true}]}
+ :catalog/original-expansion-g-89-migrant-workers
+ {:triggers [{:event :use-space :spaces #{:labor} :effect {:op :plow :cost {:food 1} :optional? true}}]}
+ :catalog/original-expansion-g-99-reed-beds
+ {:triggers [{:event :use-space :spaces #{:plow} :effect {:op :gain :goods {:reed 1}}}]}
+ :catalog/original-expansion-g-113-stone-kitchen
+ {:passive {:cook {:vegetable 4 :sheep 2 :boar 3 :cattle 4} :bake 3 :crock-compatible true}}
+}

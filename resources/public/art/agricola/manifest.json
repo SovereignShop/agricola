@@ -1142,6 +1142,150 @@
       "source": "http://playagricola.com/Agricola/Cards/Cards/occx1PipeSmoker_3313_4.jpg",
       "sha256": "e3f3794200aead524b4bd0d0badbe40d4ada776199410973eed00a857700d734",
       "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against the title and deck number."
+    },
+    {
+      "file": "cards/original-g033.jpg",
+      "source": "http://playagricola.com/Agricola/Images/occg1hoemaker_v2.jpg",
+      "sha256": "6f9438e69c6be3c15fae56e4b9a7643024c87beb9697df61e278d71d6d128284",
+      "note": "Unmodified English printed card; title, number and rules visually checked."
+    },
+    {
+      "file": "cards/original-g049.jpg",
+      "source": "http://playagricola.com/Agricola/Images/occg1seedmaster.jpg",
+      "sha256": "4b6d85727a68a6bed0e36e879db73812fc547b0eed089e4d138b1eb0ee01673b",
+      "note": "Unmodified English printed card; title, number and rules visually checked."
+    },
+    {
+      "file": "cards/original-g073.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminorerrantoven.jpg",
+      "sha256": "460d50fb35a8d9c1da675b9e32f5ed5dfbfd6053b4b1e1e5cde65eb261b5ded3",
+      "note": "Unmodified English printed card; title, number and rules visually checked."
+    },
+    {
+      "file": "cards/original-g074.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminorextraeffort.jpg",
+      "sha256": "e8e5bfcba7d49dcf8f46944a46a8728312d830a1adc68ed564b2d5f0e51b2a58",
+      "note": "Unmodified English printed card; title, number and rules visually checked."
+    },
+    {
+      "file": "cards/original-g086.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminoritinerantlaborers.jpg",
+      "sha256": "133294e9fdb1f13c0f2b347336cd0b9f8bf4f428898850127ec13c7471544333",
+      "note": "Unmodified English printed card; title, number and rules visually checked."
+    },
+    {
+      "file": "cards/original-g089.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminormigrantworkers.jpg",
+      "sha256": "ec3904f10e83ddbb53a284bfd5249ecab5db70fe1a4d53aefc3fb3058375e4cb",
+      "note": "Unmodified English printed card; title, number and rules visually checked."
+    },
+    {
+      "file": "cards/original-g099.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminorreedbeds_v3.jpg",
+      "sha256": "0931a69791e5055400ed696a348be8194bc24ac16ef722f852ed35db3405884f",
+      "note": "Unmodified English printed card; title, number and rules visually checked."
+    },
+    {
+      "file": "cards/original-g113.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminorstonekitchen_v3.jpg",
+      "sha256": "b5625523f6dd7b2eb7460f26596b42e26f442a954e8c19756a9f9c22564f9bbc",
+      "note": "Unmodified English printed card; title, number and rules visually checked."
+    },
+    {
+      "file": "cards/original-wm026.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx3HedgeMaster_1002_3.jpg",
+      "sha256": "d65998855f5a936aedc4c0407d9a4301b1c7d34ceced3e1641c11b429b00aee4",
+      "note": "Unmodified English printed card; title, number and rules visually checked."
+    },
+    {
+      "file": "cards/original-wm029.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx1HillFarmer_904_8.jpg",
+      "sha256": "8fef9e7fb4af46bbb1a6490913e9e5d1c80afd139e057a03b4f9e07f1dba6161",
+      "note": "Unmodified English printed card; title, number and rules visually checked."
+    },
+    {
+      "file": "cards/original-wm038.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx3Minimalist_230_5.jpg",
+      "sha256": "0375f223cfa82de61d37a3d1510c1fd3d9c04a128816b236e75eb28e743052c7",
+      "note": "Unmodified English printed card; title, number and rules visually checked."
+    },
+    {
+      "file": "cards/original-wm041.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx1Politician_732_5.jpg",
+      "sha256": "2fc7a4fcceb6e1b0da8b4444e59bdf7883031802879d55b30f3aad9a03e3f68f",
+      "note": "Unmodified English printed card; title, number and rules visually checked."
+    },
+    {
+      "file": "cards/original-wm051.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx1TavernKeeper_174_9.jpg",
+      "sha256": "16dddae4762ea6364bc0f3dff3231537ef0d910a4b53353714823154bd438b65",
+      "note": "Unmodified English printed card; title, number and rules visually checked."
+    },
+    {
+      "file": "cards/original-wm092.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorKeys_539_6.jpg",
+      "sha256": "c3a115ff21f497934b243aa2e679021602c248a7d0c67a797601b6953f740936",
+      "note": "Unmodified English printed card; title, number and rules visually checked."
+    },
+    {
+      "file": "cards/original-wm093.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorKindling_508_5.jpg",
+      "sha256": "bd6dbef9b0e6bd519134abc2dedb0e119bb79139f70b7d7cc7682fa509f9e567",
+      "note": "Unmodified English printed card; title, number and rules visually checked."
+    },
+    {
+      "file": "cards/original-wm101.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorPrizewinningSheep_717_2.jpg",
+      "sha256": "cb4b69922e1d8bb0c1dc6d2363eeef07c3431ed215f8747d20883a3d1fcf3c82",
+      "note": "Unmodified English printed card; title, number and rules visually checked."
+    },
+    {
+      "file": "cards/original-fr022.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorFullbottomedWig_3904_4.jpg",
+      "sha256": "f936ab4d9be0998915f95d08c16d184a1386cea16a664914fae4130778e7f069",
+      "note": "Unmodified English printed card; title, number and rules visually checked."
+    },
+    {
+      "file": "cards/original-fr028.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorHammock_4245_6.jpg",
+      "sha256": "1bbe190d1f2a7e93bd97ecc1ad22a369fccedfee83a1288dd83c18dcde531fe8",
+      "note": "Unmodified English printed card; title, number and rules visually checked."
+    },
+    {
+      "file": "cards/original-fr030.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorHaystack_2427_4.jpg",
+      "sha256": "efd0b730ab9895b83453e8812462f53e8f6d4fc10dceb65a1a0a64e96d8b9938",
+      "note": "Unmodified English printed card; title, number and rules visually checked."
+    },
+    {
+      "file": "cards/original-fr055.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorVegetableHarvest_3378_8.jpg",
+      "sha256": "b9b63ca075e3409965474366fe90de0df7152195b3bf79fbaf8de408ada0c8a6",
+      "note": "Unmodified English printed card; title, number and rules visually checked."
+    },
+    {
+      "file": "cards/original-fr084.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx1GrainSpeculator_3087_5.jpg",
+      "sha256": "dff16691e99df24661e7f4d19a78220513687ddb5ea679ea75a2505d117dafdb",
+      "note": "Unmodified English printed card; title, number and rules visually checked."
+    },
+    {
+      "file": "cards/original-fr104.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx1RacingStableManager_2965_2.jpg",
+      "sha256": "53ed565d6c2e76417d88df8734ab71ac0eaffd9cdcbedab5276329f288f7a5c3",
+      "note": "Unmodified English printed card; title, number and rules visually checked."
+    },
+    {
+      "file": "cards/original-fr108.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx4ShovelWorker_3292_9.jpg",
+      "sha256": "afb12ec87b3677603e0fef25e1648bcd6ea060e83e0290994a6c1ac79c57b250",
+      "note": "Unmodified English printed card; title, number and rules visually checked."
+    },
+    {
+      "file": "cards/original-fr111.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx1SunFarmer_4004_5.jpg",
+      "sha256": "edfefa1065e55e3fd436b04c339861e59b0bbacf0e1af3737534f56158be3f30",
+      "note": "Unmodified English printed card; title, number and rules visually checked."
     }
   ]
 }

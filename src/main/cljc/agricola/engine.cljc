@@ -358,7 +358,7 @@
     (apply merge-with max {:grain 1 :vegetable 1}
            (concat (cards/passives p :animal-cooking)
                    (when (some #(:oven (improvement-definition %)) (owned-improvement-ids p))
-                     (cards/passives p :oven-animal-cooking))
+                     (concat (cards/passives p :oven-animal-cooking) (cards/passives p :oven-cooking)))
             (for [id (owned-improvement-ids p) :let [definition (improvement-definition id) rates (:cook definition {})]]
              (cond-> rates
                (and (:vegetable rates) (or (#{:fireplace-2 :fireplace-3 :hearth-4 :hearth-5} id) (:fireplace definition) (:cooking-corner definition) (:cooking-hearth definition)))
@@ -367,14 +367,16 @@
   (let [definition (improvement-definition id)]
     (or (contains? #{:fireplace-2 :fireplace-3 :hearth-4 :hearth-5} id)
         (:fireplace definition) (:cooking-corner definition) (:cooking-hearth definition))))
+(defn crock-improvement? [id]
+  (or (fireplace-family? id) (:crock-compatible (improvement-definition id))))
 (defn crock? [p] (some true? (cards/passives p :cooking-pair-food)))
 (defn qualifying-cooked-units [p goods]
   (let [rates (cook-rates p)
         spice (reduce + 0 (cards/passives p :vegetable-cooking-bonus))
         qualifying (apply merge-with max {}
-                          (for [id (owned-improvement-ids p) :when (fireplace-family? id)
+                          (for [id (owned-improvement-ids p) :when (crock-improvement? id)
                                 :let [rates (:cook (improvement-definition id) {})]]
-                            (cond-> rates (:vegetable rates) (update :vegetable + spice))))]
+                            (cond-> rates (and (:vegetable rates) (fireplace-family? id)) (update :vegetable + spice))))]
     (reduce + 0 (for [[resource n] goods
                      :when (and (contains? qualifying resource) (= (qualifying resource) (rates resource)))] n))))
 (defn convert-food
@@ -402,7 +404,7 @@
      (quantities! cook-with-bake (concat animals [:grain :vegetable]))
      (require! (or (pos? n) (every? zero? (vals cook-with-bake))) "Cooking with baking requires at least one grain to bake.")
      (if (zero? n) p
-       (let [ovens (sort-by (fn [id] [(- (:bake (improvement-definition id))) (if (fireplace-family? id) 0 1)])
+       (let [ovens (sort-by (fn [id] [(- (:bake (improvement-definition id))) (if (crock-improvement? id) 0 1)])
                             (baking-improvement-ids p))
              [food qualifying] (loop [left n ovens ovens food 0 qualifying 0]
                                  (if (zero? left) [food qualifying]
@@ -410,7 +412,7 @@
                                      (require! oven "Your improvements cannot bake that much grain in one action.")
                                      (let [used (min left (get oven :limit left))]
                                        (recur (- left used) (rest ovens) (+ food (* used (:bake oven)))
-                                              (+ qualifying (if (fireplace-family? id) used 0)))))))
+                                              (+ qualifying (if (crock-improvement? id) used 0)))))))
              cooked (qualifying-cooked-units p cook-with-bake)
              ;; convert-food pays the cooking bonus; add the remainder of this
              ;; single simultaneous batch here, including a baked/cooked pair.
@@ -477,7 +479,8 @@
          base (apply min (count (tiles p :room))
                      (when (and (= :wood (:house p)) (= material :clay))
                        (cards/passives p :wood-clay-renovation-cost)))
-         cost {material base :reed (if (some true? (cards/passives p :no-construction-reed)) 0 1)}
+         cost {material base :reed (if (or (some true? (cards/passives p :no-construction-reed))
+                                          (some true? (cards/passives p :no-renovation-reed))) 0 1)}
          cost (discounted cost {material (reduce + 0 (cards/passives p :renovation-discount))})
          cost (discounted cost (cond-> {:stone (reduce + 0 (cards/passives p :stone-discount))
                                        :reed (reduce + 0 (cards/passives p :reed-construction-discount))}
@@ -528,11 +531,13 @@
     (cond-> {} discount (assoc :manufacturer-discount discount) carve? (assoc :wood-carver? true))))
 (defn hand-improvement-discounts [p card]
   (let [reed (count (filter #(contains? % (:id card)) (cards/passives p :reed-discount-for-improvements)))]
-    (cond-> {:wood (if (cards/has? p :a075) 1 0)
+    (apply merge-with +
+     (cond-> {:wood (if (cards/has? p :a075) 1 0)
              :stone (reduce + 0 (cards/passives p :stone-discount))}
       (seq (cards/passives p :improvement-clay-discount))
       (assoc :clay (reduce + 0 (cards/passives p :improvement-clay-discount)))
-      (pos? reed) (assoc :reed reed))))
+      (pos? reed) (assoc :reed reed))
+     (keep #(get % (:id card)) (cards/passives p :specific-improvement-discounts)))))
 (defn improvement-discount-resources
   "The printed building materials eligible for this card's chosen discount."
   [p id]

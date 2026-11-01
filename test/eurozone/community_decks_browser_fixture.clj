@@ -14,8 +14,10 @@
       gate (-> base (assoc :phase :feeding :round 4 :fed #{})
                (assoc-in [:players 0 :goods :sheep] 1) (assoc-in [:players 0 :minors] [(cid "WM" 97)])
                (g/queue-front [(g/event :feeding-start 0)]) g/drain)
+      effort (play base (cid "G" 74))
+      politician (play base (cid "WM" 41))
       ids (mapv (fn [[title state]]
                   (let [id (:id (store/transact! service token {:event :create :mode :local :name "Ada" :names names :title title :setup {:mode :random}}))]
                     (store/save! service (swap! (:rooms service) assoc-in [id :state] state)) id))
-                [["G, WM and France prints" gallery] ["Drained Pond arrival" pond] ["Open Gate choice" gate]])]
+                [["G, WM and France prints" gallery] ["Drained Pond arrival" pond] ["Open Gate choice" gate] ["Extra Effort choice" effort] ["Politician exchange" politician]])]
   (println (str/join "," ids)))

@@ -617,7 +617,7 @@
       (and (= :pay-or-beg (:op effect)) (< (a/amount (p g player) :food) (:food effect)))
       (and (= :corn-select (:op effect)) (> (count (get-in g [:corn-sale :offers])) 1))
       (and (= :reveal-rounds (:op effect)) (= 11 (:round g)))
-      (#{:serf :perpetual-play :foreman :animal-breeder :animal-trainer :fence-overseer :mark-fence-space :return-animal-loan :freshman-bake :classify-fields :paper-knife :lodger-remove :ability-window :choose :plow :plow-many :wheel-plow :mini-pasture :stable :build-rooms :choose-good :bake :bake-one :take-field-crop :sow-offer :sow :housing :cottage :scholar} (:op effect))
+      (#{:serf :perpetual-play :foreman :animal-breeder :animal-trainer :fence-overseer :mark-fence-space :return-animal-loan :freshman-bake :classify-fields :paper-knife :lodger-remove :ability-window :choose :plow :plow-many :wheel-plow :mini-pasture :stable :build-rooms :choose-good :card-action :bake :bake-one :take-field-crop :sow-offer :sow :housing :cottage :scholar} (:op effect))
       (and (= :seasonal-crop (:op effect)) (>= (:round g) 6))))
 (defn run-effect* [g {:keys [player card effect context window] :as head} choice]
   (let [pid player current (p g pid) op (:op effect) cost (expr/quantities g pid context (or (:cost effect) {}))]
@@ -1282,11 +1282,29 @@
             (for [one cells :when (attached? rooms one) two cells
                   :when (and (not= one two) (attached? (conj (vec rooms) one) two))]
               [one two]))))
+(defn major-action-choices [g pid]
+  ;; Legality probes must include upgrades and discounts, without baking or
+  ;; committing a card. Hand improvements marked major-or-minor also qualify.
+  (let [player (p g pid)]
+    (concat
+      (for [id (:available-improvements g)
+            upgrade (if (:upgrade (a/improvements id)) (cons nil (a/fireplace-upgrades player)) [nil])
+            discount (or (seq (a/improvement-discount-resources player id)) [nil])
+            payment (a/improvement-payment-options player id)]
+        (cond-> (assoc payment :improvement id) upgrade (assoc :upgrade upgrade)
+                discount (assoc :discount-resource discount)))
+      (for [id (get-in player [:hand :minor]) :when (get-in (c/card id) [:passive :major-or-minor])
+            discount (or (seq (a/improvement-discount-resources player id)) [nil])
+            payment (a/improvement-payment-options player id)
+            option (if-let [costs (:cost-options (c/card id))] (range (count costs)) [nil])]
+        (cond-> (assoc payment :card id :as-major? true) discount (assoc :discount-resource discount)
+                (some? option) (assoc :payment-option option))))))
 (defn possible-effect? [g {:keys [player effect] :as head}]
   (let [op (:op effect) cost (expr/quantities g player (:context head) (:cost effect))
         conversion (when (optional-effect? g head) (funding-conversion g player cost))
         probe (if (seq conversion) (update-in g [:players player] a/convert-food conversion) g)
         choices (cond
+                  (and (= :card-action op) (= #{:major} (:kinds effect)) (not (optional-effect? g head))) (major-action-choices probe player)
                   (= :relocate op) (map #(hash-map :option %) (range (count (relocation-origins g player))))
                   (= :adopt-original op) [{:amount 1}]
                   (= :wet-nurse op) [{:amount 1} {:amount 1 :adopt-reed-hut? true}]
@@ -1362,6 +1380,10 @@
   (and (nil? (:action-context g)) (nil? (:sow-in-progress g)) (nil? (:freshman-plan g))
        (every? #(or (= :ability-window (get-in % [:effect :op]))
                     (and (= :continue (:kind %)) (#{:finish-round :next-round} (:step %)))) (:effect-queue g))))
+(defn exchange-remaining [g player cid]
+  (when-let [limit (get-in (c/card cid) [:ability :limit-per-round])]
+    (max 0 (- limit (if (= (:round g) (get-in player [:card-state cid :exchange-round]))
+                      (get-in player [:card-state cid :exchange-used] 0) 0)))))
 (defn anytime-available?
   ([player cid] (anytime-available? nil player cid))
   ([g player cid]
@@ -1382,7 +1404,8 @@
                                            (catch #?(:clj clojure.lang.ExceptionInfo :cljs :default) _ false)))
                         (a/construction-payment-options player))))
     :free-room (free-room-available? player cid)
-    :exchange-options (boolean (some #(can-pay? player (:cost %)) (get-in (c/card cid) [:ability :options])))
+    :exchange-options (and (pos? (or (exchange-remaining g player cid) 1))
+                           (boolean (some #(can-pay? player (:cost %)) (get-in (c/card cid) [:ability :options]))))
     :sheep-exchange (pos? (a/amount player :sheep))
     :porcelain (>= (a/amount player :clay) 2)
     :buy-stock (and (seq (get-in player [:card-state cid :stock]))
@@ -1764,6 +1787,8 @@
              (#{:lazy-sowman :swagman} (get-in g [:action-context :mode]))) :extra-action
         (and (owned? g pid :a028) (#{:lessons :lessons-extra :lessons-copse :lessons-growth} space)) :forest-school
         (head-family-permission? g pid space) :head-of-family
+        (and (some #(contains? % space) (c/passives player :share-action-spaces))
+             (not (some #{pid} (space-owners g space)))) :shared-action
         (and (some true? (c/passives player :share-field-spaces)) (#{:vegetable :plow :cultivation} space)
              (not (some #{pid} (space-owners g space)))) :field-warden
         (and (owned? g pid :a025) (= space (:first-nonaccumulation g)) (= 1 (space-people g space))) :bassinet
@@ -2376,12 +2401,16 @@
       (let [_ (a/require! (and (not (and (get-in (c/card card) [:ability :exclude-final-breeding?]) (= 14 (:round g)) (= :finish-round (:phase g))))
                                       (not (contains? (get-in (c/card card) [:ability :exclude-phases] #{}) (:phase g)))) "This exchange is unavailable during this phase.")
             options (get-in (c/card card) [:ability :options]) index (:option cmd)
-            times (get cmd :times 1)]
+            times (get cmd :times 1) remaining (exchange-remaining g player card)]
         (a/require! (and (integer? index) (<= 0 index) (< index (count options))) "Choose one of this card's exchanges.")
         (a/require! (and (a/natural? times) (pos? times)) "Choose a positive whole number of exchanges.")
+        (when remaining (a/require! (<= times remaining) "This card has no more exchanges available this round."))
         (let [{:keys [cost goods]} (nth options index)
               scale #(into {} (map (fn [[resource n]] [resource (* times n)]) %))]
-          (update-in g [:players pid] #(-> % (a/pay (scale cost)) (a/gain (scale goods))))))
+          (cond-> (update-in g [:players pid] #(-> % (a/pay (scale cost)) (a/gain (scale goods))))
+            remaining (assoc-in [:players pid :card-state card :exchange-round] (:round g))
+            remaining (assoc-in [:players pid :card-state card :exchange-used]
+                                (+ times (- (get-in (c/card card) [:ability :limit-per-round]) remaining))))))
       :adopt (do (a/require! (and (= :work (:phase g)) (pos? (:newborn player 0))) "Adopt a newborn during the work phase.")
                  (-> g (update-in [:players pid] a/pay {:food 1})
                        (update-in [:players pid :remaining] inc) (update-in [:players pid :newborn] dec) (adopt-newborn pid)))

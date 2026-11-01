@@ -1,9 +1,9 @@
 {:edition :revised-2016
- :reviewed "2026-10-31"
+ :reviewed "2026-11-01"
  :sources
  [{:id :g-wm-fr-english-prints :authority :printed-card-scans :edition :original
    :url "http://playagricola.com/Agricola/Cards/index.php"
-   :note "First native batch: G005/010/021/029/051/069/075/081/087/093; WM003/067/076/082/095/097/098/100/109/111; FR003/010/016/017/038/039/043/044/048/053/057/100. All 32 English faces checked visually. Exact source URLs and byte hashes are in the artwork manifest; no proposed/rebalanced faces substituted."}
+   :note "First native batch: G005/010/021/029/051/069/075/081/087/093; WM003/067/076/082/095/097/098/100/109/111; FR003/010/016/017/038/039/043/044/048/053/057/100. Second batch: G033/049/073/074/086/089/099/113; WM026/029/038/041/051/092/093/101; FR022/028/030/055/084/104/108/111. All 56 English faces checked visually. Exact source URLs and byte hashes are in the artwork manifest; no proposed/rebalanced faces substituted."}
   {:id :community-compendium-v11-web :authority :unofficial-compilation :edition :original
    :url "https://www.reedstonefood.com/agricola/compendium"
    :note "Community clarifications cross-checked with the G/WM/FR printings, especially Plentiful Fields excluding card fields, passing cards, and Open Gate retaining earned points when discarded."}
@@ -83,7 +83,31 @@
    :status :unresolved
    :note "No explicit publisher or designer clarification was found. Do not present either interpretation as a verified ruling."}]
  :regressions
- [{:id :community-planted-farm-fields
+ [{:id :community-extra-effort
+   :cards [:catalog/original-expansion-g-74-extra-effort]
+   :source "https://www.reedstonefood.com/agricola/compendium"
+   :authority :printed-card-and-community-clarification
+   :rule "Extra Effort costs one food (missing from the imported catalogue), then requires an affordable major improvement at its normal cost. The mandatory choice and passing continuation survive reload."
+   :test agricola.community-decks-test/extra-effort-requires-an-affordable-major-and-resolves-before-passing}
+  {:id :community-politician
+   :cards [:catalog/original-expansion-wm-41-politician]
+   :source "https://www.reedstonefood.com/agricola/compendium"
+   :authority :printed-card-and-community-clarification
+   :rule "The two exchanges per round are shared between both directions, including bulk exchanges. Saved usage resets only with the round."
+   :test agricola.community-decks-test/seed-master-and-politician-exchanges-use-native-costs-and-round-limits}
+  {:id :community-stone-kitchen
+   :cards [:catalog/original-expansion-g-113-stone-kitchen :catalog/original-expansion-fr-55-vegetable-harvest]
+   :source "https://www.reedstonefood.com/agricola/compendium"
+   :authority :printed-card-and-community-clarification
+   :rule "Stone Kitchen cooks and bakes and combines with the Crock, but is not an oven, fireplace or cooking hearth. Vegetable Harvest requires an actual oven."
+   :test agricola.community-decks-test/vegetable-harvest-needs-a-real-oven-and-stone-kitchen-combines-with-crock}
+  {:id :community-granted-fences
+   :cards [:catalog/original-expansion-g-33-hoe-maker :catalog/original-expansion-wm-26-hedge-master :catalog/original-expansion-wm-29-hill-farmer]
+   :source "https://www.reedstonefood.com/agricola/compendium"
+   :authority :printed-card-and-community-clarification
+   :rule "Fences granted by another card also trigger these cards. Hedge Master awards one point per fencing action; Hill Farmer awards food per plowing/fencing action, not per piece. Hoe Maker offers one optional paid field."
+   :test agricola.community-decks-test/granted-fences-trigger-hedge-master-hill-farmer-and-hoe-maker}
+  {:id :community-planted-farm-fields
    :cards [:catalog/original-expansion-g-93-plentiful-fields :catalog/original-expansion-wm-100-plum-patch :catalog/original-expansion-fr-38-orchard]
    :source "https://www.reedstonefood.com/agricola/compendium"
    :authority :printed-card-and-community-clarification
