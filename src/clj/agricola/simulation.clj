@@ -2,7 +2,7 @@
   "Seeded self-play and append-only EDN recordings. Each accepted command goes
    through the production engine. A partial file remains replayable after failure."
   (:require [agricola.bot :as bot] [agricola.house-rules :as house] [agricola.engine :as a] [agricola.card-game :as g]
-            [agricola.card-rules :as c] [agricola.draw :as draw] [agricola.recording :as recording]
+            [agricola.card-rules :as c] [agricola.card-impact :as impact] [agricola.draw :as draw] [agricola.recording :as recording]
             [clojure.edn :as edn] [clojure.java.io :as io] [clojure.string :as str])
   (:import [java.util Random ArrayList Collections]
            [java.security MessageDigest] [java.io PushbackReader]))
@@ -98,10 +98,14 @@
              (let [pid (actor state) _ (reset! attempted {:player pid})
                    choice (choose state pid rng (nth policies pid)) command (:command choice)
                    _ (reset! attempted {:player pid :command command})
-                   effects (atom [])
-                   next (binding [g/*effect-observer* #(swap! effects conj %)] (apply-command state pid command))
+                   effects (atom []) impacts (atom [])
+                   next (binding [g/*effect-observer* #(swap! effects conj %)
+                                  g/*impact-observer* (fn [before after head choice]
+                                                       (when-let [entry (impact/event before after head choice)]
+                                                         (swap! impacts conj entry)))]
+                          (apply-command state pid command))
                    event {:record :move :index i :player pid :round (:round state) :phase (:phase state)
-                          :command command :estimate (:value choice) :effects @effects :hash (state-hash next)}]
+                          :command command :estimate (:value choice) :effects @effects :impacts @impacts :hash (state-hash next)}]
                (swap! events conj event) (emit event) (recur next (inc i))))))
        (catch Exception e
          (emit {:record :error :seed seed :moves (count @events) :attempt @attempted :state @current

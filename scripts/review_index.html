@@ -11,12 +11,14 @@
 <div class="filters">
 <label>Card, seed, or error<input id="search" type="search" placeholder="e.g. Plowman"></label>
 <label>Search cards in<select id="cardScope"><option value="played">Played cards</option><option value="dealt">Dealt cards</option><option value="effects">Triggered effects</option></select></label>
+<label>Card impact<select id="impact"><option value="">Any impact</option><option value="zero">No measured benefit</option><option value="no-trigger">Never triggered</option><option value="declined">All effects declined</option><option value="no-measured-gain">Resolved, no measured gain</option><option value="unmeasured">Passive / scoring benefits unmeasured</option></select></label>
 <label>Players<select id="players"><option value="">All</option><option value="2">2</option><option>3</option><option>4</option><option>5</option></select></label>
 <label>Setup<select id="mode"><option value="">All</option><option value="random">Random hands</option><option value="draw">Draft</option></select></label>
 <label>Review<select id="status"><option value="">All games</option><option value="attention">Errors / unusual outcomes</option><option value="failed">Failed games</option><option value="unreviewed">Not yet reviewed</option><option value="noted">With my notes</option></select></label>
 <label>Sort<select id="sort"><option value="attention">Errors first</option><option value="seed">Seed</option><option value="high">Highest score</option><option value="low">Lowest score</option><option value="cards">Most cards played</option></select></label>
 <button id="export">Export review notes</button>
 </div>
+<p>No measured benefit is a review hint, not proof of a bug. Passive discounts, cooking, baking and final scoring are not yet fully attributed. Older collections without impact measurements are excluded when filtering by impact.</p>
 <p id="notice" role="status"></p><p id="count"></p>
 <table><thead><tr><th>Game</th><th>Result</th><th>Cards</th><th>Review</th></tr></thead><tbody id="games"></tbody></table>
 <script>
@@ -28,9 +30,11 @@ function save(){try{localStorage.setItem(key,JSON.stringify(notes))}catch(e){$('
 const flags=g=>[...(g.status!=='complete'?[g.error||g.status]:[]),...(g.begging?.some(n=>n>=5)?['5+ begging cards']:[]),...(g.scores?.some(n=>n<0)?['Negative score']:[]),...(g.moves>=600?['600+ commands']:[])];
 function element(tag,text,cls){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e}
 function cell(row){const td=document.createElement('td');row.append(td);return td}
+const impactReasons={'no-trigger':'Never triggered',declined:'All effects declined','no-measured-gain':'Resolved, no measured gain',unmeasured:'Passive / scoring benefits unmeasured',measured:'Measured benefit',unavailable:'Impact not recorded'};
+function matchingImpacts(g){const kind=$('impact').value,q=$('search').value.toLowerCase().trim();return (g['card-impact']||[]).filter(c=>(kind==='zero'?c['zero-impact']:c.reason===kind)&&(!q||(c.name+' '+c.id).toLowerCase().includes(q)||String(g.seed).includes(q)||(g.error||'').toLowerCase().includes(q)))}
 function render(){
 const q=$('search').value.toLowerCase().trim(), scope=$('cardScope').value, status=$('status').value;
-let games=manifest.games.filter(g=>(!$('players').value||g.players==$('players').value)&&(!$('mode').value||g.mode===$('mode').value)&&(!q||[g.seed,g.error,...(g[scope]||[]).map(c=>c.name+' '+c.id)].join(' ').toLowerCase().includes(q))&&(!status||(status==='failed'&&g.status!=='complete')||(status==='attention'&&flags(g).length)||(status==='unreviewed'&&!notes[g.seed]?.reviewed)||(status==='noted'&&notes[g.seed]?.text)));
+let games=manifest.games.filter(g=>(!$('impact').value||matchingImpacts(g).length)&&(!$('players').value||g.players==$('players').value)&&(!$('mode').value||g.mode===$('mode').value)&&($('impact').value||!q||[g.seed,g.error,...(g[scope]||[]).map(c=>c.name+' '+c.id)].join(' ').toLowerCase().includes(q))&&(!status||(status==='failed'&&g.status!=='complete')||(status==='attention'&&flags(g).length)||(status==='unreviewed'&&!notes[g.seed]?.reviewed)||(status==='noted'&&notes[g.seed]?.text)));
 games.sort((a,b)=>{switch($('sort').value){case'high':return Math.max(...b.scores)-Math.max(...a.scores)||a.seed-b.seed;case'low':return Math.min(...a.scores)-Math.min(...b.scores)||a.seed-b.seed;case'cards':return b.played.length-a.played.length||a.seed-b.seed;case'attention':return (a.status==='complete')-(b.status==='complete')||flags(b).length-flags(a).length||a.seed-b.seed;default:return a.seed-b.seed}});
 $('count').textContent=games.length+' shown · '+Object.values(notes).filter(n=>n.reviewed).length+' marked reviewed. Notes stay in this browser.';
 $('games').replaceChildren();
@@ -44,11 +48,13 @@ for(const f of flags(g))result.append(element('div',f,'flag'));
 if(g.attempt)result.append(element('small',g.attempt));
 const cards=cell(tr);cards.className='cardlist';cards.append(element('div',(g.played||[]).map(c=>c.name).join(' · ')||'No cards played'));
 const details=element('details');details.append(element('summary',(g.dealt||[]).length+' dealt cards'),element('div',(g.dealt||[]).map(c=>c.name).join(' · ')));cards.append(details);
+const impacts=$('impact').value?matchingImpacts(g):(g['card-impact']||[]).filter(c=>c['zero-impact']);
+if(impacts.length){const info=element('details');info.open=!!$('impact').value;info.append(element('summary',impacts.length+' cards with no measured benefit'));for(const c of impacts){info.append(element('div',c.name+' · Player '+(c.player+1)+' · played round '+c['played-round']),element('small',impactReasons[c.reason]+' · '+c.effects+' effects, '+c.declined+' declined'+(c.unmeasured.length?' · '+c.unmeasured.join(', '):'')+' · first move '+(c['first-move']+1)));}cards.append(info);}
 const review=cell(tr), button=element('button',notes[g.seed]?.reviewed?'Reviewed ✓':'Mark reviewed');button.onclick=()=>{notes[g.seed]={...notes[g.seed],reviewed:!notes[g.seed]?.reviewed};save();render()};
 const note=element('textarea');note.placeholder='Round / move and suspected bug';note.setAttribute('aria-label','Notes for game '+g.seed);note.value=notes[g.seed]?.text||'';note.oninput=()=>{notes[g.seed]={...notes[g.seed],text:note.value};save()};review.append(button,note);$('games').append(tr);
 }}
 async function update(){try{const response=await fetch('manifest.json',{cache:'no-store'});if(!response.ok)throw Error('HTTP '+response.status);manifest=await response.json();const complete=manifest.games.filter(g=>g.status==='complete').length,failed=manifest.games.length-complete;const all=new Set(manifest.games.flatMap(g=>(g.played||[]).map(c=>c.id)));$('summary').textContent=`${manifest.completed} / ${manifest.target} recorded · ${complete} finished games · ${failed} failures · ${all.size} distinct cards played${manifest.finished?' · Batch finished':' · Recording continues'}`;if(manifest.worker_failures.length)$('notice').textContent=manifest.worker_failures.join(' · ');if(!document.activeElement.matches('textarea'))render()}catch(error){$('notice').textContent='Could not refresh recordings: '+error.message}}
-for(const id of ['search','cardScope','players','mode','status','sort'])$(id).addEventListener('input',render);
+for(const id of ['search','cardScope','impact','players','mode','status','sort'])$(id).addEventListener('input',render);
 $('export').onclick=()=>{const blob=new Blob([JSON.stringify({batch:location.pathname,notes},null,2)],{type:'application/json'}),a=element('a');a.href=URL.createObjectURL(blob);a.download='eurozone-review-notes.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 update();setInterval(()=>{if(!manifest.finished)update()},15000);
 </script>

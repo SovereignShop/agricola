@@ -1,12 +1,12 @@
 ;; One sequential JVM per shard: with-redefs never overlaps another game.
 (require '[agricola.simulation :as sim] '[agricola.recording :as rec]
-         '[agricola.card-rules :as cards] '[agricola.engine :as engine]
+         '[agricola.impact-review :as impact-review] '[agricola.card-rules :as cards] '[agricola.engine :as engine]
          '[eurozone.bot-player :as runtime] '[clojure.data.json :as json]
          '[clojure.java.io :as io])
 
 (defn card-row [cid] {:id (str cid) :name (or (:name (cards/card cid)) (:name (engine/improvements cid)) (str cid))})
 (defn inspect-recording [path]
-  (let [{:keys [status frames moves result failure header]} (rec/timeline (sim/read-records path))
+  (let [{:keys [status frames moves result failure header] :as timeline} (rec/timeline (sim/read-records path))
         final (peek frames)
         coverage (sim/coverage (:initial header) moves final)
         played (set (mapcat #(cards/owned %) (:players final)))
@@ -19,6 +19,7 @@
      :dealt (mapv card-row (sort (:dealt coverage)))
      :played (mapv card-row (sort (into played (:played coverage))))
      :effects (mapv card-row (sort cards-in-effects))
+     :card-impact (impact-review/summarize timeline)
      :rounds (vec (for [[i state] (map-indexed vector frames)
                        :when (or (zero? i) (not= (:round state) (:round (nth frames (dec i)))))]
                    {:round (:round state) :move i}))

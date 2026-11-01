@@ -704,3 +704,12 @@ synthetic bot recordings, including all hands. The index filters by player count
 setup, played/dealt/effect cards, and failures; Watch opens verified board playback.
 Review notes and checkmarks stay in browser local storage and can be exported.
 High begging and negative scores are inspection hints, not confirmed rule bugs.
+
+
+New review recordings include committed card-impact measurements. In a collection,
+choose **Card impact → No measured benefit** and optionally enter a card name.
+Both filters apply to the same player/card; old collections without measurements
+are excluded rather than treated as zero. Detail rows distinguish no trigger,
+declined effects, resolved effects without measured gains, and passive/scoring
+benefits outside the tracker. Playing costs are not benefits. A benefit to another
+player counts as an impact. These are review hints, not automatic rule verdicts.
