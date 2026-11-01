@@ -2,7 +2,7 @@
   (:require [reagent.core :as r] [re-frame.core :as rf] [clojure.string :as str]
             [cljs.reader :as reader] [agricola.recording :as recording] [eurozone.browser.table-controls :as controls]
             [eurozone.round-markers :as round-markers] [agricola.draw :as draw]
-            [agricola.engine :as a] [agricola.house-rules :as house] [agricola.card-expressions :as expr] [agricola.five-player :as five] [agricola.card-game :as card-game] [eurozone.catalog :as catalog] [eurozone.browser.art :as art] [eurozone.browser.board-layout :as board-layout] [agricola.card-rules :as cards] [eurozone.browser.card-art :as card-art] [eurozone.browser.layout :as layout] [eurozone.browser.tabletop :as tabletop] [eurozone.browser.readability :as readability] [eurozone.browser.comms :as comms] [eurozone.store :as store]))
+            [agricola.engine :as a] [agricola.house-rules :as house] [agricola.card-expressions :as expr] [agricola.five-player :as five] [agricola.card-game :as card-game] [eurozone.catalog :as catalog] [eurozone.browser.art :as art] [eurozone.browser.board-layout :as board-layout] [agricola.card-rules :as cards] [eurozone.browser.card-art :as card-art] [eurozone.browser.layout :as layout] [eurozone.browser.tabletop :as tabletop] [eurozone.browser.readability :as readability] [eurozone.browser.chat-dock :as chat-dock] [eurozone.browser.comms :as comms] [eurozone.store :as store]))
 
 (def glyph {:wood "▰" :clay "◆" :reed "≋" :stone "⬟" :grain "♧" :vegetable "●" :food "◉" :sheep "♧" :boar "◆" :cattle "⬢"})
 (def labels {:wood "Wood" :clay "Clay" :reed "Reed" :stone "Stone" :grain "Grain" :vegetable "Vegetables" :food "Food" :sheep "Sheep" :boar "Wild boar" :cattle "Cattle"})
@@ -1443,13 +1443,14 @@
        [:p.art-credit "Major and hand-card scans: English. " [:a {:href "/art/agricola/sources.html" :target "_blank" :rel "noreferrer"} "Artwork sources ↗"]]])))
 
 (defn chat-panel [room]
-  (let [ui @(rf/subscribe [:ui]) permission @(rf/subscribe [:permission])
+  (r/with-let [last-message (atom nil) follow? (atom true)]
+   (let [ui @(rf/subscribe [:ui]) permission @(rf/subscribe [:permission])
         peers (:chat-peers ui) statuses (:chat-status ui)
         ready? (and (:connected? ui) (seq peers) (every? #(= :open (get statuses (:id %))) peers))
         messages (get-in ui [:chat-messages (:id room)] [])]
     [:aside.chat-panel {:aria-label "Table chat"}
      [:div.section-heading [:div [:h3 "Table chat"]] [:span.chat-dot {:class (when ready? "ready")}]]
-     [:p.chat-privacy (if (comms/peer?) "Through the host · not saved" "Direct peer-to-peer · not saved")]
+     [:p.chat-privacy (if (comms/peer?) "Through the host" "Direct peer-to-peer")]
      [:div.chat-peers (for [peer peers] ^{:key (:id peer)}
                         [:span {:title (name (get statuses (:id peer) :connecting))}
                          [:i {:class (when (= :open (get statuses (:id peer))) "ready")}] (:name peer)])]
@@ -1457,7 +1458,15 @@
            (not (seq peers)) [:p.small "Chat is ready when another seated player opens this table."]
            (not ready?) [:p.small "Connecting directly… If this takes too long, try reconnecting or a different network. "
                         [button "Reconnect" #(dispatch :chat/retry) "text-button"]])
-     [:div.chat-messages {:ref #(when % (set! (.-scrollTop %) (.-scrollHeight %))) :role "log" :aria-live "polite" :aria-relevant "additions text" :tab-index 0}
+     [:div.chat-messages {:ref (fn [el]
+                                (when (and el (not= @last-message (:id (last messages))))
+                                  (reset! last-message (:id (last messages)))
+                                  (when (or @follow? (:own? (last messages)))
+                                    (set! (.-scrollTop el) (.-scrollHeight el)))))
+                          :on-scroll (fn [event]
+                                       (let [el (.-currentTarget event)]
+                                         (reset! follow? (< (- (.-scrollHeight el) (.-scrollTop el) (.-clientHeight el)) 40))))
+                          :role "log" :aria-live "polite" :aria-relevant "additions text" :tab-index 0}
       (for [message messages] ^{:key (:id message)}
         [:div.chat-message {:class (when (:own? message) "own")}
          [:div [:strong (:name message)] [:time (.toLocaleTimeString (js/Date. (:time message)) #js [] #js {:hour "2-digit" :minute "2-digit"})]]
@@ -1466,7 +1475,8 @@
      [:form.chat-compose {:on-submit (fn [e] (.preventDefault e) (dispatch :chat/send))}
       [input (or (:chat-draft ui) "") #(dispatch :chat/draft %) {:aria-label "Chat message" :placeholder "Say something…" :max-length 1000 :disabled (not ready?) :auto-complete "off"}]
       [:button {:type "submit" :disabled (or (not ready?) (str/blank? (:chat-draft ui)))} "Send"]]
-     [:span.small "Messages stay in this tab until you reload."]]))
+     [:div.chat-storage [:span.small (if (:chat-storage-error ui) "Could not save on this device. Messages remain in this tab." "Last 100 messages saved on this device.")]
+      (when (seq messages) [button "Clear history" #(dispatch :chat/clear (:id room)) "text-button"]) ]])) )
 
 (defn score-table [g]
   (let [scores (or (:scores g) (if (= :cards (:variant g)) (mapv #(card-game/score g (:id %)) (:players g)) (mapv a/score (:players g)))) winners (:winners g)]
@@ -1662,7 +1672,7 @@
          [:section.panel [:h2 "The players are drawing cards."]
           [:p "Packets pass once everyone who has a legal choice has picked. Completed hands and blocked packets pass automatically."]])
        [:p.small "Every player finishes with 7 occupations and 7 minor improvements. Remaining cards are discarded only after every hand is complete."]]
-      [chat-panel room]]]))
+      ]]))
 (defn replay-draft-pool [before move inspect!]
   (when (and (= :pick (get-in move [:command :type])) (= :draw (:phase before)))
     (let [pid (:player move) d (:draw before) packet (get-in d [:packets pid])
@@ -1776,4 +1786,8 @@
            (and (:game-id ui) (:connected? ui)) [:main.panel.not-found [:h1 "Table not found"] [:p "This table may belong to another Eurozone server."] [button "Back to the library" #(dispatch :navigate nil) "button primary"]]
            (comms/peer?) [:main.panel [button "← All tables" #(dispatch :navigate nil) "text-button"] [:h1 "Connecting to your table"] [:p (or (:peer-status ui) "Waiting for the host…")]]
            :else [library])
+     (when (and room (seq (get-in ui [:permissions (:id room) :seats]))
+                (not @replay-data) (not @recordings-open?)
+                (not (:activity-lobby? ui)) (not (:missing-host-save ui)))
+       ^{:key (:id room)} [chat-dock/dock room chat-panel])
      [:footer [:span.wordmark.small-mark "eurozone"] [:span "Agricola · an unofficial implementation"]]]))

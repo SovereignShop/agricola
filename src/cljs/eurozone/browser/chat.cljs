@@ -1,9 +1,45 @@
 (ns eurozone.browser.chat
-  (:require [re-frame.core :as rf] [clojure.string :as str]
+  (:require [re-frame.core :as rf] [clojure.string :as str] [cljs.reader :as reader]
             [eurozone.model :as model] [eurozone.browser.comms :as comms]))
 
 (defonce session (atom {:room nil :self nil :peers {}}))
 (defonce connections (atom {}))
+(def default-options {:mode :collapsed :pinned? true :corner :right})
+(defn storage-key [room]
+  (str "eurozone-chat-v1:" (or (.-EUROZONE_DISCORD_USER js/window)
+                                 (.getItem js/sessionStorage "eurozone-session")
+                                 (.getItem js/localStorage "eurozone-session") "guest") ":" room))
+(defn load-room [room]
+  (try
+    (let [saved (some-> (.getItem js/localStorage (storage-key room)) reader/read-string)
+          options (:options saved)]
+      {:messages (vec (take-last 100 (filter #(and (string? (:id %)) (string? (:name %))
+                                                   (string? (:text %)) (<= (count (:text %)) 1000)
+                                                   (number? (:time %))) (:messages saved))))
+       :options {:mode (if (#{:collapsed :open :expanded} (:mode options)) (:mode options) :collapsed)
+                 :pinned? (not (false? (:pinned? options)))
+                 :corner (if (= :left (:corner options)) :left :right)}
+       :unread (max 0 (min 100 (if (number? (:unread saved)) (:unread saved) 0)))})
+    (catch :default _ {:messages [] :options default-options :unread 0})))
+(defn saved-room [db room]
+  {:messages (get-in db [:chat-messages room] []) :options (get-in db [:chat-options room] default-options)
+   :unread (get-in db [:chat-unread room] 0)})
+(rf/reg-fx :chat/save
+  (fn [[room saved]]
+    (try (.setItem js/localStorage (storage-key room) (pr-str saved))
+         (rf/dispatch [:chat/storage-error false])
+         (catch :default _ (rf/dispatch [:chat/storage-error true])))))
+(rf/reg-event-db :chat/storage-error (fn [db [_ failed?]] (assoc db :chat-storage-error failed?)))
+(rf/reg-event-fx :chat/view
+  (fn [{:keys [db]} [_ room changes]]
+    (let [options (merge (get-in db [:chat-options room] default-options) changes)
+          db (cond-> (assoc-in db [:chat-options room] options)
+               (not= :collapsed (:mode options)) (assoc-in [:chat-unread room] 0))]
+      {:db db :chat/save [room (saved-room db room)]})))
+(rf/reg-event-fx :chat/clear
+  (fn [{:keys [db]} [_ room]]
+    (let [db (-> db (assoc-in [:chat-messages room] []) (assoc-in [:chat-unread room] 0))]
+      {:db db :chat/save [room (saved-room db room)]})))
 (defn status! [peer status] (rf/dispatch [:chat/status peer status]))
 (defn error! [message] (rf/dispatch [:chat/error message]))
 (defn close-peer! [id]
@@ -101,8 +137,13 @@
     (let [room (:game-id db) seated? (seq (get-in db [:permissions room :seats]))
           desired (when (and (:connected? db) seated?) room)]
       (if (= desired (:room @session)) {}
-          {:db (assoc db :chat-room desired :chat-self nil :chat-peers [] :chat-status {} :chat-error nil)
-           :chat/join desired}))))
+          (let [saved (when desired (load-room desired))
+                restore? (and desired (not (contains? (:chat-messages db) desired)))]
+            {:db (cond-> (assoc db :chat-room desired :chat-self nil :chat-peers [] :chat-status {} :chat-error nil :chat-draft "")
+                   restore? (assoc-in [:chat-messages desired] (:messages saved))
+                   restore? (assoc-in [:chat-options desired] (:options saved))
+                   restore? (assoc-in [:chat-unread desired] (:unread saved)))
+             :chat/join desired})))))
 (rf/reg-event-fx :chat/roster
   (fn [{:keys [db]} [_ message]]
     (if (= (:room message) (:chat-room db))
@@ -111,11 +152,14 @@
 (rf/reg-event-fx :chat/signal (fn [_ [_ message]] {:chat/signal message}))
 (rf/reg-event-db :chat/error (fn [db [_ message]] (assoc db :chat-error message)))
 (rf/reg-event-db :chat/status (fn [db [_ id status]] (assoc-in db [:chat-status id] status)))
-(rf/reg-event-db :chat/message
-  (fn [db [_ room message]]
+(rf/reg-event-fx :chat/message
+  (fn [{:keys [db]} [_ room message]]
     (let [messages (get-in db [:chat-messages room] [])]
-      (if (some #(= (:id %) (:id message)) messages) db
-          (assoc-in db [:chat-messages room] (vec (take-last 100 (conj messages message))))))))
+      (if (some #(= (:id %) (:id message)) messages) {}
+          (let [db (cond-> (assoc-in db [:chat-messages room] (vec (take-last 100 (conj messages message))))
+                     (and (not (:own? message)) (= :collapsed (get-in db [:chat-options room :mode] :collapsed)))
+                     (update-in [:chat-unread room] #(min 100 (inc (or % 0)))))]
+            {:db db :chat/save [room (saved-room db room)]})))))
 (rf/reg-event-db :chat/draft (fn [db [_ text]] (assoc db :chat-draft text)))
 (rf/reg-event-fx :chat/disconnect
   (fn [{:keys [db]} _]

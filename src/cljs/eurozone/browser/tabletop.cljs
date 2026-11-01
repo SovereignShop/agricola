@@ -575,13 +575,12 @@
                    [art/piece resource] [:b.pile-count amount]])])
              (for [d decks] ^{:key (:path d)} [deck d player prefs gesture zoom open-deck!])])]]]
        [:div.tt-table-edge [:span {:title "Shift + right-click opens the browser menu."} "Drag to pan · right button + scroll to pan sideways · pinch or Ctrl / ⌘ + wheel to zoom"]
-        [button "Chat" #(do (reset! dismissed decision-key) (reset! popup {:kind :chat}))]
         (when (and decision? (= decision-key @dismissed)) [button decision-title #(reset! dismissed nil)])]
        [:div.tt-modal
         (when (and active-popup (not vote-visible?) (not (seq (:takeback room))))
           [controls/modal
            (case (:kind active-popup) :decision decision-title :deck (or (:label popup-deck) "Cards") :card (if (:hidden? popup-deck) "Private card" (:name (card-info (:id active-popup))))
-             :farm (str (get-in g [:players (:pid active-popup) :name]) "’s farm") :chat "Table chat" :scores (if finished? "Game complete" "Scoring") :rules "Rules" :cloth "Tablecloth" "Table menu")
+             :farm (str (get-in g [:players (:pid active-popup) :name]) "’s farm") :scores (if finished? "Game complete" "Scoring") :rules "Rules" :cloth "Tablecloth" "Table menu")
            (case (:kind active-popup)
              :decision [:div {:class (when simple-action? "tt-simple-action")}
                         (when (and (:space (:draft ui)) (empty? (:effect-queue g)))
@@ -619,7 +618,6 @@
                        [button [:<> [:span.tt-material-swatch {:style {:background-image (str "url(/art/tablecloths/" (name id) ".webp)")}}] [:strong label]]
                         #(do (swap! prefs assoc :material id) (save-arrangement! @prefs))
                         {:aria-label label :aria-pressed (= id (:material @prefs :tan))}])]
-             :chat [(:chat renderers) room]
              :scores [:div
                       (when (and finished? recording-allowed?)
                         [:div.end-game-recording

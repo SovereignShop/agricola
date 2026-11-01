@@ -90,7 +90,8 @@ Native browsers use WebRTC, falling back to a WebSocket relay. Activities use
 the relay because [Discord does not support WebRTC](https://docs.discord.com/developers/activities/development-guides/networking).
 The coordinator saves invitation/host metadata, not peer game states. The host
 commits moves to IndexedDB before sending each guest public state and their own
-hand. Chat uses these connections and is not saved. Peer tables are absent from
+hand. Chat uses these connections; each browser retains its last 100 received/sent
+messages per user and table in local storage. Peer tables are absent from
 the ordinary server lobby.
 
 Keep the host tab open and bookmark the invitation. Returning in the original
@@ -449,10 +450,9 @@ picks are rejected. Picks and pending decisions survive server restarts.
 
 ## Tabletop, artwork, and chat
 
-The table uses the full browser width with a compact game header. **Table view**
-puts the shared board, active farm, and chat side by side. The board scales to its
-panel height, and panel contents scroll independently. **Focus table** hides the
-site header and round strip; **Fullscreen** uses the browser’s fullscreen mode.
+The table uses the full browser width with a compact game header. **Board view**
+shows the shared board and player farms on one pan-and-zoom tabletop. Player
+view buttons focus each farm; chat stays pinned independently of the camera.
 The **Text − / percentage / +** controls scale interface text from 80% to 200%
 without changing board artwork or tile widths. Ctrl+/Ctrl−/Ctrl0 (or ⌘ on Mac)
 increase, decrease, and reset text size, including inside the Discord Activity.
@@ -493,13 +493,19 @@ pins revisions and checksums; [artwork credits](resources/public/art/agricola/so
 are linked in the game. Third-party artwork is separate from the application’s
 source-code licensing. The lobby illustration remains original SVG.
 
-The translucent panel at the right is **WebRTC data-channel chat**. The existing
-WebSocket carries seat-authorized, table-scoped signaling; chat text travels
-between browsers, never through the game store or save file. Messages stay in
-memory in each tab, capped at 100 per table, and disappear on reload. Spectators
-cannot join chat. The send button waits until channels to all connected peers
-are open; disconnected peers do not receive offline messages. On narrow screens,
-panels stack so chat does not cover game controls.
+The translucent **Chat** panel can be pinned to either bottom corner, expanded,
+or collapsed to a tab with an unread count. Pinned chat stays open while using
+the board; unpinned chat collapses when clicking outside it. Each user's panel
+preferences and last 100 messages per table are saved on this device across
+reloads. **Clear history** removes only this device's copy. These histories are
+not synced between devices and do not provide offline message delivery.
+
+Server-hosted tables use **WebRTC data-channel chat**. The existing WebSocket
+carries seat-authorized, table-scoped signaling; chat text travels between
+browsers, never through the game store or save file. Peer-hosted and Discord
+tables instead use their existing host connection. Spectators cannot join chat.
+The send button waits until channels to all connected peers are open. Chat fits
+phone viewports and can be collapsed to uncover the board.
 
 Modern browsers need WebRTC support. The default uses Google's public STUN server;
 some NAT/firewall configurations require TURN. For hosted deployments, set
@@ -740,3 +746,13 @@ dragging/snapping/persistence, material selection, placement confirmation,
 spatial actions, playable-card selection, fireplace upgrades, optional effects,
 and mobile controls. The live Discord service
 is intentionally not switched to this experimental branch.
+
+Pinned chat browser regression (after the advanced browser build):
+
+```sh
+python test/browser_chat_dock.py
+```
+
+This uses two isolated players and real RTC channels to check delivery, unread
+counts, pinning, expansion, reload persistence, user/table isolation, clearing
+local history, and portrait/landscape bounds.
