@@ -173,3 +173,34 @@
               (update-in [:players 0] a/gain {:grain 2 :sheep 2}))
         done (g/command s 0 {:type :ability :card id :option 1 :times 2})]
     (is (= 1 (- (stock done 1 :food) (stock s 1 :food))))))
+
+(deftest queued-resource-choices-validate-and-preserve-single-choice-compatibility
+  (doseq [resources [[:wood :reed] [:stone :stone]]]
+    (let [s (scenario "singer") batch (resolve! (reload s) {:resources resources})
+          legacy (reduce #(resolve! %1 {:resource %2}) s resources)]
+      (is (= 2 (g/resource-choice-count s)))
+      (is (= (:players legacy) (:players batch)))
+      (is (= (:turn legacy) (:turn batch)))
+      (is (empty? (:effect-queue batch)))
+      (is (thrown? clojure.lang.ExceptionInfo
+                   (g/command batch 0 {:type :resolve :decision (:decision-id s) :resources resources})))))
+  (doseq [resources [[] [:wood] [:wood :stone :reed] [:wood :sheep] nil]]
+    (is (thrown? clojure.lang.ExceptionInfo (resolve! (scenario "singer") {:resources resources}))))
+  (let [s (scenario "singer") changed (assoc-in s [:effect-queue 1 :player] 1)]
+    (is (= 1 (g/resource-choice-count changed)))
+    (is (thrown? clojure.lang.ExceptionInfo (resolve! changed {:resources [:wood :wood]}))))
+  (let [s (scenario "singer") first (resolve! s {:resource :clay})]
+    (is (= 1 (g/resource-choice-count first)))
+    (is (empty? (:effect-queue (resolve! (reload first) {:resources [:wood]}))))))
+
+(deftest queued-resources-survive-intervening-decisions
+  (let [s (scenario "singer") id (cid "G" 50)
+        planned (g/resolve-choice s 0 {:decision (:decision-id s) :resources [:wood :stone]})
+        interrupted (g/drain (g/queue-front planned [(g/task 0 id {:op :gain :goods {:food 1} :optional? true} {})]))
+        done (resolve! (reload interrupted) {:skip? true})]
+    (is (= :gain (op interrupted)))
+    (is (= (inc (stock s 0 :wood)) (stock interrupted 0 :wood)))
+    (is (= (stock s 0 :stone) (stock interrupted 0 :stone)))
+    (is (= (inc (stock s 0 :stone)) (stock done 0 :stone)))
+    (is (= (stock s 0 :food) (stock done 0 :food)))
+    (is (empty? (:effect-queue done)))))

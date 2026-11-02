@@ -10,7 +10,7 @@
    {:id "businesswoman" :card :catalog/original-expansion-g-25-businesswoman :name "Businesswoman"
     :description "Choose up to two improvements, paying each cost. Try two majors, two minors, or one of each; either offer can be declined."}
    {:id "singer" :card :catalog/original-expansion-g-50-singer :name "Singer"
-    :description "Choose two building resources, one at a time. They may be identical or different."}
+    :description "Click resource icons to queue two building resources. Remove either queued choice or clear both, then take them together. The same resource may be chosen twice."}
    {:id "gardening-tools" :card :catalog/original-expansion-g-76-gardening-tools :name "Gardening Tools"
     :description "Partner has just sown. Pay one food to sow your own empty field, or decline. This interrupts Partner's turn without using your worker."}
    {:id "shovel" :card :catalog/original-expansion-g-110-shovel :name "Shovel"

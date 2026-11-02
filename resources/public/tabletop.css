@@ -274,3 +274,25 @@
 .impact-earned {font-size:calc(18px * var(--text-scale,1))}
 .impact-events {padding-left:22px;margin:12px 0}
 .impact-events li {margin:10px 0;font-size:calc(14px * var(--text-scale,1));line-height:1.45}
+
+/* Card decisions use only the space and controls they need. */
+.tt-modal .table-dialog:has(.decision-without-farm) {width:660px}
+.tt-modal .table-dialog:has(.decision-without-farm .card-choice-spread) {width:1000px}
+.tt-modal .player-panel.decision-without-farm {display:block}
+.resource-picker {margin:22px 0 18px}
+.resource-picker-instruction {margin:0 0 16px;color:#514a35}
+.resource-picker-options {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.resource-choice,.queued-resource {position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1px solid #baaa84;border-radius:8px;background:#fff9e9;color:#423e2a;padding:14px 8px;min-height:100px;font:inherit;cursor:pointer;box-shadow:0 3px 0 #b5a58033;transition:background .12s,transform .12s}
+.resource-choice:hover:not(:disabled),.queued-resource:hover:not(:disabled) {background:#f5e5ba;transform:translateY(-2px)}
+.resource-choice:focus-visible,.queued-resource:focus-visible {outline:3px solid #7b713f;outline-offset:3px}
+.resource-choice:disabled {opacity:.5;cursor:default;box-shadow:none}
+.resource-choice .piece,.queued-resource .piece {width:48px;height:48px;object-fit:contain;filter:drop-shadow(1px 3px 2px #31261733)}
+.resource-choice-queue {display:flex;justify-content:center;gap:12px;margin:22px 0 10px;padding:18px 12px;background:#e4d6b34d;border-radius:10px}
+.queued-resource,.resource-choice-slot {width:104px;min-height:106px;box-sizing:border-box}
+.queued-resource {padding:16px 8px 10px;background:#fff8e3}
+.resource-choice-slot {display:flex;align-items:center;justify-content:center;border:1px dashed #b9a77e;border-radius:8px;color:#a39370;font-family:var(--tt-font);font-size:28px}
+.resource-remove {position:absolute;right:7px;top:0;font-size:22px;color:#76694e}
+.resource-picker-status {display:flex;justify-content:space-between;align-items:center;gap:12px;color:#756b51;font-size:.9em;min-height:34px}
+@media(max-width:600px) {.resource-picker-options {gap:8px}.resource-choice {padding:10px 3px;min-height:90px;font-size:.85em}.resource-choice .piece {width:40px;height:40px}.resource-picker {margin-top:16px}}
+.decision-without-farm .card-decision {border-top:0;padding-top:0}
+.decision-without-farm .card-decision>.eyebrow,.decision-without-farm .card-decision>h3 {display:none}

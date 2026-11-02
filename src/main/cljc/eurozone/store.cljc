@@ -146,7 +146,9 @@
   ;; food and printed scoring; only newly created games use the new defaults.
   ;; Network packets still require an exact match between running clients.
   (or (= @engine-fingerprint fingerprint)
-      (contains? #{;; Community batch three adds cards; existing saved decisions remain valid.
+      (contains? #{;; Resource-choice queues preserve existing decisions and single-choice recordings.
+                   "484da90951daa1ca326035df1e3d5f1d7493cf11165585255ae38d7c0129c17b"
+                   ;; Community batch three adds cards; existing saved decisions remain valid.
                    "e9c88aecd34003d215e9735472f3906be0dc80612a047f3d638a3a9def3a0317"
                    "c392563c1a00c063ed0975f223d2dae2adafc1aa84eba60c7d1c22f625a897f3"
                    ;; 6fede24 adds optional rules; the first G/WM/FR batch adds

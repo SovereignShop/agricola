@@ -15,6 +15,19 @@
       (= key :card) (update :draft dissoc :improvement :upgrade :bake-grain :payment-option :return-improvement :return-improvements :as-major? :discount-resource :manufacturer-discount :wood-carver?))))
 ;; Apply multi-control edits to the latest draft, not the render-time snapshot.
 ;; Several DOM changes can arrive before Reagent renders the next frame.
+(rf/reg-event-db :draft-resource-queue
+  (fn [db [_ decision amount operation value]]
+    (let [prior (get-in db [:draft :effect-resource-queue])
+          resources (if (= decision (:decision prior)) (vec (:resources prior)) [])
+          next (case operation
+                 :add (cond (= amount 1) [value]
+                            (< (count resources) amount) (conj resources value)
+                            :else resources)
+                 :remove (if (and (integer? value) (<= 0 value) (< value (count resources)))
+                           (vec (concat (subvec resources 0 value) (subvec resources (inc value)))) resources)
+                 :clear [])]
+      (assoc-in db [:draft :effect-resource-queue] {:decision decision :resources next}))))
+
 (rf/reg-event-db :draft-map-entry
   (fn [db [_ key entry value]]
     (if (nil? value) (update-in db [:draft key] dissoc entry)

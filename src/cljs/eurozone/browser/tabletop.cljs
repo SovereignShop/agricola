@@ -659,7 +659,7 @@
                             [button "Choose another space" #(do (dispatch :select-action nil) (close!))]]])
                         (if simple-action?
                           [(:action-editor renderers) g (get-in g [:players actor]) (:draft ui) (:busy? ui)]
-                          [(:player-panel renderers) g (get-in g [:players actor]) (:draft ui) can-play? (:busy? ui)])]
+                          [(:player-panel renderers) g (get-in g [:players actor]) (:draft ui) can-play? (:busy? ui) true])]
              :farm [:div [(:player-panel renderers) g (get-in g [:players (:pid active-popup)]) (:draft ui) can-play? (:busy? ui)]
                     [controls/harvest-planner room (:pid active-popup)]]
              :deck [deck-spread popup-deck (get-in g [:players (first deck-path)]) inspect-from-deck!]

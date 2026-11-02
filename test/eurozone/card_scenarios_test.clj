@@ -43,7 +43,7 @@
 
 (def review-commands
   {"businesswoman" [{:improvement :fireplace-2} {:skip? true}]
-   "singer" [{:resource :reed} {:resource :reed}]
+   "singer" [{:resources [:reed :reed]}]
    "gardening-tools" [{} {:plantings [{:cell 0 :crop :grain}]}]
    "shovel" [{} {:plantings [{:cell 0 :crop :vegetable}]}]
    "debris-dealer" [{:type :action :space :renovate}]

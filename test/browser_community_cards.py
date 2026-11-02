@@ -53,11 +53,10 @@ def check(base):
                         dialog.get_by_role('button',name='Resolve effect →',exact=True).click()
                         expect(dialog).to_have_count(0)
                     elif id in ('singer','herdsman'):
-                        for resource in (['stone','stone'] if id=='singer' else ['boar']):
-                            dialog.get_by_label('Resource',exact=True).select_option(resource)
-                            revision=frame.locator('.game').get_attribute('data-revision')
-                            dialog.get_by_role('button',name='Resolve effect →',exact=True).click()
-                            expect(frame.locator('.game')).not_to_have_attribute('data-revision',revision)
+                        expect(dialog.get_by_role('group',name="Ada's farm",exact=True)).to_have_count(0)
+                        for resource in (['Stone','Stone'] if id=='singer' else ['Wild boar']):
+                            dialog.get_by_role('button',name='Add '+resource,exact=True).click()
+                        dialog.get_by_role('button',name=('Take 2 resources →' if id=='singer' else 'Take 1 animal →'),exact=True).click()
                         expect(dialog).to_have_count(0)
                     elif id=='ruins':
                         expect(dialog.get_by_text('Take the next Stone',exact=False)).to_be_visible()
@@ -77,12 +76,9 @@ def check(base):
                         expect(preview).to_have_count(0)
                         if id=='homework':
                             nested=frame.get_by_role('dialog',name='Resolve Singer',exact=True)
-                            for resource in ['wood','reed']:
-                                expect(nested).to_be_visible()
-                                nested.get_by_label('Resource',exact=True).select_option(resource)
-                                revision=frame.locator('.game').get_attribute('data-revision')
-                                nested.get_by_role('button',name='Resolve effect →',exact=True).click()
-                                expect(frame.locator('.game')).not_to_have_attribute('data-revision',revision)
+                            for resource in ['Wood','Reed']:
+                                nested.get_by_role('button',name='Add '+resource,exact=True).click()
+                            nested.get_by_role('button',name='Take 2 resources →',exact=True).click()
                             expect(nested).to_have_count(0)
                         expect(dialog).to_be_visible()
                         dialog.get_by_role('button',name='Skip this effect',exact=True).click()

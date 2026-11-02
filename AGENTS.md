@@ -2,6 +2,7 @@
 
 For every new card implementation, and for fixes to interactive card effects:
 
+- Review the interaction explicitly: reuse an existing flow only when it fits the card well; otherwise add a tailored flow built from consistent shared controls. Resource choices should use resource icons and editable selections where appropriate. Show a farm or clickable farm tiles only when they help with the current decision. Verify the chosen flow in the prepared test table, including mobile use.
 - Add a playable prepared position to `src/main/cljc/eurozone/card_scenarios.cljc` so it appears under **Card test tables** in the browser and Discord Activity lobby.
 - Prepare the prerequisites and resources, then trigger the effect through the native engine. Pause immediately before the relevant decision. For automatic effects, pause before the triggering action so the reviewer can observe its result.
 - Give each scenario a clear description of what to try. Use a fresh table controlled by its creator; never overwrite an existing game to stage a test.

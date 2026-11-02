@@ -617,10 +617,13 @@
       (and (= :pay-or-beg (:op effect)) (< (a/amount (p g player) :food) (:food effect)))
       (and (= :corn-select (:op effect)) (> (count (get-in g [:corn-sale :offers])) 1))
       (and (= :reveal-rounds (:op effect)) (= 11 (:round g)))
-      (#{:serf :perpetual-play :foreman :animal-breeder :animal-trainer :fence-overseer :mark-fence-space :return-animal-loan :freshman-bake :classify-fields :paper-knife :lodger-remove :ability-window :choose :plow :plow-many :wheel-plow :mini-pasture :stable :build-rooms :choose-good :card-action :bake :bake-one :take-field-crop :sow-offer :sow :housing :cottage :scholar} (:op effect))
+      (and (= :choose-good (:op effect)) (not (contains? effect :selected-resource)))
+      (#{:serf :perpetual-play :foreman :animal-breeder :animal-trainer :fence-overseer :mark-fence-space :return-animal-loan :freshman-bake :classify-fields :paper-knife :lodger-remove :ability-window :choose :plow :plow-many :wheel-plow :mini-pasture :stable :build-rooms :card-action :bake :bake-one :take-field-crop :sow-offer :sow :housing :cottage :scholar} (:op effect))
       (and (= :seasonal-crop (:op effect)) (>= (:round g) 6))))
 (defn run-effect* [g {:keys [player card effect context window] :as head} choice]
-  (let [pid player current (p g pid) op (:op effect) cost (expr/quantities g pid context (or (:cost effect) {}))]
+  (let [pid player current (p g pid) op (:op effect) cost (expr/quantities g pid context (or (:cost effect) {}))
+        choice (if (and (= op :choose-good) (contains? effect :selected-resource))
+                 (assoc choice :resource (:selected-resource effect)) choice)]
     (if (:skip? choice)
       (do (a/require! (optional-effect? g head) "This effect is mandatory.")
           (case op
@@ -1604,11 +1607,37 @@
               chosen? #(and (= cid (:card %)) (= (:window head) (:window %)) (= pid (:player %)))]
           (-> g (assoc :effect-queue (vec (concat (filter chosen? queue) (remove chosen? queue))))
               (update :decision-id (fnil inc 0)))))))
+(defn resource-choice-count
+  "Consecutive identical mandatory resource choices from one card can be
+   selected together. Their effects still execute separately, in native order."
+  [g]
+  (let [head (first (:effect-queue g)) effect (:effect head)]
+    (if (not= :choose-good (:op effect)) 0
+      (if (or (optional-effect? g head) (seq (:cost effect))) 1
+        (count (take-while #(= head %) (:effect-queue g)))))))
+
+(defn prepare-resource-choices [g choice]
+  (if-not (contains? choice :resources) [g choice]
+    (let [head (first (:effect-queue g)) resources (:resources choice)
+          n (resource-choice-count g)]
+      (a/require! (and (pos? n) (vector? resources) (= n (count resources)) (not (:skip? choice))
+                       (every? (set (get-in head [:effect :choices])) resources))
+                  (str "Choose exactly " n " of the offered resources."))
+      ;; Preselect only the remaining choices, rather than executing past any
+      ;; reactions caused by the first gain. Interruptions persist normally.
+      [(update g :effect-queue
+               #(vec (concat [(first %)]
+                             (map (fn [task resource] (assoc-in task [:effect :selected-resource] resource))
+                                  (take (dec n) (rest %)) (rest resources))
+                             (drop n %))))
+       (assoc choice :resource (first resources))])))
+
 (defn resolve-choice [g pid choice]
   (let [head (first (:effect-queue g))]
     (a/require! (and (= :effect (:kind head)) (= pid (:player head))) "It is another player's card decision.")
     (a/require! (= (:decision choice) (:decision-id g)) "That decision has already been resolved.")
-    (let [next (-> g (update :effect-queue #(vec (rest %))) (run-effect head choice)
+    (let [[g choice] (prepare-resource-choices g choice)
+          next (-> g (update :effect-queue #(vec (rest %))) (run-effect head choice)
                    (update :decision-id (fnil inc 0)))
           next (cond-> next (:once? head) (assoc-in [:players pid :card-state (:card head) :triggered?] true))]
       (observe-effect! head choice g next)
