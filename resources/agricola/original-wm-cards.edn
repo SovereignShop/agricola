@@ -110,4 +110,14 @@
               :condition [:test [:and [:not [:= [:context :manure?] true]] [:>= [:context :harvested-goods] 2]]]
               :effect {:op :card-action :kinds #{:occupation} :occupation-cost 2 :optional? true}}]}
 
+ :catalog/original-expansion-wm-1-amazon
+ {:triggers [{:event :use-space :spaces #{:fishing} :condition [:round 7] :effect {:op :gain :goods {:sheep 1}}}
+             {:event :use-space :spaces #{:fishing} :condition [:round 9] :effect {:op :gain :goods {:boar 1}}}
+             {:event :use-space :spaces #{:fishing} :condition [:round 11] :effect {:op :gain :goods {:cattle 1}}}
+             {:event :use-space :spaces #{:fishing} :condition [:round 13]
+              :effect {:op :choose-good :choices [:sheep :boar :cattle]}}]}
+ :catalog/original-expansion-wm-59-apprenticeship
+ {:play [{:op :card-action :kinds #{:occupation} :occupation-cost 0 :optional? true
+          :available-when [:fewer-occupations-than-each-other]}]}
+
 }

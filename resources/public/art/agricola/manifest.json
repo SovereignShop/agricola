@@ -2263,6 +2263,42 @@
       "source": "http://playagricola.com/Agricola/Cards/Cards/occx3Journeyman_3956_4.jpg",
       "sha256": "e0080b01e94d71a19bb063d4207412707c0d907063a05e0fb6304beefbd09b51",
       "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-g013.jpg",
+      "source": "http://playagricola.com/Agricola/Images/occg1claystarter.jpg",
+      "sha256": "ffcefdb65b457ed233e54d0ca530b930368384fd4d821f1e0cf1f74d1ad71c92",
+      "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-g016.jpg",
+      "source": "http://playagricola.com/Agricola/Images/occg3fencehelper.jpg",
+      "sha256": "1c1e9d1b60c9d632bdcc92b8781ce4fb69091eaaa1fdf3568761626266002448",
+      "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-wm001.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx3Amazon_670_6.jpg",
+      "sha256": "c68b5c58c7171f57529e9d9b0891bdcbf649ef0bf49fa3a91cf7760a24954ac9",
+      "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-wm059.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorApprenticeship_597_7.jpg",
+      "sha256": "d7bec53c78ca062747e36f592ef4f8d2d7e7d93478198ec27bf00a9d9eeb0807",
+      "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-fr012.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorCamembert_2399_5.jpg",
+      "sha256": "91f7d2edbdd4a68338921542cf61e6e24ec4be365047bd8138f8afa15b32d045",
+      "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-fr015.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorCoffeeBreak_3786_9.jpg",
+      "sha256": "a0e9b4a0225a2920b535f847559adf4dfd5d63f5992947e6928a8184a7a1112f",
+      "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
     }
   ]
 }

@@ -25,9 +25,9 @@ def check(base,fixture):
                 expect(inspected.locator('.card-sheet-art')).to_have_css('background-position','0% 0%')
                 page.screenshot(path='/tmp/eurozone-five-player-print.png')
             page.get_by_role('button',name='Close dialog',exact=True).click()
-        assert int(minors)+int(occupations)==683
+        assert int(minors)+int(occupations)==689
         assert not errors,errors
-        print('PASS all 683 hand cards render images, including 48 five-player occupations')
+        print('PASS all 689 hand cards render images, including 48 five-player occupations')
         browser.close()
 
 if __name__=='__main__':main(check,'test/eurozone/all_prints_browser_fixture.clj')

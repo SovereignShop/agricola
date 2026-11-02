@@ -91,4 +91,10 @@
                                  {:label "Food → Wild boar" :cost {:food 1} :effects [{:op :gain :goods {:boar 1}}]}
                                  {:label "Food → Cattle" :cost {:food 1} :effects [{:op :gain :goods {:cattle 1}}]}]}}]}
 
+ :catalog/original-expansion-fr-12-camembert
+ {:play [{:op :place-space-goods :count 3 :goods {:food 1}}]}
+ :catalog/original-expansion-fr-15-coffee-break
+ {:play [{:op :schedule :offsets [1 2 3 4 5] :goods {:food 1}}]
+  :triggers [{:event :occupation :effect {:op :cancel-schedule}}]}
+
 }

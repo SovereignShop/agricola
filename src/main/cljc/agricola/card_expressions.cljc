@@ -77,6 +77,9 @@
           :stored-good (get-in p [:card-state x :stored-goods (second args)] 0)
           :other-occupations-below (boolean (some #(< (count (:occupations %)) (ev x))
                                          (if (= 1 (count (:players g))) [p] (remove #(= pid (:id %)) (:players g)))))
+          :fewer-occupations-than-each-other
+          (every? #(< (cards/occupation-count p nil) (cards/occupation-count % nil))
+                  (remove #(= pid (:id %)) (:players g)))
           :other-owned-cards (reduce + 0 (for [other (:players g) :when (not= pid (:id other))]
                                           (count (filter x (cards/owned other)))))
           :baking-improvements (count (a/baking-improvement-ids p))

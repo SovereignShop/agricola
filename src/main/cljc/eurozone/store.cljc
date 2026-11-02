@@ -146,7 +146,9 @@
   ;; food and printed scoring; only newly created games use the new defaults.
   ;; Network packets still require an exact match between running clients.
   (or (= @engine-fingerprint fingerprint)
-      (contains? #{;; Community batch seven opts new harvest facts in only for new cards.
+      (contains? #{;; Community batch eight adds opt-in effects without changing old decisions.
+                   "b0e1d9648ab404799f1bf4a8e3a657e0af5be7294b24a1f22dfa5f4279d405d7"
+                   ;; Community batch seven opts new harvest facts in only for new cards.
                    "aa47d640921c1b8fca81ba0914e663844ee2760ef6a439516edba60df4b8ef20"
                    ;; Community batch six adds card stocks and rooms without changing saved decisions.
                    "4957e6f5d00b391a561adf0f5c2b10d9b45a52ddd95dd46c7f38f5478388fdbf"

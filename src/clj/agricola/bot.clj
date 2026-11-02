@@ -190,6 +190,11 @@
                             {:animals {:boar boar :cattle cattle}})
                   :grow (if (:reed-hut? p) [{:adopt-reed-hut? false} {:adopt-reed-hut? true}] [{}])
                   :resource-seller-receipt (map #(hash-map :option %) (range (count (g/resource-seller-options state pid (:card head) (:goods effect)))))
+                  :place-space-goods
+                  (let [spaces (vec (g/fence-marker-spaces state pid)) n (:count effect)]
+                    ;; Rotate through small, legal assignments rather than enumerating all triples.
+                    (for [offset (range (count spaces))]
+                      {:spaces (vec (take n (drop offset (cycle spaces))))}))
                   :foreman (map #(hash-map :space %) (g/fence-marker-spaces state pid))
                   :animal-breeder (map #(hash-map :animal %) a/animals)
                   :animal-trainer (let [budget (min (a/amount p :food) (get-in head [:context :pile-food] 0))]

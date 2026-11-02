@@ -42,7 +42,14 @@
       (is (= (:players (scenarios/scenario id) 2) (count (:players state)))))))
 
 (def review-commands
-  {"private-market" [{:type :ability :card :catalog/original-expansion-g-95-private-market :option 3}]
+  {"clay-starter" [{:type :action :space :lessons :card :catalog/original-expansion-g-13-clay-starter}]
+   "fence-helper" [{:fences (vec (a/edges 0))}]
+   "amazon" [{:type :action :space :fishing}]
+   "amazon-choice" [{:resource :boar}]
+   "apprenticeship" [{:card :catalog/original-expansion-g-5-architect}]
+   "camembert" [{:spaces [:meeting :grain :wood]} {:type :action :space :grain}]
+   "coffee-break" [{:type :action :space :lessons :card :catalog/original-expansion-g-5-architect}]
+   "private-market" [{:type :ability :card :catalog/original-expansion-g-95-private-market :option 3}]
    "grain-market" [{}]
    "grain-elevator" [{:type :action :space :grain}]
    "grain-elevator-opponent" [{:type :action :space :grain}]

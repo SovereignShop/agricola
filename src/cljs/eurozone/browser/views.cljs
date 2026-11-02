@@ -546,9 +546,10 @@
 (defn board-action [g id can-play? draft busy? round & [extension?]]
   (let [action (a/action-definition g id) placement (get-in g [:occupied id]) owners (card-game/space-owners g id) owner (or (first owners) (first (get-in g [:newborn-spaces id]))) occupied? (some? placement)
                               share? (and (= :cards (:variant g)) (card-game/occupied-permission g (:turn g) id))
+                              selected? (if (set? (:space draft)) (contains? (:space draft) id) (= id (:space draft)))
                               gain (not-empty (merge-with + (if (:accumulate action) (get-in g [:piles id]) (:gain action)) (get-in g [:space-bonuses id])))]
-      [:button.action-card {:class (str (name (:group action)) (when round " round-action") (when extension? " extension-action") (when (printed-action? g id) " printed-action") (when occupied? " occupied") (when (= id (:space draft)) " chosen"))
-                            :style (when-not (or round extension?) (board-position g id)) :disabled (if (:choose-space! draft) (not (contains? (:eligible-spaces draft) id)) (or (not (card-game/available-action-space? g (:turn g) id)) (and occupied? (not share?)) (not can-play?) busy?)) :aria-pressed (when (:choose-space! draft) (= id (:space draft))) :on-click #(if-let [choose! (:choose-space! draft)] (choose! id) (dispatch :select-action id))
+      [:button.action-card {:class (str (name (:group action)) (when round " round-action") (when extension? " extension-action") (when (printed-action? g id) " printed-action") (when occupied? " occupied") (when selected? " chosen"))
+                            :style (when-not (or round extension?) (board-position g id)) :disabled (if (:choose-space! draft) (not (contains? (:eligible-spaces draft) id)) (or (not (card-game/available-action-space? g (:turn g) id)) (and occupied? (not share?)) (not can-play?) busy?)) :aria-pressed (when (:choose-space! draft) selected?) :on-click #(if-let [choose! (:choose-space! draft)] (choose! id) (dispatch :select-action id))
                             :data-action (name id) :aria-label (str (:name action) ": " (:description action))
                             :title (or (:description action) (:name action))}
        (when round [art/round-card-art :front (art/round-card-indices id)])
@@ -647,7 +648,7 @@
      [:div.field-card-choices {:role "group" :aria-label "Card action spaces"}
       (for [cid card-spaces] ^{:key cid}
         [:button.field-card-choice {:type "button" :aria-label (:name (cards/card cid))
-                                    :aria-pressed (= cid selected) :on-click #(choose! cid)}
+                                    :aria-pressed (if (set? selected) (contains? selected cid) (= cid selected)) :on-click #(choose! cid)}
          [tabletop/card-face cid false nil]])])])
 (defn round-picker [g selected choose!]
   [:div.round-assignment-track {:role "group" :aria-label "Reserve stables on future rounds"}
@@ -1105,7 +1106,7 @@
         resource-count (if (= op :choose-good) (card-game/resource-choice-count g) 1)
         selected-resources (resource-selection g draft)
         keep (get draft :keep (select-keys (:goods p) a/animals))
-        choice (merge (select-keys draft [:salesman? :smallholder? :adopt-reed-hut? :wood-reed :wood-carver? :manufacturer-discount :purchase :perpetual-student? :from-space :animals :space :owner :buyer :cultivation-first? :return-animals :cook-with-bake :plow-card :plow-maker? :sow-before? :return-improvement :return-improvements :as-major? :discount-resource :accommodate-taken? :grain-source :animal :cell :cells :rooms :stables :fences :fence-material :rounds :person-kind :cards :frame? :brushwood? :clay-reed :clay-supports? :room-options :renovate-to :paper-maker? :occupation-wood :card :cook? :option :payment-option :improvement :upgrade :bake-grain :exchange?])
+        choice (merge (select-keys draft [:salesman? :smallholder? :adopt-reed-hut? :wood-reed :wood-carver? :manufacturer-discount :spaces :purchase :perpetual-student? :from-space :animals :space :owner :buyer :cultivation-first? :return-animals :cook-with-bake :plow-card :plow-maker? :sow-before? :return-improvement :return-improvements :as-major? :discount-resource :accommodate-taken? :grain-source :animal :cell :cells :rooms :stables :fences :fence-material :rounds :person-kind :cards :frame? :brushwood? :clay-reed :clay-supports? :room-options :renovate-to :paper-maker? :occupation-wood :card :cook? :option :payment-option :improvement :upgrade :bake-grain :exchange?])
                       (when (contains? draft :effect-fields) {:fields (:effect-fields draft)})
                       {:type :resolve :decision (:decision-id g) :keep keep :grain (get draft :effect-grain 1)
                        :action (or (:effect-action draft) (if (= op :young-artist) :draw :room))
@@ -1142,6 +1143,17 @@
          [:div [:p.small "You may play Chief's Daughter now for free, or keep it in your hand."]
           [:div {:style {:width "160px" :height "246px"}} [tabletop/card-face (:card effect) false nil]]]
          [:p.small "You have no card to play in response. Continue when ready."]))
+     (when (= op :place-space-goods)
+       (let [selected (set (:spaces draft)) limit (:count effect)
+             preview (reduce (fn [state space] (update-in state [:space-bonuses space]
+                                                #(merge-with + (or % {}) (:goods effect)))) g selected)
+             eligible (if (= limit (count selected)) selected (card-game/fence-marker-spaces g (:id p)))]
+         [:div {:role "group" :aria-label "Place goods on action spaces"}
+          [:p.small (str "Click " limit " different revealed action spaces. Click a marked space again to remove its food.")]
+          [:div.choice-recipe [goods (:goods effect)] [:span "→ each selected space"]]
+          [:p {:role "status"} (str (count selected) " / " limit " spaces selected")]
+          [board-picker preview eligible selected
+           #(draft! :spaces (vec (sort (if (contains? selected %) (disj selected %) (conj selected %)))))]]))
      (when (#{:mark-fence-space :foreman} op)
        [:div [:p.small "Click the action space where you want to place your marker."]
         [board-picker g (card-game/fence-marker-spaces g (:id p)) (:space draft) #(draft! :space %)]])
@@ -1307,7 +1319,20 @@
         [farm-picker p (a/removable-field-cells p) [(:cell draft)] #(draft! :cell %)]])
      (when (= op :build-fences)
        [:div [:p.small "Select farm edges to enclose pastures."]
+        (when (:pay-actor? effect)
+          [:div.choice-recipe {:role "group" :aria-label "Payment to fencing player"}
+           [goods (:cost effect)] [:span "→"] [choice-icon :person (get-in head [:context :actor])]
+           [:span (:name (card-game/p g (get-in head [:context :actor])))]])
         [farm p (assoc draft :space :fences) true]
+        (when-let [after (try (a/build-fences (cond-> p (:reset-fence-bonus? effect) a/reset-turn-fence-bonus)
+                                             (:fences draft)
+                                             (merge (select-keys draft [:fence-material :wood-carver?])
+                                                    (select-keys effect [:free-fences])))
+                             (catch :default _ nil))]
+          [:div.choice-recipe {:role "group" :aria-label "Fence payment"}
+           [goods (into {} (for [resource a/resources :let [n (- (a/amount p resource) (a/amount after resource))]
+                                :when (pos? n)] [resource n]))]
+           [:span "→"] [choice-icon :fence] [:span (count (:fences draft))]])
         (when (cards/has? p :a016)
           [eurozone.browser.views/resource-choices "Fence material" (:fence-material draft :wood) #(draft! :fence-material %) [:wood :clay]])])
      (when (= op :build-rooms)

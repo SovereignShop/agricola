@@ -88,4 +88,12 @@
   :triggers [{:event :harvest-crops :condition [:test [:> [:context :harvested-grain-fields] 0]]
               :effect {:op :exchange :cost {:grain 1} :goods {:vegetable 1} :optional? true}}]}
 
+ :catalog/original-expansion-g-13-clay-starter
+ {:requires-effect-when [:and [:= [:house] :wood] [:= [:rooms] 2]]
+  :play [{:op :renovate :free? true :cost {:food 1}
+          :available-when [:and [:= [:house] :wood] [:= [:rooms] 2]]}]}
+ :catalog/original-expansion-g-16-fence-helper
+ {:triggers [{:event :fence :scope :others
+              :effect {:op :build-fences :cost {:food 1} :pay-actor? true :optional? true}}]}
+
 }

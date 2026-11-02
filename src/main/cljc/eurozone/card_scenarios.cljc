@@ -4,7 +4,21 @@
   (:require [agricola.engine :as a] [agricola.card-game :as game] [agricola.card-rules :as cards]))
 
 (def scenarios
-  [{:id "private-market" :card :catalog/original-expansion-g-95-private-market :name "Private Market"
+  [{:id "clay-starter" :card :catalog/original-expansion-g-13-clay-starter :name "Clay Starter"
+    :description "Use Lessons to play Clay Starter from your hand. Your two-room wooden hut automatically renovates to clay for one additional food, without paying clay or reed."}
+   {:id "fence-helper" :card :catalog/original-expansion-g-16-fence-helper :name "Fence Helper" :players 3
+    :description "Partner has just built fences. Select fence edges directly on your farm, paying their normal cost plus one food to Partner, or decline. Both payments are pictured."}
+   {:id "amazon" :card :catalog/original-expansion-wm-1-amazon :name "Amazon" :players 3
+    :description "Take Fishing in round seven to receive one sheep automatically as well as the food. The next table tests the round-thirteen animal choice."}
+   {:id "amazon-choice" :card :catalog/original-expansion-wm-1-amazon :name "Amazon · animal choice" :players 3
+    :description "Fishing in round thirteen has just supplied food. Click a sheep, wild boar, or cattle icon to choose the extra animal."}
+   {:id "apprenticeship" :card :catalog/original-expansion-wm-59-apprenticeship :name "Apprenticeship"
+    :description "You have fewer occupations than Partner, and the minor's one-food cost is paid. Click an occupation face to play it without a lesson fee, or decline. Apprenticeship then passes to Partner's hand."}
+   {:id "camembert" :card :catalog/original-expansion-fr-12-camembert :name "Camembert"
+    :description "Click three revealed action spaces to place one food on each. Occupied spaces, including Meeting Place, are allowed. Click again to undo a selection. The next player to use each space receives its food."}
+   {:id "coffee-break" :card :catalog/original-expansion-fr-15-coffee-break :name "Coffee Break"
+    :description "Round two has delivered the first food. Four food markers remain on rounds three to six. Play an occupation using Lessons to remove those future food; Flower Pots' round-eight vegetable must remain."}
+   {:id "private-market" :card :catalog/original-expansion-g-95-private-market :name "Private Market"
     :description "Open the played card and choose a pictured two-food exchange for wood, clay, reed, or stone. Only one exchange is allowed per round."}
    {:id "grain-market" :card :catalog/original-expansion-g-78-grain-market :name "Grain Market"
     :description "Three grain fields have just been harvested. Exchange one grain for a vegetable using the pictured payment, or decline. This is one offer per harvest, not one per field."}
@@ -151,6 +165,21 @@
         base (game/initialize (a/new-game names (vec (mapcat identity a/stages)) 0))
         funded (update base :players #(mapv (fn [p] (a/gain p {:food 12 :wood 8 :clay 8 :reed 6 :stone 8 :grain 3 :vegetable 2})) %))]
     (case id
+      "clay-starter" (put-in-hand funded 0 card)
+      "fence-helper" (-> funded (prepared-round 4) (played 0 card) (assoc :turn 1)
+                          (game/command 1 {:type :action :space :fences :fences (vec (a/edges 0))}))
+      "amazon" (-> funded (prepared-round 7) (played 0 card))
+      "amazon-choice" (-> funded (prepared-round 13) (played 0 card)
+                           (game/command 0 {:type :action :space :fishing}))
+      "apprenticeship" (-> funded (played 1 (cards/id :a109))
+                             (put-in-hand 0 :catalog/original-expansion-g-5-architect)
+                             (put-in-hand 0 :catalog/original-expansion-g-49-seed-master)
+                             (played 0 card))
+      "camembert" (-> funded (played 0 (cards/id :a109)) (played 0 (cards/id :a115))
+                       (put-in-hand 0 card) (game/command 0 {:type :action :space :meeting :card card}))
+      "coffee-break" (-> funded (played 0 :catalog/original-expansion-wm-82-flower-pots)
+                          (played 0 card) game/begin-round game/drain
+                          (put-in-hand 0 :catalog/original-expansion-g-5-architect))
       "private-market" (played funded 0 card)
       "grain-market" (-> funded (prepared-round 4)
                            (update-in [:players 0] #(reduce (fn [p cell] (a/place-tile p :field cell)) % [0 1 2]))

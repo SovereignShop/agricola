@@ -301,7 +301,8 @@
                              (-> (a/gain {:food shortfall}) (update :begging + shortfall)))
             paid (cond-> (a/pay player cost)
                    (and (= :minor (:kind card)) (:wood-carver? options)) (assoc :wood-carver-used? true))]
-        (when (:requires-effect? card)
+        (when (or (:requires-effect? card)
+                  (and (:requires-effect-when card) (expr/evaluate g pid {} (:requires-effect-when card))))
           (let [owned (update paid (if (= :occupation (:kind card)) :occupations :minors) (fnil conj []) cid)
                 probe (assoc-in g [:players pid] owned)]
             (a/require! (and (seq (:play card))
@@ -622,7 +623,7 @@
       (and (= :corn-select (:op effect)) (> (count (get-in g [:corn-sale :offers])) 1))
       (and (= :reveal-rounds (:op effect)) (= 11 (:round g)))
       (and (= :choose-good (:op effect)) (not (contains? effect :selected-resource)))
-      (#{:serf :perpetual-play :foreman :animal-breeder :animal-trainer :fence-overseer :mark-fence-space :return-animal-loan :freshman-bake :classify-fields :paper-knife :lodger-remove :ability-window :choose :remove-empty-field :plow :plow-many :wheel-plow :mini-pasture :stable :build-rooms :card-action :bake :bake-one :take-field-crop :sow-offer :sow :housing :cottage :scholar} (:op effect))
+      (#{:place-space-goods :serf :perpetual-play :foreman :animal-breeder :animal-trainer :fence-overseer :mark-fence-space :return-animal-loan :freshman-bake :classify-fields :paper-knife :lodger-remove :ability-window :choose :remove-empty-field :plow :plow-many :wheel-plow :mini-pasture :stable :build-rooms :card-action :bake :bake-one :take-field-crop :sow-offer :sow :housing :cottage :scholar} (:op effect))
       (and (= :seasonal-crop (:op effect)) (>= (:round g) 6))))
 (defn run-effect* [g {:keys [player card effect context window] :as head} choice]
   (let [pid player current (p g pid) op (:op effect) cost (expr/quantities g pid context (or (:cost effect) {}))
@@ -774,6 +775,13 @@
               (-> g (update-in [:players pid] a/gain goods)
                   (assoc-in [:players pid :card-state card :resource-stack] stack))))
           :flush-action-receipts (finish-action-receipt g (:action-id effect))
+          :place-space-goods
+          (let [spaces (:spaces choice) eligible (set (fence-marker-spaces g pid))
+                goods (expr/quantities g pid context (:goods effect))]
+            (a/require! (and (sequential? spaces) (= (:count effect) (count spaces) (count (set spaces)))
+                             (every? eligible spaces))
+                        (str "Choose " (:count effect) " different revealed action spaces."))
+            (reduce (fn [state space] (update-in state [:space-bonuses space] #(merge-with + (or % {}) goods))) g spaces))
           :foreman
           (do (a/require! (some #{(:space choice)} (fence-marker-spaces g pid)) "Choose an available action space for the food.")
               (a/require! (not= (:round g) (get-in current [:card-state card :used-round])) "Foreman was already used this round.")
@@ -1009,6 +1017,11 @@
                       (a/require! (expr/evaluate g pid context (get option :when true)) "That option is unavailable.")
                       (queue-front (update-in g [:players pid] a/pay (expr/quantities g pid context (:cost option)))
                                    (map #(task pid card % context) (:effects option)))))
+          :cancel-schedule
+          (update-in g [:players pid :schedule]
+                     #(into {} (for [[round entries] %
+                                     :let [kept (if (> round (:round g)) (filterv (fn [entry] (not= card (:card entry))) entries) entries)]
+                                     :when (seq kept)] [round kept])))
           :schedule (schedule g pid card (update effect :goods #(expr/quantities g pid context %)))
           :remaining-rounds (-> g (update-in [:players pid] a/gain (into {} (map (fn [[r n]] [r (* n (- 14 (:round g)))]) (:goods effect))))
                                  (update-in [:players pid :bonus-points] (fnil + 0) (* (or (:points effect) 0) (- 14 (:round g)))))
