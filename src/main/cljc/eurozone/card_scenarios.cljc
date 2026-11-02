@@ -4,7 +4,37 @@
   (:require [agricola.engine :as a] [agricola.card-game :as game] [agricola.card-rules :as cards]))
 
 (def scenarios
-  [{:id "clay-starter" :card :catalog/original-expansion-g-13-clay-starter :name "Clay Starter"
+  [{:id "reed-sale" :card :catalog/original-expansion-g-100-reed-sale :name "Reed Sale"
+    :description "Use Meeting Place to play Reed Sale: pay one reed, receive three food automatically, then pass the card to Partner."}
+   {:id "sheepskin-rug" :card :catalog/original-expansion-g-109-sheepskin-rug :name "Sheepskin Rug"
+    :description "Play Sheepskin Rug at Meeting Place, paying one sheep. Your Fireplace earns its two-point bonus. Upgrading that Fireplace to a Cooking Hearth later removes the bonus."}
+   {:id "sickle" :card :catalog/original-expansion-g-111-sickle :name "Sickle"
+    :description "Plow one more field at Farmland. Five actual field tiles plus eight grain and four vegetables (including planted crops) activate Sickle's three-point bonus."}
+   {:id "stonecutters-hall" :card :catalog/original-expansion-g-114-stonecutter-s-hall :name "Stonecutter's Hall"
+    :description "It is feeding time. Open the played card and click its stone-to-three-food exchange, once this harvest, or feed without using it. Two/four/five remaining stone earn one/two/three bonus points."}
+   {:id "tree-house" :card :catalog/original-expansion-g-116-tree-house :name "Tree House"
+    :description "Your clay hut has two rooms and two people. Take Family Growth: Tree House provides space for a third person without adding a room tile."}
+   {:id "boundary-stones" :card :catalog/original-expansion-wm-65-boundary-stones :name "Boundary Stones"
+    :description "Plow the empty space below the central field to make a T shape. Three fields now touch exactly one other field, increasing Boundary Stones' bonus from one to two points."}
+   {:id "brazier" :card :catalog/original-expansion-wm-66-brazier :name "Brazier"
+    :description "During feeding, open Brazier and click one pictured animal or vegetable exchange. Only one unit of one type may be converted per harvest. You may feed without using it."}
+   {:id "glassblowers-shop" :card :catalog/original-expansion-wm-86-glassblowers-shop :name "Glassblowers Shop"
+    :description "During feeding, open the played card to exchange one clay for three food. Pottery was returned on play; a repurchased Pottery still converts clay but must not add a second clay-scoring bonus."}
+   {:id "lamp-oil" :card :catalog/original-expansion-wm-94-lamp-oil :name "Lamp Oil"
+    :description "You have no food. Use Lessons to play Architect: Lamp Oil supplies one food before the one-food occupation fee, so the play is legal and your food stays at zero."}
+   {:id "worm-bait" :card :catalog/original-expansion-wm-115-worm-bait :name "Worm Bait"
+    :description "Two food are stored from an earlier Farmland action. Take Grain Seeds with the last worker to start harvest: one stored food returns to supply. Next round, Fishing collects the remainder along with its normal food."}
+   {:id "flat-hill" :card :catalog/original-expansion-fr-21-flat-hill :name "Flat Hill"
+    :description "Four fields are planted. Play Flat Hill at Meeting Place to renovate the wooden hut to clay automatically, without paying clay or reed."}
+   {:id "lighthouse" :card :catalog/original-expansion-fr-35-lighthouse :name "Lighthouse"
+    :description "Lighthouse was built in a house with exactly two stone rooms. Take Family Growth: it provides space for a third person. Later room extensions do not remove this space."}
+   {:id "drinker-of-absinthe" :card :catalog/original-expansion-fr-79-drinker-of-absinthe :name "Drinker of Absinthe"
+    :description "Play this occupation using Lessons in round six. One visible food marker is placed on each of rounds seven through fourteen and delivered at the start of that round."}
+   {:id "immigrants-son" :card :catalog/original-expansion-fr-87-immigrants-son :name "Immigrants Son"
+    :description "Your fifth occupation has just been played. Click an unused farm space to plow for free, or decline. The sixth and seventh occupations offer the same action; playing Immigrants Son itself never does."}
+   {:id "village-druid" :card :catalog/original-expansion-fr-116-village-druid :name "Village Druid" :players 4
+    :description "Play Architect using Lessons. Village Druid automatically supplies one sheep afterward. Playing Village Druid itself does not award a sheep."}
+   {:id "clay-starter" :card :catalog/original-expansion-g-13-clay-starter :name "Clay Starter"
     :description "Use Lessons to play Clay Starter from your hand. Your two-room wooden hut automatically renovates to clay for one additional food, without paying clay or reed."}
    {:id "fence-helper" :card :catalog/original-expansion-g-16-fence-helper :name "Fence Helper" :players 3
     :description "Partner has just built fences. Select fence edges directly on your farm, paying their normal cost plus one food to Partner, or decline. Both payments are pictured."}
@@ -165,6 +195,45 @@
         base (game/initialize (a/new-game names (vec (mapcat identity a/stages)) 0))
         funded (update base :players #(mapv (fn [p] (a/gain p {:food 12 :wood 8 :clay 8 :reed 6 :stone 8 :grain 3 :vegetable 2})) %))]
     (case id
+      "reed-sale" (put-in-hand funded 0 card)
+      "sheepskin-rug" (-> funded (a/build-improvement 0 {:improvement :fireplace-2})
+                              (update-in [:players 0] a/gain {:sheep 1}) (put-in-hand 0 card))
+      "sickle" (-> funded (played 0 card)
+                     (update-in [:players 0] #(reduce (fn [p cell] (a/place-tile p :field cell)) % [0 1 2 3]))
+                     (update-in [:players 0] a/sow [{:cell 0 :crop :grain} {:cell 1 :crop :grain}
+                                                  {:cell 2 :crop :vegetable} {:cell 3 :crop :vegetable}])
+                     (update-in [:players 0] a/gain {:grain 1}))
+      "stonecutters-hall" (-> funded (prepared-round 4) (played 0 card) last-harvest-action)
+      "tree-house" (-> funded (prepared-round 7)
+                         (played 0 (cards/id :a109)) (played 0 (cards/id :a115))
+                         (played 0 :catalog/original-expansion-g-49-seed-master)
+                         (played 0 card) (game/run-effect (game/task 0 nil {:op :renovate} {}) {}) game/drain)
+      "boundary-stones" (-> funded (played 0 card)
+                              (update-in [:players 0] #(reduce (fn [p cell] (a/place-tile p :field cell)) % [0 1 2])))
+      "brazier" (-> funded (prepared-round 4) (played 0 card)
+                      (update-in [:players 0] a/gain {:sheep 1}) last-harvest-action)
+      "glassblowers-shop" (-> funded (prepared-round 4)
+                               (a/build-improvement 0 {:improvement :pottery}) (played 0 card) last-harvest-action)
+      "lamp-oil" (-> funded (update-in [:players 0] a/build-fences (vec (a/edges 0)))
+                       (update-in [:players 0] a/gain {:sheep 2}) (played 0 card)
+                       (played 0 :catalog/original-expansion-g-49-seed-master)
+                       (put-in-hand 0 :catalog/original-expansion-g-5-architect)
+                       (assoc-in [:players 0 :goods :food] 0))
+      "worm-bait" (-> funded (played 0 card) (game/command 0 {:type :action :space :plow :cell 0})
+                        (prepared-round 4) (assoc :turn 0)
+                        (update :players #(mapv (fn [p] (assoc p :remaining (if (zero? (:id p)) 1 0))) %)))
+      "flat-hill" (-> funded
+                        (update-in [:players 0] #(reduce (fn [p cell] (a/place-tile p :field cell)) % [0 1 2 3]))
+                        (update-in [:players 0] a/sow [{:cell 0 :crop :grain} {:cell 1 :crop :grain}
+                                                     {:cell 2 :crop :vegetable} {:cell 3 :crop :vegetable}])
+                        (put-in-hand 0 card))
+      "lighthouse" (-> funded (prepared-round 7) (assoc-in [:players 0 :house] :stone) (played 0 card))
+      "drinker-of-absinthe" (-> funded (prepared-round 6) (put-in-hand 0 card))
+      "immigrants-son" (-> funded (played 0 card) (played 0 (cards/id :a109)) (played 0 (cards/id :a115))
+                             (played 0 :catalog/original-expansion-g-49-seed-master)
+                             (put-in-hand 0 :catalog/original-expansion-g-5-architect)
+                             (game/command 0 {:type :action :space :lessons :card :catalog/original-expansion-g-5-architect}))
+      "village-druid" (-> funded (played 0 card) (put-in-hand 0 :catalog/original-expansion-g-5-architect))
       "clay-starter" (put-in-hand funded 0 card)
       "fence-helper" (-> funded (prepared-round 4) (played 0 card) (assoc :turn 1)
                           (game/command 1 {:type :action :space :fences :fences (vec (a/edges 0))}))

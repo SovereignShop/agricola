@@ -120,4 +120,26 @@
  {:play [{:op :card-action :kinds #{:occupation} :occupation-cost 0 :optional? true
           :available-when [:fewer-occupations-than-each-other]}]}
 
+ :catalog/original-expansion-wm-65-boundary-stones
+ {:score {:type :expression :value [:if [:>= [:field-endpoints] 5] 5 [:max 0 [:- [:field-endpoints] 1]]]}}
+ :catalog/original-expansion-wm-66-brazier
+ {:ability {:op :exchange-options :phases #{:feeding} :limit-per-round 1 :food-conversion? true
+            :options [{:label "Vegetable → 3 Food" :cost {:vegetable 1} :goods {:food 3}}
+                      {:label "Sheep → 2 Food" :cost {:sheep 1} :goods {:food 2}}
+                      {:label "Wild boar → 3 Food" :cost {:boar 1} :goods {:food 3}}
+                      {:label "Cattle → 4 Food" :cost {:cattle 1} :goods {:food 4}}]}}
+ :catalog/original-expansion-wm-86-glassblowers-shop
+ {:cost :return-pottery :requires [:owns-major :pottery]
+  :passive {:major-or-minor true :suppress-craft-bonus #{:pottery}}
+  :ability {:op :exchange-options :phases #{:feeding} :limit-per-round 1
+            :options [{:label "Clay → 3 Food" :cost {:clay 1} :goods {:food 3}}]}
+  :score {:type :expression :value [:+ [:if [:>= [:goods :clay] 2] 1 0] [:if [:>= [:goods :clay] 4] 1 0] [:if [:>= [:goods :clay] 5] 1 0]]}}
+ :catalog/original-expansion-wm-94-lamp-oil
+ {:passive {:occupation-food 1}}
+ :catalog/original-expansion-wm-115-worm-bait
+ {:triggers [{:event :use-space :spaces #{:plow} :effect {:op :store-goods :goods {:food 2}}}
+             {:event :use-space :spaces #{:fishing} :effect {:op :release-stored}}
+             {:event :before-field-phase :condition [:test [:not [:= [:context :manure?] true]]]
+              :effect {:op :discard-stored :goods {:food 1}}}]}
+
 }

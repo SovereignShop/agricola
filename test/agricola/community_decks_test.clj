@@ -27,12 +27,12 @@
                          (cond (nil? f) nil
                                (and (seq? f) (= '(def printed-files) (take 2 f))) (nth f 2)
                                :else (recur)))))]
-    (is (= 97 (count c/community-deck-definitions)))
+    (is (= 112 (count c/community-deck-definitions)))
     (doseq [[id _] c/community-deck-definitions :let [card (c/card id)]]
       (is (= id (:id card)))
       (is (some? (if (contains? card :requires) (:requires card) (expr/requirement (:prerequisites card)))) (str id))
       (is (.isFile (io/file "resources/public/art/agricola/cards" (art id))) (str id)))
-    (doseq [[deck implemented total] [["G" 32 119] ["WM" 31 115] ["FR" 34 120]]
+    (doseq [[deck implemented total] [["G" 37 119] ["WM" 36 115] ["FR" 39 120]]
             :let [pack (:pack-id (c/card (first (filter #(= deck (:deck (c/card %))) (keys c/community-deck-definitions)))))
                   coverage (first (filter #(= pack (:id %)) store/card-packs))]]
       (is (= implemented (:implemented coverage))) (is (= total (:total coverage)))

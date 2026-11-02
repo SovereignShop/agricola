@@ -818,9 +818,9 @@
          (when (some :reason choices)
            [:details.unavailable-cards [:summary "Unavailable cards"]
             (for [{:keys [id reason]} choices :when reason] ^{:key id} [:p.small (str (:name (cards/card id)) ": " reason)])])])]
-     (when (#{:return-cooking :return-oven :return-hearth :return-well :return-fireplace :return-joinery} (:cost (cards/card (:card draft))))
+     (when (#{:return-cooking :return-oven :return-hearth :return-well :return-fireplace :return-joinery :return-pottery} (:cost (cards/card (:card draft))))
        [:div
-        [:h4 (case (:cost (cards/card (:card draft))) :return-oven "Return an oven" :return-well "Return the Well" :return-fireplace "Return a Fireplace" :return-joinery "Return the Joinery" :return-hearth "Return a Cooking Hearth" "Return cooking improvement")]
+        [:h4 (case (:cost (cards/card (:card draft))) :return-oven "Return an oven" :return-well "Return the Well" :return-fireplace "Return a Fireplace" :return-joinery "Return the Joinery" :return-pottery "Return the Pottery" :return-hearth "Return a Cooking Hearth" "Return cooking improvement")]
         [:div.card-choice-spread {:role "group" :aria-label "Return improvement"}
          (for [id (card-game/card-return-options p (:card draft))] ^{:key id}
            [card-choice id (= id (or (:return-improvement draft) (first (card-game/card-return-options p (:card draft))))) #(draft! :return-improvement id)])]
@@ -1568,9 +1568,10 @@
           [graphical-choices "Exchange" (:option @selection) #(swap! selection assoc :option %)
            (for [[index option] (map-indexed vector (get-in card [:ability :options]))]
              [index (:label option) [effect-visual option g (:id p) {}]])]
-          (when (some? remaining) [:p.small (str remaining " exchanges remaining this round.")])
-          [field "Times" [:input {:type "number" :min 1 :max remaining :step 1 :value (:times @selection)
-                                  :on-change #(swap! selection assoc :times (js/parseInt (.. % -target -value)))}]]]
+          (when (some? remaining) [:p.small (str remaining (if (= #{:feeding} (get-in card [:ability :phases])) " exchanges remaining this harvest." " exchanges remaining this round."))])
+          (when (not= 1 (get-in card [:ability :limit-per-round]))
+            [field "Times" [:input {:type "number" :min 1 :max remaining :step 1 :value (:times @selection)
+                                    :on-change #(swap! selection assoc :times (js/parseInt (.. % -target -value)))}]])]
          :reed-food [recipe {:reed 1} {:food 2}]
          :buy-stock (if-let [resource (peek (get-in p [:card-state cid :stock]))] [recipe {:food 1} {resource 1}] [:p.small "Sold out"])
          :porcelain [graphical-choices "Clay to exchange" (:amount @selection) #(swap! selection assoc :amount %)

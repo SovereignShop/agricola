@@ -97,4 +97,21 @@
  {:play [{:op :schedule :offsets [1 2 3 4 5] :goods {:food 1}}]
   :triggers [{:event :occupation :effect {:op :cancel-schedule}}]}
 
+ :catalog/original-expansion-fr-21-flat-hill
+ {:requires [:>= [:harvestable-planted-fields] 4]
+  :play [{:op :renovate :free? true :available-when [:= [:house] :wood]}]}
+ :catalog/original-expansion-fr-35-lighthouse
+ {:requires [:and [:= [:house] :stone] [:= [:rooms] 2]] :passive {:extra-room 1}}
+ :catalog/original-expansion-fr-79-drinker-of-absinthe
+ {:play [{:op :schedule :rounds [7 8 9 10 11 12 13 14] :goods {:food 1}}]}
+ :catalog/original-expansion-fr-87-immigrants-son
+ {:triggers [{:event :occupation
+              :condition [:test [:and [:>= [:occupations] 5] [:<= [:occupations] 7]
+                                      [:not [:= [:context :card] :catalog/original-expansion-fr-87-immigrants-son]]]]
+              :effect {:op :plow :optional? true}}]}
+ :catalog/original-expansion-fr-116-village-druid
+ {:triggers [{:event :occupation
+              :condition [:test [:not [:= [:context :card] :catalog/original-expansion-fr-116-village-druid]]]
+              :effect {:op :gain :goods {:sheep 1}}}]}
+
 }

@@ -42,7 +42,22 @@
       (is (= (:players (scenarios/scenario id) 2) (count (:players state)))))))
 
 (def review-commands
-  {"clay-starter" [{:type :action :space :lessons :card :catalog/original-expansion-g-13-clay-starter}]
+  {"reed-sale" [{:type :action :space :meeting :card :catalog/original-expansion-g-100-reed-sale}]
+   "sheepskin-rug" [{:type :action :space :meeting :card :catalog/original-expansion-g-109-sheepskin-rug}]
+   "sickle" [{:type :action :space :plow :cell 4}]
+   "stonecutters-hall" [{:type :ability :card :catalog/original-expansion-g-114-stonecutter-s-hall :option 0}]
+   "tree-house" [{:type :action :space :growth}]
+   "boundary-stones" [{:type :action :space :plow :cell 6}]
+   "brazier" [{:type :ability :card :catalog/original-expansion-wm-66-brazier :option 0}]
+   "glassblowers-shop" [{:type :ability :card :catalog/original-expansion-wm-86-glassblowers-shop :option 0}]
+   "lamp-oil" [{:type :action :space :lessons :card :catalog/original-expansion-g-5-architect}]
+   "worm-bait" [{:type :action :space :grain}]
+   "flat-hill" [{:type :action :space :meeting :card :catalog/original-expansion-fr-21-flat-hill}]
+   "lighthouse" [{:type :action :space :growth}]
+   "drinker-of-absinthe" [{:type :action :space :lessons :card :catalog/original-expansion-fr-79-drinker-of-absinthe}]
+   "immigrants-son" [{:cell 0}]
+   "village-druid" [{:type :action :space :lessons :card :catalog/original-expansion-g-5-architect}]
+   "clay-starter" [{:type :action :space :lessons :card :catalog/original-expansion-g-13-clay-starter}]
    "fence-helper" [{:fences (vec (a/edges 0))}]
    "amazon" [{:type :action :space :fishing}]
    "amazon-choice" [{:resource :boar}]

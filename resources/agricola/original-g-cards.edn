@@ -96,4 +96,18 @@
  {:triggers [{:event :fence :scope :others
               :effect {:op :build-fences :cost {:food 1} :pay-actor? true :optional? true}}]}
 
+ :catalog/original-expansion-g-100-reed-sale
+ {:play [{:op :gain :goods {:food 3}}]}
+ :catalog/original-expansion-g-109-sheepskin-rug
+ {:score {:type :expression :value [:if [:> [:returnable-fireplaces] 0] 2 0]}}
+ :catalog/original-expansion-g-111-sickle
+ {:score {:type :expression :value [:if [:and [:>= [:field-tiles] 5] [:>= [:total-crops :grain] 8] [:>= [:total-crops :vegetable] 4]] 3 0]}}
+ :catalog/original-expansion-g-114-stonecutter-s-hall
+ {:cost-options [{:wood 3 :stone 2} {:clay 3 :stone 2} {:reed 3 :stone 2}]
+  :ability {:op :exchange-options :phases #{:feeding} :limit-per-round 1
+            :options [{:label "Stone → 3 Food" :cost {:stone 1} :goods {:food 3}}]}
+  :score {:type :expression :value [:+ [:if [:>= [:goods :stone] 2] 1 0] [:if [:>= [:goods :stone] 4] 1 0] [:if [:>= [:goods :stone] 5] 1 0]]}}
+ :catalog/original-expansion-g-116-tree-house
+ {:passive {:renovated-extra-room 1}}
+
 }

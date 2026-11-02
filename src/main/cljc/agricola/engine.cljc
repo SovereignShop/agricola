@@ -517,6 +517,7 @@
         homekeeper? (and (some true? (cards/passives p :homekeeper)) (#{:clay :stone} (:house p))
                          (some #(and (some field-cells (neighbors %)) (some pasture-cells (neighbors %))) (tiles p :room)))]
     (+ (count (tiles p :room)) (reduce + 0 (cards/passives p :extra-room))
+       (if (#{:clay :stone} (:house p)) (reduce + 0 (cards/passives p :renovated-extra-room)) 0)
        (if (:off-site-room p) 1 0) (if homekeeper? 1 0)
        (if (and (cards/has? p :a127) (get-in p [:card-state (cards/id :a127) :room-active?])) 1 0))))
 (defn grow
@@ -723,7 +724,8 @@
                    :rooms (* ({:wood 0 :clay 1 :stone 2} (:house p)) (count (tiles p :room)))
                    :family (* 3 (:family p))
                    :improvements (reduce + 0 (map #(:points (improvements %)) (:improvements p)))
-                   :bonus (reduce + 0 (for [id (:improvements p) :let [{:keys [craft bonus]} (improvements id)] :when (and craft (not (and (= id :joinery) (some true? (cards/passives p :sawmill)))))]
+                   :bonus (reduce + 0 (for [id (:improvements p) :let [{:keys [craft bonus]} (improvements id)] :when (and craft (not (some #(contains? % id) (cards/passives p :suppress-craft-bonus)))
+                                                                                                    (not (and (= id :joinery) (some true? (cards/passives p :sawmill)))))]
                                        (count (filter #(>= (craft-stock p craft) %) bonus))))
                    :begging (* -3 (:begging p))}]
     {:total (reduce + (vals breakdown)) :breakdown breakdown :tiebreak (reduce + (map #(amount p %) [:wood :clay :reed :stone]))}))

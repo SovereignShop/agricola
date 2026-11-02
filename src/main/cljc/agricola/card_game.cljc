@@ -228,7 +228,7 @@
                          :double-turn-plow (cond-> {:grain 1} (> (:round g) 3) (assoc :food 1))
                          :bottles {:clay (:family p) :food (:family p)}
                          (:fishing-person :clay-supply :return-two-improvements) {}
-                         (:return-cooking :return-oven :return-hearth :return-well :return-fireplace :return-joinery) (:printed-cost card)
+                         (:return-cooking :return-oven :return-hearth :return-well :return-fireplace :return-joinery :return-pottery) (:printed-cost card)
                          (:printed-cost card)))))))
 (defn card-return-options [player cid]
   (case (:cost (c/card cid))
@@ -237,6 +237,7 @@
     :return-hearth (a/returnable-hearths player)
     :return-well (when (contains? (:improvements player) :well) [:well])
     :return-fireplace (a/fireplace-upgrades player)
+    :return-pottery (when (contains? (:improvements player) :pottery) [:pottery])
     :return-joinery (when (contains? (:improvements player) :joinery) [:joinery])
     :return-two-improvements (sort (a/owned-improvement-ids player))
     nil))
@@ -245,7 +246,7 @@
     (for [i (range (count ids)) j (range (inc i) (count ids))] [(ids i) (ids j)])))
 (defn selected-card-returns [player cid options]
   (let [eligible (card-return-options player cid)
-        count-needed (case (:cost (c/card cid)) :return-two-improvements 2 (:return-cooking :return-oven :return-hearth :return-well :return-fireplace :return-joinery) 1 0)
+        count-needed (case (:cost (c/card cid)) :return-two-improvements 2 (:return-cooking :return-oven :return-hearth :return-well :return-fireplace :return-joinery :return-pottery) 1 0)
         chosen (case count-needed
                  2 (get options :return-improvements (vec (take 2 eligible)))
                  1 [(or (:return-improvement options) (first eligible))]
@@ -995,6 +996,11 @@
           :store-goods (update-in g [:players pid :card-state card :stored-goods]
                                  #(merge-with + (or % {}) (expr/quantities g pid context (:goods effect))))
           :clear-stored (assoc-in g [:players pid :card-state card :stored-goods] {})
+          :discard-stored
+          (update-in g [:players pid :card-state card :stored-goods]
+                     (fn [stored] (into {} (for [[resource n] stored
+                                                :let [left (max 0 (- n (get (:goods effect) resource 0)))]
+                                                :when (pos? left)] [resource left]))))
           :release-stored (-> g (update-in [:players pid] a/gain (get-in current [:card-state card :stored-goods] {}))
                               (assoc-in [:players pid :card-state card :stored-goods] {}))
           :take-pile-good
@@ -1420,6 +1426,11 @@
 (defn stored-goods-collectable? [player cid]
   (>= (reduce + 0 (vals (get-in player [:card-state cid :stored-goods])))
       (get-in (c/card cid) [:ability :minimum-stored] 1)))
+(defn exchange-phase-available? [g player cid]
+  (let [ability (:ability (c/card cid)) phases (:phases ability)]
+    (and (or (nil? phases) (contains? phases (:phase g)))
+         (not (contains? (:exclude-phases ability #{}) (:phase g)))
+         (not (and (:exclude-final-breeding? ability) (= 14 (:round g)) (= :finish-round (:phase g)))))))
 (defn anytime-available?
   ([player cid] (anytime-available? nil player cid))
   ([g player cid]
@@ -1440,7 +1451,7 @@
                                            (catch #?(:clj clojure.lang.ExceptionInfo :cljs :default) _ false)))
                         (a/construction-payment-options player))))
     :free-room (free-room-available? player cid)
-    :exchange-options (and (pos? (or (exchange-remaining g player cid) 1))
+    :exchange-options (and (exchange-phase-available? g player cid) (pos? (or (exchange-remaining g player cid) 1))
                            (boolean (some #(can-pay? player (:cost %)) (get-in (c/card cid) [:ability :options]))))
     :sheep-exchange (pos? (a/amount player :sheep))
     :porcelain (>= (a/amount player :clay) 2)
@@ -2478,8 +2489,7 @@
           (-> (run-effect g (task pid card {:op :build-rooms :max-rooms 1 :free? true} {}) cmd)
               (assoc-in [:players pid :card-state card :room-used?] true)))
       :exchange-options
-      (let [_ (a/require! (and (not (and (get-in (c/card card) [:ability :exclude-final-breeding?]) (= 14 (:round g)) (= :finish-round (:phase g))))
-                                      (not (contains? (get-in (c/card card) [:ability :exclude-phases] #{}) (:phase g)))) "This exchange is unavailable during this phase.")
+      (let [_ (a/require! (exchange-phase-available? g player card) "This exchange is unavailable during this phase.")
             options (get-in (c/card card) [:ability :options]) index (:option cmd)
             times (get cmd :times 1) remaining (exchange-remaining g player card)]
         (a/require! (and (integer? index) (<= 0 index) (< index (count options))) "Choose one of this card's exchanges.")

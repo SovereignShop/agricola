@@ -2,7 +2,22 @@
 (def available #{:revised-base/a002 :revised-base/a005 :revised-base/a009 :revised-base/a012 :revised-base/a016 :revised-base/a019 :revised-base/a024 :revised-base/a026 :revised-base/a032 :revised-base/a033 :revised-base/a038 :revised-base/a044 :revised-base/a050 :revised-base/a053 :revised-base/a055 :revised-base/a056 :revised-base/a063 :revised-base/a067 :revised-base/a069 :revised-base/a071 :revised-base/a075 :revised-base/a078 :revised-base/a080 :revised-base/a086 :revised-base/a087 :revised-base/a088 :revised-base/a090 :revised-base/a098 :revised-base/a102 :revised-base/a108 :revised-base/a110 :revised-base/a112 :revised-base/a114 :revised-base/a116 :revised-base/a119 :revised-base/a120 :revised-base/a123 :revised-base/a125 :revised-base/a143 :revised-base/a147 :revised-base/a155 :revised-base/a160 :revised-base/a165 :revised-base/b002 :revised-base/b008 :revised-base/b010 :revised-base/b013 :revised-base/b016 :revised-base/b019 :revised-base/b024 :revised-base/b025 :revised-base/b033 :revised-base/b036 :revised-base/b039 :revised-base/b045 :revised-base/b047 :revised-base/b050 :revised-base/b056 :revised-base/b057 :revised-base/b061 :revised-base/b062 :revised-base/b066 :revised-base/b068 :revised-base/b074 :revised-base/b077 :revised-base/b080 :revised-base/b084 :revised-base/b087 :revised-base/b089 :revised-base/b091 :revised-base/b095 :revised-base/b097 :revised-base/b098 :revised-base/b099 :revised-base/b102 :revised-base/b104 :revised-base/b107 :revised-base/b108 :revised-base/b109 :revised-base/b114 :revised-base/b121 :revised-base/b123 :revised-base/b126 :revised-base/b136 :revised-base/b142 :revised-base/b145 :revised-base/b156 :revised-base/b163 :revised-base/b164 :revised-base/b166})
 ;; Exact pack identities keep reprints and Original cards separate.
 (def printed-files
-  {:catalog/original-expansion-g-13-clay-starter "original-g013.jpg"
+  {:catalog/original-expansion-g-100-reed-sale "original-g100.jpg"
+   :catalog/original-expansion-g-109-sheepskin-rug "original-g109.jpg"
+   :catalog/original-expansion-g-111-sickle "original-g111.jpg"
+   :catalog/original-expansion-g-114-stonecutter-s-hall "original-g114.jpg"
+   :catalog/original-expansion-g-116-tree-house "original-g116.jpg"
+   :catalog/original-expansion-wm-65-boundary-stones "original-wm065.jpg"
+   :catalog/original-expansion-wm-66-brazier "original-wm066.jpg"
+   :catalog/original-expansion-wm-86-glassblowers-shop "original-wm086.jpg"
+   :catalog/original-expansion-wm-94-lamp-oil "original-wm094.jpg"
+   :catalog/original-expansion-wm-115-worm-bait "original-wm115.jpg"
+   :catalog/original-expansion-fr-21-flat-hill "original-fr021.jpg"
+   :catalog/original-expansion-fr-35-lighthouse "original-fr035.jpg"
+   :catalog/original-expansion-fr-79-drinker-of-absinthe "original-fr079.jpg"
+   :catalog/original-expansion-fr-87-immigrants-son "original-fr087.jpg"
+   :catalog/original-expansion-fr-116-village-druid "original-fr116.jpg"
+   :catalog/original-expansion-g-13-clay-starter "original-g013.jpg"
    :catalog/original-expansion-g-16-fence-helper "original-g016.jpg"
    :catalog/original-expansion-wm-1-amazon "original-wm001.jpg"
    :catalog/original-expansion-wm-59-apprenticeship "original-wm059.jpg"

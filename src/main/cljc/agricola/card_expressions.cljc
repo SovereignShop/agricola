@@ -49,8 +49,13 @@
           :own-work-turn (and (= :work (:phase g)) (= pid (:turn g)))
           :house (:house p) :round (:round g) :family (:family p) :newborn (:newborn p 0) :remaining (:remaining p 0) :begging (:begging p 0)
           :rooms (count (a/tiles p :room)) :fields (count (field-list p)) :field-tiles (count (a/tiles p :field))
+          :field-endpoints (let [fields (set (a/tiles p :field))]
+                             (count (filter #(= 1 (count (filter fields (a/neighbors %)))) fields)))
           :grain-fields (count-crop p :grain context) :vegetable-fields (count-crop p :vegetable context)
           :planted-farm-fields (count (filter #(some pos? (vals (a/field-crops %))) (filter #(= :field (:type %)) (:farm p))))
+          :harvestable-planted-fields
+          (count (filter #(some pos? (vals (a/field-crops %)))
+                         (concat (filter #(= :field (:type %)) (:farm p)) (vals (:card-fields p)))))
           :planted-fields (count (filter #(pos? (:count % 0)) (field-list p)))
           :empty-fields (count (filter #(zero? (:count % 0)) (field-list p)))
           :empty-farm-fields (count (filter #(and (= :field (:type %)) (not-any? pos? (vals (a/field-crops %)))) (:farm p)))
