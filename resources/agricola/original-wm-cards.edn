@@ -72,4 +72,17 @@
                       {:label "1 grain + 1 cattle → 6 food" :cost {:grain 1 :cattle 1} :goods {:food 6}}]}}
  :catalog/original-expansion-wm-73-diamond-mine
  {:play [{:op :schedule :offsets [1 2] :goods {:stone 1}}]}
+ :catalog/original-expansion-wm-77-edible-roots
+ {:passive {:observe-empty-harvest true}
+  :triggers [{:event :harvest-crop :condition [:test [:= [:context :emptied-field?] true]]
+              :effect {:op :gain :goods {:food 1}}}]}
+ :catalog/original-expansion-wm-79-festival-hall
+ {:requires [:>= [:grain-fields] 2]
+  :triggers [{:event :after-field-phase :condition [:test [:and [:not [:= [:context :manure?] true]] [:> [:goods :grain] 0]]]
+              :effect {:op :choose :optional? true
+                       :options [{:label "Grain → Wood + Food" :cost {:grain 1} :effects [{:op :gain :goods {:wood 1 :food 2}}]}
+                                 {:label "Grain → Clay + Food" :cost {:grain 1} :effects [{:op :gain :goods {:clay 1 :food 2}}]}
+                                 {:label "Grain → Reed + Food" :cost {:grain 1} :effects [{:op :gain :goods {:reed 1 :food 2}}]}
+                                 {:label "Grain → Stone + Food" :cost {:grain 1} :effects [{:op :gain :goods {:stone 1 :food 2}}]}]}}]}
+
 }

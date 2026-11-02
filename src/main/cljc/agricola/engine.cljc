@@ -448,6 +448,16 @@
 (defn field-crops [field]
   (merge-with + (or (:under-crops field) {})
               (if (and (:crop field) (pos? (:count field 0))) {(:crop field) (:count field)} {})))
+(defn removable-field-cells [player]
+  (let [fields (set (tiles player :field))]
+    (filterv (fn [cell]
+               (let [remaining (disj fields cell)]
+                 (and (not-any? pos? (vals (field-crops (get-in player [:farm cell]))))
+                      (or (empty? remaining) (connected? remaining))))) (sort fields))))
+(defn remove-empty-field [player cell]
+  (require! (some #{cell} (removable-field-cells player))
+            "Choose an empty farm field whose removal leaves the other fields connected.")
+  (assoc-in player [:farm cell] {:type :empty}))
 (defn field-crop-count [field crop] (get (field-crops field) crop 0))
 (defn normalize-field [field]
   (if (pos? (:count field 0)) field

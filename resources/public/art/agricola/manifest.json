@@ -2155,6 +2155,42 @@
       "reference": "http://playagricola.com/Agricola/Cards/index.php?v=c.chris-JA-",
       "sha256": "fca666a686e2fe0e2b9434cac48ade7014bab69139f9dd3a2823b3e9fe08495f",
       "note": "Unmodified English Artifex card face from Play-Agricola. Title, deck number, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-g107.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminorsheepmarket_v2.jpg",
+      "sha256": "514c931b4f473830bf2a5715b1c93bead7cdf258ca3d3c78522a92e342e6a77e",
+      "note": "English original G107 face, verified against card text and the Unofficial Agricola Compendium."
+    },
+    {
+      "file": "cards/original-g119.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminorwoodenbridge_v2.jpg",
+      "sha256": "c4e4774e9734d5fdbdf43cec4822c7e4c15e5259198539feeea95252e827c2dc",
+      "note": "English original G119 face, verified against card text and the Unofficial Agricola Compendium."
+    },
+    {
+      "file": "cards/original-wm77.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorEdibleRoots_2212_4.jpg",
+      "sha256": "89135f12939608f81dd55165f97eeb9d01b40064e7892cfad3f7d714ee4e440c",
+      "note": "English original WM77 face, verified against card text and the Unofficial Agricola Compendium."
+    },
+    {
+      "file": "cards/original-wm79.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorFestivalHall_1858_5.jpg",
+      "sha256": "fb677860c896ba7c1a5406a75ab8dab67112a74a7909d1ac13ee6c6482ad2a61",
+      "note": "English original WM79 face, verified against card text and the Unofficial Agricola Compendium."
+    },
+    {
+      "file": "cards/original-fr1.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorAbandonedWillow_3845_4.jpg",
+      "sha256": "4dc6c708f53733b6f9b4f57ca73231d03024fd8996b4c73f4c6f9d924f711cea",
+      "note": "English original FR1 face, verified against card text and the Unofficial Agricola Compendium."
+    },
+    {
+      "file": "cards/original-fr101.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx4Powerhouse_3445_11.jpg",
+      "sha256": "47a5a140ff48e86b119047d349b0d7bee54336a3428a2eafcc82c810bf4a6833",
+      "note": "English original FR101 face, verified against card text and the Unofficial Agricola Compendium."
     }
   ]
 }

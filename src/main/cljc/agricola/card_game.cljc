@@ -74,10 +74,14 @@
 (defn harvested-crop-events [player cells]
   (for [cell cells :let [field (get-in player (a/field-path cell))]
         :when (and (:crop field) (pos? (:count field 0)))]
-    (event :harvest-crop (:id player) {:cell cell :crop (:crop field)
-                                     :last? (and (= 1 (:count field))
-                                                 (not (and (= :vegetable (:crop field))
-                                                           (some true? (c/passives player :preserve-harvest-vegetables)))))})))
+    (let [last? (and (= 1 (:count field))
+                     (not (and (= :vegetable (:crop field))
+                               (some true? (c/passives player :preserve-harvest-vegetables)))))]
+      (event :harvest-crop (:id player)
+             (cond-> {:cell cell :crop (:crop field) :last? last?}
+               ;; Snapshot before harvesting: another queued effect may sow this field.
+               (some true? (c/passives player :observe-empty-harvest))
+               (assoc :emptied-field? (and last? (= 1 (reduce + 0 (vals (a/field-crops field)))))))))))
 (defn businessman-available? [g pid context]
   (let [cid :catalog/original-base-i-228-businessman
         key [(:round g) (or (get-in g [:action-context :phase]) (:phase g)) (:turn-serial g 0)]
@@ -618,7 +622,7 @@
       (and (= :corn-select (:op effect)) (> (count (get-in g [:corn-sale :offers])) 1))
       (and (= :reveal-rounds (:op effect)) (= 11 (:round g)))
       (and (= :choose-good (:op effect)) (not (contains? effect :selected-resource)))
-      (#{:serf :perpetual-play :foreman :animal-breeder :animal-trainer :fence-overseer :mark-fence-space :return-animal-loan :freshman-bake :classify-fields :paper-knife :lodger-remove :ability-window :choose :plow :plow-many :wheel-plow :mini-pasture :stable :build-rooms :card-action :bake :bake-one :take-field-crop :sow-offer :sow :housing :cottage :scholar} (:op effect))
+      (#{:serf :perpetual-play :foreman :animal-breeder :animal-trainer :fence-overseer :mark-fence-space :return-animal-loan :freshman-bake :classify-fields :paper-knife :lodger-remove :ability-window :choose :remove-empty-field :plow :plow-many :wheel-plow :mini-pasture :stable :build-rooms :card-action :bake :bake-one :take-field-crop :sow-offer :sow :housing :cottage :scholar} (:op effect))
       (and (= :seasonal-crop (:op effect)) (>= (:round g) 6))))
 (defn run-effect* [g {:keys [player card effect context window] :as head} choice]
   (let [pid player current (p g pid) op (:op effect) cost (expr/quantities g pid context (or (:cost effect) {}))
@@ -650,6 +654,9 @@
                 (:businessman? effect) (assoc-in [:players pid :card-state card (if (:merchant-repeat? context) :repeat-turn :last-turn)] (freshman-turn-key g))
                 (:once-per-turn? effect) (assoc-in [:players pid :card-state card :last-turn] (freshman-turn-key g)))]
         (case op
+          :remove-empty-field
+          (update-in g [:players pid] #(-> % (a/remove-empty-field (:cell choice))
+                                           (a/gain (expr/quantities g pid context (:goods effect)))))
           :relocate
           (let [origins (relocation-origins g pid) index (:option choice)]
             (a/require! (and (integer? index) (<= 0 index) (< index (count origins))) "Choose one eligible person to move.")
@@ -1331,7 +1338,7 @@
                   (= :corn-offer op) (when (>= (a/amount (p g player) :food) 2) [{}])
                   (= :juggler op) [{}]
                   (= :pelts op) [{:amount 1}]
-                  (#{:plow :mini-pasture :stable} op) (map #(hash-map :cell %) (range 15))
+                  (#{:plow :mini-pasture :stable :remove-empty-field} op) (map #(hash-map :cell %) (range 15))
                   (= :plow-many op) (map #(hash-map :cells [%]) (range 15))
                   (= :wheel-plow op) (cons {:skip? true} (map #(hash-map :cells [%]) (range 15)))
                   (#{:loppers :return-goods :lasso-followup} op) [{}]
@@ -1430,6 +1437,16 @@
         :let [pid (mod (+ (:starting-player g) offset) (count (:players g))) player (p g pid)]
         :when (some #(anytime-available? g player %) (c/active-owned player))]
     (task pid nil {:op :ability-window} {})))
+(defn before-work-tasks [g]
+  ;; Opt-in timing window: stone-producing anytime abilities (e.g. Politician)
+  ;; may fund Powerhouse after this round's deliveries, before its bonus is checked.
+  (for [offset (range (count (:players g)))
+        :let [pid (mod (+ (:starting-player g) offset) (count (:players g))) player (p g pid)]
+        cid (c/active-owned player)
+        :let [condition (get-in (c/card cid) [:passive :before-work-abilities])]
+        :when (and condition (expr/evaluate g pid {} condition)
+                   (some #(anytime-available? g player %) (c/active-owned player)))]
+    (task pid cid {:op :ability-window :timing :before-work} {})))
 (defn promote-available-effect [g head]
   ;; A temporary inability to pay must not consume this timing opportunity.
   ;; Run another currently available card in the same owner's window first.
@@ -1665,7 +1682,7 @@
 (defn preparation-reconsider [g]
   (let [fingerprint (preparation-fingerprint g)]
     (if (= fingerprint (:preparation-cycle g))
-      (queue-front (dissoc g :preparation-cycle) [(step :work)])
+      (queue-front (dissoc g :preparation-cycle) (concat (before-work-tasks g) [(step :work)]))
       (let [candidates (for [offset (range (count (:players g)))
                              :let [pid (mod (+ (:starting-player g) offset) (count (:players g)))]
                              head (trigger-tasks g (event :round-start pid {:preparation-reconsider? true}))

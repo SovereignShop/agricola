@@ -4,7 +4,21 @@
   (:require [agricola.engine :as a] [agricola.card-game :as game] [agricola.card-rules :as cards]))
 
 (def scenarios
-  [{:id "seed-spreader" :card :catalog/original-expansion-g-105-seed-spreader :name "Seed Spreader"
+  [{:id "sheep-market" :card :catalog/original-expansion-g-107-sheep-market :name "Sheep Market"
+    :description "Harvest is about to begin. Click a pictured grain, vegetable or sheep exchange, or decline. The exchange happens before crops are harvested."}
+   {:id "wooden-bridge" :card :catalog/original-expansion-g-119-wooden-bridge :name "Wooden Bridge"
+    :description "Take Reed Bank to receive one extra food, or Day Laborer to receive one extra reed. The bonus is automatic."}
+   {:id "edible-roots" :card :catalog/original-expansion-wm-77-edible-roots :name "Edible Roots"
+    :description "Take Grain Seeds with the last worker to start harvest. The last grain and vegetable on two fields give one food each; the third field still holds grain and gives no food."}
+   {:id "festival-hall" :card :catalog/original-expansion-wm-79-festival-hall :name "Festival Hall"
+    :description "Your fields have just been harvested. Exchange one grain for the pictured building resource plus two food, or decline. All four resource choices are available."}
+   {:id "abandoned-willow" :card :catalog/original-expansion-fr-1-abandoned-willow :name "Abandoned Willow"
+    :description "Click an empty field on your farm to return it and receive four wood. Removing the middle field would disconnect the others, so it cannot be selected. The card then belongs to Partner."}
+   {:id "powerhouse" :card :catalog/original-expansion-fr-101-powerhouse :name "Powerhouse" :players 4
+    :description "Take Grain Seeds with the last worker to start round two. Five stone in your supply give two food automatically at the start of work, after scheduled resources arrive."}
+   {:id "powerhouse-politician" :card :catalog/original-expansion-fr-101-powerhouse :name "Powerhouse + Politician" :players 4
+    :description "Round two is prepared, with four stone in supply. Open Politician and click its reed-to-stone exchange, then Begin work: Powerhouse gives two food. Continuing without the exchange gives one food. No farm selection is needed."}
+   {:id "seed-spreader" :card :catalog/original-expansion-g-105-seed-spreader :name "Seed Spreader"
     :description "Farmland has just been used. Sow exactly one grain or vegetable by clicking a field, or decline. Copse is also present to check that wood cannot be sown with this effect."}
    {:id "vegetable-scoop" :card :catalog/original-expansion-g-117-vegetable-scoop :name "Vegetable Scoop"
     :description "Take Vegetable Seeds on the shared board: you receive two vegetables automatically. Other vegetable receipts do not trigger the Scoop."}
@@ -111,6 +125,29 @@
         base (game/initialize (a/new-game names (vec (mapcat identity a/stages)) 0))
         funded (update base :players #(mapv (fn [p] (a/gain p {:food 12 :wood 8 :clay 8 :reed 6 :stone 8 :grain 3 :vegetable 2})) %))]
     (case id
+      "sheep-market" (-> funded (prepared-round 4) (played 0 (cards/id :a109)) (played 0 card)
+                          (update-in [:players 0] a/gain {:sheep 1}) last-harvest-action)
+      "wooden-bridge" (played funded 0 card)
+      "edible-roots" (-> funded (prepared-round 4)
+                           (update-in [:players 0] #(reduce (fn [p cell] (a/place-tile p :field cell)) % [0 1 2]))
+                           (played 0 card)
+                           (update-in [:players 0] a/sow [{:cell 0 :crop :grain} {:cell 1 :crop :vegetable} {:cell 2 :crop :grain}])
+                           (assoc-in [:players 0 :farm 0 :count] 1) (assoc-in [:players 0 :farm 1 :count] 1)
+                           (assoc :turn 0)
+                           (update :players #(mapv (fn [p] (assoc p :remaining (if (zero? (:id p)) 1 0))) %)))
+      "festival-hall" (-> funded (prepared-round 4)
+                            (update-in [:players 0] #(-> % (a/place-tile :field 0) (a/place-tile :field 1)
+                                                          (a/sow [{:cell 0 :crop :grain} {:cell 1 :crop :grain}])))
+                            (played 0 card) last-harvest-action)
+      "abandoned-willow" (-> funded
+                               (update-in [:players 0] #(reduce (fn [p cell] (a/place-tile p :field cell)) % [0 1 2]))
+                               (played 0 card))
+      "powerhouse" (-> funded (played 0 card) (assoc-in [:players 0 :goods :stone] 5) (assoc :turn 0)
+                       (update :players #(mapv (fn [p] (assoc p :remaining (if (zero? (:id p)) 1 0))) %)))
+      "powerhouse-politician" (-> (initial-state "powerhouse" names)
+                                 (played 0 :catalog/original-expansion-wm-41-politician)
+                                 (assoc-in [:players 0 :goods :stone] 4)
+                                 (game/command 0 {:type :action :space :grain}))
       "seed-spreader" (-> funded (played 0 (cards/id :a109)) (played 0 card)
                           (played 0 :catalog/original-base-i-78-copse)
                           (update-in [:players 0] a/place-tile :field 0)

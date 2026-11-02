@@ -57,4 +57,15 @@
               :effect {:op :sow-offer :max-fields 1 :allowed-crops #{:grain :vegetable} :optional? true}}]}
  :catalog/original-expansion-g-117-vegetable-scoop
  {:triggers [{:event :use-space :spaces #{:vegetable} :effect {:op :gain :goods {:vegetable 1}}}]}
+ :catalog/original-expansion-g-107-sheep-market
+ {:triggers [{:event :before-field-phase :condition [:test [:and [:not [:= [:context :manure?] true]] [:> [:+ [:goods :grain] [:goods :vegetable] [:goods :sheep]] 0]]]
+              :effect {:op :choose :optional? true
+                       :options [{:label "Grain → Sheep" :cost {:grain 1} :effects [{:op :gain :goods {:sheep 1}}]}
+                                 {:label "Vegetable → Sheep" :cost {:vegetable 1} :effects [{:op :gain :goods {:sheep 1}}]}
+                                 {:label "Sheep → Grain" :cost {:sheep 1} :effects [{:op :gain :goods {:grain 1}}]}
+                                 {:label "Sheep → Vegetable" :cost {:sheep 1} :effects [{:op :gain :goods {:vegetable 1}}]}]}}]}
+ :catalog/original-expansion-g-119-wooden-bridge
+ {:triggers [{:event :use-space :spaces #{:reed} :effect {:op :gain :goods {:food 1}}}
+             {:event :use-space :spaces #{:labor} :effect {:op :gain :goods {:reed 1}}}]}
+
 }

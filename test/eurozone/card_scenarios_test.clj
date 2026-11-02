@@ -42,7 +42,14 @@
       (is (= (:players (scenarios/scenario id) 2) (count (:players state)))))))
 
 (def review-commands
-  {"seed-spreader" [{} {:plantings [{:cell 1 :crop :vegetable}]}]
+  {"sheep-market" [{:option 2}]
+   "wooden-bridge" [{:type :action :space :reed}]
+   "edible-roots" [{:type :action :space :grain}]
+   "festival-hall" [{:option 3}]
+   "abandoned-willow" [{:cell 0}]
+   "powerhouse" [{:type :action :space :grain}]
+   "powerhouse-politician" [{:type :ability :card :catalog/original-expansion-wm-41-politician :option 0} {}]
+   "seed-spreader" [{} {:plantings [{:cell 1 :crop :vegetable}]}]
    "vegetable-scoop" [{:type :action :space :vegetable}]
    "diamond-mine" [{:type :action :space :meeting :card :catalog/original-expansion-wm-73-diamond-mine}]
    "encircling-wall" [{:cell 1}]

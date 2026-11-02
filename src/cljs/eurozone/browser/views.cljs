@@ -1130,7 +1130,7 @@
         reason (try (card-game/resolve-choice (with-private-hand g (:id p) ui) (:id p) choice) nil
                     (catch :default error (.-message error)))]
     [:div.card-decision
-     [:div.eyebrow "RESOLVE A CARD EFFECT"] [:h3 (case op :ability-window "After the harvest" :play-hand-response "Respond to Chief"
+     [:div.eyebrow "RESOLVE A CARD EFFECT"] [:h3 (case op :ability-window (if (= :before-work (:timing effect)) "Before work begins" "After the harvest") :play-hand-response "Respond to Chief"
                                                           (or (:name (cards/card (:card head)))
                                                               (case op (:sow :sow-offer) "Sow crops"
                                                                 :build-rooms "Build rooms"
@@ -1241,7 +1241,10 @@
            [card-choice cid selected? #(dispatch :draft-card cid (not selected?))
             {:aria-label (str "Offer " (:name (cards/card cid)))
              :disabled (and (not selected?) (>= (count (:cards draft)) 3))}])]])
-     (when (= op :ability-window) [:p.small "You may use your card abilities before continuing to the next round or final scoring."])
+     (when (= op :ability-window)
+       [:p.small (if (= :before-work (:timing effect))
+                   "You may use your card abilities before work begins and its bonuses are checked."
+                   "You may use your card abilities before continuing to the next round or final scoring.")])
      (when (and (= op :take-pile-good) (nil? (:space effect)))
        (let [options (card-game/pile-good-options g effect) space (first (:pile-choice draft))
              resources (map :resource (filter #(= space (:space %)) options))]
@@ -1289,6 +1292,10 @@
        [:div [:p.small "Click farm spaces to build stables at 2 wood each."]
         [farm-picker p (filter #(and (= :empty (get-in p [:farm % :type])) (not (get-in p [:farm % :stable]))) (range 15))
          (:stables draft) #(dispatch :draft-toggle-value :stables %)]])
+     (when (= op :remove-empty-field)
+       [:div [:div.choice-recipe [choice-icon :field] [:span "→"] [goods (:goods effect)]]
+        [:p.small "Click an empty field to return it. Your remaining fields must stay connected."]
+        [farm-picker p (a/removable-field-cells p) [(:cell draft)] #(draft! :cell %)]])
      (when (= op :build-fences)
        [:div [:p.small "Select farm edges to enclose pastures."]
         [farm p (assoc draft :space :fences) true]
@@ -1461,7 +1468,7 @@
      (when (:card head) [:p.small.card-rule-text (:text (cards/card (:card head)))])
      (when (and reason (or (not resource-picker?) (= resource-count (count selected-resources))) (not (#{:sidekick :extra-action :play-hand-response} op))) [:p.card-unavailable {:role "status"} reason])
      [:div.form-row
-      (when (and (not (#{:sidekick :extra-action} op)) (or (not= :play-hand-response op) (nil? reason))) [button (if resource-picker? (str "Take " resource-count " " (resource-noun available-resources) (when (> resource-count 1) "s") " →") (case op :return-animal-loan "Settle animal loan" :collect-cooked-animal "Collect cooked markers" :ability-window "Finish harvest decisions →" :sow-offer "Take Sow action" :take-stock "Take resource →" :bake "Bake bread →" :play-hand-response "Play Chief's Daughter" "Resolve effect →"))
+      (when (and (not (#{:sidekick :extra-action} op)) (or (not= :play-hand-response op) (nil? reason))) [button (if resource-picker? (str "Take " resource-count " " (resource-noun available-resources) (when (> resource-count 1) "s") " →") (case op :return-animal-loan "Settle animal loan" :collect-cooked-animal "Collect cooked markers" :ability-window (if (= :before-work (:timing effect)) "Begin work →" "Finish harvest decisions →") :sow-offer "Take Sow action" :take-stock "Take resource →" :bake "Bake bread →" :play-hand-response "Play Chief's Daughter" "Resolve effect →"))
        #(dispatch :command choice) "button primary" (or busy? (boolean reason))])
       (when (card-game/optional-effect? g head) [button (if (= :play-hand-response op) "Continue" "Skip this effect") #(dispatch :command {:type :resolve :decision (:decision-id g) :skip? true}) "text-button" busy?])]]))
 

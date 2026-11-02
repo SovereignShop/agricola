@@ -209,6 +209,7 @@
                   :collect-cooked-animal (map #(hash-map :amount %) (range 1 (inc (get-in head [:context :converted-goods (:resource effect)] 0))))
                   (:plow :stable :plowsmith) (map #(hash-map :cell %) (range 15))
                   (:mini-pasture :fence-overseer :corral-builder :amateur-fencer) (mini-pasture-choices p)
+                  :remove-empty-field (map #(hash-map :cell %) (a/removable-field-cells p))
                   :wheel-plow (plow-decision-candidates p effect)
                   :plow-many (mapcat (fn [paths] (map (fn [[_ cells]] {:cells cells}) paths))
                                       (take (:max-fields effect) (rest (iterate

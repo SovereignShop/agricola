@@ -62,4 +62,12 @@
  {:play [{:op :mini-pasture :optional? true}]}
  :catalog/original-expansion-fr-45-stone-house-reconstruction
  {:ability {:op :renovate-clay-stone}}
+ :catalog/original-expansion-fr-1-abandoned-willow
+ {:requires [:>= [:empty-farm-fields] 1] :requires-effect? true
+  :play [{:op :remove-empty-field :goods {:wood 4}}]}
+ :catalog/original-expansion-fr-101-powerhouse
+ {:passive {:before-work-abilities [:< [:goods :stone] 5]}
+  :triggers [{:event :work-start :condition [:test [:>= [:goods :stone] 3]]
+              :effect {:op :gain :goods {:food [:if [:>= [:goods :stone] 5] 2 1]}}}]}
+
 }
