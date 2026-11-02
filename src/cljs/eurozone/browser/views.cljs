@@ -1258,6 +1258,10 @@
                                  :checked (get draft :adopt-reed-hut? (zero? (a/unused-person-tokens p)))
                                  :on-change #(draft! :adopt-reed-hut? (.. % -target -checked))}]
         "Bring the Reed Hut occupant into your home"])
+     (when (= op :exchange)
+       [:div {:role "group" :aria-label "Card exchange"}
+        [recipe (expr/quantities g (:id p) (:context head) (:cost effect))
+                (expr/quantities g (:id p) (:context head) (:goods effect))]])
      (when (= op :take-stock)
        (let [resource (peek (get-in p [:card-state (:card head) :stock]))
              cost (expr/quantities g (:id p) (:context head) (:cost effect))]
@@ -1453,7 +1457,15 @@
           [:label.checkbox [:input {:type "checkbox" :checked (boolean (:salesman? draft))
                                     :on-change #(do (draft! :salesman? (.. % -target -checked)) (draft! :card nil) (draft! :improvement nil))}]
            "Use Traveling Salesman for this improvement action"])
-        (when (contains? (:kinds effect) :occupation) [hand-select g p :occupation draft])
+        (when (contains? (:kinds effect) :occupation)
+          [:div
+           [:div.choice-recipe {:role "group" :aria-label "Occupation payment"}
+            [goods (if (:card draft)
+                     (try (card-game/card-cost g (:id p) (cards/card (:card draft)) (:occupation-cost effect 0) draft)
+                          (catch :default _ nil))
+                     {:food (:occupation-cost effect 0)})]
+            [:span "→"] [choice-icon :play]]
+           [hand-select g p :occupation draft]])
         (when (or (contains? (:kinds effect) :minor) (contains? (:kinds effect) :major)) [hand-select g p :minor draft (contains? (:kinds effect) :major)])
         (when (and (not (:card draft))
                    (or (contains? (:kinds effect) :major)
@@ -1520,7 +1532,9 @@
          :adopt [:p.small "Pay 1 food to let a newborn take an action this work phase. That child will need adult feeding."]
          :release-stored [:div {:role "group" :aria-label "Goods to collect"}
                           [goods (get-in p [:card-state cid :stored-goods])]
-                          [:p.small "Take all of these goods into your supply."]]
+                          [:p.small (if-let [minimum (get-in card [:ability :minimum-stored])]
+                                      (str "Collect all goods once at least " minimum " are stored here.")
+                                      "Take all of these goods into your supply.")]]
          :cash-card [:div [goods {:food (get-in p [:card-state cid :food] 0)}] [:p.small "Collect the food and turn this card face down."]]
          :free-room [:div [:p.small "Choose one empty space beside your house for the free room."]
                            [farm p {:space :build :rooms (:rooms @selection)} true #(swap! selection assoc %1 %2)]]

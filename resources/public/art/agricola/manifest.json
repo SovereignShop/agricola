@@ -2227,6 +2227,42 @@
       "source": "http://playagricola.com/Agricola/Cards/Cards/occx1Oceanographer_3569_4.jpg",
       "sha256": "f87668888352c73143815191e95bb3df659d5932de0dad23550f42b00f5e3cb5",
       "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-g095.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminorprivatemarket_v2.jpg",
+      "sha256": "7f6f47ff9c480faf499204ecb15b7d89e1a9dd8485331ac9234abcbb5ac8bbee",
+      "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-g078.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminorgrainmarket.jpg",
+      "sha256": "f19c78584c13c637363acbbb47b5984400a516c23bbce201fc22062d0a1b5b88",
+      "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-wm088.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorGrainElevator_647_12.jpg",
+      "sha256": "d484756af6e1d453f539d80e4fbb5a86f8989db0584edbc6d95e9876baa44139",
+      "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-wm078.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorFarmSchool_2630_6.jpg",
+      "sha256": "36fc54b752460cbc93bfdc2ad03f6008ca4925d6b08a23a65ff77dd33a2ab52f",
+      "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-fr011.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorBrickyard_4271_3.jpg",
+      "sha256": "70b8d0789264472850c0cc3d52fa07386ae68de0a8a15a72f25f8566b2316fa7",
+      "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-fr088.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx3Journeyman_3956_4.jpg",
+      "sha256": "e0080b01e94d71a19bb063d4207412707c0d907063a05e0fb6304beefbd09b51",
+      "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
     }
   ]
 }

@@ -76,4 +76,16 @@
  {:triggers [{:event :use-space :spaces #{:labor}
               :effect {:op :build-rooms :max-rooms 1 :optional? true}}]}
 
+ :catalog/original-expansion-g-95-private-market
+ {:ability {:op :exchange-options :limit-per-round 1
+            :options [{:label "2 Food → Wood" :cost {:food 2} :goods {:wood 1}}
+                      {:label "2 Food → Clay" :cost {:food 2} :goods {:clay 1}}
+                      {:label "2 Food → Reed" :cost {:food 2} :goods {:reed 1}}
+                      {:label "2 Food → Stone" :cost {:food 2} :goods {:stone 1}}]}}
+ :catalog/original-expansion-g-78-grain-market
+ {:requires [:>= [:grain-fields] 3]
+  :passive {:observe-extra-grain-harvest true}
+  :triggers [{:event :harvest-crops :condition [:test [:> [:context :harvested-grain-fields] 0]]
+              :effect {:op :exchange :cost {:grain 1} :goods {:vegetable 1} :optional? true}}]}
+
 }

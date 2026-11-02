@@ -716,7 +716,10 @@
           (let [selected (select-keys choice [:owner :cell]) owner (:owner selected)]
             (a/require! (some #{selected} (harvest-helper-options g pid)) "Choose one grain on another player's field.")
             (-> g (update-in [:players owner] #(-> % (a/remove-field-crop (:cell selected) :grain) (a/gain {:food 2})))
-                (update-in [:players pid] a/gain {:grain 1})))
+                (update-in [:players pid] a/gain {:grain 1})
+                (cond-> (some true? (c/passives current :observe-extra-grain-harvest))
+                  (queue-front [(event :harvest-crops pid {:harvested-grain-fields 1
+                                                         :harvested-vegetable-fields 0})]))))
           :cover-unused
           (let [n (:amount choice 0)]
             (a/require! (and (a/natural? n) (<= n (unused-count current))) "Choose a number of unused farmyard spaces.")
@@ -983,6 +986,7 @@
           :gain (update-in g [:players pid] a/gain (expr/quantities g pid context (:goods effect)))
           :store-goods (update-in g [:players pid :card-state card :stored-goods]
                                  #(merge-with + (or % {}) (expr/quantities g pid context (:goods effect))))
+          :clear-stored (assoc-in g [:players pid :card-state card :stored-goods] {})
           :release-stored (-> g (update-in [:players pid] a/gain (get-in current [:card-state card :stored-goods] {}))
                               (assoc-in [:players pid :card-state card :stored-goods] {}))
           :take-pile-good
@@ -1400,6 +1404,9 @@
   (when-let [limit (get-in (c/card cid) [:ability :limit-per-round])]
     (max 0 (- limit (if (= (:round g) (get-in player [:card-state cid :exchange-round]))
                       (get-in player [:card-state cid :exchange-used] 0) 0)))))
+(defn stored-goods-collectable? [player cid]
+  (>= (reduce + 0 (vals (get-in player [:card-state cid :stored-goods])))
+      (get-in (c/card cid) [:ability :minimum-stored] 1)))
 (defn anytime-available?
   ([player cid] (anytime-available? nil player cid))
   ([g player cid]
@@ -1429,7 +1436,7 @@
                         (some (fn [[resource rate]] (and (pos? rate) (pos? (a/amount player resource)))) (a/cook-rates player))))
     :reed-food (pos? (a/amount player :reed))
     :cash-card (pos? (get-in player [:card-state cid :food] 0))
-    :release-stored (some pos? (vals (get-in player [:card-state cid :stored-goods])))
+    :release-stored (stored-goods-collectable? player cid)
     :free-placement-fences (and (pos? (a/fences-available player)) (pos? (a/amount player :wood)))
     :move-crop (and (some #(>= (:count % 0) 2) (fields player)) (some #(zero? (:count % 0)) (fields player)))
     false)))
@@ -1490,8 +1497,15 @@
         after (reduce #(update-in %1 [:players %2] a/field-harvest) g pids)
         after (note-gain-receipts g after :harvest)
         crop-events (mapcat #(harvested-crop-events % (concat (a/tiles % :field) (keys (:card-fields %)))) players)
-        facts (fn [player] (merge context {:harvested-grain-fields (crop-fields player :grain)
-                                          :harvested-vegetable-fields (crop-fields player :vegetable)}))]
+        facts (fn [player]
+                (cond-> (merge context {:harvested-grain-fields (crop-fields player :grain)
+                                       :harvested-vegetable-fields (crop-fields player :vegetable)})
+                  ;; Count actual harvested stacks, including wood and preserved vegetables.
+                  ;; Opt in so recordings of existing cards retain identical event contexts.
+                  (some true? (c/passives player :observe-harvest-count))
+                  (assoc :harvested-goods
+                         (count (filter #(and (:crop %) (pos? (:count % 0)))
+                                        (concat (:farm player) (vals (:card-fields player))))))))]
     (queue-front after (concat (map #(update % :context merge context) crop-events)
                               (map #(event :harvest-crops (:id %) (facts %)) players)
                               (map #(event :field-phase (:id %) (facts %)) players)
@@ -2471,7 +2485,8 @@
                  (-> g (update-in [:players pid] a/pay {:food 1})
                        (update-in [:players pid :remaining] inc) (update-in [:players pid :newborn] dec) (adopt-newborn pid)))
       :release-stored
-      (do (a/require! (some pos? (vals (get-in player [:card-state card :stored-goods]))) "No goods remain on this card.")
+      (do (a/require! (stored-goods-collectable? player card)
+                      (str "Collect when this card holds at least " (get-in (c/card card) [:ability :minimum-stored] 1) " goods."))
           (run-effect* g (task pid card {:op :release-stored} {}) {}))
       :cash-card (-> g (update-in [:players pid] a/gain {:food (get-in player [:card-state card :food] 0)})
                       (assoc-in [:players pid :card-state card :food] 0)

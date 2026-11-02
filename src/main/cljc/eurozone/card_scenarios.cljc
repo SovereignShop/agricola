@@ -4,7 +4,21 @@
   (:require [agricola.engine :as a] [agricola.card-game :as game] [agricola.card-rules :as cards]))
 
 (def scenarios
-  [{:id "carrot-farmer" :card :catalog/original-expansion-g-12-carrot-farmer :name "Carrot Farmer"
+  [{:id "private-market" :card :catalog/original-expansion-g-95-private-market :name "Private Market"
+    :description "Open the played card and choose a pictured two-food exchange for wood, clay, reed, or stone. Only one exchange is allowed per round."}
+   {:id "grain-market" :card :catalog/original-expansion-g-78-grain-market :name "Grain Market"
+    :description "Three grain fields have just been harvested. Exchange one grain for a vegetable using the pictured payment, or decline. This is one offer per harvest, not one per field."}
+   {:id "grain-elevator" :card :catalog/original-expansion-wm-88-grain-elevator :name "Grain Elevator"
+    :description "Two grain have accumulated on the card, the cap for this table. Take Grain Seeds: receive its one grain plus both stored grain. The next test shows what happens when an opponent takes it."}
+   {:id "grain-elevator-opponent" :card :catalog/original-expansion-wm-88-grain-elevator :name "Grain Elevator · opponent"
+    :description "Partner is about to act. Take Grain Seeds for Partner: they receive only the space's one grain; both grain on your Elevator return to the general supply."}
+   {:id "farm-school" :card :catalog/original-expansion-wm-78-farm-school :name "Farm School"
+    :description "Two goods have just been harvested, including wood from Copse. Click an occupation face to play it for two food, or decline. The payment is shown graphically."}
+   {:id "brickyard" :card :catalog/original-expansion-fr-11-brickyard :name "Brickyard"
+    :description "Three clay are stored, too few to collect. Take Grain Seeds with the last worker: round seven adds the fourth clay. Open Brickyard to collect all four; collecting does not discard it."}
+   {:id "journeyman" :card :catalog/original-expansion-fr-88-journeyman :name "Journeyman" :players 3
+    :description "A round is starting and your house is stone. Click the pictured one-food exchange for a sheep, wild boar, or cattle, or decline. The chosen animal fits as your house pet."}
+   {:id "carrot-farmer" :card :catalog/original-expansion-g-12-carrot-farmer :name "Carrot Farmer"
     :description "Farmland has just been used. Pay the pictured one food to take one of the three vegetables on this card, or decline. The remaining stock stays on the card."}
    {:id "pulley" :card :catalog/original-expansion-g-97-pulley :name "Pulley"
     :description "Day Laborer has just supplied two food. Click one space beside your house to build a room at its normal cost, or decline. The payment is shown before you confirm."}
@@ -137,6 +151,32 @@
         base (game/initialize (a/new-game names (vec (mapcat identity a/stages)) 0))
         funded (update base :players #(mapv (fn [p] (a/gain p {:food 12 :wood 8 :clay 8 :reed 6 :stone 8 :grain 3 :vegetable 2})) %))]
     (case id
+      "private-market" (played funded 0 card)
+      "grain-market" (-> funded (prepared-round 4)
+                           (update-in [:players 0] #(reduce (fn [p cell] (a/place-tile p :field cell)) % [0 1 2]))
+                           (update-in [:players 0] a/sow [{:cell 0 :crop :grain} {:cell 1 :crop :grain} {:cell 2 :crop :grain}])
+                           (played 0 card) last-harvest-action)
+      "grain-elevator" (-> funded (played 0 card) (prepared-round 3))
+      "grain-elevator-opponent" (assoc (initial-state "grain-elevator" names) :turn 1)
+      "farm-school" (-> funded (prepared-round 4)
+                          (played 0 (cards/id :a109)) (played 0 (cards/id :a115))
+                          (played 0 :catalog/original-base-i-78-copse) (played 0 card)
+                          (update-in [:players 0] a/place-tile :field 0)
+                          (update-in [:players 0] a/sow [{:cell 0 :crop :grain}
+                                                       {:cell :catalog/original-base-i-78-copse :crop :wood}])
+                          (put-in-hand 0 :catalog/original-expansion-g-5-architect)
+                          (put-in-hand 0 :catalog/original-expansion-g-49-seed-master)
+                          last-harvest-action)
+      "brickyard" (-> funded (played 0 (cards/id :a109)) (played 0 (cards/id :a115))
+                        (played 0 card) (prepared-round 3) (assoc-in [:players 0 :goods :clay] 0)
+                        game/begin-round game/drain
+                        game/begin-round game/drain
+                        game/begin-round game/drain
+                        (assoc :turn 0)
+                        (update :players #(mapv (fn [p] (assoc p :remaining (if (zero? (:id p)) 1 0))) %)))
+      "journeyman" (-> funded (update-in [:players 0] a/renovate {})
+                          (update-in [:players 0] a/renovate {})
+                          (played 0 card) game/begin-round game/drain)
       "carrot-farmer" (-> funded (played 0 card) (game/command 0 {:type :action :space :plow :cell 0}))
       "pulley" (-> funded (played 0 card) (game/command 0 {:type :action :space :labor}))
       "food-connoisseur" (played funded 0 card)

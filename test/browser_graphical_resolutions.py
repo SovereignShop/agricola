@@ -66,7 +66,7 @@ def check(base):
                             expect(frame.locator(f'.tt-player[data-player="0"] .tt-inventory [data-goods="{r}"] .pile-count')).to_have_text(str(before[r]+delta))
                         page.frames[1].evaluate('location.reload()')
                         expect(frame.locator('.tt-player[data-player="0"]')).to_be_visible(timeout=20000)
-                        assert amount('wood')==before['wood']-1
+                        expect(frame.locator('.tt-player[data-player="0"] .tt-inventory [data-goods="wood"] .pile-count')).to_have_text(str(before['wood']-1))
                     elif id in ('foreman','fence-builder','work-certificate'):
                         space='grain' if id=='foreman' else 'wood'
                         dialog.locator(f'.board-picker [data-action={space}]').click()

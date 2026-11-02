@@ -98,4 +98,16 @@
               :effect {:op :store-goods :goods {:food 1}}}]
   :ability {:op :release-stored}}
 
+ :catalog/original-expansion-wm-88-grain-elevator
+ {:triggers [{:event :round-start
+              :condition [:test [:< [:stored-good :catalog/original-expansion-wm-88-grain-elevator :grain] [:player-count]]]
+              :effect {:op :store-goods :goods {:grain 1}}}
+             {:event :use-space :spaces #{:grain} :effect {:op :release-stored}}
+             {:event :use-space :scope :others :spaces #{:grain} :effect {:op :clear-stored}}]}
+ :catalog/original-expansion-wm-78-farm-school
+ {:passive {:observe-harvest-count true}
+  :triggers [{:event :harvest-crops
+              :condition [:test [:and [:not [:= [:context :manure?] true]] [:>= [:context :harvested-goods] 2]]]
+              :effect {:op :card-action :kinds #{:occupation} :occupation-cost 2 :optional? true}}]}
+
 }

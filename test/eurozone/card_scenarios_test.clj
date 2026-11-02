@@ -42,7 +42,14 @@
       (is (= (:players (scenarios/scenario id) 2) (count (:players state)))))))
 
 (def review-commands
-  {"carrot-farmer" [{}]
+  {"private-market" [{:type :ability :card :catalog/original-expansion-g-95-private-market :option 3}]
+   "grain-market" [{}]
+   "grain-elevator" [{:type :action :space :grain}]
+   "grain-elevator-opponent" [{:type :action :space :grain}]
+   "farm-school" [{:card :catalog/original-expansion-g-5-architect}]
+   "brickyard" [{:type :action :space :grain} {:type :ability :card :catalog/original-expansion-fr-11-brickyard}]
+   "journeyman" [{:option 2}]
+   "carrot-farmer" [{}]
    "pulley" [{:rooms [0]}]
    "food-connoisseur" [{:type :action :space :fishing}]
    "oak-cask" [{:type :action :space :grain} {:type :ability :card :catalog/original-expansion-wm-96-oak-cask}]

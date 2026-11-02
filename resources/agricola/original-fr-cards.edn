@@ -80,4 +80,15 @@
   :triggers [{:event :plow :condition [:test [:= [:context :fields-plowed] 1]]
               :effect {:op :take-stock :optional? true}}]}
 
+ :catalog/original-expansion-fr-11-brickyard
+ {:triggers [{:event :round-start :condition [:test [:= [:goods :clay] 0]]
+              :effect {:op :store-goods :goods {:clay 1}}}]
+  :ability {:op :release-stored :minimum-stored 4}}
+ :catalog/original-expansion-fr-88-journeyman
+ {:triggers [{:event :round-start :condition [:house :stone]
+              :effect {:op :choose :optional? true
+                       :options [{:label "Food → Sheep" :cost {:food 1} :effects [{:op :gain :goods {:sheep 1}}]}
+                                 {:label "Food → Wild boar" :cost {:food 1} :effects [{:op :gain :goods {:boar 1}}]}
+                                 {:label "Food → Cattle" :cost {:food 1} :effects [{:op :gain :goods {:cattle 1}}]}]}}]}
+
 }
