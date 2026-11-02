@@ -15,6 +15,12 @@
       (= key :card) (update :draft dissoc :improvement :upgrade :bake-grain :payment-option :return-improvement :return-improvements :as-major? :discount-resource :manufacturer-discount :wood-carver?))))
 ;; Apply multi-control edits to the latest draft, not the render-time snapshot.
 ;; Several DOM changes can arrive before Reagent renders the next frame.
+(rf/reg-event-db :draft-adjust-in
+  (fn [db [_ path default delta maximum]]
+    (update-in db (into [:draft] path) #(max 0 (min maximum (+ (or % default) delta))))))
+(rf/reg-event-db :draft-adjust
+  (fn [db [_ key default delta maximum]]
+    (update-in db [:draft key] #(max 0 (min maximum (+ (or % default) delta))))))
 (rf/reg-event-db :draft-resource-queue
   (fn [db [_ decision amount operation value]]
     (let [prior (get-in db [:draft :effect-resource-queue])

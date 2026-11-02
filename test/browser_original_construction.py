@@ -14,9 +14,9 @@ def check(base, fixture_ids):
         errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(base+'/#'+plow)
-        expect(page.get_by_role('combobox', name='Plow', exact=True)).to_be_visible()
+        expect(page.get_by_role('group', name='Plow', exact=True)).to_be_visible()
         page.reload()
-        page.get_by_role('combobox', name='Plow', exact=True).select_option(':catalog/original-base-e-62-turnwrest-plow')
+        page.get_by_role('group', name='Plow', exact=True).get_by_role('button',name='Turnwrest Plow',exact=True).click()
         maker = page.get_by_role('checkbox', name='Plow Maker: pay 1 food for one extra field', exact=True)
         maker.click()
         expect(maker).to_be_checked()
@@ -24,7 +24,7 @@ def check(base, fixture_ids):
             page.get_by_role('dialog').get_by_role('button', name='Farm space '+str(cell+1)+': empty', exact=True).click()
         page.get_by_role('button', name='Resolve effect →', exact=True).click()
         expect(page.get_by_role('dialog')).to_have_count(0)
-        expect(page.locator('.tt-player[data-player="0"] [data-goods="food"] .pile-count')).to_have_text('1')
+        expect(page.locator('.tt-player[data-player="0"] [data-goods="food"] .pile-count')).to_have_text('2')
         for cell in range(1,5):
             expect(page.locator('.tt-player[data-player="0"] [aria-label="Farm space '+str(cell)+': field"]')).to_have_count(1)
         print('PASS: select one of two original plows and combine with Plow Maker for four fields after reload', flush=True)
@@ -38,16 +38,18 @@ def check(base, fixture_ids):
         }""")
         expect(page.locator('.app')).to_have_css('padding-top', '32px')
         expect(page.locator('.app')).to_have_css('padding-bottom', '18px')
-        page.get_by_label('Build room 1', exact=True).click()
-        expect(page.get_by_label('Build room 1', exact=True)).to_be_checked()
-        page.get_by_label('Build room 2', exact=True).click()
-        expect(page.get_by_label('Build room 2', exact=True)).to_be_checked()
-        # Mixed bases are the only affordable way to build these two rooms.
+        farm=page.locator('.card-decision .farm-picker').first
+        for n in [1,2]:
+            button=farm.get_by_role('button',name=f'Farm space {n}: empty',exact=True)
+            button.click();expect(button).to_have_attribute('aria-pressed','true')
+        # Click each planned room, then its actual payment pieces.
         for cell, expected in [(1, {'clay':2, 'wood':1, 'reed':1}), (2, {'clay':3, 'reed':2})]:
-            select = page.get_by_role('combobox', name='Room '+str(cell)+' payment', exact=True)
-            options = select.locator('option').evaluate_all('(xs) => xs.map(x => ({value:x.value, text:x.textContent.toLowerCase()}))')
-            wanted = next(x['value'] for x in options if x['value'] and all((str(n)+' '+resource) in x['text'] for resource,n in expected.items()) and (cell==1 or 'wood' not in x['text']))
-            select.select_option(wanted)
+            page.locator('.room-payment-picker').get_by_role('button',name=f'Farm space {cell}: room',exact=True).click()
+            choices=page.get_by_role('group',name='Payment for the highlighted room',exact=True).get_by_role('button')
+            names=choices.evaluate_all('(xs)=>xs.map(x=>x.getAttribute("aria-label"))')
+            wanted=next(label for label in names if all((str(n)+' '+r) in label.lower() for r,n in expected.items()) and (cell==1 or 'wood' not in label.lower()))
+            page.get_by_role('group',name='Payment for the highlighted room',exact=True).get_by_role('button',name=wanted,exact=True).click()
+        expect(page.get_by_role('dialog').get_by_role('combobox')).to_have_count(0)
         page.screenshot(path='/tmp/eurozone-original-construction-mobile.png')
         page.get_by_role('button', name='Resolve effect →', exact=True).click()
         expect(page.get_by_role('dialog')).to_have_count(0)

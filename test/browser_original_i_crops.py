@@ -15,7 +15,7 @@ def check(base, fixture_ids):
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(base+'/#'+draw)
         page.get_by_role('button', name='Reveal packet', exact=True).click()
-        expect(page.locator('.draw-choices .card-sheet-art')).to_have_count(16)
+        expect(page.locator('.draw-choices .card-sheet-art')).to_have_count(18)
         faces = page.locator('.draw-choices .card-sheet-art').evaluate_all('els=>els.map(e=>({id:e.dataset.cardArt,src:e.style.backgroundImage}))')
         assert all(':catalog/original-base-i-' in f['id'] and 'original-i-' in f['src'] for f in faces), faces
         for sheet in ['minors', 'occupations']:
@@ -23,9 +23,9 @@ def check(base, fixture_ids):
         page.goto(base+'/#'+work)
         page.locator('.action-card[data-action="sow-bake"]').click()
         for n in [1, 2]:
-            box = page.get_by_role('checkbox', name=f'Sow Copse · stack {n} with wood', exact=True)
+            box = page.get_by_role('button', name=f'Field on Copse · stack {n}', exact=True)
             box.click()
-            expect(box).to_be_checked()
+            expect(box).to_have_attribute('aria-pressed','true')
         page.get_by_role('button', name='Place family member →', exact=True).click()
         expect(page.get_by_role('dialog')).to_have_count(0)
         expect(page.locator('.tt-player[data-player="0"] button.tt-card[aria-label="Copse"] .tt-card-markers b')).to_have_text('8')
@@ -37,10 +37,11 @@ def check(base, fixture_ids):
         page.goto(base+'/#'+popup)
         expect(page.get_by_role('dialog', name='Resolve Copse', exact=True)).to_be_visible()
         page.reload()
+        page.get_by_role('group',name='Crop to sow',exact=True).get_by_role('button',name='Wood',exact=True).click()
         for n in [1, 2]:
-            page.get_by_role('combobox', name=f'Sow Copse · stack {n}', exact=True).select_option('wood')
+            page.get_by_role('button',name=f'Field on Copse · stack {n}',exact=True).click()
         for n in [1, 2]:
-            expect(page.get_by_role('combobox', name=f'Sow Copse · stack {n}', exact=True)).to_have_value('wood')
+            expect(page.get_by_role('button',name=f'Field on Copse · stack {n}',exact=True)).to_have_attribute('aria-pressed','true')
         page.get_by_role('button', name='Resolve effect →', exact=True).click()
         expect(page.get_by_role('dialog')).to_have_count(0)
         expect(page.locator('.tt-player[data-player="0"] button.tt-card[aria-label="Copse"] .tt-card-markers b')).to_have_text('8')

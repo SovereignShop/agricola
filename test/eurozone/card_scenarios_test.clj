@@ -53,7 +53,23 @@
    "baguette" [{:grain 1}]
    "barber-shop" [{:type :action :space :meeting :card :catalog/original-expansion-fr-8-barber-shop}]
    "homework" [{:card :catalog/original-expansion-g-49-seed-master} {:skip? true}]
-   "trailblazer" [{:cell 1}]})
+   "trailblazer" [{:cell 1}]
+   "foreman" [{:space :grain}]
+   "fence-builder" [{:space :wood}]
+   "fence-overseer" [{:cell 0}]
+   "animal-breeder" [{:animal :boar}]
+   "resource-seller" [{:option 0}]
+   "silage" [{:grain-source 2 :animal :sheep}]
+   "stable-planner" [{:rounds [4 7]}]
+   "harvest-helper" [{:owner 1 :cell 0}]
+   "hide-farmer" [{:amount 2}]
+   "clearing-spade" [{:type :ability :card :revised-base/a071 :from 0 :to :catalog/original-base-e-18-bean-field}]
+   "asparagus-knife" [{:cell 0}]
+   "work-certificate" [{:space :wood :resource :wood}]
+   "stagehand" [{:option 1} {:stables [1 2]}]
+   "cottager" [{:action :room :cell 0}]
+   "copse" [{:type :action :space :sow-bake :plantings [{:cell :catalog/original-base-i-78-copse :crop :wood}
+                                                       {:cell :catalog/original-base-i-78-copse-2 :crop :wood}]}]})
 
 (deftest community-tables-resolve-decline-save-and-replay
   (doseq [[scenario commands] review-commands

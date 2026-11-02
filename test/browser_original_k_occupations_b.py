@@ -27,7 +27,7 @@ def check(base, fixture_ids):
         print('PASS: rapid Animal Trainer choices retain both species and spend only pile food', flush=True)
 
         page.goto(base+'/#'+fence)
-        page.get_by_role('combobox', name='Farm space', exact=True).select_option('0')
+        page.get_by_role('dialog').get_by_role('button',name='Farm space 1: empty',exact=True).click()
         page.get_by_role('button', name='Resolve effect →', exact=True).click()
         expect(page.get_by_role('dialog')).to_have_count(0)
         page.reload()
@@ -36,7 +36,7 @@ def check(base, fixture_ids):
         print('PASS: Fence Overseer fences the new stable and survives reload', flush=True)
 
         page.goto(base+'/#'+foreman)
-        page.get_by_role('combobox', name='Action space for Foreman', exact=True).select_option(':grain')
+        page.get_by_role('dialog').locator('.board-picker [data-action=grain]').click()
         page.get_by_role('button', name='Resolve effect →', exact=True).click()
         expect(page.get_by_role('dialog')).to_have_count(0)
         expect(page.locator('.action-card[data-action="grain"] [data-piece-type="food"]')).to_have_count(1)
@@ -49,7 +49,7 @@ def check(base, fixture_ids):
 
         page.set_viewport_size({'width':430, 'height':932})
         page.goto(base+'/#'+breeder)
-        page.get_by_role('combobox', name='Pair of animals', exact=True).select_option('boar')
+        page.get_by_role('button',name='2 Wild boar for 2 food',exact=True).click()
         page.get_by_role('button', name='Resolve effect →', exact=True).click()
         expect(page.get_by_role('dialog')).to_have_count(0)
         expect(page.locator('.tt-player[data-player="0"] [data-goods="boar"] .pile-count')).to_have_text('2')
@@ -58,7 +58,7 @@ def check(base, fixture_ids):
 
         page.goto(base+'/#'+seller)
         page.reload()
-        page.get_by_role('combobox', name='Resource receipt order', exact=True).select_option('1')
+        page.get_by_role('group',name='Resource receipt order',exact=True).get_by_role('button').nth(1).click()
         page.get_by_role('button', name='Resolve effect →', exact=True).click()
         expect(page.get_by_role('dialog')).to_have_count(0)
         expect(page.locator('.tt-player[data-player="0"] [data-goods="wood"] .pile-count')).to_have_text('22')

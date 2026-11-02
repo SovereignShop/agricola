@@ -32,34 +32,34 @@ def check(base, fixtures):
             expect(page.locator(f'.tt-player[data-player="{pid}"] [data-goods="food"] .pile-count')).to_have_text(str(amount))
 
         open_saved(harvest, 'Harvest Helper')
-        page.get_by_role('button', name='Ben · field 1', exact=True).click()
+        page.get_by_role('dialog').get_by_role('group',name="Ben's farm",exact=True).get_by_role('button',name='Farm space 1: field',exact=True).click()
         resolve()
         expect(page.get_by_role('dialog')).to_have_count(0)
         food(1, 5)
 
         open_saved(chamberlain, 'Chamberlain')
-        page.get_by_label(re.compile(r'^Round 12 action')).select_option('cultivation')
+        page.get_by_role('button',name='Plow and Sow',exact=True).click()
         resolve()
         expect(page.get_by_role('dialog')).to_have_count(0)
 
         open_saved(hide, 'Hide Farmer')
-        page.get_by_role('spinbutton', name='Unused spaces to cover (1 food each)', exact=True).fill('13')
+        for cell in page.get_by_role('dialog').get_by_role('button',name=re.compile(r'^Farm space .*: empty$')).all():cell.click()
         resolve()
-        expect(page.get_by_role('dialog')).to_have_count(0)
+        expect(page.get_by_role('dialog',name='Resolve Hide Farmer',exact=True)).to_have_count(0)
         food(0, 7)
 
         open_saved(corn, 'Corn Profiteer')
         page.get_by_role('button', name='Cora', exact=True).click()
         resolve()
         expect(page.get_by_role('dialog')).to_have_count(0)
-        food(0, 4)
+        food(0, 5)
         food(1, 3)
         food(2, 1)
 
         open_saved(juggler, 'Juggler')
         resolve()
         expect(page.get_by_role('dialog')).to_have_count(0)
-        food(0, 3)
+        food(0, 4)
         food(1, 4)
 
         open_saved(businessman, 'Businessman')
@@ -70,7 +70,7 @@ def check(base, fixtures):
             if following:
                 expect(page.get_by_role('dialog', name='Resolve '+following, exact=True)).to_be_visible()
         expect(page.get_by_role('dialog')).to_have_count(0)
-        food(0, 21)
+        food(0, 22)
         assert not errors, errors
         print('PASS: saved Harvest Helper, Chamberlain, Hide Farmer, Corn Profiteer auction, Juggler and Businessman/Merchant', flush=True)
         browser.close()

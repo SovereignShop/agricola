@@ -30,7 +30,7 @@ def check(base, fixture_ids):
         print('PASS: Pig Catcher leaves actual pile wood and triggers Berry Picker', flush=True)
 
         page.goto(base+'/#'+fence)
-        page.get_by_role('combobox', name='Action space for Fence Builder', exact=True).select_option(':wood')
+        page.get_by_role('dialog').locator('.board-picker [data-action=wood]').click()
         page.get_by_role('button', name='Resolve effect →', exact=True).click()
         expect(page.get_by_role('dialog')).to_have_count(0)
         page.reload()
@@ -49,7 +49,7 @@ def check(base, fixture_ids):
         page.set_viewport_size({'width':430, 'height':932})
         page.goto(base+'/#'+cabinet)
         expect(page.get_by_role('dialog')).to_have_count(1)
-        page.get_by_role('combobox', name=re.compile(r'^Card effect')).select_option('1')
+        page.get_by_role('group',name='Card effect',exact=True).get_by_role('button').nth(1).click()
         page.get_by_role('button', name='Resolve effect →', exact=True).click()
         expect(page.locator('.tt-player[data-player="0"] [data-goods="food"] .pile-count')).to_have_text('4')
         expect(page.locator('.tt-player[data-player="0"] [data-goods="wood"]')).to_have_count(0)

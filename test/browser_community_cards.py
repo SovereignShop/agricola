@@ -49,7 +49,8 @@ def check(base):
                         expect(frame.locator('.tt-player[data-player="0"] [aria-label$=": field"]')).to_have_count(2)
                     elif id in ('gardening-tools','shovel'):
                         dialog.get_by_role('button',name='Take Sow action',exact=True).click()
-                        dialog.get_by_label('Sow field 1',exact=True).select_option('grain')
+                        dialog.get_by_role('group',name='Crop to sow',exact=True).get_by_role('button',name='Grain',exact=True).click()
+                        dialog.get_by_role('button',name='Farm space 1: field',exact=True).click()
                         dialog.get_by_role('button',name='Resolve effect →',exact=True).click()
                         expect(dialog).to_have_count(0)
                     elif id in ('singer','herdsman'):
@@ -87,13 +88,14 @@ def check(base):
                     frame.locator('[data-owner="0"][data-deck="improvements"]').get_by_role('button',name='Open Played · improvements spread',exact=True).click()
                     frame.get_by_role('dialog').get_by_role('button',name='Steamer',exact=True).click()
                     inspection=frame.get_by_role('dialog',name='Steamer',exact=True)
-                    inspection.get_by_label(re.compile('^Exchange')).select_option('1')
+                    inspection.get_by_role('group',name='Exchange',exact=True).get_by_role('button').nth(1).click()
                     inspection.get_by_role('button',name='Use card ability',exact=True).click()
                     # Close inspection to expose the triggered Pelts decision.
                     inspection.get_by_role('button',name='Close dialog',exact=True).click()
                     frame.get_by_role('button',name='Go to my decision',exact=True).click()
                     pelts=frame.get_by_role('dialog',name='Resolve Pelts',exact=True)
                     expect(pelts).to_be_visible()
+                    pelts.get_by_role('button',name='Farm space 6: room',exact=True).click()
                     pelts.get_by_role('button',name='Resolve effect →',exact=True).click()
                     expect(pelts).to_have_count(0)
                 if id=='debris-dealer':
