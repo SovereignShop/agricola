@@ -379,18 +379,31 @@
                             (cond-> rates (and (:vegetable rates) (fireplace-family? id)) (update :vegetable + spice))))]
     (reduce + 0 (for [[resource n] goods
                      :when (and (contains? qualifying resource) (= (qualifying resource) (rates resource)))] n))))
+(defn cooking-listeners [p]
+  (vec (filter #(some (fn [trigger] (= :convert-food (:event trigger))) (:triggers (cards/card %)))
+               (cards/active-owned p))))
+(defn spit-roast-bonus? [p goods context]
+  (and (= :feeding (:phase context)) (some true? (cards/passives p :spit-roast))
+       (not= (:round context) (:spit-roast-round p)) (some #(pos? (get goods % 0)) animals)))
+(defn convert-recipe
+  "A card's fixed food recipe is cooking, but does not use fireplace rates or
+   qualify for Cooking Hearth/Crock bonuses. Preserve conversion listeners."
+  [p goods food context]
+  (let [spit? (spit-roast-bonus? p goods context)]
+    (cond-> (gain (pay p goods) {:food (+ food (if spit? 1 0))})
+      spit? (assoc :spit-roast-round (:round context))
+      true (update :cooking-receipts (fnil conj [])
+                   (merge context {:goods goods :rates {} :listeners (cooking-listeners p)})))))
 (defn convert-food
   ([p goods] (convert-food p goods {}))
   ([p goods context]
   (quantities! goods (concat animals [:grain :vegetable]))
   (let [rates (cook-rates p)]
     (require! (every? #(or (zero? (val %)) (contains? rates (key %))) goods) "You need a Fireplace or Cooking Hearth to cook animals.")
-    (let [listeners (vec (filter #(some (fn [trigger] (= :convert-food (:event trigger))) (:triggers (cards/card %)))
-                                 (cards/active-owned p)))
+    (let [listeners (cooking-listeners p)
           converted (into {} (filter (comp pos? val) goods))
           bonus (if (crock? p) (quot (qualifying-cooked-units p goods) 2) 0)
-          spit? (and (= :feeding (:phase context)) (some true? (cards/passives p :spit-roast))
-                     (not= (:round context) (:spit-roast-round p)) (some #(pos? (get goods % 0)) animals))]
+          spit? (spit-roast-bonus? p goods context)]
       (cond-> (gain (pay p goods) {:food (+ bonus (if spit? 1 0) (reduce + 0 (map (fn [[r n]] (* n (get rates r 0))) goods)))})
         spit? (assoc :spit-roast-round (:round context))
         (seq converted)

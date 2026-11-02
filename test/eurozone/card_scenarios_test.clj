@@ -1,6 +1,6 @@
 (ns eurozone.card-scenarios-test
   (:require [clojure.test :refer :all] [eurozone.card-scenarios :as scenarios]
-            [eurozone.store :as store] [agricola.engine :as a]
+            [eurozone.store :as store] [agricola.engine :as a] [agricola.card-rules :as cards]
             [agricola.card-game :as game] [agricola.recording :as recording])
   (:import [java.nio.file Files]))
 
@@ -36,4 +36,41 @@
 (deftest only-registered-prepared-positions-are-accepted
   (is (thrown? clojure.lang.ExceptionInfo (store/transition {} "tester" {:event :create :name "Ada" :scenario "unknown"})))
   (doseq [{:keys [id card]} scenarios/scenarios]
-    (is (= card (get-in (scenarios/initial-state id ["Ada" "Ben"]) [:effect-queue 0 :card])))))
+    (let [state (scenarios/initial-state id (:names (scenarios/options id "Ada")))
+          player (game/p state 0)]
+      (is (some #{card} (concat (cards/owned player) (mapcat val (:hand player)))) id)
+      (is (= (:players (scenarios/scenario id) 2) (count (:players state)))))))
+
+(def review-commands
+  {"businesswoman" [{:improvement :fireplace-2} {:skip? true}]
+   "singer" [{:resource :reed} {:resource :reed}]
+   "gardening-tools" [{} {:plantings [{:cell 0 :crop :grain}]}]
+   "shovel" [{} {:plantings [{:cell 0 :crop :vegetable}]}]
+   "debris-dealer" [{:type :action :space :renovate}]
+   "herdsman" [{:resource :boar}]
+   "ruins" [{}]
+   "steamer" [{:type :ability :card :catalog/original-expansion-wm-108-steamer :option 1} {:amount 1}]
+   "baguette" [{:grain 1}]
+   "barber-shop" [{:type :action :space :meeting :card :catalog/original-expansion-fr-8-barber-shop}]
+   "homework" [{:card :catalog/original-expansion-g-49-seed-master} {:skip? true}]
+   "trailblazer" [{:cell 1}]})
+
+(deftest community-tables-resolve-decline-save-and-replay
+  (doseq [[scenario commands] review-commands
+          decline? [false true]]
+    (let [path (str (.resolve (Files/createTempDirectory "community-scenario" (make-array java.nio.file.attribute.FileAttribute 0)) "games.edn"))
+          service (store/make-store path)
+          id (:id (store/transact! service "tester" {:event :create :name "Ada" :scenario scenario}))
+          initial (get @(:rooms service) id)
+          optional? (get-in initial [:state :effect-queue 0 :effect :optional?])
+          commands (if (and decline? optional?)
+                     (repeat (if (#{"businesswoman" "homework"} scenario) 2 1) {:skip? true}) commands)]
+      (is (= (:state initial) (get-in @(:rooms (store/make-store path)) [id :state])) scenario)
+      (doseq [choice commands]
+        (let [room (get @(:rooms service) id) state (:state room)
+              command (if (:type choice) choice (merge {:type :resolve :decision (:decision-id state)} choice))]
+          (store/transact! service "tester" {:event :command :id id :revision (:revision room) :command command})))
+      (let [room (get @(:rooms service) id)]
+        (is (= (:state room) (get-in @(:rooms (store/make-store path)) [id :state])) scenario)
+        (is (= (:state room) (last (:frames (recording/timeline (:recording room))))))
+        (is (not= (:state initial) (:state room)) scenario)))))

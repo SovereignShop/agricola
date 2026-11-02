@@ -48,4 +48,26 @@
             :specific-improvement-discounts {:fireplace-2 {:clay 1} :fireplace-3 {:clay 1} :hearth-4 {:clay 1} :hearth-5 {:clay 1}}}}
  :catalog/original-expansion-wm-101-prize-winning-sheep
  {:play [{:op :choose-good :choices [:wood :clay :reed :stone]}]}
+
+ :catalog/original-expansion-wm-15-debris-dealer
+ {:triggers [{:event :renovate :condition [:test [:= [:context :previous-house] :clay]]
+              :effect {:op :gain :goods {:clay 2}}}
+             {:event :renovate :scope :others :condition [:test [:not [:= [:house] :wood]]]
+              :effect {:op :gain :goods {:wood [:if [:= [:context :previous-house] :wood] 2 0]
+                                        :clay [:if [:= [:context :previous-house] :clay] 2 0]}}}]}
+ :catalog/original-expansion-wm-28-herdsman
+ {:triggers [{:event :use-space :spaces #{:labor} :condition [:test [:< [:round] 6]]
+              :effect {:op :gain :goods {:sheep 1}}}
+             {:event :use-space :spaces #{:labor} :condition [:test [:>= [:round] 6]]
+              :effect {:op :choose-good :choices [:sheep :boar]}}]}
+ :catalog/original-expansion-wm-106-ruins
+ {:play [{:op :stock :goods [:stone :stone :stone :stone]}]
+  :triggers [{:event :field-phase :condition [:test [:not [:= [:context :manure?] true]]]
+              :effect {:op :take-stock :optional? true}}]}
+ :catalog/original-expansion-wm-108-steamer
+ {:ability {:op :exchange-options :food-conversion? true :exclude-phases #{:breeding} :exclude-final-breeding? true
+            :options [{:label "1 grain + 1 vegetable → 5 food" :cost {:grain 1 :vegetable 1} :goods {:food 5}}
+                      {:label "1 grain + 1 sheep → 4 food" :cost {:grain 1 :sheep 1} :goods {:food 4}}
+                      {:label "1 grain + 1 boar → 5 food" :cost {:grain 1 :boar 1} :goods {:food 5}}
+                      {:label "1 grain + 1 cattle → 6 food" :cost {:grain 1 :cattle 1} :goods {:food 6}}]}}
 }

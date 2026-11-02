@@ -53,6 +53,7 @@
           :planted-farm-fields (count (filter #(some pos? (vals (a/field-crops %))) (filter #(= :field (:type %)) (:farm p))))
           :planted-fields (count (filter #(pos? (:count % 0)) (field-list p)))
           :empty-fields (count (filter #(zero? (:count % 0)) (field-list p)))
+          :empty-farm-fields (count (filter #(and (= :field (:type %)) (not-any? pos? (vals (a/field-crops %)))) (:farm p)))
           :unused (count (filter #(a/empty-cell? p %) (range 15)))
           :pastures (count (a/pastures p))
           :pastures-at-least (count (filter #(>= (count %) (ev x)) (a/pastures p)))
@@ -82,6 +83,13 @@
           :cooking-improvements (count (filter #(:cook (a/improvement-definition %)) (a/owned-improvement-ids p)))
           :rounds-left (- 14 (:round g))
           :completed-harvests (count (filter #(< % (:round g)) a/harvest-rounds))
+          :remaining-harvests (count (filter #(or (> % (:round g))
+                                                (and (= % (:round g))
+                                                     (#{:preparation :work :return-home} (:phase g))
+                                                     ;; Before-field effects still use :return-home.
+                                                     ;; The queued harvest step marks that boundary
+                                                     ;; without adding state to older recordings.
+                                                     (not-any? (fn [task] (= :field-harvest (:step task))) (:effect-queue g)))) a/harvest-rounds))
           :harvest-round (boolean (a/harvest-rounds (:round g)))
           :occupied (contains? (:occupied g) x)
           :owns-space (let [owner (get-in g [:occupied x])] (if (vector? owner) (boolean (some #{pid} owner)) (= pid owner)))

@@ -3,6 +3,19 @@
 ;; Exact pack identities keep reprints and Original cards separate.
 (def printed-files
   {
+   :catalog/original-expansion-g-25-businesswoman "original-g025.jpg"
+   :catalog/original-expansion-g-50-singer "original-g050.jpg"
+   :catalog/original-expansion-g-76-gardening-tools "original-g076.jpg"
+   :catalog/original-expansion-g-110-shovel "original-g110.jpg"
+   :catalog/original-expansion-wm-15-debris-dealer "original-wm015.jpg"
+   :catalog/original-expansion-wm-28-herdsman "original-wm028.jpg"
+   :catalog/original-expansion-wm-106-ruins "original-wm106.jpg"
+   :catalog/original-expansion-wm-108-steamer "original-wm108.jpg"
+   :catalog/original-expansion-fr-7-baguette "original-fr007.jpg"
+   :catalog/original-expansion-fr-8-barber-shop "original-fr008.jpg"
+   :catalog/original-expansion-fr-32-homework "original-fr032.jpg"
+   :catalog/original-expansion-fr-113-trailblazer "original-fr113.jpg"
+
    :catalog/original-expansion-g-33-hoe-maker "original-g033.jpg"
    :catalog/original-expansion-g-49-seed-master "original-g049.jpg"
    :catalog/original-expansion-g-73-errant-oven "original-g073.jpg"

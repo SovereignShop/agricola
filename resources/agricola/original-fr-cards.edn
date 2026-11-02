@@ -46,4 +46,16 @@
  :catalog/original-expansion-fr-111-the-sun-farmer
  {:triggers [{:event :use-space :spaces #{:grain} :effect {:op :gain :goods {:sheep 1}}}
              {:event :use-space :spaces #{:sheep} :effect {:op :gain :goods {:grain 1}}}]}
+
+ :catalog/original-expansion-fr-7-baguette
+ {:triggers [{:event :feeding-start :condition [:test [:> [:baking-improvements] 0]]
+              :effect {:op :bake :cost {:wood 1} :optional? true}}]}
+ :catalog/original-expansion-fr-8-barber-shop
+ {:play [{:op :points :amount [:remaining-harvests]}]}
+ :catalog/original-expansion-fr-32-homework
+ {:play [{:op :card-action :kinds #{:occupation} :occupation-cost 0 :optional? true}
+         {:op :card-action :kinds #{:occupation} :occupation-cost 0 :optional? true}]}
+ :catalog/original-expansion-fr-113-trailblazer
+ {:triggers [{:event :round-start :condition [:test [:= [:empty-farm-fields] 0]]
+              :effect {:op :plow :cost {:food 1} :optional? true}}]}
 }

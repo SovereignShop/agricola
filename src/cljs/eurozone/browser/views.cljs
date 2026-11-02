@@ -1112,6 +1112,8 @@
                                  :checked (get draft :adopt-reed-hut? (zero? (a/unused-person-tokens p)))
                                  :on-change #(draft! :adopt-reed-hut? (.. % -target -checked))}]
         "Bring the Reed Hut occupant into your home"])
+     (when (= op :take-stock)
+       [:p.small (str "Take the next " (some-> (get-in p [:card-state (:card head) :stock]) peek labels) " from this card, or leave it for a later harvest.")])
      (when (= op :sow-offer)
        [:p.small (if (:max-fields effect) "You may sow exactly one field." "You may take a Sow action. Grain offered before sowing will be available when you choose your fields.")])
      (when (= op :sow)
@@ -1147,7 +1149,7 @@
         [:select {:value (str (:card head)) :on-change #(dispatch :command {:type :order-effect :card (keyword (subs (.. % -target -value) 1))})}
          (for [id options] ^{:key id} [:option {:value (str id)} (:name (cards/card id))])]])
      (when (#{:choose-good :seasonal-crop :boat-painter :countryman} op)
-       [field "Resource" [:select {:value (name (or (:effect-resource draft) (first (or (:choices effect) (if (= op :boat-painter) [:grain :food] [:grain :vegetable])))))
+       [field "Resource" [:select {:aria-label "Resource" :value (name (or (:effect-resource draft) (first (or (:choices effect) (if (= op :boat-painter) [:grain :food] [:grain :vegetable])))))
                                    :on-change #(draft! :effect-resource (keyword (.. % -target -value)))}
                           (for [r (or (:choices effect) (if (= op :boat-painter) [:grain :food] [:grain :vegetable]))] ^{:key r} [:option {:value (name r)} (labels r)])]])
      (when (= op :lodger-remove)
@@ -1350,7 +1352,7 @@
         [:label.checkbox [:input {:type "checkbox" :checked (boolean (:cook? draft)) :on-change #(draft! :cook? (.. % -target -checked))}] "Cook surplus (requires a cooking improvement)"]])
      (when (and reason (not (#{:sidekick :extra-action :play-hand-response} op))) [:p.card-unavailable {:role "status"} reason])
      [:div.form-row
-      (when (and (not (#{:sidekick :extra-action} op)) (or (not= :play-hand-response op) (nil? reason))) [button (case op :return-animal-loan "Settle animal loan" :collect-cooked-animal "Collect cooked markers" :ability-window "Finish harvest decisions →" :sow-offer "Take Sow action" :play-hand-response "Play Chief's Daughter" "Resolve effect →")
+      (when (and (not (#{:sidekick :extra-action} op)) (or (not= :play-hand-response op) (nil? reason))) [button (case op :return-animal-loan "Settle animal loan" :collect-cooked-animal "Collect cooked markers" :ability-window "Finish harvest decisions →" :sow-offer "Take Sow action" :take-stock "Take resource →" :play-hand-response "Play Chief's Daughter" "Resolve effect →")
        #(dispatch :command choice) "button primary" (or busy? (boolean reason))])
       (when (card-game/optional-effect? g head) [button (if (= :play-hand-response op) "Continue" "Skip this effect") #(dispatch :command {:type :resolve :decision (:decision-id g) :skip? true}) "text-button" busy?])]]))
 

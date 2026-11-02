@@ -41,4 +41,15 @@
  {:triggers [{:event :use-space :spaces #{:plow} :effect {:op :gain :goods {:reed 1}}}]}
  :catalog/original-expansion-g-113-stone-kitchen
  {:passive {:cook {:vegetable 4 :sheep 2 :boar 3 :cattle 4} :bake 3 :crock-compatible true}}
+
+ :catalog/original-expansion-g-25-businesswoman
+ {:play [{:op :card-action :kinds #{:major :minor} :optional? true}
+         {:op :card-action :kinds #{:major :minor} :optional? true}]}
+ :catalog/original-expansion-g-50-singer
+ {:play [{:op :choose-good :choices [:wood :clay :reed :stone]}
+         {:op :choose-good :choices [:wood :clay :reed :stone]}]}
+ :catalog/original-expansion-g-76-gardening-tools
+ {:triggers [{:event :sow :scope :others :effect {:op :sow-offer :cost {:food 1} :optional? true}}]}
+ :catalog/original-expansion-g-110-shovel
+ {:triggers [{:event :use-space :spaces #{:labor} :effect {:op :sow-offer :optional? true}}]}
 }

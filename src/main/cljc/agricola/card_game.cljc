@@ -932,7 +932,9 @@
             (a/require! (sowing-potential? g pid effect) "There is no legal sowing plan, even with the grain available before sowing.")
             (-> g (assoc :sow-in-progress pid)
                 (queue-front [(event :before-sow pid {:unconditional? (:unconditional? effect)})
-                              (task pid card (assoc effect :op :sow-start :optional? false) context)])))
+                              ;; The offer has already paid its cost. Internal
+                              ;; sowing steps must not charge it again.
+                              (task pid card (assoc (dissoc effect :cost) :op :sow-start :optional? false) context)])))
           :sow-start
           (if (sowable? (sowing-player g pid effect))
             (queue-front g [(task pid card (assoc effect :op :sow :optional? false) context)])
@@ -1052,6 +1054,10 @@
                                      (c/occupation-count current (when (= "Original" (:edition (c/card card))) :original-tutor)))
                            (assoc-in [:players pid :card-state card :occupations-after] 0))
           :stock (assoc-in g [:players pid :card-state card :stock] (:goods effect))
+          :take-stock (let [stock (get-in current [:card-state card :stock])]
+                        (a/require! (seq stock) "No goods remain on this card.")
+                        (-> g (update-in [:players pid] a/gain {(peek stock) 1})
+                            (update-in [:players pid :card-state card :stock] pop)))
           :reed-hut-worker (if (pos? (a/unused-person-tokens current))
                              (cond-> (-> g (assoc-in [:players pid :reed-hut?] true)
                                            (assoc-in [:players pid :reed-hut-placed?] false))
@@ -1311,7 +1317,7 @@
                   (= :pieceworker op) (map #(hash-map :purchase %) (pieceworker-choices (:context head)))
                   (= :basin-maker op) [{:amount 1}]
                   (= :tanner op) [{:animals {:boar 1}} {:animals {:cattle 1}}]
-                  (= :wood-distributor op) [{}]
+                  (#{:wood-distributor :take-stock} op) [{}]
                   (= :foreman op) (map #(hash-map :space %) (fence-marker-spaces g player))
                   (= :animal-breeder op) (when (animal-breeder-available? g player (:context head)) (map #(hash-map :animal %) a/animals))
                   (= :animal-trainer op) (map #(hash-map :animals {% 1}) a/animals)
@@ -2407,7 +2413,10 @@
         (when remaining (a/require! (<= times remaining) "This card has no more exchanges available this round."))
         (let [{:keys [cost goods]} (nth options index)
               scale #(into {} (map (fn [[resource n]] [resource (* times n)]) %))]
-          (cond-> (update-in g [:players pid] #(-> % (a/pay (scale cost)) (a/gain (scale goods))))
+          (cond-> (update-in g [:players pid]
+                            #(if (get-in (c/card card) [:ability :food-conversion?])
+                               (a/convert-recipe % (scale cost) (:food (scale goods)) (select-keys g [:phase :round]))
+                               (-> % (a/pay (scale cost)) (a/gain (scale goods)))))
             remaining (assoc-in [:players pid :card-state card :exchange-round] (:round g))
             remaining (assoc-in [:players pid :card-state card :exchange-used]
                                 (+ times (- (get-in (c/card card) [:ability :limit-per-round]) remaining))))))

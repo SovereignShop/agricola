@@ -3,7 +3,7 @@
  :sources
  [{:id :g-wm-fr-english-prints :authority :printed-card-scans :edition :original
    :url "http://playagricola.com/Agricola/Cards/index.php"
-   :note "First native batch: G005/010/021/029/051/069/075/081/087/093; WM003/067/076/082/095/097/098/100/109/111; FR003/010/016/017/038/039/043/044/048/053/057/100. Second batch: G033/049/073/074/086/089/099/113; WM026/029/038/041/051/092/093/101; FR022/028/030/055/084/104/108/111. All 56 English faces checked visually. Exact source URLs and byte hashes are in the artwork manifest; no proposed/rebalanced faces substituted."}
+   :note "First native batch: G005/010/021/029/051/069/075/081/087/093; WM003/067/076/082/095/097/098/100/109/111; FR003/010/016/017/038/039/043/044/048/053/057/100. Second batch: G033/049/073/074/086/089/099/113; WM026/029/038/041/051/092/093/101; FR022/028/030/055/084/104/108/111. Third batch: G025/050/076/110; WM015/028/106/108; FR007/008/032/113. All 68 English faces checked visually. Exact source URLs and byte hashes are in the artwork manifest; no proposed/rebalanced faces substituted."}
   {:id :community-compendium-v11-web :authority :unofficial-compilation :edition :original
    :url "https://www.reedstonefood.com/agricola/compendium"
    :note "Community clarifications cross-checked with the G/WM/FR printings, especially Plentiful Fields excluding card fields, passing cards, and Open Gate retaining earned points when discarded."}
@@ -83,7 +83,25 @@
    :status :unresolved
    :note "No explicit publisher or designer clarification was found. Do not present either interpretation as a verified ruling."}]
  :regressions
- [{:id :community-extra-effort
+ [{:id :community-barber-shop
+   :cards [:catalog/original-expansion-fr-8-barber-shop]
+   :source "https://www.reedstonefood.com/agricola/compendium"
+   :authority :printed-card-and-community-clarification
+   :rule "Barber Shop counts future harvests only; a harvest already starting or underway is excluded. Points are awarded on play."
+   :test agricola.community-batch-three-test/barber-shop-counts-only-future-harvests-and-awards-points-once}
+  {:id :community-steamer-cooking
+   :cards [:catalog/original-expansion-wm-108-steamer]
+   :source "https://www.reedstonefood.com/agricola/compendium"
+   :authority :printed-card-and-community-clarification
+   :rule "Steamer's animal recipes count as food conversions and trigger cooking listeners such as Pelts. They are not baking or fireplace conversions."
+   :test agricola.community-batch-three-test/steamer-pays-pairs-and-counts-as-cooking-without-baking-or-fireplace}
+  {:id :community-trailblazer
+   :cards [:catalog/original-expansion-fr-113-trailblazer]
+   :source "https://www.reedstonefood.com/agricola/compendium"
+   :authority :printed-card-and-community-clarification
+   :rule "Trailblazer may plow the first farm field. Empty fields on cards do not block it."
+   :test agricola.community-batch-three-test/trailblazer-tests-farm-fields-and-allows-first-field}
+  {:id :community-extra-effort
    :cards [:catalog/original-expansion-g-74-extra-effort]
    :source "https://www.reedstonefood.com/agricola/compendium"
    :authority :printed-card-and-community-clarification
