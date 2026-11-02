@@ -4,7 +4,17 @@
   (:require [agricola.engine :as a] [agricola.card-game :as game] [agricola.card-rules :as cards]))
 
 (def scenarios
-  [{:id "swing-plow" :card :catalog/original-base-k-115-swing-plow
+  [{:id "seed-spreader" :card :catalog/original-expansion-g-105-seed-spreader :name "Seed Spreader"
+    :description "Farmland has just been used. Sow exactly one grain or vegetable by clicking a field, or decline. Copse is also present to check that wood cannot be sown with this effect."}
+   {:id "vegetable-scoop" :card :catalog/original-expansion-g-117-vegetable-scoop :name "Vegetable Scoop"
+    :description "Take Vegetable Seeds on the shared board: you receive two vegetables automatically. Other vegetable receipts do not trigger the Scoop."}
+   {:id "diamond-mine" :card :catalog/original-expansion-wm-73-diamond-mine :name "Diamond Mine"
+    :description "Three occupations are already played. Use Meeting Place to play Diamond Mine and see stone markers on the next two rounds."}
+   {:id "encircling-wall" :card :catalog/original-expansion-fr-18-encircling-wall :name "Encircling Wall"
+    :description "The four-stone cost has been paid. Click a farm space adjoining the existing pasture to fence it without paying wood, or decline."}
+   {:id "stone-house-reconstruction" :card :catalog/original-expansion-fr-45-stone-house-reconstruction :name "Stone House Reconstruction"
+    :description "Open the played card and renovate the clay house to stone. The normal renovation cost applies and no worker is placed."}
+   {:id "swing-plow" :card :catalog/original-base-k-115-swing-plow
     :name "Swing Plow"
     :description "Paused after choosing Plow. Click your farm to choose up to two additional fields, or decline the plow. You control both players."}
    {:id "businesswoman" :card :catalog/original-expansion-g-25-businesswoman :name "Businesswoman"
@@ -101,6 +111,18 @@
         base (game/initialize (a/new-game names (vec (mapcat identity a/stages)) 0))
         funded (update base :players #(mapv (fn [p] (a/gain p {:food 12 :wood 8 :clay 8 :reed 6 :stone 8 :grain 3 :vegetable 2})) %))]
     (case id
+      "seed-spreader" (-> funded (played 0 (cards/id :a109)) (played 0 card)
+                          (played 0 :catalog/original-base-i-78-copse)
+                          (update-in [:players 0] a/place-tile :field 0)
+                          (game/command 0 {:type :action :space :plow :cell 1}))
+      "vegetable-scoop" (-> funded (prepared-round 8) (played 0 card))
+      "diamond-mine" (-> funded (prepared-round 4)
+                          (played 0 (cards/id :a109))
+                          (played 0 (cards/id :a115))
+                          (played 0 (cards/id :a117))
+                          (put-in-hand 0 card))
+      "encircling-wall" (-> funded (update-in [:players 0] a/build-fences (vec (a/edges 0))) (played 0 card))
+      "stone-house-reconstruction" (-> funded (update-in [:players 0] a/renovate {}) (played 0 card))
       "foreman" (-> funded (played 0 card) game/begin-round game/drain)
       "fence-builder" (played funded 0 card)
       "fence-overseer" (-> funded (played 0 card) (game/command 0 {:type :action :space :build :stables [0]}))

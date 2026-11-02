@@ -52,4 +52,9 @@
  {:triggers [{:event :sow :scope :others :effect {:op :sow-offer :cost {:food 1} :optional? true}}]}
  :catalog/original-expansion-g-110-shovel
  {:triggers [{:event :use-space :spaces #{:labor} :effect {:op :sow-offer :optional? true}}]}
+ :catalog/original-expansion-g-105-seed-spreader
+ {:triggers [{:event :use-space :spaces #{:plow}
+              :effect {:op :sow-offer :max-fields 1 :allowed-crops #{:grain :vegetable} :optional? true}}]}
+ :catalog/original-expansion-g-117-vegetable-scoop
+ {:triggers [{:event :use-space :spaces #{:vegetable} :effect {:op :gain :goods {:vegetable 1}}}]}
 }

@@ -146,7 +146,9 @@
   ;; food and printed scoring; only newly created games use the new defaults.
   ;; Network packets still require an exact match between running clients.
   (or (= @engine-fingerprint fingerprint)
-      (contains? #{;; Resource-choice queues preserve existing decisions and single-choice recordings.
+      (contains? #{;; Community batch four adds cards without changing existing states.
+                   "673b9a66fbd0f187217df7a81aa6528148e3b610ef77f40dfaf6c488205ddfd2"
+                   ;; Resource-choice queues preserve existing decisions and single-choice recordings.
                    "484da90951daa1ca326035df1e3d5f1d7493cf11165585255ae38d7c0129c17b"
                    ;; Community batch three adds cards; existing saved decisions remain valid.
                    "e9c88aecd34003d215e9735472f3906be0dc80612a047f3d638a3a9def3a0317"
@@ -229,7 +231,7 @@
       (let [options (scenarios/options scenario (valid-name name))
             [rooms room] (transition rooms token (assoc (dissoc options :scenario) :event :create))
             state (scenarios/initial-state scenario (:names options))
-            room (assoc room :state state :recording [(recording-header room state true)])]
+            room (assoc room :scenario scenario :state state :recording [(recording-header room state true)])]
         [(assoc rooms (:id room) room) room])
       (let [id (str (random-uuid)) mode (or mode :online) name (valid-name name)
           _ (agricola/require! (#{:online :local} mode) "Choose online or pass-and-play mode.")

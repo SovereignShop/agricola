@@ -421,3 +421,13 @@
  .board-picker .original-board>.printed-action>strong {position:static;width:auto;height:auto;margin:0;clip-path:none;white-space:normal}
  .board-picker .original-board .round-action {position:absolute;min-height:0}
 }
+
+/* Prepared card reviews keep navigation beside the live effect, including in dialogs. */
+.card-review {background:#eee6d3;color:#493d2c;padding:9px 16px;border-bottom:1px solid #b5a88d}
+.card-review-heading,.card-review-actions {display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card-review-heading {justify-content:space-between}
+.card-review p {margin:5px 0;font-size:calc(13px * var(--text-scale,1));line-height:1.4}
+.card-review-actions .button {padding:6px 10px;min-height:36px}
+.card-review>small {display:block;font-size:11px;margin-top:5px}
+.table-dialog .card-review {position:sticky;top:0;z-index:12;margin-bottom:12px;border:1px solid #b5a88d;border-radius:4px;box-shadow:0 3px 12px #493d2c18}
+@media(max-width:760px) {.card-review {padding:8px}.card-review-actions {gap:5px}.card-review-actions .button {font-size:12px;padding:6px 8px}}

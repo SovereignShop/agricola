@@ -58,4 +58,8 @@
  :catalog/original-expansion-fr-113-trailblazer
  {:triggers [{:event :round-start :condition [:test [:= [:empty-farm-fields] 0]]
               :effect {:op :plow :cost {:food 1} :optional? true}}]}
+ :catalog/original-expansion-fr-18-encircling-wall
+ {:play [{:op :mini-pasture :optional? true}]}
+ :catalog/original-expansion-fr-45-stone-house-reconstruction
+ {:ability {:op :renovate-clay-stone}}
 }

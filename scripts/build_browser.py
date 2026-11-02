@@ -5,6 +5,7 @@ import shutil
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
+subprocess.run(["clojure", "-M", "scripts/check_card_prints.clj"], cwd=ROOT, check=True)
 # Compile the existing JVM policy for the browser without changing its training
 # fingerprint. This generated adapter has one source of truth, not a second AI.
 bot_source = (ROOT / "src/clj/agricola/bot.clj").read_text()

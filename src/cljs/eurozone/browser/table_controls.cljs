@@ -44,7 +44,7 @@
           [:strong (if paused? "Paused" (time-text seconds))]
           [:small (cond paused? "Vote in progress" (zero? seconds) "Bot is choosing…" urgent? "Bot moves at zero" :else "remaining")]])])))
 
-(defn modal [title children & [close]]
+(defn modal [title children & [close review]]
   (r/with-let [previous (.-activeElement js/document)
                node (atom nil) current-close (atom close)
                outside-press? (atom false)
@@ -72,6 +72,7 @@
      [:section.table-dialog {:role "dialog" :aria-modal true :aria-label title :tab-index -1
                              :ref #(when % (reset! node %) (when (and (top?) (not (.contains % (.-activeElement js/document)))) (.focus %)))}
       [:div.section-heading [:h2 title] (when close [:button.text-button {:aria-label "Close dialog" :on-click close} "×"])]
+      review
       children]]
     (finally (.removeEventListener js/document "keydown" handler)
              (when (and previous (.-isConnected previous)) (.focus previous)))))

@@ -3,6 +3,131 @@
 ;; Exact pack identities keep reprints and Original cards separate.
 (def printed-files
   {
+   :catalog/revised-artifex-expansion-a-18-wheel-plow "revised-a018.jpg"
+   :catalog/revised-artifex-expansion-a-21-family-friend-home "revised-a021.jpg"
+   :catalog/revised-artifex-expansion-a-25-bassinet "revised-a025.jpg"
+   :catalog/revised-artifex-expansion-a-27-oven-site "revised-a027.jpg"
+   :catalog/revised-artifex-expansion-a-34-loppers "revised-a034.jpg"
+   :catalog/revised-artifex-expansion-a-35-swimming-class "revised-a035.jpg"
+   :catalog/revised-artifex-expansion-a-61-winnowing-fan "revised-a061.jpg"
+   :catalog/revised-artifex-expansion-a-72-calcium-fertilizers "revised-a072.jpg"
+   :catalog/revised-artifex-expansion-a-79-garden-hoe "revised-a079.jpg"
+   :catalog/revised-artifex-expansion-a-82-work-certificate "revised-a082.jpg"
+   :catalog/revised-artifex-expansion-a-85-homekeeper "revised-a085.jpg"
+   :catalog/revised-artifex-expansion-a-107-catcher "revised-a107.jpg"
+   :catalog/revised-artifex-expansion-a-109-small-trader "revised-a109.jpg"
+   :catalog/revised-artifex-expansion-a-113-heresy-teacher "revised-a113.jpg"
+   :catalog/revised-artifex-expansion-a-128-riparian-builder "revised-a128.jpg"
+   :catalog/revised-artifex-expansion-a-129-swagman "revised-a129.jpg"
+   :catalog/revised-artifex-expansion-a-130-mummy-s-boy "revised-a130.jpg"
+   :catalog/revised-artifex-expansion-a-131-craft-teacher "revised-a131.jpg"
+   :catalog/revised-artifex-expansion-a-132-publican "revised-a132.jpg"
+   :catalog/revised-artifex-expansion-a-139-hollow-warden "revised-a139.jpg"
+   :catalog/revised-artifex-expansion-a-144-sequestrator "revised-a144.jpg"
+   :catalog/revised-artifex-expansion-a-149-house-artist "revised-a149.jpg"
+   :catalog/revised-artifex-expansion-a-151-minstrel "revised-a151.jpg"
+   :catalog/revised-artifex-expansion-a-161-patch-caretaker "revised-a161.jpg"
+   :catalog/revised-artifex-expansion-a-162-forest-tallyman "revised-a162.jpg"
+   :catalog/revised-artifex-expansion-a-163-building-expert "revised-a163.jpg"
+   :catalog/original-expansion-g-105-seed-spreader "original-g105.jpg"
+   :catalog/original-expansion-g-117-vegetable-scoop "original-g117.jpg"
+   :catalog/original-expansion-wm-73-diamond-mine "original-wm073.jpg"
+   :catalog/original-expansion-fr-18-encircling-wall "original-fr018.jpg"
+   :catalog/original-expansion-fr-45-stone-house-reconstruction "original-fr045.jpg"
+   :catalog/revised-artifex-expansion-a-1-shelter "revised-a001.png"
+   :catalog/revised-artifex-expansion-a-3-paper-knife "revised-a003.png"
+   :catalog/revised-artifex-expansion-a-4-baseboards "revised-a004.png"
+   :catalog/revised-artifex-expansion-a-6-storage-barn "revised-a006.png"
+   :catalog/revised-artifex-expansion-a-7-gardener-s-knife "revised-a007.png"
+   :catalog/revised-artifex-expansion-a-8-food-basket "revised-a008.png"
+   :catalog/revised-artifex-expansion-a-10-wooden-shed "revised-a010.png"
+   :catalog/revised-artifex-expansion-a-11-mud-patch "revised-a011.png"
+   :catalog/revised-artifex-expansion-a-13-renovation-company "revised-a013.png"
+   :catalog/revised-artifex-expansion-a-14-carpenter-s-hammer "revised-a014.png"
+   :catalog/revised-artifex-expansion-a-15-carpenter-s-axe "revised-a015.png"
+   :catalog/revised-artifex-expansion-a-17-reclamation-plow "revised-a017.png"
+   :catalog/revised-artifex-expansion-a-20-double-turn-plow "revised-a020.png"
+   :catalog/revised-artifex-expansion-a-22-telegram "revised-a022.png"
+   :catalog/revised-artifex-expansion-a-23-stone-company "revised-a023.png"
+   :catalog/revised-artifex-expansion-a-28-forest-school "revised-a028.png"
+   :catalog/revised-artifex-expansion-a-29-ale-benches "revised-a029.png"
+   :catalog/revised-artifex-expansion-a-30-baking-sheet "revised-a030.png"
+   :catalog/revised-artifex-expansion-a-31-debt-security "revised-a031.png"
+   :catalog/revised-artifex-expansion-a-36-facades-carving "revised-a036.png"
+   :catalog/revised-artifex-expansion-a-37-bucksaw "revised-a037.png"
+   :catalog/revised-artifex-expansion-a-39-chapel "revised-a039.png"
+   :catalog/revised-artifex-expansion-a-40-potter-s-yard "revised-a040.png"
+   :catalog/revised-artifex-expansion-a-41-vegetable-slicer "revised-a041.png"
+   :catalog/revised-artifex-expansion-a-42-forest-lake-hut "revised-a042.png"
+   :catalog/revised-artifex-expansion-a-43-farmyard-manure "revised-a043.png"
+   :catalog/revised-artifex-expansion-a-45-fire-protection-pond "revised-a045.png"
+   :catalog/revised-artifex-expansion-a-46-claw-knife "revised-a046.png"
+   :catalog/revised-artifex-expansion-a-47-trellises "revised-a047.png"
+   :catalog/revised-artifex-expansion-a-48-shaving-horse "revised-a048.png"
+   :catalog/revised-artifex-expansion-a-49-nest-site "revised-a049.png"
+   :catalog/revised-artifex-expansion-a-51-drift-net-boat "revised-a051.png"
+   :catalog/revised-artifex-expansion-a-52-throwing-axe "revised-a052.png"
+   :catalog/revised-artifex-expansion-a-54-credit "revised-a054.png"
+   :catalog/revised-artifex-expansion-a-57-milking-parlor "revised-a057.png"
+   :catalog/revised-artifex-expansion-a-58-asparagus-knife "revised-a058.png"
+   :catalog/revised-artifex-expansion-a-59-potato-ridger "revised-a059.png"
+   :catalog/revised-artifex-expansion-a-60-oriental-fireplace "revised-a060.png"
+   :catalog/revised-artifex-expansion-a-62-beer-keg "revised-a062.png"
+   :catalog/revised-artifex-expansion-a-64-barley-mill "revised-a064.png"
+   :catalog/revised-artifex-expansion-a-65-seed-pellets "revised-a065.png"
+   :catalog/revised-artifex-expansion-a-66-feeding-dish "revised-a066.png"
+   :catalog/revised-artifex-expansion-a-68-asparagus-gift "revised-a068.png"
+   :catalog/revised-artifex-expansion-a-70-lifting-machine "revised-a070.png"
+   :catalog/revised-artifex-expansion-a-73-agricultural-fertilizers "revised-a073.png"
+   :catalog/revised-artifex-expansion-a-74-stable-tree "revised-a074.png"
+   :catalog/revised-artifex-expansion-a-76-cob "revised-a076.png"
+   :catalog/revised-artifex-expansion-a-77-hod "revised-a077.png"
+   :catalog/revised-artifex-expansion-a-81-interim-storage "revised-a081.png"
+   :catalog/revised-artifex-expansion-a-84-silage "revised-a084.png"
+   :catalog/revised-artifex-expansion-a-89-stable-planner "revised-a089.png"
+   :catalog/revised-artifex-expansion-a-91-shifting-cultivator "revised-a091.png"
+   :catalog/revised-artifex-expansion-a-93-bed-maker "revised-a093.png"
+   :catalog/revised-artifex-expansion-a-94-lazy-sowman "revised-a094.png"
+   :catalog/revised-artifex-expansion-a-95-angler "revised-a095.png"
+   :catalog/revised-artifex-expansion-a-96-task-artisan "revised-a096.png"
+   :catalog/revised-artifex-expansion-a-97-freshman "revised-a097.png"
+   :catalog/revised-artifex-expansion-a-99-fellow-grazer "revised-a099.png"
+   :catalog/revised-artifex-expansion-a-100-curator "revised-a100.png"
+   :catalog/revised-artifex-expansion-a-101-cookery-outfitter "revised-a101.png"
+   :catalog/revised-artifex-expansion-a-103-portmonger "revised-a103.png"
+   :catalog/revised-artifex-expansion-a-104-wood-harvester "revised-a104.png"
+   :catalog/revised-artifex-expansion-a-105-barrow-pusher "revised-a105.png"
+   :catalog/revised-artifex-expansion-a-106-slurry-spreader "revised-a106.png"
+   :catalog/revised-artifex-expansion-a-115-chief-forester "revised-a115.png"
+   :catalog/revised-artifex-expansion-a-117-wood-carrier "revised-a117.png"
+   :catalog/revised-artifex-expansion-a-118-treegardener "revised-a118.png"
+   :catalog/revised-artifex-expansion-a-121-clay-puncher "revised-a121.png"
+   :catalog/revised-artifex-expansion-a-122-pan-baker "revised-a122.png"
+   :catalog/revised-artifex-expansion-a-124-knapper "revised-a124.png"
+   :catalog/revised-artifex-expansion-a-126-master-workman "revised-a126.png"
+   :catalog/revised-artifex-expansion-a-127-lodger "revised-a127.png"
+   :catalog/revised-artifex-expansion-a-134-full-farmer "revised-a134.png"
+   :catalog/revised-artifex-expansion-a-135-animal-reeve "revised-a135.png"
+   :catalog/revised-artifex-expansion-a-136-drudgery-reeve "revised-a136.png"
+   :catalog/revised-artifex-expansion-a-137-riverine-shepherd "revised-a137.png"
+   :catalog/revised-artifex-expansion-a-140-shovel-bearer "revised-a140.png"
+   :catalog/revised-artifex-expansion-a-141-turnip-farmer "revised-a141.png"
+   :catalog/revised-artifex-expansion-a-142-cordmaker "revised-a142.png"
+   :catalog/revised-artifex-expansion-a-145-ropemaker "revised-a145.png"
+   :catalog/revised-artifex-expansion-a-146-storehouse-steward "revised-a146.png"
+   :catalog/revised-artifex-expansion-a-148-woolgrower "revised-a148.png"
+   :catalog/revised-artifex-expansion-a-150-stagehand "revised-a150.png"
+   :catalog/revised-artifex-expansion-a-152-night-school-student "revised-a152.png"
+   :catalog/revised-artifex-expansion-a-153-pig-owner "revised-a153.png"
+   :catalog/revised-artifex-expansion-a-154-paymaster "revised-a154.png"
+   :catalog/revised-artifex-expansion-a-156-buyer "revised-a156.png"
+   :catalog/revised-artifex-expansion-a-157-bohemian "revised-a157.png"
+   :catalog/revised-artifex-expansion-a-158-culinary-artist "revised-a158.png"
+   :catalog/revised-artifex-expansion-a-159-joiner-of-the-sea "revised-a159.png"
+   :catalog/revised-artifex-expansion-a-164-wood-worker "revised-a164.png"
+   :catalog/revised-artifex-expansion-a-166-haydryer "revised-a166.png"
+   :catalog/revised-artifex-expansion-a-167-breeder-buyer "revised-a167.png"
+   :catalog/revised-artifex-expansion-a-168-animal-teacher "revised-a168.png"
    :catalog/original-expansion-g-25-businesswoman "original-g025.jpg"
    :catalog/original-expansion-g-50-singer "original-g050.jpg"
    :catalog/original-expansion-g-76-gardening-tools "original-g076.jpg"
@@ -102,6 +227,60 @@
 ;; Indices are visually checked against the card titles, not catalogue order.
 (def original-sprites
   {
+   :revised-five/a169 ["revised-five-occupations.jpg" 0 10 5]
+   :revised-five/a170 ["revised-five-occupations.jpg" 1 10 5]
+   :revised-five/a171 ["revised-five-occupations.jpg" 2 10 5]
+   :revised-five/a172 ["revised-five-occupations.jpg" 3 10 5]
+   :revised-five/a173 ["revised-five-occupations.jpg" 4 10 5]
+   :revised-five/a174 ["revised-five-occupations.jpg" 5 10 5]
+   :revised-five/a175 ["revised-five-occupations.jpg" 6 10 5]
+   :revised-five/a176 ["revised-five-occupations.jpg" 7 10 5]
+   :revised-five/a177 ["revised-five-occupations.jpg" 8 10 5]
+   :revised-five/a178 ["revised-five-occupations.jpg" 9 10 5]
+   :revised-five/a179 ["revised-five-occupations.jpg" 10 10 5]
+   :revised-five/a180 ["revised-five-occupations.jpg" 11 10 5]
+   :revised-five/b169 ["revised-five-occupations.jpg" 12 10 5]
+   :revised-five/b170 ["revised-five-occupations.jpg" 13 10 5]
+   :revised-five/b171 ["revised-five-occupations.jpg" 14 10 5]
+   :revised-five/b172 ["revised-five-occupations.jpg" 15 10 5]
+   :revised-five/b173 ["revised-five-occupations.jpg" 16 10 5]
+   :revised-five/b174 ["revised-five-occupations.jpg" 17 10 5]
+   :revised-five/b175 ["revised-five-occupations.jpg" 18 10 5]
+   :revised-five/b176 ["revised-five-occupations.jpg" 19 10 5]
+   :revised-five/b177 ["revised-five-occupations.jpg" 20 10 5]
+   :revised-five/b178 ["revised-five-occupations.jpg" 21 10 5]
+   :revised-five/b179 ["revised-five-occupations.jpg" 22 10 5]
+   :revised-five/b180 ["revised-five-occupations.jpg" 23 10 5]
+   :revised-five/c169 ["revised-five-occupations.jpg" 24 10 5]
+   :revised-five/c170 ["revised-five-occupations.jpg" 25 10 5]
+   :revised-five/c171 ["revised-five-occupations.jpg" 26 10 5]
+   :revised-five/c172 ["revised-five-occupations.jpg" 27 10 5]
+   :revised-five/c173 ["revised-five-occupations.jpg" 28 10 5]
+   :revised-five/c174 ["revised-five-occupations.jpg" 29 10 5]
+   :revised-five/c175 ["revised-five-occupations.jpg" 30 10 5]
+   :revised-five/c176 ["revised-five-occupations.jpg" 31 10 5]
+   :revised-five/c177 ["revised-five-occupations.jpg" 32 10 5]
+   :revised-five/c178 ["revised-five-occupations.jpg" 33 10 5]
+   :revised-five/c179 ["revised-five-occupations.jpg" 34 10 5]
+   :revised-five/c180 ["revised-five-occupations.jpg" 35 10 5]
+   :revised-five/d169 ["revised-five-occupations.jpg" 36 10 5]
+   :revised-five/d170 ["revised-five-occupations.jpg" 37 10 5]
+   :revised-five/d171 ["revised-five-occupations.jpg" 38 10 5]
+   :revised-five/d172 ["revised-five-occupations.jpg" 39 10 5]
+   :revised-five/d173 ["revised-five-occupations.jpg" 40 10 5]
+   :revised-five/d174 ["revised-five-occupations.jpg" 41 10 5]
+   :revised-five/d175 ["revised-five-occupations.jpg" 42 10 5]
+   :revised-five/d176 ["revised-five-occupations.jpg" 43 10 5]
+   :revised-five/d177 ["revised-five-occupations.jpg" 44 10 5]
+   :revised-five/d178 ["revised-five-occupations.jpg" 45 10 5]
+   :revised-five/d179 ["revised-five-occupations.jpg" 46 10 5]
+   :revised-five/d180 ["revised-five-occupations.jpg" 47 10 5]
+   :revised-base/a092 ["revised-base-occupations.jpg" 8 10 5]
+   :revised-base/a111 ["revised-base-occupations.jpg" 13 10 5]
+   :revised-base/a133 ["revised-base-occupations.jpg" 19 10 5]
+   :revised-base/a138 ["revised-base-occupations.jpg" 20 10 5]
+   :revised-base/b118 ["revised-base-occupations.jpg" 35 10 5]
+   :revised-base/a083 ["revised-base-minors.jpg" 25 10 6]
    :catalog/original-base-e-22-raft ["original-e-minors.jpg" 0]
    :catalog/original-base-e-53-butter-churn ["original-e-minors.jpg" 1]
    :catalog/original-base-e-19-gypsy-s-crock ["original-e-minors.jpg" 2]
@@ -412,11 +591,12 @@
    :catalog/original-base-k-342-animal-trainer ["original-k-occupations.jpg" 3]})
 (defn available? [id] (boolean (or (available id) (printed-files id) (original-sprites id))))
 (defn face [id label]
-  (if-let [[sheet index] (original-sprites id)]
+  (if-let [[sheet index columns rows] (original-sprites id)]
     [:span.card-sheet-art
-     {:role "img" :aria-label (str label " · original English card") :data-card-art (str id)
+     {:role "img" :aria-label (str label " · English card print") :data-card-art (str id)
       :style {:background-image (str "url(/art/agricola/" sheet ")")
-              :background-position (str (* (/ (mod index 10) 9) 100) "% "
-                                        (* (/ (quot index 10) 6) 100) "%")}}]
+              :background-size (str (* 100 (or columns 10)) "% " (* 100 (or rows 7)) "%")
+              :background-position (str (* (/ (mod index (or columns 10)) (dec (or columns 10))) 100) "% "
+                                        (* (/ (quot index (or columns 10)) (dec (or rows 7))) 100) "%")}}]
     (when-let [src (url id)]
       [:img {:src src :alt label :loading "lazy" :draggable false}])))

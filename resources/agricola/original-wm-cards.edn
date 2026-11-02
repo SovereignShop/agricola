@@ -70,4 +70,6 @@
                       {:label "1 grain + 1 sheep → 4 food" :cost {:grain 1 :sheep 1} :goods {:food 4}}
                       {:label "1 grain + 1 boar → 5 food" :cost {:grain 1 :boar 1} :goods {:food 5}}
                       {:label "1 grain + 1 cattle → 6 food" :cost {:grain 1 :cattle 1} :goods {:food 6}}]}}
+ :catalog/original-expansion-wm-73-diamond-mine
+ {:play [{:op :schedule :offsets [1 2] :goods {:stone 1}}]}
 }

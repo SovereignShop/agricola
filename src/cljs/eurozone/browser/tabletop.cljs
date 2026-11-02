@@ -6,6 +6,7 @@
             [agricola.card-game :as game] [agricola.card-impact :as impact] [agricola.card-rules :as cards]
             [eurozone.browser.art :as art] [eurozone.browser.card-art :as card-art]
             [eurozone.browser.readability :as readability]
+            [eurozone.browser.card-review :as card-review]
             [eurozone.browser.table-controls :as controls]))
 
 (def materials [[:white "White linen"] [:tan "Natural linen"] [:checkered "Sage check"] [:leather "Cognac leather"]])
@@ -572,6 +573,7 @@
         [controls/turn-banner room open-decision!]
         (when finished? [button "View results" #(reset! popup {:kind :scores})])
         (when (number? @view) [button "Farm actions" #(do (reset! dismissed decision-key) (reset! popup {:kind :farm :pid @view}))])]
+       (when-not active-popup [card-review/controls room])
        [:div.tt-viewport {:tab-index 0 :aria-label "Tabletop. Drag to pan; hold right mouse button and scroll to pan horizontally; pinch or Control or Command wheel to zoom."
                           :data-zoom @zoom
                           :on-key-down (fn [e] (when (and (not (or (.-ctrlKey e) (.-metaKey e))) (= (.-target e) (.-currentTarget e)))
@@ -702,7 +704,7 @@
                     (when (or (and (:host? permission) (= :local (:mode room))) (and finished? recording-allowed?))
                       [button "Save recording" #(dispatch :request-recording :download) {:disabled (boolean recording-busy?)}])
                     [:p.small "Deck and goods positions are saved for your user in this browser. They do not change anyone else’s view."]
-                    [:p.small "Move handles also accept arrow keys. Text controls change reading size; the zoom controls change the table’s scale."]]) close!])
+                    [:p.small "Move handles also accept arrow keys. Text controls change reading size; the zoom controls change the table’s scale."]]) close! [card-review/controls room]])
         ;; Kept outside the menu so votes and results can arrive while the table is visible.
         [:div.tt-takeback {:on-click-capture #(when (.closest (.-target %) "button") (close!))} [controls/takeback room]]]] )
     (finally (.removeEventListener mobile-query "change" media-change)

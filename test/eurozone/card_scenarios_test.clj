@@ -42,7 +42,12 @@
       (is (= (:players (scenarios/scenario id) 2) (count (:players state)))))))
 
 (def review-commands
-  {"businesswoman" [{:improvement :fireplace-2} {:skip? true}]
+  {"seed-spreader" [{} {:plantings [{:cell 1 :crop :vegetable}]}]
+   "vegetable-scoop" [{:type :action :space :vegetable}]
+   "diamond-mine" [{:type :action :space :meeting :card :catalog/original-expansion-wm-73-diamond-mine}]
+   "encircling-wall" [{:cell 1}]
+   "stone-house-reconstruction" [{:type :ability :card :catalog/original-expansion-fr-45-stone-house-reconstruction}]
+   "businesswoman" [{:improvement :fireplace-2} {:skip? true}]
    "singer" [{:resources [:reed :reed]}]
    "gardening-tools" [{} {:plantings [{:cell 0 :crop :grain}]}]
    "shovel" [{} {:plantings [{:cell 0 :crop :vegetable}]}]
@@ -81,6 +86,8 @@
           optional? (get-in initial [:state :effect-queue 0 :effect :optional?])
           commands (if (and decline? optional?)
                      (repeat (if (#{"businesswoman" "homework"} scenario) 2 1) {:skip? true}) commands)]
+      (is (= scenario (:scenario initial)))
+      (is (= scenario (get-in @(:rooms (store/make-store path)) [id :scenario])))
       (is (= (:state initial) (get-in @(:rooms (store/make-store path)) [id :state])) scenario)
       (doseq [choice commands]
         (let [room (get @(:rooms service) id) state (:state room)

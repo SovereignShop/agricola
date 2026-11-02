@@ -2421,7 +2421,7 @@
               (assoc-in [:players pid :card-state card :claimed?] true)))
       :renovate-clay-stone
       (do (a/require! (= :clay (:house player))
-                      "Stone Breaker renovates a clay hut to stone.")
+                      "This ability renovates a clay hut to stone.")
           (run-effect g (task pid card {:op :renovate} {}) (assoc cmd :renovate-to :stone)))
       :renovate-wood-clay
       (do (a/require! (and (= :wood (:house player)) (trowel-boundary? g)

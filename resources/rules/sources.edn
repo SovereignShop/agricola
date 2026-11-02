@@ -1,7 +1,10 @@
 {:edition :revised-2016
  :reviewed "2026-11-01"
  :sources
- [{:id :g-wm-fr-english-prints :authority :printed-card-scans :edition :original
+ [{:id :community-four-prints-and-rulings :authority :printed-card-scans :edition :original
+   :url "http://playagricola.com/Agricola/Cards/index.php"
+   :note "Fourth batch G105/117, WM073, FR018/045: English faces verified against title, number, cost, prerequisites and rules. Exact URLs/checksums are in the artwork manifest. Compendium cross-check: Seed Spreader sows one grain/vegetable only, not wood or an unconditional sow; Encircling Wall follows connected-pasture and fence-supply rules; Stone House Reconstruction retains normal renovation payment. Tests: agricola.community-batch-four-test. Interaction review: native farm sow picker and mini-pasture picker; automatic vegetable receipt and future stone markers; graphical renovation payment with the existing anytime-ability flow. Each card has a native-triggered test table."}
+  {:id :g-wm-fr-english-prints :authority :printed-card-scans :edition :original
    :url "http://playagricola.com/Agricola/Cards/index.php"
    :note "First native batch: G005/010/021/029/051/069/075/081/087/093; WM003/067/076/082/095/097/098/100/109/111; FR003/010/016/017/038/039/043/044/048/053/057/100. Second batch: G033/049/073/074/086/089/099/113; WM026/029/038/041/051/092/093/101; FR022/028/030/055/084/104/108/111. Third batch: G025/050/076/110; WM015/028/106/108; FR007/008/032/113. All 68 English faces checked visually. Exact source URLs and byte hashes are in the artwork manifest; no proposed/rebalanced faces substituted."}
   {:id :community-compendium-v11-web :authority :unofficial-compilation :edition :original

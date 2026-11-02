@@ -41,6 +41,7 @@
                             (qualify "agricola.player" (dissoc p :id :farm :goods :hand))
                             (when (:hand p) {:agricola.player/hand-counts (into {} (map (fn [[k v]] [k (count v)]) (:hand p)))})
                             (qualify "agricola.resource" (:goods p)))) players)}
+            (when (:scenario room) {:eurozone.game/scenario (:scenario room)})
             (qualify "agricola.game" (cond-> (dissoc state :players :round-order :deck-order :minor-order :minor-deck :draw :card-rng) (:draw state) (assoc :draw (draw/public-view (:draw state))))))]))
 (defn pull-game [db id]
   (when-let [room (d/pull db '[* {:eurozone.game/players [* {:eurozone.player/cells [*]}]}] [:eurozone.game/id id])]

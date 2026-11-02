@@ -1358,6 +1358,803 @@
       "source": "http://playagricola.com/Agricola/Cards/Cards/occx1Trailblazer_3377_8.jpg",
       "sha256": "d34cf2fc424f892679314a8ac0d33be74cb1fcef388cecb3f906ad0f415dc3ae",
       "note": "Unmodified English printed card face, Play-Agricola image archive. Card identity checked against title and deck number."
+    },
+    {
+      "file": "cards/revised-a001.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/shelter.png",
+      "sha256": "5674adc509ab1ba77d58b6fac2822e178930e2770c7075053189b6f329268cf7",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a003.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/paper%20knife.png",
+      "sha256": "8fdf9795019515a8b553740c2aa12d1f50481fe0b8743f013c5240a81a723c2f",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a004.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/baseboards.png",
+      "sha256": "d24aeb995e1e471f3c5bdefc96e573769791a61c152147b29952594781df58d3",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a006.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/storage%20barn.png",
+      "sha256": "bde7edd815c63b49bdfb1326dc9fb9d5ca005940852a3671e0121f6e783b6341",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a007.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/gardener%27s%20knife.png",
+      "sha256": "e4efa7f3dfd8201ad1164033bfb40852ec2cc997221933b4c86e630bb3270164",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a008.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/food%20basket.png",
+      "sha256": "ed2c7a0a4f80827726cef33bb5cef2607c1ff57552fe267b66f925ba70c7682b",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a010.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/wooden%20shed.png",
+      "sha256": "1f54f4292684018d60846a06913d575262c813a1f4fff19f61c8b6f22ebd1c86",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a011.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/mud%20patch.png",
+      "sha256": "376819923f279d1544cd16ece3f5f87187ad54870f11e6792e1f57adc572a2b0",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a013.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/renovation%20company.png",
+      "sha256": "c9af347d453c7ea85de83b4f43079e716ac113a86a48592606bb2ae1b65cf6ff",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a014.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/carpenter%27s%20hammer.png",
+      "sha256": "f06be45fc5cf53ad03c0f4977b736722e926973ddab7506e4e715b42aa44e45e",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a015.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/carpenter%27s%20axe.png",
+      "sha256": "ec1b47166b01889e3653c13ab0e069a1d966c2a4a0e86f1ba08f2db0d25788f7",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a017.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/reclamation%20plow.png",
+      "sha256": "c1ba174033d1f514c52e017c66751dd6a653f8ee8a54739c4e781ef62f20e256",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a020.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/double-turn%20plow.png",
+      "sha256": "41671499a13cb13f7267b5793f928245bd019a4e68e6e8726998e0f27f2de903",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a022.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/telegram.png",
+      "sha256": "e7481e63563c8e89872f72c4617292f67ce88194a46b7c9054affa5964601fbf",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a023.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/stone%20company.png",
+      "sha256": "bb2c580fec17e32d127ec5542aeecf45f999386109a9b75e686da4be2b51b6ca",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a028.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/forest%20school.png",
+      "sha256": "9d2b8d2fea41f4b65762c94656f13ac97e441348e498e5f41a90f07091793432",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a029.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/ale-benches.png",
+      "sha256": "03dc19af695e566d0fb6d0c739738823fe81f31cab87878712d365aca68d878e",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a030.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/baking%20sheet.png",
+      "sha256": "36bbe87e713c0ec80cdd65d469365afacc3931d3115055cb65f518349f8515e2",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a031.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/debt%20security.png",
+      "sha256": "879ae618e223343998f2ccb4d1e40a5374c423fdab23ede355775dec5f7ed3d2",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a036.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/facades%20carving.png",
+      "sha256": "5fb0ff559a85f7a07bb1b67f19126ea044c47b842c38aefe17e6048a786d79d8",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a037.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/bucksaw.png",
+      "sha256": "fac427d3f77411426e2270134a8658ade97a23cea416e1c4a10a90dcb41c4615",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a039.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/chapel.png",
+      "sha256": "30b778ce05ba90cd32cb62ba14913ed9643c7a0c23d1ba47ffa9940520fd67bd",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a040.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/potter%27s%20yard.png",
+      "sha256": "0c170079fd7acf3ea757491d844fd349cd6cbc3da7f68a3cfccb7f030c45bdc9",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a041.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/vegetable%20slicer.png",
+      "sha256": "4ce20ab9becc95471d6d9e50da7f042bcffe1950e507fb37be2956db0b2fd123",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a042.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/forest%20lake%20hut.png",
+      "sha256": "37c874c3324862687a7d93d74eb4a4850b404fee35ff92d69261b7c9588d7527",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a043.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/farmyard%20manure.png",
+      "sha256": "37b39166c296804f8d02e41bb67a228485720f752781f57ba3454aac3c9f9277",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a045.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/fire%20protection%20pond.png",
+      "sha256": "10d8ee1ccf86b74dadda32e4026b838a727d566097790fd3132e5488e77251f7",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a046.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/claw%20knife.png",
+      "sha256": "cfa8b8f501d7d89a58027789af0ac3a04cc642c948dffa3bc0e6f80bae2ace82",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a047.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/trellises.png",
+      "sha256": "0d1dcc8334cdea85995874feae4c584274b9691cef903c111c8f28ef9be8f3c9",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a048.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/shaving%20horse.png",
+      "sha256": "0602d1738c9151b96e3a1dc8799db3a70f1bd14822b7826a4e5639c061d2c2e0",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a049.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/nest%20site.png",
+      "sha256": "c5b1118be924d019be236c4682ef5d62be72d64455d134fda501f45082a4c0e2",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a051.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/drift-net%20boat.png",
+      "sha256": "f0971d3d789b988c37c164ea6baafe4915b9ba8d0de177a798fe8d56c19c9334",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a052.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/throwing%20axe.png",
+      "sha256": "340a5335327c511b3b0476aca8c2986020fd2ff460da4347cb1b6d68a951f3e9",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a054.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/credit.png",
+      "sha256": "ecb05d14f0c9668530750491e096a9877455f420f2fd0902726a1b052df2667b",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a057.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/milking%20parlor.png",
+      "sha256": "905d7b2d1569728f8f0498f79a454618b8b12dc6a8ae7cdc632c55ffcf65fa5a",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a058.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/asparagus%20knife.png",
+      "sha256": "ea0f63903c6c5cc53e3f831e4ad731c62ac0441fbffdd9241d8e34766149def3",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a059.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/potato%20ridger.png",
+      "sha256": "6e4ced33a89aa46a4045adfa648acf10dd3b2eb39148d4ad6073f1487da9820d",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a060.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/oriental%20fireplace.png",
+      "sha256": "c4594c3585ae2cd84181ca1b1d099fcea6514d3db33614d71fb1a42e87cb05ee",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a062.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/beer%20keg.png",
+      "sha256": "dc00337641c3fabc8dd5983eb5a6448a658f1795ff3bb40af9647de16d7f19b5",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a064.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/barley%20mill.png",
+      "sha256": "8c2c91ca10577bac04f1bb2f24cd7f07ae0c2a14159f24496345eb5580e4a52f",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a065.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/seed%20pellets.png",
+      "sha256": "cbc2fc5da7259ae548a6f40150f72a7811f35e9a20bbababeadd43eb672d1a09",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a066.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/feeding%20dish.png",
+      "sha256": "59ccafa5fa05e928095ca36e70e362b88347dec6f4e9a272a79d784ee12aa66f",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a068.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/asparagus%20gift.png",
+      "sha256": "d0df27d3bc66be74edfff1577a0193eae0b5d4e14a87c5ee562671bd0ca6083d",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a070.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/lifting%20machine.png",
+      "sha256": "81fa865b4f9802f03f3e1d27c69ed1279367250a87f9e89c232f807f09a2c510",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a073.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/agricultural%20fertilizers.png",
+      "sha256": "673e9be273124754c69c8f52e4bbb2e3c943ba1e79f221fa395661e09b9d84f0",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a074.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/stable%20tree.png",
+      "sha256": "0ba82b555332b1ebec6939eb20a9281223bbb1422614e3d4ab25284f5c36d497",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a076.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/cob.png",
+      "sha256": "f0bf0ca4c33ef0d59e130ba2a69b5812e435fd990d10d99acaaafa3da70a1c86",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a077.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/hod.png",
+      "sha256": "5bb9b8d1cdf9b099dd368ba7d0f22d59be3710187dd679d3436b325843523182",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a081.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/interim%20storage.png",
+      "sha256": "cbd5fcb77682008d94f89ba58e3ebadffa7b4a4d20a14e08d29bb2dcd30ace6e",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a084.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/silage.png",
+      "sha256": "ba0be372b9d021e995a1cdb578ecf296613d4ab20d07952d35b5c79ea41c2386",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a089.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/stableplanner.png",
+      "sha256": "03e8b48fcb2ef54ef2f5db757963a7a81a61044fa1158f20b0dc1e6ac1256e86",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a091.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/shiftingcultivator.png",
+      "sha256": "8cc20e48ae267b59312fd7a19419326205348a861f2449f660123e5840de7392",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a093.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/bedmaker.png",
+      "sha256": "5d21a308fa98b2d95b1b0afcfc4685d0204df4c37e4a1480830e64f8a57562c0",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a094.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/lazysowman.png",
+      "sha256": "2ad851fde2d11dd4e55de3fd8fe8efafce3a664e8ad181242e888381126a7197",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a095.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/angler.png",
+      "sha256": "f30a32aa26ad7bb26b91c1b1c088f75561781ef2324617084c2596c080a4c797",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a096.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/taskartisan.png",
+      "sha256": "703b80281625f2d55d1b626b41062eab481593fe2e16cdf9b7a8498b15bd7cd3",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a097.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/freshman.png",
+      "sha256": "4029bef4a01088121ca8fa21df8352c530b6ebf78111e222d559804f79992201",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a099.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/fellowgrazer.png",
+      "sha256": "0bf26433f9e470e3bfb3c16a002221510e6e3446617addea590278f200072e13",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a100.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/curator.png",
+      "sha256": "1d5e6c7cdca10bce08129a1b9caf0535dceefd0a923a201290e8e219b5c58058",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a101.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/cookeryoutfitter.png",
+      "sha256": "ed231823ed00cda221985aed328f5808178d525ca517e83451aaeb983b835dfa",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a103.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/portmonger.png",
+      "sha256": "94bc58fed7a02562df749adf4cd6bec22cf9137cb1b62398cbcf3a8d32794aec",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a104.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/woodharvester.png",
+      "sha256": "08014ef4908e2d0b85df6b58f3bd59408d553b3086fa60b72dc799f8bd9e0ab4",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a105.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/barrowpusher.png",
+      "sha256": "a94b5e7a924350684045bc239d31d6e8d168e19a493e4e03d7219130b6901fa5",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a106.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/slurryspreader.png",
+      "sha256": "5f98b6caa3830d40b0c605d46a9e5ca3f417a79adf178979a150832001d7aede",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a115.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/chiefforester.png",
+      "sha256": "4d74fe09d474f3bbec43c36315f32753bec17b071f7b4cf1cdd36724a1459b12",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a117.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/woodcarrier.png",
+      "sha256": "9eda5caafa8b1034752535c57ad1ff3efa88e59dd5bbe8a295bb9176812ce1a1",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a118.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/treegardener.png",
+      "sha256": "75bc162278b6e83754233773355ead258a1e96939ad357e507b0e998f7d6494a",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a121.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/claypuncher.png",
+      "sha256": "41a268e4772514d0cc2d240436209360c5e647f051eb9c05939ff95627054ea0",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a122.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/panbaker.png",
+      "sha256": "7e158b62d7a90084b7a0b09d8f276f3c40e391b9472aaaa5aed1510aebab8017",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a124.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/knapper.png",
+      "sha256": "92cf9dfa039a3999a095a1c097fd1db82d5563101768880d002da7a709e99664",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a126.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/masterworkman.png",
+      "sha256": "39a3c13c61bca6880fb330f97732d75b42a0077b90a64ee6d4e0d6c44eb33c44",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a127.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/lodger.png",
+      "sha256": "cf3fce5b0a7e0d5427e96ec06925469025f689bba21646d1246b833b1dfba120",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a134.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/fullfarmer.png",
+      "sha256": "a56722d9435a921789d4d35cfc1a944a0f1ca9c9c7ae5fb765d34e9b3c3dc906",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a135.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/animalreeve.png",
+      "sha256": "7376bba5b7cef71f33fa8af15f9ae40e2b3800001d1931bfd1085b7295f05b97",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a136.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/drudgeryreeve.png",
+      "sha256": "3eb74dbff9bef0be3fb7f5542136422420442eaac24c7c4580173bea91ca7f4a",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a137.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/riverineshepherd.png",
+      "sha256": "49fd86d6f65384f9185cb218626f50d3c486fba1dcffd550d8afa4559fe97b61",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a140.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/shovelbearer.png",
+      "sha256": "6c2e4943da386d23f8832c04d9e36d7a0341315761dd7e7d75ba17426fad7052",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a141.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/turnipfarmer.png",
+      "sha256": "5c979ae3c4c3b9b84f1cf6d67bfb1f8043169c0521fadd028022463ea5271286",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a142.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/cordmaker.png",
+      "sha256": "4c80332c28cc2f536a148e7e48139a7163e2c0ce4670abfb31a72243b940ec59",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a145.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/ropemaker.png",
+      "sha256": "4dc502544c847596ecaa3afcc8e339a2a6e8d8feb84774a5920181dca94773cc",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a146.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/storehousesteward.png",
+      "sha256": "d2d2b896eca6e5c101a9f1163597af693a2fe1058fe3088ad19a4fcd604ba5a8",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a148.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/woolgrower.png",
+      "sha256": "b2552eebfbae28a879082ba7f0b766a91398aaf193281954cd83227479c2cdb5",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a150.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/stagehand.png",
+      "sha256": "0776d8945fc608c13527678a2bf71bea6101b539b40485d599ecc85a58e88ef9",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a152.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/night-schoolstudent.png",
+      "sha256": "f946fa8da031e004d3377a8e852b3bcf8a7ed188c64ee2fe6bc759d7b4f81360",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a153.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/pigowner.png",
+      "sha256": "2186de4791a0ffb87d2111286a075a27958d851c5cea34d6e9e9fb431a43dd1d",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a154.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/paymaster.png",
+      "sha256": "0deb1e1ece9aeb9f7f2bc4cb6fc089bd7b32cdc662b1be4be4b91b3125b64543",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a156.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/buyer.png",
+      "sha256": "5d2367e8c2917ef082c87ce62488ab32ee013a4babb7082be2c13de7350c8c77",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a157.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/bohemian.png",
+      "sha256": "7846c3166215776dfbc283c5d7acda33db02e22ca4a7fb5c379b6948dc322014",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a158.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/culinaryartist.png",
+      "sha256": "426d4859b19a90eee4969ccaad71edcea2ecfe20d27b3ee052b47495a19d654f",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a159.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/joinerofthesea.png",
+      "sha256": "4090282339db592ce9e7090776274aeda644850600140cab853b227a0ea85f12",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a164.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/woodworker.png",
+      "sha256": "c8469d8d0cb5433099ee95e001397adc4ffa26d9f15814894c232a94f1efcb52",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a166.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/haydryer.png",
+      "sha256": "96b62f30ed057763e811237bc0e98eb7d734cf4a02184c4fdbf3fcc9bfbac0bc",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a167.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/breederbuyer.png",
+      "sha256": "4a96267fe6c6f34d489e1380604e74bcc60960f91c8633b7c7bbe4c45934fa70",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "cards/revised-a168.png",
+      "source": "https://raw.githubusercontent.com/JiaYouChen2003/agricola.tools/2b5a0df3c1e5b76a3d55a997acbc96abcb1456cb/raw_asset/cards_images/img/animalteacher.png",
+      "sha256": "5effa8167837e04c5b157721ff766529e137ca23bca5c442d7611c6f56764b25",
+      "note": "Existing English card face, unmodified. Artifex title, deck number and rules visually verified; image archive includes both scans and digital card faces."
+    },
+    {
+      "file": "revised-base-minors.jpg",
+      "source": "https://cdn.steamusercontent.com/ugc/939432803454833754/B52BA75D0218DEB0E1B261B7213C75CADE821DB3/",
+      "reference": "https://steamcommunity.com/sharedfiles/filedetails/?id=1931752711",
+      "sha256": "9e0b9d2c0a6bc95313dd169714ff40c5ad6710e570141df2b14d4f407b161b2d",
+      "note": "Unmodified English Revised Edition sheet, 10 columns by 6 rows. Card identities and positions visually verified."
+    },
+    {
+      "file": "revised-base-occupations.jpg",
+      "source": "https://cdn.steamusercontent.com/ugc/939432803454849052/8CE3608A1BFA973D650950078BD6425D48940BA7/",
+      "reference": "https://steamcommunity.com/sharedfiles/filedetails/?id=1931752711",
+      "sha256": "ecf4dd96587e2fbbad84af8d8365b5beb1d03a456ddf7b605fee69dfc48030f1",
+      "note": "Unmodified English Revised Edition sheet, 10 columns by 5 rows. Card identities and positions visually verified."
+    },
+    {
+      "file": "revised-five-occupations.jpg",
+      "source": "https://cdn.steamusercontent.com/ugc/939432803454878026/81F4717589DA64CA108D725CB24656BE1CCCF23A/",
+      "reference": "https://steamcommunity.com/sharedfiles/filedetails/?id=1931752711",
+      "sha256": "b11e6664a906e96cc3d50c2e1f13fa47d1953c6b31fa7a09c6864e24c05e8d07",
+      "note": "Unmodified English Revised Edition sheet, 10 columns by 5 rows. Card identities and positions visually verified."
+    },
+    {
+      "file": "cards/original-g105.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminorseedspreader.jpg",
+      "sha256": "449be0cde402e2bcf8f6e57fa08ce820c012fefbe5fe88d0539a65d4bd25852b",
+      "note": "Unmodified English card face from Play-Agricola. Title, deck number, printed cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-g117.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminorvegetablescoop.jpg",
+      "sha256": "d77bda76de33f34e3e8bfb1db70fca8f24b80148c1830c0513850fe652e5001e",
+      "note": "Unmodified English card face from Play-Agricola. Title, deck number, printed cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-wm073.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorDiamondMine_134_4.jpg",
+      "sha256": "3be853f1fe2e430e311199f9aa8cd37a43865cb5bbbac865c4090f7dbdf647b8",
+      "note": "Unmodified English card face from Play-Agricola. Title, deck number, printed cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-fr018.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorEncirclingWall_3106_10.jpg",
+      "sha256": "8a9596949293c1431c9e8265d3f7c04b432b14dfd3d086fea50f2999843dfbfe",
+      "note": "Unmodified English card face from Play-Agricola. Title, deck number, printed cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-fr045.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorStoneHouseReconstruc_3911_14.jpg",
+      "sha256": "8e8b1811047c25ff47b4de90d3d83e1fa4996a0df0d6e77a6f8e92b736b22b83",
+      "note": "Unmodified English card face from Play-Agricola. Title, deck number, printed cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/revised-a018.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorWheelPlow_8176_1.jpg",
+      "reference": "http://playagricola.com/Agricola/Cards/index.php?v=c.chris-JA-",
+      "sha256": "bbaa3e44520369a925f2bf7c187316c03e27510219edad68f23da356f83c5bed",
+      "note": "Unmodified English Artifex card face from Play-Agricola. Title, deck number, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/revised-a021.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorFamilyFriendlyHome_8198_1.jpg",
+      "reference": "http://playagricola.com/Agricola/Cards/index.php?v=c.chris-JA-",
+      "sha256": "729520f4e01ed8065f5e95a194260c5f156bbb9404f51be0fa96475504ada024",
+      "note": "Unmodified English Artifex card face from Play-Agricola. Title, deck number, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/revised-a025.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorBassinet_8201_2.jpg",
+      "reference": "http://playagricola.com/Agricola/Cards/index.php?v=c.chris-JA-",
+      "sha256": "80afcf179a8d2d91ca30024c4914ad64db4af17962bd34c85e24bc40c8da5ee2",
+      "note": "Unmodified English Artifex card face from Play-Agricola. Title, deck number, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/revised-a027.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorOvenSite_8203_2.jpg",
+      "reference": "http://playagricola.com/Agricola/Cards/index.php?v=c.chris-JA-",
+      "sha256": "183ad1076b7886c2538bdbd19f57db3ab2a51c74d21187de66495bb554fcf9fe",
+      "note": "Unmodified English Artifex card face from Play-Agricola. Title, deck number, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/revised-a034.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorLoppers_8208_2.jpg",
+      "reference": "http://playagricola.com/Agricola/Cards/index.php?v=c.chris-JA-",
+      "sha256": "db2d802dca7dee5947fd44ab01e6f8911941cb66997fa034eed648c3b991a060",
+      "note": "Unmodified English Artifex card face from Play-Agricola. Title, deck number, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/revised-a035.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorSwimmingClass_8211_2.jpg",
+      "reference": "http://playagricola.com/Agricola/Cards/index.php?v=c.chris-JA-",
+      "sha256": "f48fede04e858aab9969857d27c589b3ba2e37d5ae3c26e5a90cede97840a4b8",
+      "note": "Unmodified English Artifex card face from Play-Agricola. Title, deck number, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/revised-a061.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorWinnowingFan_8238_1.jpg",
+      "reference": "http://playagricola.com/Agricola/Cards/index.php?v=c.chris-JA-",
+      "sha256": "7a48d9033d2988536ea83279b19cb7f65bfa81ad4c23861e9af41ae1d3b7e9b8",
+      "note": "Unmodified English Artifex card face from Play-Agricola. Title, deck number, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/revised-a072.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorCalciumFertilizers_8249_1.jpg",
+      "reference": "http://playagricola.com/Agricola/Cards/index.php?v=c.chris-JA-",
+      "sha256": "c7b9c7a9af25cf55098521cdbd8927a54d5b8d8be8b162e3635ba2bcb6454f2c",
+      "note": "Unmodified English Artifex card face from Play-Agricola. Title, deck number, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/revised-a079.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorGardenHoe_8257_1.jpg",
+      "reference": "http://playagricola.com/Agricola/Cards/index.php?v=c.chris-JA-",
+      "sha256": "5e2032dad65d00920dcebb6c04a8f32e0bd8c1a8c7b670e9a7ec8f586e639574",
+      "note": "Unmodified English Artifex card face from Play-Agricola. Title, deck number, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/revised-a082.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorWorkCertificate_8260_1.jpg",
+      "reference": "http://playagricola.com/Agricola/Cards/index.php?v=c.chris-JA-",
+      "sha256": "58ebeb609f452602716f538a2d452eb75adbc13ef12a98b7b48649d598bf5507",
+      "note": "Unmodified English Artifex card face from Play-Agricola. Title, deck number, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/revised-a085.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx1Homekeeper_8064_1.jpg",
+      "reference": "http://playagricola.com/Agricola/Cards/index.php?v=c.chris-JA-",
+      "sha256": "a831926f9cbec2ec4d5c1e4d570981291d5ac87fe522c0c25ca217425dff760c",
+      "note": "Unmodified English Artifex card face from Play-Agricola. Title, deck number, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/revised-a107.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx1Catcher_8090_2.jpg",
+      "reference": "http://playagricola.com/Agricola/Cards/index.php?v=c.chris-JA-",
+      "sha256": "b837f646115a31443ece62916fcd594d6fc7aab863e34d4afd01d7af191868f0",
+      "note": "Unmodified English Artifex card face from Play-Agricola. Title, deck number, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/revised-a109.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx1SmallTrader_8092_1.jpg",
+      "reference": "http://playagricola.com/Agricola/Cards/index.php?v=c.chris-JA-",
+      "sha256": "d61d1564994716626dbd50cca996114428567bbb6c5634633b7794a3949201f1",
+      "note": "Unmodified English Artifex card face from Play-Agricola. Title, deck number, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/revised-a113.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx1HeresyTeacher_8096_1.jpg",
+      "reference": "http://playagricola.com/Agricola/Cards/index.php?v=c.chris-JA-",
+      "sha256": "10dc1f18c0945f8299ccba912d2796ede683c89a7aa4f1ed045dfee36413d22e",
+      "note": "Unmodified English Artifex card face from Play-Agricola. Title, deck number, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/revised-a128.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx3RiparianBuilder_8112_2.jpg",
+      "reference": "http://playagricola.com/Agricola/Cards/index.php?v=c.chris-JA-",
+      "sha256": "e67f790485ac9dfa2e26b801cbb29bd0907c93c35bb832f9a3a75e11aa1a9527",
+      "note": "Unmodified English Artifex card face from Play-Agricola. Title, deck number, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/revised-a129.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx3Swagman_8113_1.jpg",
+      "reference": "http://playagricola.com/Agricola/Cards/index.php?v=c.chris-JA-",
+      "sha256": "e5101afea397f0e590bd41e32a305d392357ee85d0ca24498564c7b071a352ca",
+      "note": "Unmodified English Artifex card face from Play-Agricola. Title, deck number, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/revised-a130.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx3MummysBoy_8114_1.jpg",
+      "reference": "http://playagricola.com/Agricola/Cards/index.php?v=c.chris-JA-",
+      "sha256": "2d9f8eda03812955c826e644046204eb1891cc8397e5e1c3a07e9aed1633b4ce",
+      "note": "Unmodified English Artifex card face from Play-Agricola. Title, deck number, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/revised-a131.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx3CraftTeacher_8115_1.jpg",
+      "reference": "http://playagricola.com/Agricola/Cards/index.php?v=c.chris-JA-",
+      "sha256": "6998d8c8098d167ee36afcffff2e0c1ff2147efb3d173602c42396f2a22b6e00",
+      "note": "Unmodified English Artifex card face from Play-Agricola. Title, deck number, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/revised-a132.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx3Publican_8116_3.jpg",
+      "reference": "http://playagricola.com/Agricola/Cards/index.php?v=c.chris-JA-",
+      "sha256": "08970e56374d8a917f60ebb4be89e719f372bfd59a8702bbfc56423f8df880e3",
+      "note": "Unmodified English Artifex card face from Play-Agricola. Title, deck number, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/revised-a139.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx3HollowWarden_8123_2.jpg",
+      "reference": "http://playagricola.com/Agricola/Cards/index.php?v=c.chris-JA-",
+      "sha256": "fd2dbc26eef53632d6f950305da45ea6201643d0a0561e940aec4634118618f0",
+      "note": "Unmodified English Artifex card face from Play-Agricola. Title, deck number, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/revised-a144.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx3Sequestrator_8129_1.jpg",
+      "reference": "http://playagricola.com/Agricola/Cards/index.php?v=c.chris-JA-",
+      "sha256": "093ffbcde163e0a1da2098b47164520bba029b6af213d2265a1b5d924ae04d97",
+      "note": "Unmodified English Artifex card face from Play-Agricola. Title, deck number, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/revised-a149.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx4HouseArtist_8134_1.jpg",
+      "reference": "http://playagricola.com/Agricola/Cards/index.php?v=c.chris-JA-",
+      "sha256": "7ef6ab274535c405ec4d70f2a6f4b03c635cb3a50735f5e65edb2fe57830e9db",
+      "note": "Unmodified English Artifex card face from Play-Agricola. Title, deck number, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/revised-a151.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx4Minstrel_8136_1.jpg",
+      "reference": "http://playagricola.com/Agricola/Cards/index.php?v=c.chris-JA-",
+      "sha256": "529f52e40f29bd99cf268bb4dcb3e51a454d96fece534dd4df9a949319480d96",
+      "note": "Unmodified English Artifex card face from Play-Agricola. Title, deck number, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/revised-a161.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx4PatchCaretaker_8147_1.jpg",
+      "reference": "http://playagricola.com/Agricola/Cards/index.php?v=c.chris-JA-",
+      "sha256": "ffd83bec0bfaad26737c9d6baa6726a6c1fdcd13efa7a07b95d00be271012a9a",
+      "note": "Unmodified English Artifex card face from Play-Agricola. Title, deck number, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/revised-a162.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx4ForestTallyman_8148_1.jpg",
+      "reference": "http://playagricola.com/Agricola/Cards/index.php?v=c.chris-JA-",
+      "sha256": "2cc3437428e470350d965b35c66d5474b42365a4e368708ceec950f80d06fc37",
+      "note": "Unmodified English Artifex card face from Play-Agricola. Title, deck number, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/revised-a163.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx4BuildingExpert_8149_3.jpg",
+      "reference": "http://playagricola.com/Agricola/Cards/index.php?v=c.chris-JA-",
+      "sha256": "fca666a686e2fe0e2b9434cac48ade7014bab69139f9dd3a2823b3e9fe08495f",
+      "note": "Unmodified English Artifex card face from Play-Agricola. Title, deck number, costs, prerequisites and rules visually verified."
     }
   ]
 }

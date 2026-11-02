@@ -2,7 +2,7 @@
   (:require [reagent.core :as r] [re-frame.core :as rf] [clojure.string :as str]
             [cljs.reader :as reader] [agricola.recording :as recording] [eurozone.browser.table-controls :as controls]
             [eurozone.round-markers :as round-markers] [agricola.draw :as draw]
-            [agricola.engine :as a] [agricola.house-rules :as house] [agricola.card-expressions :as expr] [agricola.five-player :as five] [agricola.card-game :as card-game] [eurozone.catalog :as catalog] [eurozone.browser.art :as art] [eurozone.browser.board-layout :as board-layout] [agricola.card-rules :as cards] [eurozone.browser.card-art :as card-art] [eurozone.browser.layout :as layout] [eurozone.browser.tabletop :as tabletop] [eurozone.browser.readability :as readability] [eurozone.browser.chat-dock :as chat-dock] [eurozone.browser.comms :as comms] [eurozone.store :as store] [eurozone.card-scenarios :as scenarios]))
+            [agricola.engine :as a] [agricola.house-rules :as house] [agricola.card-expressions :as expr] [agricola.five-player :as five] [agricola.card-game :as card-game] [eurozone.catalog :as catalog] [eurozone.browser.art :as art] [eurozone.browser.board-layout :as board-layout] [agricola.card-rules :as cards] [eurozone.browser.card-art :as card-art] [eurozone.browser.layout :as layout] [eurozone.browser.tabletop :as tabletop] [eurozone.browser.card-review :as card-review] [eurozone.browser.readability :as readability] [eurozone.browser.chat-dock :as chat-dock] [eurozone.browser.comms :as comms] [eurozone.store :as store] [eurozone.card-scenarios :as scenarios]))
 
 (def glyph {:wood "▰" :clay "◆" :reed "≋" :stone "⬟" :grain "♧" :vegetable "●" :food "◉" :sheep "♧" :boar "◆" :cattle "⬢"})
 (def labels {:wood "Wood" :clay "Clay" :reed "Reed" :stone "Stone" :grain "Grain" :vegetable "Vegetables" :food "Food" :sheep "Sheep" :boar "Wild boar" :cattle "Cattle"})
@@ -225,11 +225,7 @@
          (for [{:keys [id name]} scenarios/scenarios] ^{:key id} [:option {:value id} name])]]
        [:p (:description definition)]
        [button "Open test table"
-        #(if (:activity-lobby? ui)
-           (dispatch :activity/enter "create" nil @selected)
-           (dispatch :send {:event :create :scenario @selected
-                            :name (or (not-empty (.getItem js/sessionStorage "eurozone-name"))
-                                      (not-empty (.getItem js/localStorage "eurozone-name")) "Tester")}))
+        #(card-review/open! @selected)
         "button" (or (:busy? ui) (and (not (:activity-lobby? ui)) (not (:connected? ui))))]])))
 (defn library []
   [:main.library
@@ -1486,7 +1482,17 @@
          :return-animal-loan [animal-loan-controls p @selection #(swap! selection assoc-in [:return-animals %1] %2)]
          :corn-profiteer [:p.small "Offer one grain. Other players can offer two food; if nobody buys, receive three food from the supply."]
          :claim-goods [:p.small "Claim once, while every other player has more than two rooms. You can leave these goods here until you need them."]
-         (:renovate-wood-clay :renovate-clay-stone) [payment-options p @selection #(swap! selection assoc %1 %2)]
+         (:renovate-wood-clay :renovate-clay-stone)
+         [:div
+          (let [target (if (= op :renovate-clay-stone) :stone :clay)
+                after (try (a/renovate p (assoc @selection :renovate-to target)) (catch :default _ nil))
+                cost (when after (into {} (for [resource a/resources
+                                               :let [n (- (a/amount p resource) (a/amount after resource))]
+                                               :when (pos? n)] [resource n])))]
+            [:div.choice-recipe (when cost [goods cost]) [:span {:aria-hidden true} "→"]
+             [choice-icon (if (= target :stone) :stone-room :clay-room)]
+             [:span (str (count (a/tiles p :room)) " " (name target) " rooms")]])
+          [payment-options p @selection #(swap! selection assoc %1 %2)]]
          :free-placement-fences [farm p {:space :fences :fences (:fences @selection)} true #(swap! selection assoc %1 %2)]
          :adopt [:p.small "Pay 1 food to let a newborn take an action this work phase. That child will need adult feeding."]
          :cash-card [:div [goods {:food (get-in p [:card-state cid :food] 0)}] [:p.small "Collect the food and turn this card face down."]]
