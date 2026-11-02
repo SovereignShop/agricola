@@ -217,7 +217,7 @@ def check(base, fixtures):
         supply=page.locator('.tt-major-board')
         expect(supply.locator('[data-major-slot]')).to_have_count(10)
         expect(supply.locator('[data-available=true] .tt-card-face')).to_have_count(10)
-        page.get_by_role('button',name='Board view',exact=True).click()
+        page.get_by_role('button',name='Table view',exact=True).click()
         page.wait_for_timeout(450)
         supply.locator('[data-major-slot="well"]').click()
         expect(page.get_by_role('dialog',name='Well',exact=True)).to_be_visible()

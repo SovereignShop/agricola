@@ -11,6 +11,7 @@
 (def materials [[:white "White linen"] [:tan "Natural linen"] [:checkered "Sage check"] [:leather "Cognac leather"]])
 (def colors ["#b96942" "#47779b" "#b28e32" "#826891" "#4a9dba"])
 (defn clamp [v lo hi] (max lo (min hi v)))
+(def minimum-zoom 0.02)
 (defn px [v] (str v "px"))
 (defn dispatch [& args] (rf/dispatch (vec args)))
 (defn button [label click & [attrs]] [:button (merge {:type "button" :on-click click} attrs) label])
@@ -30,20 +31,23 @@
                     :arrangement-version 2)))) (catch :default _ {:arrangement-version 2})))
 (defn save-arrangement! [v] (try (.setItem js/localStorage (storage-key) (pr-str v)) (catch :default _ nil)))
 (defn position [prefs path default]
-  (let [v (get-in prefs (conj path :position))]
-    (if (and (vector? v) (= 2 (count v)) (every? #(and (number? %) (js/isFinite %) (<= 0 % 2400)) v)) v default)))
-(defn snap [value anchors]
+  (let [v (get-in prefs (conj path :position)) minimum-x (if (number? (first path)) -2400 0)]
+    (if (and (vector? v) (= 2 (count v)) (every? #(and (number? %) (js/isFinite %)) v)
+             (<= minimum-x (first v) 2400) (<= 0 (second v) 2400)) v default)))
+(defn snap [value anchors minimum]
   (let [nearest (first (sort-by #(js/Math.abs (- value %)) anchors))]
-    (clamp (if (and nearest (< (js/Math.abs (- value nearest)) 14)) nearest (* 16 (js/Math.round (/ value 16)))) 0 2400)))
+    (clamp (if (and nearest (< (js/Math.abs (- value nearest)) 14)) nearest (* 16 (js/Math.round (/ value 16)))) minimum 2400)))
 (defn native-ref [events]
   (fn [el] (when el (doseq [[event f] events] (aset el event f)))))
 
 (defn move-handle [label path xy size prefs gesture zoom]
-  (let [finish (fn [cancel?]
+  (let [minimum-x (if (number? (first path)) -2400 0)
+        bounded (fn [[x y]] [(clamp x minimum-x 2400) (clamp y 0 2400)])
+        finish (fn [cancel?]
                  (when-let [drag (when (= path (:path @gesture)) @gesture)]
                    (when-not cancel?
                      (let [[x y] (:position drag) [w h] size
-                           moved [(snap x [24 704 (- 704 w) 24]) (snap y [80 160 644 (- 644 h) 704])]]
+                           moved [(snap x [(- w) 24 704 (- 704 w)] minimum-x) (snap y [80 160 644 (- 644 h) 704] 0)]]
                        (swap! prefs assoc-in (conj path :position) moved)
                        (save-arrangement! @prefs)))
                    (reset! gesture nil)))]
@@ -54,7 +58,7 @@
                                        (if (= "Escape" (.-key e)) (finish true)
                                          (when-let [[dx dy] ({"ArrowLeft" [-16 0] "ArrowRight" [16 0] "ArrowUp" [0 -16] "ArrowDown" [0 16]} (.-key e))]
                                            (.preventDefault e) (.stopPropagation e)
-                                           (swap! prefs assoc-in (conj path :position) (mapv #(clamp % 0 2400) (mapv + xy [dx dy])))
+                                           (swap! prefs assoc-in (conj path :position) (bounded (mapv + xy [dx dy])))
                                            (save-arrangement! @prefs))))
                         :ref (native-ref
                               {"onpointerdown" (fn [e] (when (= 0 (.-button e))
@@ -64,7 +68,7 @@
                                "onpointermove" (fn [e] (when (= path (:path @gesture))
                                                          (let [{:keys [start origin]} @gesture]
                                                            (swap! gesture assoc :position
-                                                                  (mapv #(clamp % 0 2400) (mapv + origin (mapv #(/ % @zoom) (mapv - [(.-clientX e) (.-clientY e)] start))))))))
+                                                                  (bounded (mapv + origin (mapv #(/ % @zoom) (mapv - [(.-clientX e) (.-clientY e)] start))))))))
                                "onpointerup" (fn [_] (finish false))
                                "onpointercancel" (fn [_] (finish true))
                                "onlostpointercapture" (fn [_] (finish true))})} "⠿"]))
@@ -224,14 +228,14 @@
 (defn deck-size [n spread?]
   [(if spread? 384 128) (if spread? (+ 72 (* 192 (max 1 (js/Math.ceil (/ n 3))))) (+ 250 (* 24 (max 0 (dec n)))))])
 (defn deck [descriptor p prefs gesture zoom open-deck!]
-  (let [{:keys [path label ids hidden? spread? xy size]} descriptor
+  (let [{:keys [path label ids hidden? spread? xy size origin-x] :or {origin-x 0}} descriptor
         [x y] (if (= path (:path @gesture)) (:position @gesture) xy)
         n (count ids)]
     [:section.tt-deck {:aria-label label :data-deck (name (last path)) :data-owner (str (first path))
                        :data-mode (if spread? "spread" "stack") :data-x (first xy) :data-y (second xy)
                        :on-click #(when-not (.closest (.-target %) "button") (open-deck! path))
                        :class (when (= path (:path @gesture)) "is-moving")
-                       :style {:left (px x) :top (px y) :width (px (first size)) :height (px (second size))}}
+                       :style {:left (px (+ origin-x x)) :top (px y) :width (px (first size)) :height (px (second size))}}
      [:div.tt-deck-heading
       [move-handle label path xy size prefs gesture zoom]
       [button label #(open-deck! path) {:class "tt-deck-title" :aria-label (str "Open " label " spread") :aria-haspopup "dialog"}]
@@ -289,12 +293,13 @@
            [card-face cid hidden? p]
            (when-not hidden? [card-markers cid p])])])]))
 
-(defn player-objects [p hand prefs focus]
+(defn player-objects [p hand prefs focus mobile?]
   (let [pid (:id p) names [[:hand-occupation "Hand · occupations" :occupation] [:hand-minor "Hand · minors" :minor]
                          [:occupations "Played · occupations" nil] [:improvements "Played · improvements" nil]]
         hand-width (first (deck-size (count (:occupation hand)) (= :spread (get-in prefs [pid :hand-occupation :mode] (if (= pid focus) :spread :stack)))))
         minor-width (first (deck-size (count (:minor hand)) (= :spread (get-in prefs [pid :hand-minor :mode] (if (= pid focus) :spread :stack)))))
-        played-x (if hand (max 736 (+ 72 hand-width minor-width)) 736)
+        left-hand? (and hand (not mobile?))
+        played-x (if (and hand mobile?) (max 736 (+ 72 hand-width minor-width)) 736)
         played-width (first (deck-size (count (:occupations p)) (= :spread (get-in prefs [pid :occupations :mode] :stack))))
         improvements-x (if (or (some? hand) (seq (:occupations p))) (+ played-x 24 played-width) played-x)
         decks (for [[i [id label kind]] (map-indexed vector names)
@@ -305,10 +310,16 @@
                     ;; leave the camera bounds, including old saved hand positions.
                     :when (if kind (some? hand) (or (some? hand) (seq ids)))]
                 {:path path :label label :ids ids :spread? spread?
-                 :xy (position prefs path (nth [[24 704] [(+ 48 hand-width) 704] [played-x 160] [improvements-x 160]] i)) :size (deck-size (count ids) spread?)})
+                 :xy (position prefs path (nth [(if left-hand? [(- (+ hand-width minor-width 48)) 160] [24 704])
+                                               (if left-hand? [(- (+ minor-width 24)) 160] [(+ 48 hand-width) 704])
+                                               [played-x 160] [improvements-x 160]] i)) :size (deck-size (count ids) spread?)})
         inventory {:path [pid :inventory] :xy (position prefs [pid :inventory] [24 80]) :size [680 64]}
-        objects (conj (vec decks) inventory)]
-    {:decks decks :inventory inventory :w (max 732 (+ 28 (apply max (map #(+ (first (:xy %)) (first (:size %))) objects))))
+        objects (conj (vec decks) inventory)
+        ;; Keep saved coordinates relative to the farm. Translate the whole
+        ;; player area so left-hand decks remain inside its camera/tiling bounds.
+        origin-x (max 0 (- 24 (apply min 24 (map #(first (:xy %)) objects))))]
+    {:decks (mapv #(assoc % :origin-x origin-x) decks) :inventory inventory :origin-x origin-x
+     :w (+ origin-x (max 732 (+ 28 (apply max (map #(+ (first (:xy %)) (first (:size %))) objects)))))
      :h (max 700 (+ 40 (apply max (map #(+ (second (:xy %)) (second (:size %))) objects))))}))
 
 (defn table-geometry [players center-height]
@@ -343,7 +354,7 @@
 (defn camera! [nodes zoom bounds animate? animation]
   (when-let [v (:viewport @nodes)]
     (when @animation (js/cancelAnimationFrame @animation))
-    (let [{:keys [x y w h]} bounds z (clamp (min (/ (- (.-clientWidth v) 56) w) (/ (- (.-clientHeight v) 48) h)) 0.12 1.5)
+    (let [{:keys [x y w h]} bounds z (clamp (min (/ (- (.-clientWidth v) 56) w) (/ (- (.-clientHeight v) 48) h)) minimum-zoom 1.5)
           tx (* (+ x (/ w 2)) z)
           ty (* (+ y (/ h 2)) z)
           start [(.-scrollLeft v) (.-scrollTop v) @zoom] began (.now js/performance)
@@ -358,7 +369,7 @@
 (defn zoom-at! [nodes zoom factor cx cy animation]
   (when-let [v (:viewport @nodes)]
     (when @animation (js/cancelAnimationFrame @animation) (reset! animation nil))
-    (let [old @zoom z (clamp (* old factor) 0.12 2) rect (.getBoundingClientRect v)
+    (let [old @zoom z (clamp (* old factor) minimum-zoom 2) rect (.getBoundingClientRect v)
           x (if cx (- cx (.-left rect)) (/ (.-clientWidth v) 2))
           y (if cy (- cy (.-top rect)) (/ (.-clientHeight v) 2))]
       (apply-camera! v (:canvas @nodes) (:world @nodes) z (+ (/ (.-clientWidth v) 2) (- (* (/ (- (+ (.-scrollLeft v) x) (/ (.-clientWidth v) 2)) old) z) x)) (+ (/ (.-clientHeight v) 2) (- (* (/ (- (+ (.-scrollTop v) y) (/ (.-clientHeight v) 2)) old) z) y)))
@@ -395,7 +406,7 @@
               (reset! auto-fit? false)
               (when @animation (js/cancelAnimationFrame @animation) (reset! animation nil))
               (if pinch?
-                (let [z (clamp (* old (/ (distance ps) (max 1 (distance start)))) 0.12 2)
+                (let [z (clamp (* old (/ (distance ps) (max 1 (distance start)))) minimum-zoom 2)
                       rect (.getBoundingClientRect el) hw (/ (.-clientWidth el) 2) hh (/ (.-clientHeight el) 2)
                       wx (/ (- (+ sx ox) (.-left rect) hw) old)
                       wy (/ (- (+ sy oy) (.-top rect) hh) old)]
@@ -478,15 +489,23 @@
 
 (defn table [room renderers]
   (r/with-let [prefs (r/atom (load-arrangement)) gesture (r/atom nil) zoom (r/atom 0.3)
-               view (r/atom :board) nodes (atom {}) geometry (atom nil) animation (atom nil)
+               mobile-query (.matchMedia js/window "(max-width: 760px), (hover: none) and (pointer: coarse)")
+               mobile? (r/atom (.-matches mobile-query))
+               view (r/atom :table) nodes (atom {}) geometry (atom nil) animation (atom nil)
                popup (r/atom nil) dismissed (r/atom nil) finished-dismissed (r/atom nil) pan (atom nil) auto-fit? (atom true) wheel-cleanup (atom nil) observer (atom nil) shared-height (r/atom 2100) shared-observer (atom nil)
-               fit! (fn [animate?] (let [geo @geometry target (if (number? @view) (some #(when (= @view (get-in % [:player :id])) %) (:players geo)) nil)]
+               fit! (fn [animate?] (let [geo @geometry target (cond (number? @view) (some #(when (= @view (get-in % [:player :id])) %) (:players geo))
+                                                                 (= :board @view) (:board geo))]
                                      (camera! nodes zoom (or target (assoc geo :x 0 :y 0)) animate? animation)))
                focus! (fn [id] (reset! auto-fit? true) (reset! view id) (dispatch :inspect-player (when (number? id) id))
                         (js/requestAnimationFrame #(js/requestAnimationFrame (fn [] (fit! true)))))
                zoom! (fn [factor cx cy] (reset! auto-fit? false) (zoom-at! nodes zoom factor cx cy animation))
                inspect! (fn [cid p] (reset! popup {:kind :card :id cid :player p}))
-               open-deck! (fn [path] (reset! popup {:kind :deck :path path}))]
+               open-deck! (fn [path] (reset! popup {:kind :deck :path path}))
+               media-change (fn [event]
+                              (reset! mobile? (.-matches event))
+                              (reset! gesture nil)
+                              (js/requestAnimationFrame #(js/requestAnimationFrame (fn [] (when @auto-fit? (fit! false))))))
+               media-listener (.addEventListener mobile-query "change" media-change)]
     (let [ui @(rf/subscribe [:ui]) permission @(rf/subscribe [:permission]) g (:state room)
           actor (game/acting-player g) owned (set (:seats permission))
           finished? (= :finished (:phase g))
@@ -497,7 +516,7 @@
           ;; card ownership or saved arrangements (all remain keyed by player ID).
           anchor (or (first (filter #(owned (:id %)) (:players g))) (first (:players g)))
           [before after] (split-with #(not= (:id anchor) (:id %)) (:players g))
-          objects (mapv (fn [p] (assoc (player-objects p (get-in ui [:private-hands (:id room) (:id p)]) @prefs @view) :player p)) (concat after before))
+          objects (mapv (fn [p] (assoc (player-objects p (get-in ui [:private-hands (:id room) (:id p)]) @prefs @view @mobile?) :player p)) (concat after before))
           geo (table-geometry objects @shared-height) _ (reset! geometry geo)
           decision? (and can-play? (or (seq (:effect-queue g)) (#{:feeding :breeding :housing} (:phase g)) (:space (:draft ui))))
           decision-key [(:id room) (:revision room) actor (:phase g) (:space (:draft ui)) (get-in g [:effect-queue 0 :id]) (:action-selection ui)]
@@ -530,10 +549,11 @@
                          (some #(when (= deck-path (:path %)) %) (mapcat :decks objects))))
           inspect-from-deck! (fn [cid p] (reset! popup {:kind :card :id cid :player p :deck-path deck-path}))]
 
-      [:main.game.tt-game {:data-revision (:revision room) :data-motion-table (:id room) :data-material (name (if (some #{(:material @prefs)} (map first materials)) (:material @prefs) :tan)) :data-view (if (number? @view) (str "player-" @view) "board")}
+      [:main.game.tt-game {:data-revision (:revision room) :data-motion-table (:id room) :data-material (name (if (some #{(:material @prefs)} (map first materials)) (:material @prefs) :tan)) :data-view (if (number? @view) (str "player-" @view) (name @view))}
        [:div.tt-toolbar
         [button "← Tables" #(dispatch :navigate nil) {:class "tt-back"}]
         [:nav.tt-views {:aria-label "Table views"}
+         [button "Table view" #(focus! :table) {:aria-pressed (= :table @view)}]
          [button "Board view" #(focus! :board) {:aria-pressed (= :board @view)}]
          (for [p (:players g)] ^{:key (:id p)}
            [button [:<> [:i {:style {:background (get colors (:id p))}}] (:name p)
@@ -594,15 +614,15 @@
             [major-board g prefs gesture zoom inspect! open-deck!]
             [:div.tt-round-note [:strong (str "Round " (:round g))] [:span "Harvests: 4 · 7 · 9 · 11 · 13 · 14"]
              [:p "Drag the cloth to move around the table. Select a player above to bring their farm and cards closer."]]]]
-          (for [{:keys [player decks inventory x y w h]} (:players geo) :let [pid (:id player)]] ^{:key pid}
+          (for [{:keys [player decks inventory origin-x x y w h]} (:players geo) :let [pid (:id player)]] ^{:key pid}
             [:section.tt-player {:aria-label (str (:name player) " table area") :data-player pid :class (when (= pid (first (:path @gesture))) "tt-arranging")
                                  :style {:left (px x) :top (px y) :width (px w) :height (px h) :--player-color (get colors pid)}}
-             [:header.tt-player-title
+             [:header.tt-player-title {:style {:margin-left (px (+ origin-x 24))}}
               [button (:name player) #(focus! pid) {:aria-label (str "Focus " (:name player) " farm")}]
               [:span (str (:remaining player) " / " (a/workers-in-play player) " workers ready")]
               (when (= pid (:starting-player g)) [:span "First player"])
               (when (= actor pid) [:strong.tt-turn-token (if (owned pid) "Your turn" "Playing")])]
-             [:div.tt-farm {:style {:left "24px" :top "160px" :width "680px"}}
+             [:div.tt-farm {:style {:left (px (+ origin-x 24)) :top "160px" :width "680px"}}
               [(:farm renderers) player {} false]
               [:div.tt-farm-caption [:span (str (count (:fences player)) " / 15 fences · " (count (filter :stable (:farm player))) " / 4 stables")]
                (when (pos? (:begging player)) [:span (str (:begging player) " begging marks")])]]
@@ -611,7 +631,7 @@
                [:section.tt-inventory {:aria-label (str (:name player) " resources")
                                       :data-inventory pid :data-x (first xy) :data-y (second xy)
                                       :class (when (= path (:path @gesture)) "is-moving")
-                                      :style {:left (px bx) :top (px by) :width "680px"}}
+                                      :style {:left (px (+ origin-x bx)) :top (px by) :width "680px"}}
                 [move-handle (str (:name player) " resources") path xy size prefs gesture zoom]
                 (for [resource a/resources :let [amount (a/amount player resource)] :when (pos? amount)] ^{:key resource}
                   [:span.tt-resource {:data-goods (name resource) :title (str amount " " (name resource))
@@ -685,7 +705,8 @@
                     [:p.small "Move handles also accept arrow keys. Text controls change reading size; the zoom controls change the table’s scale."]]) close!])
         ;; Kept outside the menu so votes and results can arrive while the table is visible.
         [:div.tt-takeback {:on-click-capture #(when (.closest (.-target %) "button") (close!))} [controls/takeback room]]]] )
-    (finally (when @observer (.disconnect @observer))
+    (finally (.removeEventListener mobile-query "change" media-change)
+             (when @observer (.disconnect @observer))
              (when @wheel-cleanup (@wheel-cleanup))
              (when @shared-observer (.disconnect @shared-observer))
              (when @animation (js/cancelAnimationFrame @animation)))))

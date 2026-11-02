@@ -17,7 +17,7 @@ def check(base, ids):
         host,guest=pages
         for page,seat in [(host,'1'),(guest,'0')]:
             tabs=page.get_by_role('navigation',name='Table views')
-            expect(tabs.get_by_role('button')).to_have_text(['Board view','Ben','Ada'])
+            expect(tabs.get_by_role('button')).to_have_text(['Table view','Board view','Ben','Ada'])
             expect(tabs.locator('[data-starting-player="true"]')).to_have_count(1)
             expect(tabs.get_by_role('button',name='Ada player view',exact=True).get_by_role('img',name='Starting player')).to_have_attribute('src','/art/agricola/starting-player.svg')
             expect(page.locator('.tt-player').first).to_have_attribute('data-player',seat)
@@ -59,7 +59,7 @@ def check(base, ids):
             page.goto(base+'/#'+five)
             expect(page.locator('.tt-player')).to_have_count(5)
             expect(page.locator('.tt-player').first).to_have_attribute('data-player',seat)
-            expect(page.get_by_role('navigation',name='Table views').get_by_role('button')).to_have_count(6)
+            expect(page.get_by_role('navigation',name='Table views').get_by_role('button')).to_have_count(7)
             ids=page.locator('.tt-player').evaluate_all('(els)=>els.map(e=>Number(e.dataset.player))')
             assert ids==[(int(seat)+i)%5 for i in range(5)],ids
             positions=page.locator('.tt-player').evaluate_all('(els)=>els.map(e=>({x:parseFloat(e.style.left),y:parseFloat(e.style.top)}))')
