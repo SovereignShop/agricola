@@ -42,7 +42,13 @@
       (is (= (:players (scenarios/scenario id) 2) (count (:players state)))))))
 
 (def review-commands
-  {"sheep-market" [{:option 2}]
+  {"carrot-farmer" [{}]
+   "pulley" [{:rooms [0]}]
+   "food-connoisseur" [{:type :action :space :fishing}]
+   "oak-cask" [{:type :action :space :grain} {:type :ability :card :catalog/original-expansion-wm-96-oak-cask}]
+   "child-care-worker" [{:option 1}]
+   "oceanographer" [{}]
+   "sheep-market" [{:option 2}]
    "wooden-bridge" [{:type :action :space :reed}]
    "edible-roots" [{:type :action :space :grain}]
    "festival-hall" [{:option 3}]

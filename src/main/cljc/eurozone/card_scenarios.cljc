@@ -4,7 +4,19 @@
   (:require [agricola.engine :as a] [agricola.card-game :as game] [agricola.card-rules :as cards]))
 
 (def scenarios
-  [{:id "sheep-market" :card :catalog/original-expansion-g-107-sheep-market :name "Sheep Market"
+  [{:id "carrot-farmer" :card :catalog/original-expansion-g-12-carrot-farmer :name "Carrot Farmer"
+    :description "Farmland has just been used. Pay the pictured one food to take one of the three vegetables on this card, or decline. The remaining stock stays on the card."}
+   {:id "pulley" :card :catalog/original-expansion-g-97-pulley :name "Pulley"
+    :description "Day Laborer has just supplied two food. Click one space beside your house to build a room at its normal cost, or decline. The payment is shown before you confirm."}
+   {:id "food-connoisseur" :card :catalog/original-expansion-wm-22-food-connoisseur :name "Food Connoisseur" :players 4
+    :description "Take Fishing, Traveling Players, or Day Laborer. You automatically receive the top item from the visible stack: reed first, then wood. Receiving food from a card does not count."}
+   {:id "oak-cask" :card :catalog/original-expansion-wm-96-oak-cask :name "Oak Cask"
+    :description "Take Grain Seeds with the last worker to start harvest. Oak Cask grows from one stored food to two. Open the played card to collect all the food; an emptied cask never refills."}
+   {:id "child-care-worker" :card :catalog/original-expansion-fr-71-child-care-worker :name "Child Care Worker" :players 4
+    :description "Partner has just grown their family. Choose the pictured wood-for-food or wood-and-reed-for-food exchange, or decline. Your own family growth does not trigger this card."}
+   {:id "oceanographer" :card :catalog/original-expansion-fr-96-oceanographer :name "Oceanographer"
+    :description "Exactly one field has just been plowed. Take the top resource from the visible stack, or leave it for later. Plowing multiple fields in one action gives no resource."}
+   {:id "sheep-market" :card :catalog/original-expansion-g-107-sheep-market :name "Sheep Market"
     :description "Harvest is about to begin. Click a pictured grain, vegetable or sheep exchange, or decline. The exchange happens before crops are harvested."}
    {:id "wooden-bridge" :card :catalog/original-expansion-g-119-wooden-bridge :name "Wooden Bridge"
     :description "Take Reed Bank to receive one extra food, or Day Laborer to receive one extra reed. The bonus is automatic."}
@@ -125,6 +137,15 @@
         base (game/initialize (a/new-game names (vec (mapcat identity a/stages)) 0))
         funded (update base :players #(mapv (fn [p] (a/gain p {:food 12 :wood 8 :clay 8 :reed 6 :stone 8 :grain 3 :vegetable 2})) %))]
     (case id
+      "carrot-farmer" (-> funded (played 0 card) (game/command 0 {:type :action :space :plow :cell 0}))
+      "pulley" (-> funded (played 0 card) (game/command 0 {:type :action :space :labor}))
+      "food-connoisseur" (played funded 0 card)
+      "oak-cask" (-> funded (prepared-round 4) (played 0 card) (assoc :turn 0)
+                     (update :players #(mapv (fn [p] (assoc p :remaining (if (zero? (:id p)) 1 0))) %)))
+      "child-care-worker" (-> funded (prepared-round 7) (played 0 card)
+                               (update-in [:players 1] a/build-rooms [0])
+                               (assoc :turn 1) (game/command 1 {:type :action :space :growth}))
+      "oceanographer" (-> funded (played 0 card) (game/command 0 {:type :action :space :plow :cell 0}))
       "sheep-market" (-> funded (prepared-round 4) (played 0 (cards/id :a109)) (played 0 card)
                           (update-in [:players 0] a/gain {:sheep 1}) last-harvest-action)
       "wooden-bridge" (played funded 0 card)

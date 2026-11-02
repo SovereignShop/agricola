@@ -2191,6 +2191,42 @@
       "source": "http://playagricola.com/Agricola/Cards/Cards/occx4Powerhouse_3445_11.jpg",
       "sha256": "47a5a140ff48e86b119047d349b0d7bee54336a3428a2eafcc82c810bf4a6833",
       "note": "English original FR101 face, verified against card text and the Unofficial Agricola Compendium."
+    },
+    {
+      "file": "cards/original-g012.jpg",
+      "source": "http://playagricola.com/Agricola/Images/occg1carrotfarmer.jpg",
+      "sha256": "a6735f505cdb17dfb777c7a478fbbf1d1cb19ca354a24ee05393730687d9b689",
+      "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-g097.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminorpulley.jpg",
+      "sha256": "a01343ad277ec215d3dbccf4d52b563b1150d535951fe613b767158352139a64",
+      "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-wm022.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx1FoodConnoisseur_367_5.jpg",
+      "sha256": "0298a347ca52dc7dbd08fd2469a101a1a4c3fec013ce799a95653d9e093c5775",
+      "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-wm096.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorOakCask_884_6.jpg",
+      "sha256": "4f0c27e4a9030d34957ef526273f4b67ddc097c707887f904ed50460ff5f8d9f",
+      "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-fr071.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx4ChildCareWorker_2488_5.jpg",
+      "sha256": "551391d6ddf486f3adb19e339852d34fb936d154fc710d1b7274c71d5a580312",
+      "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-fr096.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx1Oceanographer_3569_4.jpg",
+      "sha256": "f87668888352c73143815191e95bb3df659d5932de0dad23550f42b00f5e3cb5",
+      "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
     }
   ]
 }

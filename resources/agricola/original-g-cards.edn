@@ -68,4 +68,12 @@
  {:triggers [{:event :use-space :spaces #{:reed} :effect {:op :gain :goods {:food 1}}}
              {:event :use-space :spaces #{:labor} :effect {:op :gain :goods {:reed 1}}}]}
 
+ :catalog/original-expansion-g-12-carrot-farmer
+ {:play [{:op :stock :goods [:vegetable :vegetable :vegetable]}]
+  :triggers [{:event :use-space :spaces #{:plow}
+              :effect {:op :take-stock :cost {:food 1} :optional? true}}]}
+ :catalog/original-expansion-g-97-pulley
+ {:triggers [{:event :use-space :spaces #{:labor}
+              :effect {:op :build-rooms :max-rooms 1 :optional? true}}]}
+
 }

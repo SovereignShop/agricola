@@ -74,6 +74,7 @@
           :used-this-turn (= [(:round g) (or (get-in g [:action-context :phase]) (:phase g)) (:turn-serial g 0)]
                             (get-in p [:card-state x :last-turn]))
           :card-state (get-in p [:card-state x (second args)] 0)
+          :stored-good (get-in p [:card-state x :stored-goods (second args)] 0)
           :other-occupations-below (boolean (some #(< (count (:occupations %)) (ev x))
                                          (if (= 1 (count (:players g))) [p] (remove #(= pid (:id %)) (:players g)))))
           :other-owned-cards (reduce + 0 (for [other (:players g) :when (not= pid (:id other))]

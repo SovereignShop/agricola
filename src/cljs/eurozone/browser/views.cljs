@@ -1259,7 +1259,12 @@
                                  :on-change #(draft! :adopt-reed-hut? (.. % -target -checked))}]
         "Bring the Reed Hut occupant into your home"])
      (when (= op :take-stock)
-       [:p.small (str "Take the next " (some-> (get-in p [:card-state (:card head) :stock]) peek labels) " from this card, or leave it for a later harvest.")])
+       (let [resource (peek (get-in p [:card-state (:card head) :stock]))
+             cost (expr/quantities g (:id p) (:context head) (:cost effect))]
+         [:div.stock-offer {:role "group" :aria-label "Goods on this card"}
+          [tabletop/card-markers (:card head) p]
+          (if (seq cost) [recipe cost {resource 1}] [goods {resource 1}])
+          [:p.small "Take the next item from this card, or leave it for a later opportunity."]]))
      (when (= op :sow-offer)
        [:p.small (if (:max-fields effect) "You may sow exactly one field." "You may take a Sow action. Grain offered before sowing will be available when you choose your fields.")])
      (when (= op :sow)
@@ -1302,9 +1307,20 @@
         (when (cards/has? p :a016)
           [eurozone.browser.views/resource-choices "Fence material" (:fence-material draft :wood) #(draft! :fence-material %) [:wood :clay]])])
      (when (= op :build-rooms)
-       [:div [:p.small "Click spaces beside your house in the order to build rooms."]
-        [farm-picker p (filter #(a/empty-cell? p %) (range 15)) (:rooms draft)
-         #(dispatch :draft-room % (not (some #{%} (:rooms draft))))]])
+       (let [single? (= 1 (:max-rooms effect))
+             after (when (seq (:rooms draft))
+                     (try (a/build-rooms p (:rooms draft) draft (select-keys effect [:room-discount :free?]))
+                          (catch :default _ nil)))
+             cost (when after (into {} (for [resource a/resources
+                                            :let [n (- (a/amount p resource) (a/amount after resource))] :when (pos? n)] [resource n])))
+             adjacent (set (mapcat a/neighbors (a/tiles p :room)))]
+         [:div [:p.small (if single? "Click one space beside your house." "Click spaces beside your house in the order to build rooms.")]
+          [farm-picker p (filter #(and (a/empty-cell? p %) (or (not single?) (adjacent %))) (range 15)) (:rooms draft)
+           #(if single? (draft! :rooms (if (= [%] (:rooms draft)) [] [%]))
+                        (dispatch :draft-room % (not (some #{%} (:rooms draft)))))]
+          (when after [:div.choice-recipe {:aria-label "Room payment"} [goods cost] [:span "→"]
+                       [choice-icon (case (:house p) :clay :clay-room :stone :stone-room :wood-room)]
+                       [:span (str (count (:rooms draft)) " room" (when (> (count (:rooms draft)) 1) "s"))]])]))
      (when (= op :cottage)
        [graphical-choices "Cottager action" (:effect-action draft :room) #(draft! :effect-action %)
         [[:room "Build one room" [choice-icon :room]] [:renovate "Renovate" [choice-icon (if (= :wood (:house p)) :clay-room :stone-room)]]]])
@@ -1502,6 +1518,9 @@
           [payment-options p @selection #(swap! selection assoc %1 %2)]]
          :free-placement-fences [farm p {:space :fences :fences (:fences @selection)} true #(swap! selection assoc %1 %2)]
          :adopt [:p.small "Pay 1 food to let a newborn take an action this work phase. That child will need adult feeding."]
+         :release-stored [:div {:role "group" :aria-label "Goods to collect"}
+                          [goods (get-in p [:card-state cid :stored-goods])]
+                          [:p.small "Take all of these goods into your supply."]]
          :cash-card [:div [goods {:food (get-in p [:card-state cid :food] 0)}] [:p.small "Collect the food and turn this card face down."]]
          :free-room [:div [:p.small "Choose one empty space beside your house for the free room."]
                            [farm p {:space :build :rooms (:rooms @selection)} true #(swap! selection assoc %1 %2)]]
@@ -1534,7 +1553,7 @@
 
          nil)
        (when reason [:p.card-unavailable reason])
-       [button "Use card ability" #(dispatch :command cmd) "button secondary"
+       [button (if (= op :release-stored) "Collect goods →" "Use card ability") #(dispatch :command cmd) "button secondary"
         (or (:busy? ui) (not (:connected? ui)) (boolean reason))]])))
 (defn card-abilities [g p]
   (let [permission @(rf/subscribe [:permission]) abilities (filter #(get-in (cards/card %) [:ability]) (cards/active-owned p))]

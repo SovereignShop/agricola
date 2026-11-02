@@ -1,7 +1,11 @@
 {:edition :revised-2016
  :reviewed "2026-11-01"
  :sources
- [{:id :community-five-prints-and-rulings :authority :printed-card-scans :edition :original
+ [{:id :community-six-prints-and-rulings :authority :printed-card-scans :edition :original
+   :url "http://playagricola.com/Agricola/Cards/index.php"
+   :cross-reference "https://www.reedstonefood.com/agricola/compendium"
+   :note "G012/097, WM022/096, FR071/096: final English prints checked visually; exact source URLs and checksums in artwork manifest. Carrot Farmer sells three vegetables only after Farmland; Food Connoisseur automatically removes the top marker only for food taken with a person from its three named spaces. Oceanographer rewards one field per plow action, not a multi-field plow. Pulley keeps normal room costs and discounts and receives Day Laborer goods before payment. Oak Cask stores food outside personal supply, grows only in real harvests while nonempty, and may be emptied at any time without discarding the card. Child Care Worker reacts to other players' family growth. Interaction review: stock markers and graphical payment, direct farm room selection and payment preview, graphical exchange choices, and a collect-all card ability. All six have native-triggered review tables. Tests: agricola.community-batch-six-test."}
+  {:id :community-five-prints-and-rulings :authority :printed-card-scans :edition :original
    :url "http://playagricola.com/Agricola/Cards/index.php"
    :cross-reference "https://www.reedstonefood.com/agricola/compendium"
    :note "G107/119, WM077/079, FR001/101. Verified final English faces, costs, prerequisites and rules; G archive prototypes were rejected in favor of final v2 faces. Exact URLs and checksums are in the artwork manifest. Sheep Market uses graphical optional harvest exchanges before fields; Festival Hall exchanges after fields, not Manure harvests. Edible Roots observes the last good on the entire field, including card fields and mixed stacks, not taking/moving crops. Abandoned Willow requires an empty farm field whose removal preserves connectivity, selected directly on the farm. Wooden Bridge rewards only its two action spaces; Powerhouse checks supply after round preparation, at work start; when an available anytime ability can precede that bonus, its owner gets a preparation window (Politician combination has a separate test table). Each has a native-triggered review table with Previous/Restart/Next navigation. Tests: agricola.community-batch-five-test."}

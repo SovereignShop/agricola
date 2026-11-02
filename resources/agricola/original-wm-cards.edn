@@ -85,4 +85,17 @@
                                  {:label "Grain → Reed + Food" :cost {:grain 1} :effects [{:op :gain :goods {:reed 1 :food 2}}]}
                                  {:label "Grain → Stone + Food" :cost {:grain 1} :effects [{:op :gain :goods {:stone 1 :food 2}}]}]}}]}
 
+ :catalog/original-expansion-wm-22-food-connoisseur
+ {:play [{:op :stock :goods [:clay :vegetable :stone :grain :wood :reed]}]
+  :triggers [{:event :use-space :spaces #{:labor :fishing :traveling}
+              :condition [:test [:> [:source-goods :food] 0]]
+              :effect {:op :take-stock}}]}
+ :catalog/original-expansion-wm-96-oak-cask
+ {:play [{:op :store-goods :goods {:food 1}}]
+  :triggers [{:event :field-phase
+              :condition [:test [:and [:not [:= [:context :manure?] true]]
+                                      [:> [:stored-good :catalog/original-expansion-wm-96-oak-cask :food] 0]]]
+              :effect {:op :store-goods :goods {:food 1}}}]
+  :ability {:op :release-stored}}
+
 }

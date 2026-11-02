@@ -1429,6 +1429,7 @@
                         (some (fn [[resource rate]] (and (pos? rate) (pos? (a/amount player resource)))) (a/cook-rates player))))
     :reed-food (pos? (a/amount player :reed))
     :cash-card (pos? (get-in player [:card-state cid :food] 0))
+    :release-stored (some pos? (vals (get-in player [:card-state cid :stored-goods])))
     :free-placement-fences (and (pos? (a/fences-available player)) (pos? (a/amount player :wood)))
     :move-crop (and (some #(>= (:count % 0) 2) (fields player)) (some #(zero? (:count % 0)) (fields player)))
     false)))
@@ -2469,6 +2470,9 @@
       :adopt (do (a/require! (and (= :work (:phase g)) (pos? (:newborn player 0))) "Adopt a newborn during the work phase.")
                  (-> g (update-in [:players pid] a/pay {:food 1})
                        (update-in [:players pid :remaining] inc) (update-in [:players pid :newborn] dec) (adopt-newborn pid)))
+      :release-stored
+      (do (a/require! (some pos? (vals (get-in player [:card-state card :stored-goods]))) "No goods remain on this card.")
+          (run-effect* g (task pid card {:op :release-stored} {}) {}))
       :cash-card (-> g (update-in [:players pid] a/gain {:food (get-in player [:card-state card :food] 0)})
                       (assoc-in [:players pid :card-state card :food] 0)
                       (assoc-in [:players pid :card-state card :face-down?] true))

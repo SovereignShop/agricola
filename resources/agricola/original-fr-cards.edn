@@ -70,4 +70,14 @@
   :triggers [{:event :work-start :condition [:test [:>= [:goods :stone] 3]]
               :effect {:op :gain :goods {:food [:if [:>= [:goods :stone] 5] 2 1]}}}]}
 
+ :catalog/original-expansion-fr-71-child-care-worker
+ {:triggers [{:event :grow :scope :others
+              :effect {:op :choose :optional? true
+                       :options [{:label "Wood → 2 Food" :cost {:wood 1} :effects [{:op :gain :goods {:food 2}}]}
+                                 {:label "Wood + Reed → 5 Food" :cost {:wood 1 :reed 1} :effects [{:op :gain :goods {:food 5}}]}]}}]}
+ :catalog/original-expansion-fr-96-oceanographer
+ {:play [{:op :stock :goods [:vegetable :stone :grain :clay :wood]}]
+  :triggers [{:event :plow :condition [:test [:= [:context :fields-plowed] 1]]
+              :effect {:op :take-stock :optional? true}}]}
+
 }
