@@ -110,4 +110,34 @@
  :catalog/original-expansion-g-116-tree-house
  {:passive {:renovated-extra-room 1}}
 
+ :catalog/original-expansion-g-18-fisherman-s-apprentice
+ {:triggers [{:event :use-space :scope :others :spaces #{:fishing}
+              :effect {:op :card-action :kinds #{:occupation} :occupation-cost 0 :cost {:food 1} :pay-actor? true :optional? true}}]}
+ :catalog/original-expansion-g-22-glass-blower
+ {:ability {:op :exchange-options :phases #{:feeding} :limit-per-round 1 :condition [:test [:> [:ovens] 0]]
+            :options [{:label "Clay → 3 Food" :cost {:clay 1} :goods {:food 3}}
+                      {:label "2 Clay → 5 Food" :cost {:clay 2} :goods {:food 5}}]}}
+ :catalog/original-expansion-g-24-grafter
+ {:triggers [{:event :breeding-start :effect {:op :gain :goods {:grain [:if [:>= [:goods :grain] 2] 1 0]
+                                                                            :vegetable [:if [:>= [:goods :vegetable] 2] 1 0]}}}]}
+ :catalog/original-expansion-g-26-grain-farmer
+ {:triggers [{:event :before-field-phase :condition [:test [:not [:= [:context :manure?] true]]]
+              :effect {:op :gain :goods {:food [:min 4 [:quot [:+ [:- [:total-crops :grain] [:goods :grain]] 2] 3]]}}}]}
+ :catalog/original-expansion-g-28-grump
+ {:play [{:op :house-steward}] :global-score? true
+  :score {:type :expression :value [:if [:= [:family] [:player-min [:family]]] 2 0]}}
+ :catalog/original-expansion-g-31-helper
+ {:passive {:share-construction-spaces true}}
+ :catalog/original-expansion-g-55-truffle-digger
+ {:text "Whenever you use a Family member's action to take Wood that is on an accumulating Action space and you have 1/2/3 Wild boar, you receive 1/2/3 additional Food."
+  :triggers [{:event :use-space :condition [:test [:and [:source-accumulation] [:> [:source-goods :wood] 0]]]
+              :effect {:op :gain :goods {:food [:min 3 [:goods :boar]]}}}]}
+ :catalog/original-expansion-g-58-village-farmer
+ {:play [{:op :house-steward}] :global-score? true
+  :score {:type :expression :value [:if [:= [:field-tiles] [:player-max [:field-tiles]]] 3 0]}}
+ :catalog/original-expansion-g-59-wheedler
+ {:triggers [{:event :use-space :condition [:test [:> [:source-goods :food] 0]] :effect {:op :gain :goods {:food 1}}}]}
+ :catalog/original-expansion-g-102-sausage-grinder
+ {:passive {:animal-cooking-bonus 1}}
+
 }

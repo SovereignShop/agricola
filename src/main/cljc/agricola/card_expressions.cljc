@@ -35,6 +35,16 @@
           :if (ev (if (ev x) (second args) (nth args 2)))
           :goods (a/amount p x)
           :owned-card-count (count (for [player (:players g) cid (concat (cards/owned player) (:improvements player)) :when (contains? x cid)] cid))
+          :player-min (apply min (map #(evaluate* g (:id %) context x) (:players g)))
+          :player-max (apply max (map #(evaluate* g (:id %) context x) (:players g)))
+          :feeding-people (+ (:family p) (a/reed-hut-count p))
+          :improvements-with-printed-cost
+          (count (filter #(pos? (get (:printed-cost (a/improvement-definition %)) x
+                                    (get (:cost (a/improvement-definition %)) x 0))) (a/owned-improvement-ids p)))
+          :complete-farm-columns
+          (count (for [col (range 5) :let [cells [col (+ col 5) (+ col 10)] types (map #(get-in p [:farm % :type]) cells)]
+                       :when (or (every? #{:room} types) (every? #{:field} types)
+                                 (some #(every? (set %) cells) (a/pastures p)))] col))
           :all-goods (reduce + 0 (map #(a/amount % x) (:players g)))
           :total-crops (+ (a/amount p x) (reduce + 0 (map #(a/field-crop-count % x) (field-list p))))
           :returnable-hearths (count (a/returnable-hearths p))

@@ -329,7 +329,9 @@
             (case (get-in (c/card cid) [:ability :op])
               :tinsmith (map #(hash-map :amount %) (range 1 (inc (a/amount p :clay))))
               :return-animal-loan (when-not (get-in p [:card-state cid :loan-settled?]) (g/animal-loan-choices p))
-              (:adopt :buy-stock :cash-card :release-stored :reed-food :claim-goods :corn-profiteer) [{}]
+              (:adopt :buy-stock :cash-card :reed-food :claim-goods :corn-profiteer) [{}]
+              :release-stored (if-let [resource (get-in (c/card cid) [:ability :partial-resource])]
+                                (map #(hash-map :amount %) (range 1 (inc (get-in p [:card-state cid :stored-goods resource] 0)))) [{}])
               :renovate-clay-stone (map #(assoc % :renovate-to :stone) (payment-options p))
               :renovate-wood-clay (remove #(= :stone (:renovate-to %)) (payment-options p))
               :free-placement-fences (map #(hash-map :fences %) (fence-plans p))

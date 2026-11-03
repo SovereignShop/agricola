@@ -353,16 +353,21 @@
                      (:cooking-hearth (improvement-definition %))) (owned-improvement-ids p))))
 (defn returnable-ovens [p]
   (sort (filter #(:oven (improvement-definition %)) (owned-improvement-ids p))))
+(defn animal-cooking-bonus [p goods]
+  (* (reduce + 0 (cards/passives p :animal-cooking-bonus)) (reduce + 0 (map #(get goods % 0) animals))))
+(defn add-animal-cooking-bonus [p rates]
+  (reduce (fn [rates animal] (if (pos? (get rates animal 0))
+                              (update rates animal + (reduce + 0 (cards/passives p :animal-cooking-bonus))) rates)) rates animals))
 (defn cook-rates [p]
   (let [bonus (reduce + 0 (cards/passives p :vegetable-cooking-bonus))]
-    (apply merge-with max {:grain 1 :vegetable 1}
+    (add-animal-cooking-bonus p (apply merge-with max {:grain 1 :vegetable 1}
            (concat (cards/passives p :animal-cooking)
                    (when (some #(:oven (improvement-definition %)) (owned-improvement-ids p))
                      (concat (cards/passives p :oven-animal-cooking) (cards/passives p :oven-cooking)))
             (for [id (owned-improvement-ids p) :let [definition (improvement-definition id) rates (:cook definition {})]]
              (cond-> rates
                (and (:vegetable rates) (or (#{:fireplace-2 :fireplace-3 :hearth-4 :hearth-5} id) (:fireplace definition) (:cooking-corner definition) (:cooking-hearth definition)))
-               (update :vegetable + bonus)))))))
+               (update :vegetable + bonus))))))))
 (defn fireplace-family? [id]
   (let [definition (improvement-definition id)]
     (or (contains? #{:fireplace-2 :fireplace-3 :hearth-4 :hearth-5} id)
@@ -373,10 +378,10 @@
 (defn qualifying-cooked-units [p goods]
   (let [rates (cook-rates p)
         spice (reduce + 0 (cards/passives p :vegetable-cooking-bonus))
-        qualifying (apply merge-with max {}
+        qualifying (add-animal-cooking-bonus p (apply merge-with max {}
                           (for [id (owned-improvement-ids p) :when (crock-improvement? id)
                                 :let [rates (:cook (improvement-definition id) {})]]
-                            (cond-> rates (and (:vegetable rates) (fireplace-family? id)) (update :vegetable + spice))))]
+                            (cond-> rates (and (:vegetable rates) (fireplace-family? id)) (update :vegetable + spice)))))]
     (reduce + 0 (for [[resource n] goods
                      :when (and (contains? qualifying resource) (= (qualifying resource) (rates resource)))] n))))
 (defn cooking-listeners [p]
@@ -390,7 +395,7 @@
    qualify for Cooking Hearth/Crock bonuses. Preserve conversion listeners."
   [p goods food context]
   (let [spit? (spit-roast-bonus? p goods context)]
-    (cond-> (gain (pay p goods) {:food (+ food (if spit? 1 0))})
+    (cond-> (gain (pay p goods) {:food (+ food (animal-cooking-bonus p goods) (if spit? 1 0))})
       spit? (assoc :spit-roast-round (:round context))
       true (update :cooking-receipts (fnil conj [])
                    (merge context {:goods goods :rates {} :listeners (cooking-listeners p)})))))
@@ -695,7 +700,8 @@
         rate (if (= 1 (count (:players g))) 3 2)
         family-food (if (seq caps) (+ (:family p) (min adults (apply min caps))) (+ (* rate adults) (:newborn p)))]
     (max 0 (- (+ family-food (* rate (reed-hut-count p)))
-              (reduce + 0 (cards/passives p :harvest-food-discount))))))
+              (reduce + 0 (cards/passives p :harvest-food-discount))
+              (if (= (:round g) (get-in p [:round-feeding-discount :round])) (get-in p [:round-feeding-discount :amount] 0) 0)))))
 (defn field-harvest [p]
   (reduce (fn [p cell]
             (let [path (field-path cell) {:keys [crop count]} (get-in p path)]

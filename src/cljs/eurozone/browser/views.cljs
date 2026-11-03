@@ -818,9 +818,9 @@
          (when (some :reason choices)
            [:details.unavailable-cards [:summary "Unavailable cards"]
             (for [{:keys [id reason]} choices :when reason] ^{:key id} [:p.small (str (:name (cards/card id)) ": " reason)])])])]
-     (when (#{:return-cooking :return-oven :return-hearth :return-well :return-fireplace :return-joinery :return-pottery} (:cost (cards/card (:card draft))))
+     (when (#{:return-cooking :return-oven :return-hearth :return-well :return-fireplace :return-joinery :return-pottery :return-basketry} (:cost (cards/card (:card draft))))
        [:div
-        [:h4 (case (:cost (cards/card (:card draft))) :return-oven "Return an oven" :return-well "Return the Well" :return-fireplace "Return a Fireplace" :return-joinery "Return the Joinery" :return-pottery "Return the Pottery" :return-hearth "Return a Cooking Hearth" "Return cooking improvement")]
+        [:h4 (case (:cost (cards/card (:card draft))) :return-oven "Return an oven" :return-well "Return the Well" :return-fireplace "Return a Fireplace" :return-joinery "Return the Joinery" :return-pottery "Return the Pottery" :return-basketry "Return the Basketmaker’s Workshop" :return-hearth "Return a Cooking Hearth" "Return cooking improvement")]
         [:div.card-choice-spread {:role "group" :aria-label "Return improvement"}
          (for [id (card-game/card-return-options p (:card draft))] ^{:key id}
            [card-choice id (= id (or (:return-improvement draft) (first (card-game/card-return-options p (:card draft))))) #(draft! :return-improvement id)])]
@@ -1502,6 +1502,14 @@
           [:label.checkbox [:input {:type "checkbox" :checked (boolean (:paper-maker? draft))
                                     :on-change #(draft! :paper-maker? (.. % -target -checked))}]
            "Use Paper Maker before paying the occupation cost"])])
+     (when (and (= op :store-goods) (:score-per-good effect))
+       [:div.choice-recipe {:role "group" :aria-label "Store food for points"}
+        [goods (:cost effect)] [:span "→"] [choice-icon :draw] [:strong "+1 point"]
+        [:span "Food stays on this card."]])
+     (when (and (= op :card-action) (pos? (:major-fee effect 0)))
+       [:div.choice-recipe {:role "group" :aria-label "Additional major improvement fee"}
+        [goods {:food (:major-fee effect)}] [:span "→"] [choice-icon :draw]
+        [:span "Additional payment for a major improvement. Minor improvements have no extra fee."]])
      (when (= op :educator) [hand-select g p :occupation draft])
      (when (= op :original-scholar)
        [:div [hand-select g p :occupation draft true] [hand-select g p :minor draft true]
@@ -1526,7 +1534,9 @@
       (when (card-game/optional-effect? g head) [button (if (= :play-hand-response op) "Continue" "Skip this effect") #(dispatch :command {:type :resolve :decision (:decision-id g) :skip? true}) "text-button" busy?])]]))
 
 (defn card-ability [g p cid & [expanded?]]
-  (r/with-let [selection (r/atom {:amount 2 :resource :boar :option 0 :times 1})]
+  (r/with-let [selection (r/atom {:amount (if-let [resource (get-in (cards/card cid) [:ability :partial-resource])]
+                                          (get-in p [:card-state cid :stored-goods resource] 0) 2)
+                                  :resource :boar :option 0 :times 1})]
     (let [card (cards/card cid) op (get-in card [:ability :op]) ui @(rf/subscribe [:ui])
           remaining (card-game/exchange-remaining g p cid)
           cmd (merge @selection {:type :ability :player (:id p) :card cid})
@@ -1557,9 +1567,16 @@
          :adopt [:p.small "Pay 1 food to let a newborn take an action this work phase. That child will need adult feeding."]
          :release-stored [:div {:role "group" :aria-label "Goods to collect"}
                           [goods (get-in p [:card-state cid :stored-goods])]
-                          [:p.small (if-let [minimum (get-in card [:ability :minimum-stored])]
+                          (when-let [resource (get-in card [:ability :partial-resource])]
+                            [:div.form-row {:role "group" :aria-label "Food to collect"}
+                             [button "−" #(swap! selection update :amount dec) "button" (<= (:amount @selection) 1)]
+                             [badge resource (:amount @selection)]
+                             [button "+" #(swap! selection update :amount inc) "button"
+                              (>= (:amount @selection) (get-in p [:card-state cid :stored-goods resource] 0))]])
+                          [:p.small (if (get-in card [:ability :partial-resource]) "Collect any amount; leave the rest on the card for points."
+                                     (if-let [minimum (get-in card [:ability :minimum-stored])]
                                       (str "Collect all goods once at least " minimum " are stored here.")
-                                      "Take all of these goods into your supply.")]]
+                                      "Take all of these goods into your supply."))]]
          :cash-card [:div [goods {:food (get-in p [:card-state cid :food] 0)}] [:p.small "Collect the food and turn this card face down."]]
          :free-room [:div [:p.small "Choose one empty space beside your house for the free room."]
                            [farm p {:space :build :rooms (:rooms @selection)} true #(swap! selection assoc %1 %2)]]

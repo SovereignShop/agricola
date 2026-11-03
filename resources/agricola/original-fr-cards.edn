@@ -114,4 +114,40 @@
               :condition [:test [:not [:= [:context :card] :catalog/original-expansion-fr-116-village-druid]]]
               :effect {:op :gain :goods {:sheep 1}}}]}
 
+ :catalog/original-expansion-fr-4-apple-orchard
+ {:name "Apple Garden" :score {:type :expression :value [:if [:or [:= [:total-crops :grain] 0] [:= [:total-crops :vegetable] 0]] 2 0]}}
+ :catalog/original-expansion-fr-41-peasants-boutique
+ {:cost :return-basketry :requires [:owns-major :basketry]
+  :passive {:major-or-minor true :suppress-craft-bonus #{:basketry}}
+  :ability {:op :exchange-options :phases #{:feeding} :limit-per-round 1
+            :options [{:label "Reed → 4 Food" :cost {:reed 1} :goods {:food 4}}]}
+  :score {:type :expression :value [:+ [:if [:>= [:goods :reed] 1] 1 0] [:if [:>= [:goods :reed] 3] 1 0] [:if [:>= [:goods :reed] 4] 1 0]]}}
+ :catalog/original-expansion-fr-49-the-port-le-havre
+ {:requires [:> [:ovens] 0] :triggers [{:event :bake :effect {:op :choose :optional? true
+                                 :options [{:label "Clay → Stone" :cost {:clay 1} :effects [{:op :gain :goods {:stone 1}}]}
+                                           {:label "2 Clay → 2 Stone" :cost {:clay 2} :effects [{:op :gain :goods {:stone 2}}]}]}}]}
+ :catalog/original-expansion-fr-56-watering-can
+ {:passing? true :play [{:op :water-crops}]}
+ :catalog/original-expansion-fr-63-art-director
+ {:triggers [{:event :use-space :spaces #{:traveling}
+              :effects [{:op :gain :goods {:food 1}} {:op :choose-good :choices [:wood :clay :reed :stone]}]}]}
+ :catalog/original-expansion-fr-72-cocotte
+ {:triggers [{:event :use-space :spaces #{:labor}
+              :effect {:op :card-action :kinds #{:major :minor} :major-fee 1 :optional? true}}]}
+ :catalog/original-expansion-fr-77-dove-hunter
+ {:text "In the Feeding phase of each Harvest, the Dove Hunter can convert either 1 Sheep to 4 Food or 1 Cattle to 6 Food."
+  :ability {:op :exchange-options :phases #{:feeding} :limit-per-round 1 :food-conversion? true
+            :options [{:label "Sheep → 4 Food" :cost {:sheep 1} :goods {:food 4}}
+                      {:label "Cattle → 6 Food" :cost {:cattle 1} :goods {:food 6}}]}}
+ :catalog/original-expansion-fr-89-landscape-gardener
+ {:passive {:card-stacks {:count 2 :field? true}}
+  :play [{:op :sow-offer :optional? true}]}
+ :catalog/original-expansion-fr-109-stage-star
+ {:play [{:op :gain :goods {:wood [:if [:<= [:round] 4] 6 0]}}]
+  :triggers [{:event :use-space :scope :others :spaces #{:traveling} :condition [:test [:> [:goods :wood] 0]]
+              :effect {:op :give-to-actor :cost {:wood 1} :goods {:wood 1}}}]}
+ :catalog/original-expansion-fr-117-wealthiest-european
+ {:play [{:op :repeat :count [:if [:= [:occupations] 1] [:- [:round] 1] 0]
+          :effect {:op :choose-good :choices [:wood :clay :reed :stone]}}]}
+
 }

@@ -142,4 +142,49 @@
              {:event :before-field-phase :condition [:test [:not [:= [:context :manure?] true]]]
               :effect {:op :discard-stored :goods {:food 1}}}]}
 
+ :catalog/original-expansion-wm-2-animal-buyer
+ {:triggers [{:event :after-field-phase :condition [:test [:not [:= [:context :manure?] true]]]
+              :effect {:op :choose :optional? true :options
+                       [{:label "Sheep for 2 Food" :cost {:food 2} :effects [{:op :gain :goods {:sheep 1}}]}
+                        {:label "Wild boar for 3 Food" :cost {:food 3} :effects [{:op :gain :goods {:boar 1}}]}
+                        {:label "Cattle for 4 Food" :cost {:food 4} :effects [{:op :gain :goods {:cattle 1}}]}
+                        {:label "2 Sheep for 4 Food" :cost {:food 4} :effects [{:op :gain :goods {:sheep 2}}]}
+                        {:label "2 Wild boar for 6 Food" :cost {:food 6} :effects [{:op :gain :goods {:boar 2}}]}
+                        {:label "2 Cattle for 8 Food" :cost {:food 8} :effects [{:op :gain :goods {:cattle 2}}]}
+                        {:label "Sheep + Wild boar for 5 Food" :cost {:food 5} :effects [{:op :gain :goods {:sheep 1 :boar 1}}]}
+                        {:label "Sheep + Cattle for 6 Food" :cost {:food 6} :effects [{:op :gain :goods {:sheep 1 :cattle 1}}]}
+                        {:label "Wild boar + Cattle for 7 Food" :cost {:food 7} :effects [{:op :gain :goods {:boar 1 :cattle 1}}]}]}}]}
+ :catalog/original-expansion-wm-10-cloister-dweller
+ {:score {:type :expression :value [:complete-farm-columns]}}
+ :catalog/original-expansion-wm-31-humble-farmboy
+ {:play [{:op :house-steward}] :global-score? true
+  :score {:type :expression :value [:if [:= [:cards] [:player-min [:cards]]] 3 0]}}
+ :catalog/original-expansion-wm-44-silo-girl
+ {:triggers [{:event :check-state :once? true :condition [:house :stone]
+              :effect {:op :sequence :effects [{:op :schedule :rounds [2 4 6 8 10 12 14] :goods {:grain 1}}
+                                              {:op :schedule :rounds [1 3 5 7 9 11 13] :goods {:vegetable 1}}]}}]}
+ :catalog/original-expansion-wm-46-stone-curator
+ {:triggers [{:event :use-space :condition [:test [:and [:source-accumulation] [:> [:source-rate :stone] 0]]]
+              :effect {:op :gain :goods {:food 1}}}]
+  :score {:type :expression :value [:+ [:if [:= [:house] :stone] [:quot [:rooms] 2] 0]
+                                     [:quot [:improvements-with-printed-cost :stone] 2]]}}
+ :catalog/original-expansion-wm-52-tile-maker
+ {:play [{:op :gain :goods {:clay [:+ [:if [:>= [:rounds-left] 1] 1 0] [:if [:>= [:rounds-left] 3] 1 0]
+                                    [:if [:>= [:rounds-left] 6] 1 0] [:if [:>= [:rounds-left] 9] 1 0]]}}]
+  :global-score? true :score {:type :expression :value [:if [:= [:house] :clay] 2 0]}}
+ :catalog/original-expansion-wm-63-birdcage
+ {:passive {:no-house-animals true}
+  :triggers [{:event :feeding-start :effect {:op :store-goods :cost {:food 1} :goods {:food 1} :score-per-good 1 :optional? true}}]
+  :score {:type :expression :value [:stored-good :catalog/original-expansion-wm-63-birdcage :food]}}
+ :catalog/original-expansion-wm-83-free-range-chickens
+ {:triggers [{:event :round-start :condition [:test [:> [:grain-fields] 0]] :effect {:op :store-goods :goods {:food 1}}}]
+  :ability {:op :release-stored :partial-resource :food}
+  :score {:type :expression :value [:+ [:if [:>= [:stored-good :catalog/original-expansion-wm-83-free-range-chickens :food] 3] 1 0]
+                                     [:if [:>= [:stored-good :catalog/original-expansion-wm-83-free-range-chickens :food] 6] 1 0]]}}
+ :catalog/original-expansion-wm-85-fruitcake
+ {:triggers [{:event :feeding-start :once? true :effect {:op :feeding-discount :amount [:feeding-people]}}]}
+ :catalog/original-expansion-wm-91-iron-plow
+ {:passive {:action-plow {:extra-fields 1 :spaces #{:plow}} :after-plow {:op :sow-offer :optional? true}}
+  :play [{:op :set-uses :uses 1}]}
+
 }
