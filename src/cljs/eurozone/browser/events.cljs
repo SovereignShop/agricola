@@ -11,8 +11,17 @@
 (rf/reg-event-db :draft
   (fn [db [_ key value]]
     (cond-> (assoc-in db [:draft key] value)
-      (= key :improvement) (update :draft dissoc :upgrade :bake-grain :card :discount-resource :manufacturer-discount :wood-carver? :return-improvement :return-improvements :as-major?)
-      (= key :card) (update :draft dissoc :improvement :upgrade :bake-grain :payment-option :return-improvement :return-improvements :as-major? :discount-resource :manufacturer-discount :wood-carver?))))
+      (= key :improvement) (update :draft dissoc :upgrade :bake-grain :card :discount-resource :discount-resources :manufacturer-discount :wood-carver? :return-improvement :return-improvements :as-major?)
+      (= key :card) (update :draft dissoc :improvement :upgrade :bake-grain :payment-option :return-improvement :return-improvements :as-major? :discount-resource :discount-resources :manufacturer-discount :wood-carver?)
+      (= key :payment-option) (update :draft dissoc :discount-resource :discount-resources)
+      (= key :discount-resource) (update :draft dissoc :discount-resources))))
+(rf/reg-event-db :draft-discount-choice
+  (fn [db [_ index amount resource]]
+    (update db :draft
+      (fn [draft]
+        (-> draft
+            (assoc :discount-resources (assoc (vec (take amount (concat (:discount-resources draft) (repeat nil)))) index resource))
+            (dissoc :discount-resource))))))
 ;; Apply multi-control edits to the latest draft, not the render-time snapshot.
 ;; Several DOM changes can arrive before Reagent renders the next frame.
 (rf/reg-event-db :draft-adjust-in

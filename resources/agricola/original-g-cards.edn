@@ -177,4 +177,35 @@
               :effect {:op :points :cost {:grain 1 :vegetable 1} :amount 3 :optional? true}}]}
  :catalog/original-expansion-g-115-fish-farm
  {:triggers [{:event :use-space :scope :others :spaces #{:fishing} :effect {:op :take-field-crops :optional? true}}]}
+
+;; Community batch twelve: verified final English prints.
+ :catalog/original-expansion-g-9-baker-s-daughter
+ {:public-hand-response {:event :occupation :scope :others :condition [:test [:or [:= [:event-card-id] :catalog/original-base-e-150-baker] [:= [:event-card-id] :catalog/original-base-e-149-master-baker]]]}
+  :passive {:share-action-spaces #{:grain :sow-bake}} :play [{:op :bake :optional? true}]}
+ :catalog/original-expansion-g-11-carrot-cake-baker
+ {:ability {:op :exchange-options :food-conversion? true :options [{:label "Vegetable → 2 Food" :cost {:vegetable 1} :goods {:food 2}}]}
+  :triggers [{:event :convert-food :condition [:test [:> [:converted :vegetable] 0]] :effect {:op :bake :optional? true}}]}
+ :catalog/original-expansion-g-20-freeloader {:passive {:freeloader true}}
+ :catalog/original-expansion-g-27-grain-lover
+ {:play [{:op :plow :sow-after? true :available-when [:<= [:round] 7] :optional? true}]
+  :global-score? true :score {:type :expression :value [:if [:= [:total-crops :grain] [:player-max [:total-crops :grain]]] 2 0]}}
+ :catalog/original-expansion-g-34-inventor {:passive {:inventor true}}
+ :catalog/original-expansion-g-44-pearl-seeker
+ {:triggers [{:event :use-space :spaces #{:fishing} :effects [{:op :gain :goods {:stone 1}} {:op :pearl-seeker :optional? true}]}]}
+ :catalog/original-expansion-g-52-stone-trader
+ {:triggers [{:event :use-space :condition [:test [:> [:source-goods :stone] 0]]
+              :effect {:op :card-action :kinds #{:major :minor} :printed-resource :stone :cost {:food 1} :optional? true}}]}
+ :catalog/original-expansion-g-66-birthstone
+ {:play [{:op :repeat :count [:growths-this-round] :effect {:op :points :cost {:stone 1} :amount 1 :optional? true}}]
+  :triggers [{:event :grow :effect {:op :repeat :count [:newborns-added] :effect {:op :points :cost {:stone 1} :amount 1 :optional? true}}}]}
+ :catalog/original-expansion-g-88-meat-pie
+ {:cost-options [{:grain 2} {:sheep 1} {:boar 1} {:cattle 1}]
+  :play [{:op :bake :optional? true}]
+  :triggers [{:event :bake :condition [:test [:> [:context :grain-baked] 0]]
+              :effect {:op :choose :optional? true :options [
+               {:label "Grain + Sheep → 3 Points" :cost {:grain 1 :sheep 1} :effects [{:op :points :amount 3}]}
+               {:label "Grain + Boar → 3 Points" :cost {:grain 1 :boar 1} :effects [{:op :points :amount 3}]}
+               {:label "Grain + Cattle → 3 Points" :cost {:grain 1 :cattle 1} :effects [{:op :points :amount 3}]}]}}]}
+ :catalog/original-expansion-g-92-pine-forest
+ {:triggers [{:event :before-round-deliveries :effect {:op :pine-forest :optional? true}}]}
 }

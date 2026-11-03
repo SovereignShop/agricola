@@ -84,3 +84,12 @@
     (is (= [10 13] (vec (keys (markers/by-round (assoc restored :round 6))))))
     (is (empty? (markers/by-round (assoc-in restored [:players 0 :occupations] []))))
     (is (= entries (get-in restored [:players 0 :schedule])))))
+
+(deftest goblet-well-markers-reflect-the-saved-delivery-amount
+  (let [cid :catalog/original-expansion-fr-23-goblet
+        state (-> (fresh) (update-in [:players 0] a/gain {:wood 2 :stone 3})
+                  (play 0 cid) (a/build-improvement 0 {:improvement :well}))
+        restored (edn/read-string (pr-str state))]
+    (doseq [round (range 2 7)]
+      (is (= {:food 2} (get-in (markers/by-round restored) [round 0 :goods]))))
+    (is (= {:food 3} (get-in (markers/by-round (assoc-in restored [:players 0 :well-deliveries 2] 1)) [2 0 :goods])))))

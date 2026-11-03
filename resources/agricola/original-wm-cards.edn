@@ -220,4 +220,32 @@
  :catalog/original-expansion-wm-89-home-garden
  {:play [{:op :schedule :offsets [1 2 3] :goods {:food 1} :available-when [:and [:renovated-this-round] [:not [:renovation-pending]]]}]
   :triggers [{:event :renovate :effect {:op :schedule :offsets [1 2 3] :goods {:food 1}}}]}
+
+;; Community batch twelve: verified final English prints.
+ :catalog/original-expansion-wm-4-bargaining-baker {:passive {:bargaining-baker true}}
+ :catalog/original-expansion-wm-12-covetous-farmer
+ {:ability {:op :exchange-options :condition [:own-turn] :limit-per-round 1 :options [
+  {:label "Wood" :when [:all-others-have :wood] :cost {} :goods {:wood 1}}
+  {:label "Clay" :when [:all-others-have :clay] :cost {} :goods {:clay 1}}
+  {:label "Reed" :when [:all-others-have :reed] :cost {} :goods {:reed 1}}
+  {:label "Stone" :when [:all-others-have :stone] :cost {} :goods {:stone 1}}]}}
+ :catalog/original-expansion-wm-16-diplomat
+ {:passive {:diplomat true} :play [{:op :set-card-state :values {:uses [:if [:<= [:round] 7] 2 1]}}]}
+ :catalog/original-expansion-wm-20-farm-school-graduate
+ {:requires [:= [:occupations] 0] :passive {:no-occupation-spaces true}
+  :triggers [{:event :before-field-phase :condition [:test [:not [:= [:context :manure?] true]]]
+              :effect {:op :card-action :kinds #{:occupation} :occupation-cost 2 :optional? true}}]}
+ :catalog/original-expansion-wm-24-gem-hunter
+ {:triggers [{:event :use-space :condition [:test [:and [:source-accumulation] [:> [:source-goods :clay] 0]]]
+              :effect {:op :gem-hunter :optional? true}}]}
+ :catalog/original-expansion-wm-54-wheelbarrow-pusher
+ {:triggers [{:event :after-resource-returns :condition [:test [:wheelbarrow-eligible]]
+              :effect {:op :wheelbarrow-pusher :optional? true}}]}
+ :catalog/original-expansion-wm-55-wood-worker
+ {:triggers [{:event :after-use-space :effect {:op :wood-worker :cost {:food 1} :optional? true}}]}
+ :catalog/original-expansion-wm-60-attic
+ {:triggers [{:event :build-rooms :effect {:op :room-resource :resource :wood :pay? true :cells [:context :new-rooms] :max [:context :rooms-built] :optional? true}}]
+  :score {:type :expression :value [:room-resources :catalog/original-expansion-wm-60-attic]}}
+ :catalog/original-expansion-wm-70-clockwork-man {:passive {:counts-as-occupation 1}}
+ :catalog/original-expansion-wm-90-honeymoon {:passive {:honeymoon true}}
 }

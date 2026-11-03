@@ -52,6 +52,29 @@
           :all-plows (count (for [player (:players g) cid (cards/active-owned player)
                                  :when (or (get-in (cards/card cid) [:passive :action-plow])
                                            (#{(cards/id :a018) (cards/id :b019)} cid))] cid))
+          :converted (get-in context [:converted-goods x] 0)
+          :newborns-added (:newborns-added context (max 0 (- (:family p) (:family-before context (:family p)))))
+          :growths-this-round (if (= (:round g) (get-in g [:round-growths pid :round])) (get-in g [:round-growths pid :count] 0) 0)
+          :room-resources (count (filter (set (a/tiles p :room)) (keys (get-in p [:card-state x :room-resources]))))
+          :all-others-have (and (zero? (a/amount p x)) (every? #(or (= pid (:id %)) (pos? (a/amount % x))) (:players g)))
+          :can-sow-crop (boolean (some (fn [cell] (try (a/sow (a/gain p {x 1}) [{:cell cell :crop x}]) true
+                                                      (catch #?(:clj clojure.lang.ExceptionInfo :cljs :default) _ false)))
+                                      (concat (a/tiles p :field) (keys (:card-fields p)))))
+          :new-large-pastures (max 0 (- (count (filter #(>= (count %) 3) (a/pastures p)))
+                                        (count (filter #(>= (count %) 3) (:old-pastures context)))))
+          :workshop-source-bonus
+          (let [source (into {} (filter (comp pos? val) (:source-goods context)))
+                workshop ({:wood :joinery :clay :pottery :reed :basketry} x)
+                upgrade ({:wood :return-joinery :clay :return-pottery :reed :return-basketry} x)]
+            (if (and (= #{x} (set (keys source)))
+                     (or (contains? (:improvements p) workshop) (some #(= upgrade (:cost (cards/card %))) (:minors p))))
+              (if (= x :reed) 1 2) 0))
+          :wheelbarrow-eligible
+          (let [resources [:wood :clay :reed :stone]
+                source (select-keys (:source-goods context) resources)
+                returned (merge-with + (:source-returned context) (get-in g [:action-returned-goods (:action-id context)]))
+                received (reduce + 0 (for [r resources] (max 0 (- (get-in p [:received r] 0) (get-in context [:before-received r] 0) (get returned r 0)))))]
+            (and (:accumulate (a/action-definition g (:space context))) (some pos? (vals source)) (= received 1)))
           :room-food (count (filter (set (a/tiles p :room)) (get-in p [:card-state x :room-food])))
           :stored-building-score (let [n (count (filter #(pos? (get-in p [:card-state x :stored-goods %] 0)) [:wood :clay :reed :stone]))] (if (= n 4) 5 n))
           :valuable-majors (count (filter #(>= (:points (a/improvement-definition %) 0) 2)
@@ -99,7 +122,7 @@
                             (get-in p [:card-state x :last-turn]))
           :card-state (get-in p [:card-state x (second args)] 0)
           :stored-good (get-in p [:card-state x :stored-goods (second args)] 0)
-          :other-occupations-below (boolean (some #(< (count (:occupations %)) (ev x))
+          :other-occupations-below (boolean (some #(< (cards/occupation-count % nil) (ev x))
                                          (if (= 1 (count (:players g))) [p] (remove #(= pid (:id %)) (:players g)))))
           :fewer-occupations-than-each-other
           (every? #(< (cards/occupation-count p nil) (cards/occupation-count % nil))

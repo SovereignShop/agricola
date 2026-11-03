@@ -186,4 +186,32 @@
  {:play [{:op :set-card-state :values {:resource-stack (:sheep :boar :sheep :cattle)}}]
   :passive {:resource-seller true :seller-resources #{:sheep :boar :cattle}}}
  :catalog/original-expansion-fr-105-reformer {:passive {:animals-on-occupations true}}
+
+;; Community batch twelve: verified final English prints.
+ :catalog/original-expansion-fr-13-chameleon {:passive {:chameleon true} :play [{:op :gain :goods {:boar 1}}]}
+ :catalog/original-expansion-fr-23-goblet {:passive {:major-as-minor #{:well} :well-food-per-round 2}}
+ :catalog/original-expansion-fr-29-hay-rake {:passive {:third-person-plow true}}
+ :catalog/original-expansion-fr-42-rock-pyramid
+ {:passive {:rock-pyramid true}
+  :triggers [{:event :build-rooms :condition [:house :stone]
+              :effect {:op :plow-many :max-fields [:+ [:context :rooms-built] [:context :paid-stone-rooms]] :optional? true}}]}
+ :catalog/original-expansion-fr-54-tuileries-garden
+ {:triggers [{:event :use-space :spaces #{:plow}
+              :effect {:op :choose :optional? true :options [
+               {:label "Grain → Sow" :when [:can-sow-crop :grain] :effects [{:op :gain :goods {:grain 1}} {:op :sow-offer :max-fields 1 :allowed-crops #{:grain}}]}
+               {:label "Vegetable → Sow" :when [:can-sow-crop :vegetable] :effects [{:op :gain :goods {:vegetable 1}} {:op :sow-offer :max-fields 1 :allowed-crops #{:vegetable}}]}]}}]}
+ :catalog/original-expansion-fr-58-winter-deadwood
+ {:passing? false :play [{:op :choose :options [
+  {:label "Wood → 1 Point" :cost {:wood 1} :effects [{:op :points :amount 1}]}
+  {:label "Receive Wood · pass left" :effects [{:op :gain :goods {:wood 1}} {:op :pass-this-card}]}]}]}
+ :catalog/original-expansion-fr-64-award-winner
+ {:triggers [{:event :build-improvement :effect {:op :award-winner :optional? true}}]}
+ :catalog/original-expansion-fr-70-cattle-dealer
+ {:triggers [{:event :fence :effect {:op :repeat :count [:new-large-pastures]
+                                   :effect {:op :gain :cost {:reed 1} :goods {:cattle 2} :optional? true}}}]}
+ :catalog/original-expansion-fr-82-gardening-enthusiast
+ {:play [{:op :gain :goods {:grain 1 :vegetable 1}}] :loan-resources [:grain :vegetable]
+  :ability {:op :return-animal-loan} :score {:type :unreturned-animals}}
+ :catalog/original-expansion-fr-107-sculptors-son
+ {:triggers [{:event :use-space :effect {:op :gain :goods {:wood [:workshop-source-bonus :wood] :clay [:workshop-source-bonus :clay] :reed [:workshop-source-bonus :reed]}}}]}
 }

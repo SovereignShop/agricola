@@ -17,13 +17,17 @@ def check(base, fixture_ids):
         errors = []
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(base+'/#'+loan)
-        expect(page.get_by_role('button', name='Settle animal loan', exact=True)).to_be_visible()
+        expect(page.get_by_role('button', name='Settle loan', exact=True)).to_be_visible()
         page.reload()
-        page.get_by_label('Sheep to return', exact=True).fill('1')
-        page.get_by_label('Cattle to return', exact=True).fill('1')
-        page.get_by_role('button', name='Settle animal loan', exact=True).click()
+        expect(page.get_by_role('dialog').get_by_role('spinbutton')).to_have_count(0)
+        expect(page.get_by_role('dialog').get_by_role('combobox')).to_have_count(0)
+        sheep=page.get_by_role('button', name='Return Sheep', exact=True)
+        cattle=page.get_by_role('button', name='Return Cattle', exact=True)
+        sheep.click();expect(sheep).to_have_attribute('aria-pressed','true')
+        cattle.click();expect(cattle).to_have_attribute('aria-pressed','true')
+        page.get_by_role('button', name='Settle loan', exact=True).click()
         try:
-            expect(page.get_by_role('dialog')).to_have_count(0)
+            expect(page.get_by_role('button', name='Settle loan', exact=True)).to_have_count(0)
         except Exception:
             print('LOAN FAILURE:', page.locator('body').inner_text(), 'JS:', errors, flush=True)
             raise
@@ -33,9 +37,9 @@ def check(base, fixture_ids):
         print('PASS: final loan popup persists and submits selected species, keeping an unreturned boar', flush=True)
 
         page.goto(base+'/#'+bake)
-        expect(page.get_by_label('Grain to bake', exact=True)).to_be_visible()
-        page.get_by_role('spinbutton', name='Wild boar → 3 food each', exact=True).fill('1')
-        page.get_by_role('button', name='Resolve effect →', exact=True).click()
+        expect(page.get_by_role('group', name='Baking exchange', exact=True)).to_be_visible()
+        page.get_by_role('button', name='Add Wild boar conversion', exact=True).click()
+        page.get_by_role('button', name='Bake bread →', exact=True).click()
         expect(page.get_by_role('button', name='Collect cooked markers', exact=True)).to_be_visible()
         page.reload()
         page.get_by_role('button', name='Collect cooked markers', exact=True).click()

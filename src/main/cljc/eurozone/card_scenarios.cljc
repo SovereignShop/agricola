@@ -5,6 +5,66 @@
 
 (def scenarios
   [
+   {:id "bakers-daughter" :card :catalog/original-expansion-g-9-baker-s-daughter :name "Baker's Daughter" :players 3
+    :description "Partner has played Baker. Accept the free play of Baker's Daughter, then choose whether to bake with your Clay Oven. Her shared Grain Seeds and Sow and Bake spaces remain usable when opponents occupy them."}
+   {:id "carrot-cake-baker" :card :catalog/original-expansion-g-11-carrot-cake-baker :name "Carrot Cake Baker" :players 2
+    :description "One vegetable has just been converted to two food. Bake grain with your Clay Oven using the pictured exchange, or decline. Other vegetable-to-food conversions also trigger this baking offer."}
+   {:id "freeloader" :card :catalog/original-expansion-g-20-freeloader :name "Freeloader" :players 3
+    :description "This is your first placement of the round. Partner occupies Farmland: click it and plow a field on your own farm. Your first person cannot use Meeting Place, even while it is empty."}
+   {:id "grain-lover" :card :catalog/original-expansion-g-27-grain-lover :name "Grain Lover" :players 3
+    :description "Round seven leaves seven full rounds. Click an empty farm space to plow, then optionally sow that field with grain from your supply. Players tied for the most total grain earn two points, including planted grain."}
+   {:id "inventor" :card :catalog/original-expansion-g-34-inventor :name "Inventor" :players 2
+    :description "Build the Clay Oven using Major Improvement. Its printed four-resource cost qualifies for a one-resource discount; click clay or stone in the payment preview to choose which resource to save."}
+   {:id "pearl-seeker" :card :catalog/original-expansion-g-44-pearl-seeker :name "Pearl Seeker" :players 2
+    :description "Fishing has supplied four food plus one automatic stone. Choose how many additional stone to buy for two food each, or decline. Only food from the pile funds these purchases, not other fishing bonuses."}
+   {:id "stone-trader" :card :catalog/original-expansion-g-52-stone-trader :name "Stone Trader" :players 4
+    :description "Quarry has just supplied stone. Choose an improvement with a printed stone cost, paying one food plus its normal price, or decline. Cards without a printed stone cost are excluded."}
+   {:id "birthstone" :card :catalog/original-expansion-g-66-birthstone :name "Birthstone" :players 2
+    :description "Your family has just grown. Pay one stone for one point using the pictured exchange, or decline. Playing Birthstone after growth in the same round also offers that exchange."}
+   {:id "meat-pie" :card :catalog/original-expansion-g-88-meat-pie :name "Meat Pie" :players 2
+    :description "One grain has just been baked after playing Meat Pie. Choose a pictured grain-and-animal exchange for three points, or decline. Only one exchange is allowed per baking action."}
+   {:id "pine-forest" :card :catalog/original-expansion-g-92-pine-forest :name "Pine Forest" :players 2
+    :description "Four wood have accumulated on Pine Forest and your supply is empty. At round start, accept another stored wood to collect all five automatically, or decline and leave four stored. This choice precedes other round-start deliveries."}
+   {:id "bargaining-baker" :card :catalog/original-expansion-wm-4-bargaining-baker :name "Bargaining Baker" :players 2
+    :description "Your grain supply is empty. Build the Clay Oven using Major Improvement: choose a one-resource discount, and receive one grain before construction. Other bread-symbol improvements give grain, but only ovens get the discount."}
+   {:id "covetous-farmer" :card :catalog/original-expansion-wm-12-covetous-farmer :name "Covetous Farmer" :players 3
+    :description "It is your turn. Your reed supply is empty while every opponent has reed. Open Covetous Farmer and click reed to receive one. The ability is limited to once per round and resources missing from your supply."}
+   {:id "diplomat" :card :catalog/original-expansion-wm-16-diplomat :name "Diplomat" :players 3
+    :description "Diplomat was played early, so two permissions are available in round fourteen. Partner occupies Farmland: click it to plow on your own farm, spending one permission. Your own occupied spaces remain unavailable."}
+   {:id "farm-school-graduate" :card :catalog/original-expansion-wm-20-farm-school-graduate :name "Farm School Graduate" :players 3
+    :description "The first harvest is starting. Click an occupation face to play it for two food, or decline. Farm School Graduate was your first occupation and blocks occupation actions on shared action spaces."}
+   {:id "gem-hunter" :card :catalog/original-expansion-wm-24-gem-hunter :name "Gem Hunter" :players 2
+    :description "You have taken a three-clay accumulation in round three. Accept one stone by returning one clay to the action space, or decline. After round nine, or with a smaller pile, no clay needs to be left behind."}
+   {:id "wheelbarrow-pusher" :card :catalog/original-expansion-wm-54-wheelbarrow-pusher :name "Wheelbarrow Pusher" :players 4
+    :description "You took exactly one reed from its accumulation space. Click a building resource to receive it together with one food. In a three-player game the reward would instead be a resource or food."}
+   {:id "wood-worker" :card :catalog/original-expansion-wm-55-wood-worker :name "Wood Worker" :players 3
+    :description "Grain Seeds has finished. Pay one food onto that action space to receive one wood, or decline. The next player using Grain Seeds receives the marked food; this wood cannot fund the action already completed."}
+   {:id "attic" :card :catalog/original-expansion-wm-60-attic :name "Attic" :players 2
+    :description "A new wooden room has just been built. Click that new room to place one wood from your supply there for one point, or decline. Existing rooms cannot be selected; removing a marked room later loses its point."}
+   {:id "clockwork-man" :card :catalog/original-expansion-wm-70-clockwork-man :name "Clockwork Man" :players 2
+    :description "Play Clockwork Man at Meeting Place. It counts as both an occupation and a minor improvement and earns your Tutor one point. It must not trigger occupation-play income or other occupation-play effects."}
+   {:id "honeymoon" :card :catalog/original-expansion-wm-90-honeymoon :name "Honeymoon" :players 2
+    :description "Round fourteen has begun with three family members, but Honeymoon leaves two at home. You have one worker to place: take Grain Seeds and observe that no further ordinary placement remains. The card is worth five points."}
+   {:id "chameleon" :card :catalog/original-expansion-fr-13-chameleon :name "Chameleon" :players 2
+    :description "A stable pasture holds three sheep and the house pet is a cattle. Play Chameleon at Meeting Place: pay one sheep and receive one boar, which shares the pasture with the two remaining sheep within normal capacity."}
+   {:id "goblet" :card :catalog/original-expansion-fr-23-goblet :name "Goblet" :players 2
+    :description "Use Meeting Place to build the Well as a minor improvement at its normal cost. Goblet places two food on each of the next five rounds. Playing Goblet after already building the Well does not increase existing deliveries."}
+   {:id "hay-rake" :card :catalog/original-expansion-fr-29-hay-rake :name "Hay Rake" :players 2
+    :description "Your first person used Farmland and your second took Grain Seeds. Click your own occupied Farmland with your third person to plow beside the first field. Hay Rake works only for that third placement."}
+   {:id "rock-pyramid" :card :catalog/original-expansion-fr-42-rock-pyramid :name "Rock Pyramid" :players 2
+    :description "You just paid stone to build one stone room. Click one or two empty farm spaces to plow, or decline. A free stone room permits one field; multiple rooms may permit more fields."}
+   {:id "tuileries-garden" :card :catalog/original-expansion-fr-54-tuileries-garden :name "Tuileries Garden" :players 2
+    :description "Farmland has just been used. Choose the pictured grain or vegetable, receive it from the supply, and sow it by clicking a field. You may decline before choosing a crop; selecting it commits to sowing that crop."}
+   {:id "winter-deadwood" :card :catalog/original-expansion-fr-58-winter-deadwood :name "Winter Deadwood" :players 2
+    :description "Choose either the pictured one-wood payment for one point, keeping the card, or receive one wood and pass Winter Deadwood to Partner. Only the receive-wood choice passes the card."}
+   {:id "award-winner" :card :catalog/original-expansion-fr-64-award-winner :name "Award Winner" :players 2
+    :description "You have just paid wood to play Shovel. Click the wood icon to pay one additional wood for one point, or decline. Only a building resource actually paid for that improvement is eligible, once per round."}
+   {:id "cattle-dealer" :card :catalog/original-expansion-fr-70-cattle-dealer :name "Cattle Dealer" :players 4
+    :description "One new pasture covering three farm spaces has just been fenced. Pay the pictured reed for two cattle, or decline. Making several new qualifying pastures can offer several pairs; simply reshaping one does not qualify."}
+   {:id "gardening-enthusiast" :card :catalog/original-expansion-fr-82-gardening-enthusiast :name "Gardening Enthusiast" :players 3
+    :description "The game is paused before final scoring. Click grain and vegetable icons to return either or both loaned crops, then confirm. Each unreturned crop costs one point; submitting a partial repayment closes the loan."}
+   {:id "sculptors-son" :card :catalog/original-expansion-fr-107-sculptors-son :name "Sculptors Son" :players 3
+    :description "You own Joinery, Pottery, and Basketmaker's Workshop. Take Forest to receive its wood plus two additional wood automatically. Clay and reed actions similarly reward their matching workshops; mixed source goods do not qualify."}
    {:id "animal-holder" :card :catalog/original-expansion-g-3-animal-holder :name "Animal Holder" :players 3
     :description "Play Animal Holder with Lessons in round six to gain three wood. You and Partner tie for the most animals and both receive three bonus points."}
    {:id "apprentice" :card :catalog/original-expansion-g-4-apprentice :name "Apprentice" :players 3
@@ -322,6 +382,66 @@
         base (game/initialize (a/new-game names (vec (mapcat identity a/stages)) 0))
         funded (update base :players #(mapv (fn [p] (a/gain p {:food 12 :wood 8 :clay 8 :reed 6 :stone 8 :grain 3 :vegetable 2})) %))]
     (case id
+      "bakers-daughter" (-> funded (a/build-improvement 0 {:improvement :clay-oven}) (put-in-hand 0 card)
+                            (put-in-hand 1 :catalog/original-base-e-150-baker) (assoc :turn 1)
+                            (game/command 1 {:type :action :space :lessons :card :catalog/original-base-e-150-baker}))
+      "carrot-cake-baker" (-> funded (a/build-improvement 0 {:improvement :clay-oven}) (played 0 card)
+                              (game/command 0 {:type :ability :card card :option 0}))
+      "freeloader" (-> funded (played 0 card) (assoc :turn 1)
+                        (game/command 1 {:type :action :space :plow :cell 0}) (assoc :turn 0))
+      "grain-lover" (-> funded (prepared-round 7) (played 0 card))
+      "inventor" (-> funded (prepared-round 2) (played 0 card))
+      "pearl-seeker" (-> funded (prepared-round 4) (played 0 card) (game/command 0 {:type :action :space :fishing}))
+      "stone-trader" (-> funded (prepared-round 7) (played 0 card)
+                          (put-in-hand 0 :catalog/original-expansion-wm-70-clockwork-man)
+                          (game/command 0 {:type :action :space :stone-west}))
+      "birthstone" (-> funded (prepared-round 5) (played 0 card) (update-in [:players 0] a/build-rooms [0])
+                        (game/command 0 {:type :action :space :growth}))
+      "meat-pie" (-> funded (played 0 :catalog/original-expansion-g-49-seed-master)
+                      (a/build-improvement 0 {:improvement :clay-oven})
+                      (update-in [:players 0] #(-> % (a/build-fences (vec (a/edges 0))) (a/gain {:sheep 2})))
+                      (put-in-hand 0 card) (game/play-card 0 card 0 {:payment-option 1}) game/drain
+                      (resolve-preparation {:grain 1}))
+      "pine-forest" (let [start (-> funded (played 0 card) (assoc-in [:players 0 :goods :wood] 0))
+                           four (nth (iterate #(resolve-preparation (game/drain (game/begin-round %)) {}) start) 4)]
+                       (game/drain (game/begin-round four)))
+      "bargaining-baker" (-> funded (prepared-round 2) (played 0 card) (assoc-in [:players 0 :goods :grain] 0))
+      "covetous-farmer" (-> funded (played 0 card) (assoc-in [:players 0 :goods :reed] 0))
+      "diplomat" (-> funded (played 0 card) (prepared-round 14) (assoc :turn 1)
+                      (game/command 1 {:type :action :space :plow :cell 0}) (assoc :turn 0))
+      "farm-school-graduate" (-> funded (played 0 card) (prepared-round 4)
+                                  (put-in-hand 0 :catalog/original-expansion-g-5-architect) last-harvest-action)
+      "gem-hunter" (-> funded (prepared-round 3) (played 0 card) (game/command 0 {:type :action :space :clay}))
+      "wheelbarrow-pusher" (-> funded (played 0 card) (game/command 0 {:type :action :space :reed}))
+      "wood-worker" (-> funded (played 0 card) (game/command 0 {:type :action :space :grain}))
+      "attic" (-> funded (played 0 card) (game/command 0 {:type :action :space :build :rooms [0]}))
+      "clockwork-man" (-> funded (played 0 :catalog/original-base-e-174-tutor) (put-in-hand 0 card))
+      "honeymoon" (-> funded (update-in [:players 0] a/build-rooms [0]) (update-in [:players 0] a/grow true)
+                       (prepared-round 13) (played 0 card) game/begin-round game/drain)
+      "chameleon" (-> funded (update-in [:players 0] #(-> % (a/build-fences (vec (a/edges 0)))
+                                                           (a/build-stables [0] 2) (a/gain {:sheep 3 :cattle 1})))
+                       (put-in-hand 0 card))
+      "goblet" (-> funded (prepared-round 2) (played 0 card))
+      "hay-rake" (-> funded (update-in [:players 0] a/build-rooms [6]) (update-in [:players 0] a/grow true)
+                      (prepared-round 2) (played 0 card)
+                      (game/command 0 {:type :action :space :plow :cell 0}) (assoc :turn 0)
+                      (game/command 0 {:type :action :space :grain}) (assoc :turn 0))
+      "rock-pyramid" (-> funded (assoc-in [:players 0 :house] :stone) (played 0 card)
+                          (game/command 0 {:type :action :space :build :rooms [0]}))
+      "tuileries-garden" (-> funded (played 0 (cards/id :a109)) (played 0 (cards/id :a115))
+                              (played 0 :catalog/original-expansion-g-49-seed-master)
+                              (played 0 :catalog/original-expansion-g-5-architect) (played 0 card)
+                              (game/command 0 {:type :action :space :plow :cell 0}))
+      "winter-deadwood" (played funded 0 card)
+      "award-winner" (-> funded (played 0 card) (put-in-hand 0 :catalog/original-expansion-g-110-shovel)
+                          (game/command 0 {:type :action :space :meeting :card :catalog/original-expansion-g-110-shovel}))
+      "cattle-dealer" (-> funded (prepared-round 4) (played 0 card)
+                           (game/command 0 {:type :action :space :fences
+                                            :fences (vec (map key (filter #(= 1 (val %)) (frequencies (mapcat a/edges [0 1 2])))))}))
+      "gardening-enthusiast" (-> funded (played 0 card) (assoc :round 14 :phase :finish-round) game/finish-game game/drain)
+      "sculptors-son" (-> funded (a/build-improvement 0 {:improvement :joinery})
+                           (a/build-improvement 0 {:improvement :pottery}) (a/build-improvement 0 {:improvement :basketry})
+                           (played 0 card))
       "animal-holder" (-> funded (prepared-round 6) (put-in-hand 0 card)
                            (update-in [:players 0] #(-> % (a/build-fences (vec (a/edges 0))) (a/gain {:sheep 2})))
                            (update-in [:players 1] #(-> % (a/build-fences (vec (a/edges 0))) (a/gain {:boar 2}))))

@@ -32,6 +32,13 @@
   (reduce (fn [out x] (into out (map #(conj % x) out))) [[]] xs))
 (defn field-ids [p] (concat (a/tiles p :field) (sort (keys (:card-fields p)))))
 (defn payment-options [p] (a/construction-payment-options p))
+(defn discount-options [p cid options]
+  (let [choices (a/improvement-discount-options p cid options)]
+    (case (count choices)
+      0 [{}]
+      1 (map #(hash-map :discount-resource %) (first choices))
+      (cons {} (map #(hash-map :discount-resources %)
+                    (reduce (fn [plans resources] (for [plan plans resource resources] (conj plan resource))) [[]] choices))))))
 (defn hand-options [p kind]
   (for [cid (get-in p [:hand kind])
         paper? (if (and (= kind :occupation) (c/has? p :b109)) [false true] [false])
@@ -39,13 +46,12 @@
         wood (if (and (= kind :occupation) (c/has? p :a028)) (range (+ 4 (:additional-food-cost (c/card cid) 0))) [0])
         returned (if (#{:return-cooking :return-oven :return-hearth :return-well :return-fireplace :return-joinery} (:cost (c/card cid))) (g/card-return-options p cid) [nil])
         returned-pair (if (= :return-two-improvements (:cost (c/card cid))) (g/card-return-pairs p) [nil])
-        discount-resource (or (seq (a/improvement-discount-resources p cid)) [nil])
+        discount (discount-options p cid {:payment-option payment})
         improvement-payment (if (= kind :minor) (a/improvement-payment-options p cid) [{}])
         perpetual? (if (and (= kind :occupation) (some true? (c/passives p :perpetual-student))) [false true] [false])
         major? (if (get-in (c/card cid) [:passive :major-or-minor]) [false true] [false])]
-    (cond-> (merge {:card cid} improvement-payment) perpetual? (assoc :perpetual-student? true) paper? (assoc :paper-maker? true) (some? payment) (assoc :payment-option payment)
+    (cond-> (merge {:card cid} improvement-payment discount) perpetual? (assoc :perpetual-student? true) paper? (assoc :paper-maker? true) (some? payment) (assoc :payment-option payment)
             returned (assoc :return-improvement returned) returned-pair (assoc :return-improvements returned-pair)
-            discount-resource (assoc :discount-resource discount-resource)
             major? (assoc :as-major? true) (pos? wood) (assoc :occupation-wood wood))))
 (defn sow-plans [p]
   (distinct
@@ -91,11 +97,10 @@
   (for [cid (sort (:available-improvements state))
         upgrade (if (:upgrade (a/improvements cid))
                   (cons nil (a/fireplace-upgrades p)) [nil])
-        discount-resource (or (seq (a/improvement-discount-resources p cid)) [nil])
+        discount (discount-options p cid {})
         improvement-payment (a/improvement-payment-options p cid)
-        grain (if (:oven (a/improvements cid)) (range (inc (min 3 (a/amount p :grain)))) [0])]
-    (cond-> (merge {:improvement cid} improvement-payment) upgrade (assoc :upgrade upgrade) (pos? grain) (assoc :bake-grain grain)
-            discount-resource (assoc :discount-resource discount-resource))))
+        grain (if (:oven (a/improvements cid)) (range (inc (min 3 (a/amount (a/improvement-food-before-payment p cid) :grain)))) [0])]
+    (cond-> (merge {:improvement cid} improvement-payment discount) upgrade (assoc :upgrade upgrade) (pos? grain) (assoc :bake-grain grain))))
 (defn supply-minor-options [state p]
   (filter #(a/major-as-minor? p (:improvement %)) (major-options state p)))
 (defn action-candidates [state pid]
@@ -173,6 +178,7 @@
 (declare ability-candidates card-action-candidates)
 (defn decision-candidates [state pid]
   (let [p (g/p state pid) head (first (:effect-queue state)) effect (g/plow-effect (:effect head))
+        effect (cond-> effect (contains? effect :max-fields) (update :max-fields #(expression/evaluate state pid (:context head) %)))
         options (case (:op effect)
                   :relocate (map #(hash-map :option %) (range (count (g/relocation-origins state pid))))
                   :serf [{:resource :grain} {:resource :vegetable}]
@@ -204,6 +210,17 @@
                                       {:animals {:sheep sheep :boar boar :cattle cattle}}))
                   :mark-fence-space (map #(hash-map :space %) (g/fence-marker-spaces state pid))
                   :harvest-helper (g/harvest-helper-options state pid)
+                  :room-resource
+                  (let [allowed (if (= :context (first (:cells effect))) (expression/evaluate state pid (:context head) (:cells effect)) (:cells effect))
+                        cells (vec (remove (set (keys (get-in p [:card-state (:card head) :room-resources])))
+                                           (filter #(or (nil? allowed) (some #{%} allowed)) (a/tiles p :room))))
+                        maximum (min (count cells) (expression/evaluate state pid (:context head) (:max effect 1))
+                                     (if (:pay? effect) (a/amount p (:resource effect)) 15))]
+                    (for [n (range 1 (inc maximum)) offset (range (count cells))]
+                      {:cells (vec (take n (drop offset (cycle cells))))}))
+                  :pearl-seeker (map #(hash-map :amount %) (range 1 (inc (g/pearl-seeker-max state pid (:context head)))))
+                  :wheelbarrow-pusher (map #(hash-map :resource %) (g/wheelbarrow-choices state))
+                  :award-winner (map #(hash-map :resource %) (g/award-winner-resources state pid (:card head) (:context head)))
                   :room-food (let [cells (vec (remove (set (get-in p [:card-state (:card head) :room-food])) (a/tiles p :room)))
                                    maximum (min (count cells) (expression/evaluate state pid (:context head) (:max effect 1))
                                                 (if (:pay? effect) (a/amount p :food) 15))]
@@ -224,7 +241,7 @@
                   :corn-select (map #(hash-map :buyer %) (get-in state [:corn-sale :offers]))
                   :reveal-rounds [{:cultivation-first? true} {:cultivation-first? false}]
                   :juggler [{}]
-                  :return-animal-loan (g/animal-loan-choices p)
+                  :return-animal-loan (g/animal-loan-choices p (:card head))
                   :collect-cooked-animal (map #(hash-map :amount %) (range 1 (inc (get-in head [:context :converted-goods (:resource effect)] 0))))
                   (:plow :stable :plowsmith) (map #(hash-map :cell %) (range 15))
                   (:mini-pasture :fence-overseer :corral-builder :amateur-fencer) (mini-pasture-choices p)
@@ -258,7 +275,8 @@
                   :build-rooms (for [rooms (g/room-plans p) opts (a/room-payment-plans p rooms)] (assoc opts :rooms rooms))
                   :sow (let [player (g/sowing-player state pid effect)
                              plans (if (:max-fields effect)
-                                     (for [cell (field-ids player) crop (or (:allowed-crops effect) [:grain :vegetable])] [{:cell cell :crop crop}])
+                                     (for [cell (field-ids player) :when (or (nil? (:only-cells effect)) (some #{cell} (:only-cells effect)))
+                                           crop (or (:allowed-crops effect) [:grain :vegetable])] [{:cell cell :crop crop}])
                                      (remove empty? (sow-plans player)))]
                          (for [plantings plans grain (if (= :sow-bake (get-in effect [:source-command :space]))
                                                       (range (inc (min 8 (a/amount player :grain)))) [0])]
@@ -342,7 +360,7 @@
        (map #(merge {:type :ability :card cid} %)
             (case (get-in (c/card cid) [:ability :op])
               :tinsmith (map #(hash-map :amount %) (range 1 (inc (a/amount p :clay))))
-              :return-animal-loan (when-not (get-in p [:card-state cid :loan-settled?]) (g/animal-loan-choices p))
+              :return-animal-loan (when-not (get-in p [:card-state cid :loan-settled?]) (g/animal-loan-choices p cid))
               (:adopt :buy-stock :cash-card :reed-food :claim-goods :corn-profiteer) [{}]
               :release-stored (if-let [resource (get-in (c/card cid) [:ability :partial-resource])]
                                 (map #(hash-map :amount %) (range 1 (inc (get-in p [:card-state cid :stored-goods resource] 0)))) [{}])
@@ -352,8 +370,12 @@
               :free-room (map #(hash-map :rooms [%]) (range 15))
               :exchange-options
               (for [[index option] (map-indexed vector (get-in (c/card cid) [:ability :options]))
-                    :let [affordable (apply min (map (fn [[resource n]] (quot (a/amount p resource) n)) (:cost option)))
-                          maximum (min affordable (or (g/exchange-remaining state p cid) affordable))]
+                    :when (expression/evaluate state pid {} (get option :when true))
+                    :let [remaining (g/exchange-remaining state p cid)
+                          affordable (if (seq (:cost option))
+                                       (apply min (map (fn [[resource n]] (quot (a/amount p resource) n)) (:cost option)))
+                                       (or remaining 1))
+                          maximum (min affordable (or remaining affordable))]
                     :when (pos? maximum)
                     times (distinct (filter pos? [1 maximum]))]
                 {:option index :times times})

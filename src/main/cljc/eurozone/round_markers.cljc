@@ -1,7 +1,7 @@
 (ns eurozone.round-markers
   "Public presentation of pieces promised by the engine's saved schedules.
    Kept outside the rules fingerprint so a display fix can open existing saves."
-  (:require [agricola.card-rules :as cards]))
+  (:require [agricola.card-rules :as cards] [agricola.engine :as a]))
 
 (def fence-deliveryman :catalog/original-base-i-265-fence-deliveryman)
 (def guest :catalog/original-base-i-73-guest)
@@ -18,7 +18,7 @@
 
 (defn deliveries [player round]
   (let [owned (set (cards/owned player))
-        well-food (+ (if (contains? (:well-rounds player) round) 1 0)
+        well-food (+ (a/well-food player round)
                      (get-in player [:well-deliveries round] 0))
         fences (get-in player [:reserved-fences round] 0)
         guests (get-in player [:guest-schedule round] 0)]

@@ -154,7 +154,7 @@ def check(base):
                 for cell,n in [(2,5),(3,4)]:
                     expect(frame.locator(f'.tt-player[data-player="0"] [aria-label="Farm space {cell}: field"] image[data-piece-type="grain"]')).to_have_count(n)
                 next_card('Pumpkin Pie');d=pending('Pumpkin Pie');shape(d);grain,veg=amount('grain'),amount('vegetable')
-                expect(d.get_by_role('group',name='Food or crops for points',exact=True)).to_be_visible();screenshot('pumpkin-pie');resolve(d)
+                expect(d.get_by_role('group',name='Resources for points',exact=True)).to_be_visible();screenshot('pumpkin-pie');resolve(d)
                 qty('grain',grain-1);qty('vegetable',veg-1)
                 restart('Pumpkin Pie');skip('Pumpkin Pie')
                 next_card('Fish Farm');d=pending('Fish Farm');shape(d,True);grain,veg=amount('grain'),amount('vegetable')
