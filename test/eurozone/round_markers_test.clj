@@ -66,8 +66,21 @@
   ;; Audit the complete implemented catalogue, not an enumerated deck subset.
   (doseq [[cid card] c/cards
           effect (filter #(and (map? %) (= :schedule (:op %))) (tree-seq coll? seq card))]
-    (let [entry {:goods (or (:goods effect) {}) :effect (:effect effect)}
-          expected (or (not-empty (:goods effect)) (get-in effect [:effect :goods])
+    (let [entry {:goods (or (:goods effect) {}) :effect (:effect effect) :marker-goods (:marker-goods effect)}
+          expected (or (:marker-goods effect) (get-in effect [:effect :marker-goods]) (not-empty (:goods effect)) (get-in effect [:effect :goods])
                        (when (= :plow (get-in effect [:effect :op])) {:field 1}))]
       (is (some? expected) (str "Unclassified future piece on " cid))
       (is (= expected (markers/scheduled-pieces entry)) (str cid)))))
+
+(deftest scheduled-room-markers-stay-visual-and-respect-ownership
+  (let [cid :catalog/original-expansion-wm-27-heiress
+        entries {6 [{:card cid :goods {} :effect {:op :build-rooms :optional? true :marker-goods {:wood-room 1}}}]
+                 10 [{:card cid :goods {} :marker-goods {:clay-room 1} :effect {:op :build-rooms :optional? true}}]
+                 13 [{:card cid :goods {} :effect {:op :build-rooms :marker-goods {:stone-room 1}}}]}
+        state (-> (fresh) (assoc-in [:players 0 :occupations] [cid]) (assoc-in [:players 0 :schedule] entries))
+        restored (edn/read-string (pr-str state))]
+    (doseq [[round room] [[6 :wood-room] [10 :clay-room] [13 :stone-room]]]
+      (is (= {room 1} (get-in (markers/by-round restored) [round 0 :goods]))))
+    (is (= [10 13] (vec (keys (markers/by-round (assoc restored :round 6))))))
+    (is (empty? (markers/by-round (assoc-in restored [:players 0 :occupations] []))))
+    (is (= entries (get-in restored [:players 0 :schedule])))))

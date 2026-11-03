@@ -204,6 +204,20 @@
                                       {:animals {:sheep sheep :boar boar :cattle cattle}}))
                   :mark-fence-space (map #(hash-map :space %) (g/fence-marker-spaces state pid))
                   :harvest-helper (g/harvest-helper-options state pid)
+                  :room-food (let [cells (vec (remove (set (get-in p [:card-state (:card head) :room-food])) (a/tiles p :room)))
+                                   maximum (min (count cells) (expression/evaluate state pid (:context head) (:max effect 1))
+                                                (if (:pay? effect) (a/amount p :food) 15))]
+                               (for [n (range 1 (inc maximum)) offset (range (count cells))]
+                                 {:cells (vec (take n (drop offset (cycle cells))))}))
+                  :take-field-crops
+                  (let [options (vec (for [cell (field-ids p) crop [:grain :vegetable]
+                                          :when (pos? (a/field-crop-count (get-in p (a/field-path cell)) crop))]
+                                      {:cell cell :crop crop}))
+                        fields (group-by :cell options)]
+                    (concat (map #(hash-map :plantings [%]) options)
+                            (for [preferred [:grain :vegetable]]
+                              {:plantings (vec (for [[_ choices] (sort-by (comp pr-str key) fields)]
+                                                  (or (some #(when (= preferred (:crop %)) %) choices) (first choices))))})))
                   :pelts (map #(hash-map :amount %) (range 1 (inc (min (a/amount p :food) (get-in head [:context :cooked-animals] 0) (- (count (a/tiles p :room)) (get-in p [:card-state (:card head) :pelts] 0))))))
                   :cover-unused (map #(hash-map :amount %) (range (inc (min (a/amount p :food) (g/unused-count p)))))
                   :corn-offer [{}]
@@ -216,7 +230,7 @@
                   (:mini-pasture :fence-overseer :corral-builder :amateur-fencer) (mini-pasture-choices p)
                   :remove-empty-field (map #(hash-map :cell %) (a/removable-field-cells p))
                   :wheel-plow (plow-decision-candidates p effect)
-                  :plow-many (mapcat (fn [paths] (map (fn [[_ cells]] {:cells cells}) paths))
+                  :plow-many (mapcat (fn [paths] (for [[_ cells] paths :when (>= (count cells) (:min-fields effect 1))] {:cells cells}))
                                       (take (:max-fields effect) (rest (iterate
                                         (fn [paths] (take 32 (for [[player cells] paths cell (range 15)
                                                                   :let [next (attempt #(a/place-tile player :field cell))] :when next]
@@ -238,7 +252,7 @@
                   :build-stables (let [cells (filter #(and (= :empty (get-in p [:farm % :type])) (not (get-in p [:farm % :stable]))) (range 15))]
                                    (concat (map #(hash-map :stables [%]) cells)
                                            (for [one cells two cells :when (< one two)] {:stables [one two]})
-                                           (for [n [3 4]] {:stables (vec (take n cells))})))
+                                           (for [n [3 4] :when (<= n (:max-stables effect 4))] {:stables (vec (take n cells))})))
                   :build-fences (for [fences (fence-plans p) material (if (c/has? p :a016) [:wood :clay] [:wood])]
                                   {:fences fences :fence-material material})
                   :build-rooms (for [rooms (g/room-plans p) opts (a/room-payment-plans p rooms)] (assoc opts :rooms rooms))

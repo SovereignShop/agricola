@@ -140,4 +140,41 @@
  :catalog/original-expansion-g-102-sausage-grinder
  {:passive {:animal-cooking-bonus 1}}
 
+
+;; Community batch eleven: final English print + compendium verified.
+ :catalog/original-expansion-g-3-animal-holder
+ {:play [{:op :house-steward}] :global-score? true
+  :score {:type :expression :value [:if [:= [:animals] [:player-max [:animals]]] 3 0]}}
+ :catalog/original-expansion-g-4-apprentice
+ {:triggers [{:event :before-field-phase :condition [:test [:not [:= [:context :manure?] true]]]
+              :effect {:op :gain :goods {:food [:valuable-majors]}}}]}
+ :catalog/original-expansion-g-23-glutton
+ {:triggers [{:event :after-feed :condition [:test [:= [:round] 14]]
+              :effect {:op :choose :optional? true :options [
+               {:label "3 Food → 1 Point" :cost {:food 3} :effects [{:op :points :amount 1}]}
+               {:label "6 Food → 2 Points" :cost {:food 6} :effects [{:op :points :amount 2}]}
+               {:label "9 Food → 3 Points" :cost {:food 9} :effects [{:op :points :amount 3}]}
+               {:label "12 Food → 4 Points" :cost {:food 12} :effects [{:op :points :amount 4}]}
+               {:label "15 Food → 5 Points" :cost {:food 15} :effects [{:op :points :amount 5}]}
+               {:label "18 Food → 6 Points" :cost {:food 18} :effects [{:op :points :amount 6}]}]}}]}
+ :catalog/original-expansion-g-32-hobbyist
+ {:triggers [{:event :occupation :scope :others :effect {:op :card-action :kinds #{:major :minor} :cost {:food 1} :major-fee 1 :optional? true}}]}
+ :catalog/original-expansion-g-48-ringmaster
+ {:triggers [{:event :use-space :spaces #{:traveling} :effect {:op :card-action :kinds #{:major :minor} :major-entry-cost {:grain 1} :optional? true}}]}
+ :catalog/original-expansion-g-60-wintercrafter
+ {:triggers [{:event :after-field-phase :condition [:test [:not [:= [:context :manure?] true]]]
+              :effect {:op :card-action :kinds #{:major :minor} :major-fee 2 :optional? true}}]}
+ :catalog/original-expansion-g-83-holiday-present
+ {:cost-options [{:wood 1} {:clay 1}]
+  :play [{:op :choose :options [{:label "Discard a Begging card" :when [:> [:begging] 0] :effects [{:op :discard-begging}]}
+                              {:label "Sheep" :effects [{:op :gain :goods {:sheep 1}}]}
+                              {:label "Wild boar" :effects [{:op :gain :goods {:boar 1}}]}
+                              {:label "Cattle" :effects [{:op :gain :goods {:cattle 1}}]}]}]}
+ :catalog/original-expansion-g-84-horse-barn {:passive {:adjacent-stable-sow-bonus true}}
+ :catalog/original-expansion-g-98-pumpkin-pie
+ {:cost-options [{:grain 2} {:vegetable 1}] :play [{:op :bake :optional? true}]
+  :triggers [{:event :bake :condition [:test [:> [:context :grain-baked] 0]]
+              :effect {:op :points :cost {:grain 1 :vegetable 1} :amount 3 :optional? true}}]}
+ :catalog/original-expansion-g-115-fish-farm
+ {:triggers [{:event :use-space :scope :others :spaces #{:fishing} :effect {:op :take-field-crops :optional? true}}]}
 }

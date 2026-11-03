@@ -187,4 +187,37 @@
  {:passive {:action-plow {:extra-fields 1 :spaces #{:plow}} :after-plow {:op :sow-offer :optional? true}}
   :play [{:op :set-uses :uses 1}]}
 
+
+;; Community batch eleven: final English print + compendium verified.
+ :catalog/original-expansion-wm-8-bread-carrier
+ {:triggers [{:event :check-state :scope :all :once? true :condition [:test [:oven-ever-built]]
+              :effect {:op :schedule :rounds [2 3 4 5 6 7 8 9 10 11 12 13 14] :goods {:food 1}}}]}
+ :catalog/original-expansion-wm-17-engineer {:passive {:improvement-food-before-payment true}}
+ :catalog/original-expansion-wm-27-heiress
+ {:play [{:op :schedule :rounds [6] :marker-goods {:wood-room 1} :effect {:op :build-rooms :max-rooms 1 :available-when [:= [:house] :wood] :optional? true}}
+         {:op :schedule :rounds [10] :marker-goods {:clay-room 1} :effect {:op :build-rooms :max-rooms 1 :room-discount {:clay 1} :available-when [:= [:house] :clay] :optional? true}}
+         {:op :schedule :rounds [13] :marker-goods {:stone-room 1} :effect {:op :build-rooms :max-rooms 1 :room-discount {:stone 2} :available-when [:= [:house] :stone] :optional? true}}]}
+ :catalog/original-expansion-wm-30-hoarder
+ {:triggers [{:event :feeding-start :effect {:op :choose :optional? true :options [
+  {:label "Store Wood" :cost {:wood 1} :effects [{:op :store-goods :goods {:wood 1}}]}
+  {:label "Store Clay" :cost {:clay 1} :effects [{:op :store-goods :goods {:clay 1}}]}
+  {:label "Store Reed" :cost {:reed 1} :effects [{:op :store-goods :goods {:reed 1}}]}
+  {:label "Store Stone" :cost {:stone 1} :effects [{:op :store-goods :goods {:stone 1}}]}]}}]
+  :score {:type :expression :value [:stored-building-score :catalog/original-expansion-wm-30-hoarder]}}
+ :catalog/original-expansion-wm-37-master-stableman {:passive {:stables-before-animals true}}
+ :catalog/original-expansion-wm-50-tapestry-weaver
+ {:triggers [{:event :field-phase :condition [:test [:and [:not [:= [:context :manure?] true]] [:>= [:goods :sheep] 3]]]
+              :effect {:op :room-food :max 1}}]
+  :score {:type :expression :value [:room-food :catalog/original-expansion-wm-50-tapestry-weaver]}}
+ :catalog/original-expansion-wm-71-cookies
+ {:triggers [{:event :bake :effect {:op :room-food :max [:context :grain-baked] :pay? true :optional? true}}]
+  :score {:type :expression :value [:room-food :catalog/original-expansion-wm-71-cookies]}}
+ :catalog/original-expansion-wm-72-crib
+ {:triggers [{:event :return-home :condition [:test [:grew-this-round]]
+              :effect {:op :choose :optional? true :options [{:label "2 Food" :effects [{:op :gain :goods {:food 2}}]}
+                                                             {:label "2 Food → 1 Point" :cost {:food 2} :effects [{:op :points :amount 1}]}]}}]}
+ :catalog/original-expansion-wm-84-friendly-pastures {:passive {:two-types-stabled-pastures true}}
+ :catalog/original-expansion-wm-89-home-garden
+ {:play [{:op :schedule :offsets [1 2 3] :goods {:food 1} :available-when [:and [:renovated-this-round] [:not [:renovation-pending]]]}]
+  :triggers [{:event :renovate :effect {:op :schedule :offsets [1 2 3] :goods {:food 1}}}]}
 }

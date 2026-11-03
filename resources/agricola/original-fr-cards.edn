@@ -150,4 +150,40 @@
  {:play [{:op :repeat :count [:if [:= [:occupations] 1] [:- [:round] 1] 0]
           :effect {:op :choose-good :choices [:wood :clay :reed :stone]}}]}
 
+
+;; Community batch eleven: final English print + compendium verified.
+ :catalog/original-expansion-fr-19-evening-prayer
+ {:play [{:op :repeat :count [:min 2 [:field-tiles]] :effect {:op :card-action :kinds #{:occupation} :occupation-cost 1}}]}
+ :catalog/original-expansion-fr-24-golden-rose {:passive {:hand-food-discount 2}}
+ :catalog/original-expansion-fr-31-heatwave
+ {:play [{:op :card-action :kinds #{:major} :major-ids #{:fireplace-2 :fireplace-3 :hearth-4 :hearth-5}
+          :require-upgrade-for #{:hearth-4 :hearth-5} :major-cost {}}]}
+ :catalog/original-expansion-fr-33-kids-corner {:passive {:extra-house-pets 1}}
+ :catalog/original-expansion-fr-36-marsh
+ {:name "March" :play [{:op :choose :optional? true :options [
+  {:label "Sheep + Boar → 2 Fields" :effects [{:op :plow-many :min-fields 2 :max-fields 2 :cost {:sheep 1 :boar 1} :optional? true}]}
+  {:label "Sheep + Cattle → 2 Fields" :effects [{:op :plow-many :min-fields 2 :max-fields 2 :cost {:sheep 1 :cattle 1} :optional? true}]}
+  {:label "Boar + Cattle → 2 Fields" :effects [{:op :plow-many :min-fields 2 :max-fields 2 :cost {:boar 1 :cattle 1} :optional? true}]}]}]}
+ :catalog/original-expansion-fr-52-trees-for-the-citizens
+ {:passive {:free-wood-with-joinery true}
+  :score {:type :expression :value [:quot [:improvements-with-printed-cost :wood] 2]}}
+ :catalog/original-expansion-fr-78-drawing-genius
+ {:triggers [{:event :after-use-space :condition [:test [:= [:context :space] [:newest-round-space]]]
+              :effect {:op :card-action :kinds #{:major :minor} :optional? true}}]}
+ :catalog/original-expansion-fr-90-lemon-trader
+ {:ability {:op :exchange-options :limit-per-round 2 :options [
+  {:label "Grain → Wood" :cost {:grain 1} :goods {:wood 1}}
+  {:label "Grain → Clay" :cost {:grain 1} :goods {:clay 1}}
+  {:label "Grain → Reed" :cost {:grain 1} :goods {:reed 1}}
+  {:label "Grain → Stone" :cost {:grain 1} :goods {:stone 1}}
+  {:label "Vegetable → Wood + Clay" :cost {:vegetable 1} :goods {:wood 1 :clay 1}}
+  {:label "Vegetable → Wood + Reed" :cost {:vegetable 1} :goods {:wood 1 :reed 1}}
+  {:label "Vegetable → Wood + Stone" :cost {:vegetable 1} :goods {:wood 1 :stone 1}}
+  {:label "Vegetable → Clay + Reed" :cost {:vegetable 1} :goods {:clay 1 :reed 1}}
+  {:label "Vegetable → Clay + Stone" :cost {:vegetable 1} :goods {:clay 1 :stone 1}}
+  {:label "Vegetable → Reed + Stone" :cost {:vegetable 1} :goods {:reed 1 :stone 1}}]}}
+ :catalog/original-expansion-fr-98-pasteurization-expert
+ {:play [{:op :set-card-state :values {:resource-stack (:sheep :boar :sheep :cattle)}}]
+  :passive {:resource-seller true :seller-resources #{:sheep :boar :cattle}}}
+ :catalog/original-expansion-fr-105-reformer {:passive {:animals-on-occupations true}}
 }

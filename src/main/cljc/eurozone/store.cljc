@@ -146,7 +146,9 @@
   ;; food and printed scoring; only newly created games use the new defaults.
   ;; Network packets still require an exact match between running clients.
   (or (= @engine-fingerprint fingerprint)
-      (contains? #{;; Community batch ten: new cards opt in; six older recordings replay all 1,146 moves.
+      (contains? #{;; Community batch eleven preserves earlier decisions; 1,146 historical moves verified.
+                   "dc0d0f6af2313263cb3efc3a4f4cae2b32cccd8039f48211a444846ede802e23"
+                   ;; Community batch ten: new cards opt in; six older recordings replay all 1,146 moves.
                    "1e3b66f44eedf309b031245ae38e989bc025ce21ffbe7245ad5b6cde14ea27c9"
                    ;; Community batch nine: opt-in card effects; historical recordings verified unchanged.
                    "e4a405892c2d5f39d51d0e446ca8069bdbe526db7fdc15a1a299cdfb1d73569d"

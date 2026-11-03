@@ -6,10 +6,11 @@
 (def fence-deliveryman :catalog/original-base-i-265-fence-deliveryman)
 (def guest :catalog/original-base-i-73-guest)
 
-(defn scheduled-pieces [{:keys [goods effect stable person]}]
+(defn scheduled-pieces [{:keys [goods effect stable person marker-goods]}]
   ;; Arrival effects take precedence in begin-round. In particular, :goods {}
   ;; must not hide Plowman's field or Animal Handler's optional animals.
   (cond
+    (or marker-goods (:marker-goods effect)) (or marker-goods (:marker-goods effect))
     effect (case (:op effect) :plow {:field 1} (:goods effect))
     stable {:stable 1}
     person {:person 1}

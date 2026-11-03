@@ -220,17 +220,23 @@
         stable-sheep (apply max 1 (cards/passives p :unfenced-sheep-capacity))
         stablemaster (apply max 1 (cards/passives p :one-unfenced-stable-capacity))
         mixed? (some true? (cards/passives p :mixed-pastures))
+        friendly? (some true? (cards/passives p :two-types-stabled-pastures))
+        extra-pets (reduce + 0 (cards/passives p :extra-house-pets))
         stables (filter #(and (get-in p [:farm % :stable]) (not (fenced %))) (range 15))]
     (into (cond (some true? (cards/passives p :no-house-animals)) []
                 (or (cards/has? p :a086) (some true? (cards/passives p :room-pets)))
                 (mapv #(hash-map :cells [%] :capacity 1 :kind :pet) (tiles p :room))
                 :else [{:cells [5] :capacity 1 :kind :pet}])
           (concat
+           (when-not (some true? (cards/passives p :no-house-animals))
+             (for [slot (range extra-pets)]
+               {:cells [5] :capacity 1 :kind :pet :slot [:extra-house-pet slot]}))
            (for [region ps :let [stables (count (filter #(get-in p [:farm % :stable]) region))]]
              (sheep-accommodation
               (cond-> {:cells region :capacity (+ (* 2 (count region) (reduce * 1 (repeat stables 2)))
                                                  (if (and (= 1 (count region)) (zero? stables) (some true? (cards/passives p :smallholder))) 1 0) trough) :kind :pasture}
-                mixed? (assoc :mixed? true)) pipe))
+                mixed? (assoc :mixed? true)
+                (and friendly? (pos? stables) (not mixed?)) (assoc :mixed? true :max-animal-types 2)) pipe))
            (for [i stables]
              ;; Unfenced stables are interchangeable for housing. Designate one
              ;; physical stable for Stablemaster; Pipe still applies to the rest.
@@ -242,6 +248,9 @@
                {:cells [i] :capacity 1 :kind :field :allowed-animals #{:boar}}))
            (for [cid (cards/owned p) :when (get-in (cards/card cid) [:passive :forest-boars])]
              {:cells [] :capacity 1000000 :kind :card :card cid :allowed-animals #{:boar}})
+           (when (some true? (cards/passives p :animals-on-occupations))
+             (for [cid (:occupations p)]
+               {:cells [] :capacity 1 :kind :card :card cid :slot :reformer}))
            (for [_ (range (get p :card-animal-capacity 0))]
              {:cells [] :capacity 1 :kind :card :card (cards/id :b169)})
            (mapcat (fn [cid]
@@ -279,7 +288,8 @@
             :when (>= left 0)
             boar (range (min (limits 1) left) -1 -1)
             cattle (range (min (limits 2) (- left boar)) -1 -1)
-            :when (pos? (+ sheep boar cattle))]
+            :when (and (pos? (+ sheep boar cattle))
+                       (<= (count (filter pos? [sheep boar cattle])) (:max-animal-types space 3)))]
         [sheep boar cattle])
       (for [index (range 3)
             :let [max-n (min (limits index) (if (= index 0) (:capacity space) base))]
@@ -342,6 +352,15 @@
         :else (fit (sort-by :capacity > spaces) (select-keys (:goods p) animals) [])))))
 (defn improvement-definition [id]
   (or (improvements id) (when-let [card (cards/card id)] (merge card (:passive card)))))
+(defn improvement-food-before-payment
+  "Engineer receives food before an improvement's costs, including free cards.
+   The printed stone cost counts even when a discount or upgrade removes it."
+  [p id]
+  (let [card (improvement-definition id)]
+    (if (and card (or (contains? improvements id) (#{:minor :major} (:kind card)))
+             (some true? (cards/passives p :improvement-food-before-payment)))
+      (gain p {:food (if (pos? (get (or (:printed-cost card) (:cost card)) :stone 0)) 2 1)})
+      p)))
 (defn owned-improvement-ids [p] (concat (:improvements p) (:minors p)))
 (defn baking-improvement-ids [p] (filter #(pos? (:bake (improvement-definition %) 0)) (owned-improvement-ids p)))
 (defn fireplace-upgrades [p]
@@ -495,6 +514,9 @@
                                (max 1 (+ (if (= crop :vegetable) 2 3) fieldsman (if (and smallholder? (not= crop :wood)) 1 0) (reduce + 0 (cards/passives p :extra-sown-all))
                                          (reduce + 0 (cards/passives p (if (= crop :vegetable) :extra-sown-vegetable :extra-sown-grain)))
                                          (get-in modifiers [:stack-adjust crop] 0)
+                                         (if (and (cell? cell) (= :field (:type field))
+                                                  (some true? (cards/passives p :adjacent-stable-sow-bonus)))
+                                           (min 2 (count (filter #(get-in p [:farm % :stable]) (neighbors cell)))) 0)
                                          (if (and (integer? cell) (some (set (tiles p :room)) (neighbors cell)))
                                            (reduce + 0 (map #(get % crop 0) (cards/passives p :adjacent-room-sow-bonus))) 0))))))) p plantings))))
 (defn renovate
@@ -574,7 +596,10 @@
     (let [cost (if-let [major (improvements id)] (:cost major) (:printed-cost (cards/card id)))]
       (filterv #(pos? (get cost % 0)) [:wood :clay :reed :stone]))))
 (defn special-improvement-cost [p id cost options]
-  (let [manufactured (manufacturer-discounts p id cost)
+  (let [cost (if (and (get-in (cards/card id) [:passive :free-wood-with-joinery])
+                      (or (contains? (:improvements p) :joinery) (some true? (cards/passives p :sawmill))))
+               (dissoc cost :wood) cost)
+        manufactured (manufacturer-discounts p id cost)
         selected (when (seq manufactured)
                    (or (:manufacturer-discount options)
                        (first (filter #(every? (fn [[r n]] (>= (amount p r) n)) (discounted cost %)) manufactured))
@@ -611,7 +636,8 @@
      (require! (and card ((:available-improvements g) improvement)) "That improvement is not available.")
      (when upgrade (require! (and (:upgrade card) (some #{upgrade} (fireplace-upgrades p))) "Only your Fireplace can be exchanged for a Cooking Hearth."))
      (when (and (pos? (or bake-grain 0)) (not (:oven card))) (require! false "Only a new oven grants an immediate Bake Bread action."))
-     (let [p' (-> (pay p (improvement-cost p improvement upgrade (merge (select-keys options [:discount-resource :manufacturer-discount :wood-carver?]) modifiers)))
+     (let [p (improvement-food-before-payment p improvement)
+           p' (-> (pay p (improvement-cost p improvement upgrade (merge (select-keys options [:discount-resource :manufacturer-discount :wood-carver?]) modifiers)))
                   (cond-> (and (:wood-carver? options) (not upgrade)) (assoc :wood-carver-used? true))
                   (update :improvements #(cond-> (conj % improvement) upgrade (disj upgrade)))
                   (cond-> (and upgrade (not (improvements upgrade)))
