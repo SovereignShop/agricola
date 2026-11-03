@@ -50,11 +50,11 @@ def check(base, fixture_ids):
 
         page.set_viewport_size({'width':430, 'height':932})
         page.goto(base+'/#'+feed)
-        page.get_by_role('checkbox', name='Use Joinery · 1 wood → 2 food', exact=True).click()
-        plane = page.get_by_role('checkbox', name='Plane: use 2 wood for 4 food (otherwise 1 wood for 3 food)', exact=True)
+        page.get_by_role('button', name='Use Joinery', exact=True).click()
+        plane = page.get_by_role('button', name='Use 2 wood with Plane', exact=True)
         expect(plane).to_be_visible()
         plane.click()
-        expect(plane).to_be_checked()
+        expect(plane).to_have_attribute("aria-pressed", "true")
         page.get_by_role('button', name='Feed family →', exact=True).click()
         expect(page.locator('.tt-player[data-player="0"] [data-goods="wood"]')).to_have_count(0)
         assert not errors, errors

@@ -237,4 +237,19 @@
               :effect {:op :discard-minors :max-cards 2 :food-per-card 2 :optional? true}}]}
  :catalog/original-expansion-fr-97-parquet-setter
  {:triggers [{:event :return-home :effect {:op :gain :goods {:wood [:if [:> [:work-used-spaces] 0] 1 0] :food [:if [:>= [:work-used-spaces] 2] 1 0]}}}]}
+
+;; Community batch fourteen: verified final English prints.
+
+ :catalog/original-expansion-fr-20-five-rings {:cost-options [{:wood 1} {:stone 1}] :passive {:five-rings true}}
+ :catalog/original-expansion-fr-25-grain-mill-oven {:passive {:grain-mill-oven true :major-as-minor #{:clay-oven :stone-oven}} :play [{:op :bake :optional? true}]}
+ :catalog/original-expansion-fr-66-boatswain {:triggers [{:event :use-space :spaces #{:fishing} :effect {:op :boatswain :optional? true}}]}
+ :catalog/original-expansion-fr-81-fiddler {:triggers [{:event :round-end :effect {:op :fiddler}}]}
+ :catalog/original-expansion-fr-85-harvester {:play [{:op :remaining-round-wood}] :global-score? true :score {:type :harvester}}
+ :catalog/original-expansion-fr-86-head-of-the-revolution {:play [{:op :remaining-round-wood} {:op :revolution-start}]
+  :triggers [{:event :check-state :scope :all :effect {:op :revolution-check}}]}
+ :catalog/original-expansion-fr-91-manual-labourer {:triggers [{:event :round-end :effect {:op :manual-labourer}}]}
+ :catalog/original-expansion-fr-93-mastermind {:triggers [{:event :occupation :effect {:op :mastermind}} {:event :build-improvement :effect {:op :mastermind}}]
+  :score {:type :expression :value [:card-state :catalog/original-expansion-fr-93-mastermind :bonus-plays]}}
+ :catalog/original-expansion-fr-106-sailboat-constructor {:triggers [{:event :field-phase :effect {:op :sailboat-constructor :optional? true}}]}
+ :catalog/original-expansion-fr-110-stroller {:play [{:op :stroller}] :triggers [{:event :field-phase :effect {:op :take-stroller}}]}
 }

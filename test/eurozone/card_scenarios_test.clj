@@ -43,6 +43,38 @@
 
 (def review-commands
   {
+   "alternative-designer" [{:type :action :space :build :rooms [0] :room-options {0 {:wood-clay 2 :wood-stone 2}}}]
+   "fish-seller" [{:goods [:vegetable :wood]}]
+   "stonepiler" [{:type :action :space :fences :fences ["h:0:0" "h:1:0" "v:0:0" "v:0:1"] :stonepiler-stone 2}]
+   "vegetarian" [{:type :convert :goods {:grain 1 :vegetable 1}}]
+   "bartering-hut" [{:animals [:sheep :sheep] :payment {:wood 2 :clay 2}}]
+   "corral" [{:type :action :space :sheep}]
+   "gimlet" [{:type :action :space :build :rooms [0] :stables [1 2]}]
+   "paddocks" [{:fences ["h:1:1" "h:1:2"]}]
+   "scythe" [{:type :action :space :sow-bake :plantings [{:cell 0 :crop :grain}]}]
+   "sheepdog" [{:type :feed}]
+   "bee-keeper" [{:cell 0}]
+   "cowboy" [{:type :action :space :cattle}]
+   "hunter" [{:goods {:sheep 2}}]
+   "pawnbroker" [{:type :ability :card :catalog/original-expansion-wm-39-pawnbroker :improvement :well}]
+   "village-fool" [{:card :catalog/original-expansion-g-110-shovel}]
+   "bonfire" [{:cells [0]} {:type :ability :card :catalog/original-expansion-wm-64-bonfire} {:type :convert :goods {:boar 1}}]
+   "raspberries" [{:cells [0 1 6]} {:type :action :space :plow :cell 0}]
+   "reed-nursery" [{:type :action :space :sow-bake :plantings [{:cell 0 :crop :reed} {:cell 1 :crop :reed}]}]
+   "storage-shed" [{:cell 0} {:type :action :space :meeting :card :catalog/original-expansion-g-110-shovel :storage-shed-resource :wood}]
+   "wine-closet" [{:points 1}]
+   "five-rings" [{:type :action :space :meeting :card :catalog/original-expansion-fr-20-five-rings :payment-option 1}]
+   "grain-mill-oven" [{:type :action :space :meeting :improvement :clay-oven :grain-mill-oven? true :bake-grain 1}]
+   "boatswain" [{:cells [0 1]}]
+   "fiddler" [{:type :action :space :grain}]
+   "harvester" [{:type :action :space :grain}]
+   "head-of-the-revolution" [{:type :action :space :plow :cell 0}]
+   "manual-labourer" [{:type :action :space :grain}]
+   "mastermind" [{:type :action :space :improvement :improvement :joinery}]
+   "sailboat-constructor" [{:stacks [:wood :crops]}]
+   "stroller" [{:resources [:wood :clay :reed :stone :wood :clay]}]
+   "reed-nursery-scoring" [{:amount 1 :fields {0 3}}]
+   "workshop-combinations" [{:type :feed :craft [:pottery :joinery]}]
    "animal-farmer" [{:type :action :space :sheep}]
    "artisan" [{:type :feed :craft [:pottery]}]
    "resource-collector" [{:resources [:wood :clay :reed :stone]}]
@@ -280,3 +312,66 @@
       (doseq [[resource delta] expected]
         (is (= delta (- (a/amount (game/p after 0) resource)
                         (a/amount (game/p before 0) resource))) [id resource])))))
+
+(deftest community-fourteen-review-tables-show-native-card-results
+  (doseq [[id goods points card-score]
+          [["vegetarian" {:food 5 :grain -1 :vegetable -1} nil nil]
+           ["sheepdog" {:food -5} nil nil]
+           ["fiddler" {:wood 1 :food 1} nil nil]
+           ["manual-labourer" {:wood 1} nil nil]
+           ["wine-closet" {:food 2} 1 nil]
+           ["head-of-the-revolution" {} 3 nil]
+           ["mastermind" {} nil 1]
+           ["harvester" {:grain 6} nil 3]
+           ["grain-mill-oven" {:food 5 :grain -1 :clay 0 :stone 0} nil nil]]]
+    (let [before (scenarios/initial-state id (:names (scenarios/options id "Ada")))
+          after (reduce (fn [state choice]
+                          (game/command state (game/acting-player state)
+                                        (if (:type choice) choice
+                                            (merge {:type :resolve :decision (:decision-id state)} choice))))
+                        before (get review-commands id))]
+      (doseq [[resource delta] goods]
+        (is (= delta (- (a/amount (game/p after 0) resource)
+                        (a/amount (game/p before 0) resource))) [id resource]))
+      (when points
+        (is (= points (- (get-in after [:players 0 :bonus-points] 0)
+                         (get-in before [:players 0 :bonus-points] 0))) id))
+      (when card-score
+        (is (= card-score (game/card-bonus after 0 (:card (scenarios/scenario id)))) id)))))
+
+(deftest reed-nursery-final-table-allocates-actual-supply-and-field-reed
+  (doseq [decline? [false true]]
+    (let [state (scenarios/initial-state "reed-nursery-scoring" ["Ada" "Partner"])
+          choice (if decline? {:skip? true} {:amount 1 :fields {0 3}})
+          after (game/command state 0 (merge {:type :resolve :decision (:decision-id state)} choice))
+          player (game/p after 0)]
+      (is (= :reed-nursery-points (get-in state [:effect-queue 0 :effect :op])))
+      (is (= :finished (:phase after)))
+      (is (= (if decline? 0 2) (:bonus-points player)))
+      (is (= (if decline? 3 2) (a/amount player :reed)))
+      (is (= (if decline? 3 0) (a/field-crop-count (get-in player [:farm 0]) :reed)))
+      (is (= 3 (a/field-crop-count (get-in player [:farm 1]) :reed))))))
+
+(deftest workshop-combination-orders-feed-save-and-replay
+  (doseq [[order first-food second-food] [[[:pottery :joinery] 5 2]
+                                          [[:joinery :pottery] 4 3]]]
+    (let [path (str (.resolve (Files/createTempDirectory "workshop-scenario" (make-array java.nio.file.attribute.FileAttribute 0)) "games.edn"))
+          service (store/make-store path)
+          id (:id (store/transact! service "tester" {:event :create :name "Ada" :scenario "workshop-combinations"}))
+          before (get-in @(:rooms service) [id :state])
+          player (game/p before 0)
+          context (select-keys before [:phase :round])
+          first-workshop (a/craft-food player [(first order)] false context)
+          both-workshops (a/craft-food first-workshop [(second order)] false context)]
+      (is (= :feeding (:phase before)))
+      (is (= first-food (- (a/amount first-workshop :food) (a/amount player :food))) order)
+      (is (= second-food (- (a/amount both-workshops :food) (a/amount first-workshop :food))) order)
+      (is (= before (get-in @(:rooms (store/make-store path)) [id :state])))
+      (store/transact! service "tester" {:event :command :id id :revision 0 :command {:type :feed :craft order}})
+      (let [room (get @(:rooms service) id) after (:state room) fed (game/p after 0)]
+        (is (= (+ 3 (a/amount player :food)) (a/amount fed :food)) "Seven workshop food minus four family food.")
+        (is (= (dec (a/amount player :wood)) (a/amount fed :wood)))
+        (is (= (dec (a/amount player :clay)) (a/amount fed :clay)))
+        (is (= (:round before) (:artisan-used-round fed)))
+        (is (= after (get-in @(:rooms (store/make-store path)) [id :state])))
+        (is (= after (last (:frames (recording/timeline (:recording room))))))))))

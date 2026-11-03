@@ -40,8 +40,20 @@
                             :else resources)
                  :remove (if (and (integer? value) (<= 0 value) (< value (count resources)))
                            (vec (concat (subvec resources 0 value) (subvec resources (inc value)))) resources)
+                 :move (let [[from to] value] (if (and (<= 0 from to) (< to (count resources)))
+                                                  (assoc resources from (resources to) to (resources from)) resources))
                  :clear [])]
       (assoc-in db [:draft :effect-resource-queue] {:decision decision :resources next}))))
+
+(rf/reg-event-db :draft-queue-edit
+  (fn [db [_ key operation value limit]]
+    (update-in db [:draft key]
+      (fn [items] (let [items (vec items)]
+        (case operation
+          :add (if (< (count items) limit) (conj items value) items)
+          :remove (if (and (integer? value) (<= 0 value) (< value (count items)))
+                    (vec (concat (subvec items 0 value) (subvec items (inc value)))) items)
+          :clear []))))))
 
 (rf/reg-event-db :draft-map-entry
   (fn [db [_ key entry value]]

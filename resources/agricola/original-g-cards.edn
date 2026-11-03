@@ -99,7 +99,7 @@
  :catalog/original-expansion-g-100-reed-sale
  {:play [{:op :gain :goods {:food 3}}]}
  :catalog/original-expansion-g-109-sheepskin-rug
- {:score {:type :expression :value [:if [:> [:returnable-fireplaces] 0] 2 0]}}
+ {:score {:type :expression :value [:if [:> [:owned-fireplaces] 0] 2 0]}}
  :catalog/original-expansion-g-111-sickle
  {:score {:type :expression :value [:if [:and [:>= [:field-tiles] 5] [:>= [:total-crops :grain] 8] [:>= [:total-crops :vegetable] 4]] 3 0]}}
  :catalog/original-expansion-g-114-stonecutter-s-hall
@@ -222,4 +222,17 @@
   :play [{:op :return-stables :min-stables 1 :max-stables 1 :then :room}]}
  :catalog/original-expansion-g-104-seasonal-plants
  {:triggers [{:event :sow :condition [:test [:= [:mod [:round] 2] 0]] :effect {:op :seasonal-plants}}]}
+
+;; Community batch fourteen: verified final English prints.
+
+ :catalog/original-expansion-g-1-alternative-designer {:passive {:alternative-designer true}}
+ :catalog/original-expansion-g-17-fish-seller {:triggers [{:event :use-space :spaces #{:fishing} :effect {:op :fish-seller :optional? true}}]}
+ :catalog/original-expansion-g-53-stonepiler {:passive {:stonepiler true}}
+ :catalog/original-expansion-g-57-vegetarian {:passive {:vegetarian true}}
+ :catalog/original-expansion-g-64-bartering-hut {:play [{:op :bartering-hut :optional? true}]}
+ :catalog/original-expansion-g-70-corral {:passive {:corral true} :score {:type :corral}}
+ :catalog/original-expansion-g-77-gimlet {:passive {:gimlet true :room-material-discount 1}}
+ :catalog/original-expansion-g-90-paddocks {:passing? true :prerequisites "1 Pasture, 1 Occupation" :requires [:and [:>= [:pastures] 1] [:>= [:occupations] 1]] :play [{:op :build-fences :paddocks? true :free-fences 4 :max-fences 4 :optional? true}]}
+ :catalog/original-expansion-g-103-scythe {:passive {:scythe true}}
+ :catalog/original-expansion-g-108-sheepdog {:passive {:sheepdog true}}
 }

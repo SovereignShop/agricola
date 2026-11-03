@@ -2,7 +2,7 @@
   (:require [reagent.core :as r] [re-frame.core :as rf] [clojure.string :as str]
             [eurozone.table-flow :as flow] [agricola.card-game :as game]
             [agricola.card-rules :as cards] [agricola.engine :as a] [eurozone.browser.art :as art]
-            [eurozone.browser.layout :as layout]))
+            [eurozone.browser.layout :as layout] [eurozone.browser.craft-controls :as crafts]))
 
 (defonce wall-time (r/atom (.now js/Date)))
 (defonce tick (js/setInterval #(reset! wall-time (.now js/Date)) 250))
@@ -152,13 +152,7 @@
                 (for [resource (concat [:grain :vegetable] a/animals)
                       :let [n (a/amount p resource) rate (get (a/cook-rates p) resource)] :when (and rate (pos? n))] ^{:key resource}
                   [quantity (str (resource-names resource) " to cook · " rate " food each") (get @convert resource 0) n #(swap! convert assoc resource %)])]
-               (for [id (:improvements p) :when (:craft (a/improvements id))] ^{:key id}
-                 [:label.checkbox [:input {:type "checkbox" :checked (boolean (some #{id} @craft))
-                                           :on-change #(swap! craft (fn [xs] (if (some #{id} xs) (vec (remove #{id} xs)) (conj xs id))))}]
-                  (str "Use " (:name (a/improvements id)))])
-               (when (and (a/plane? p) (some #{:joinery} @craft))
-                 [:label.checkbox [:input {:type "checkbox" :checked @plane-extra? :on-change #(reset! plane-extra? (.. % -target -checked))}]
-                  "Plane: use 2 wood for 4 food (otherwise 1 wood for 3 food)"])
+               [crafts/controls s p @craft @plane-extra? @convert #(reset! craft %) #(reset! plane-extra? %)]
                (when after [:p.feeding-total (let [marks (- (:begging after) (:begging p))]
                                              (if (pos? marks) (str marks " begging marks (−" (* 3 marks) " points)") "Enough food for everyone"))])])
             (when-not fed? [:label.checkbox [:input {:type "checkbox" :checked @queue-breed? :on-change #(reset! queue-breed? (.. % -target -checked))}] "Also queue breeding after feeding"])

@@ -91,7 +91,7 @@
  :catalog/original-base-i-86-corn-storehouse
  {:cost-options [{:wood 2 :reed 2} {:clay 2 :reed 2}]
   :triggers [{:event :after-field-phase
-              :effect {:op :sow-offer :optional? true :allowed-crops #{:grain} :stack-adjust {:grain -1}}}]}
+              :effect {:op :sow-offer :optional? true :empty-only? true :allowed-crops #{:grain} :stack-adjust {:grain -1}}}]}
  :catalog/original-base-i-103-water-mill {:passive {:water-mill true}}
  :catalog/original-base-i-97-slaughterhouse
  {:passive {:feed-last true :slaughter-income true}

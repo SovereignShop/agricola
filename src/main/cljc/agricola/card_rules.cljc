@@ -101,3 +101,7 @@
        (count (filter true? (passives p :academic))) 0)))
 
 (defn active-owned [p] (remove #(get-in p [:card-state % :face-down?]) (owned p)))
+
+(def bonus-symbol-cards (read-edn "agricola/bonus-symbol-cards.edn"))
+(defn bonus-symbol? [cid]
+  (boolean (or (:score (card cid)) (contains? bonus-symbol-cards cid) (#{:joinery :pottery :basketry} cid))))

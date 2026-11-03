@@ -177,7 +177,7 @@ def check(base):
                 frame.get_by_role('button',name='Open test table',exact=True).click();card('Animal Farmer')
                 action('sheep');qty('sheep',2);qty('boar',2);qty('cattle',1)
                 next_card('Artisan');d=frame.get_by_role('dialog',name='Harvest',exact=True);food,clay=amount('food'),amount('clay')
-                d.get_by_role('checkbox',name='Use Pottery · 1 clay → 2 food',exact=True).click();d.get_by_role('button',name='Feed family →',exact=True).click()
+                d.get_by_role('button',name='Use Pottery',exact=True).click();d.get_by_role('button',name='Feed family →',exact=True).click()
                 qty('clay',clay-1);qty('food',food);clear_harvest()
                 next_card('Resource Collector');d=pending('Resource Collector');shape(d)
                 for name in ['Wood','Clay','Reed','Stone']:
@@ -203,7 +203,7 @@ def check(base):
                 next_card('Hammer');d=pending('Hammer');shape(d,True);wood=amount('wood')
                 expect(d.get_by_role('group',name='Hammer payment to opponents',exact=True)).to_be_visible();fence(d);resolve(d);qty('wood',wood-5)
                 next_card("Potter's Wheel");d=frame.get_by_role('dialog',name='Harvest',exact=True);food,clay=amount('food'),amount('clay')
-                d.get_by_role('checkbox',name='Use Pottery · 1 clay → 2 food',exact=True).click();d.get_by_role('button',name='Feed family →',exact=True).click()
+                d.get_by_role('button',name='Use Pottery',exact=True).click();d.get_by_role('button',name='Feed family →',exact=True).click()
                 qty('clay',clay-1);qty('food',food-1);clear_harvest()
                 next_card('Remodeling');d=pending('Remodeling');shape(d,True);wood,reed=amount('wood'),amount('reed')
                 click_cell(d,1);d.get_by_role('button',name='Resolve effect →',exact=True).click()

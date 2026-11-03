@@ -5,6 +5,70 @@
 
 (def scenarios
   [
+   {:id "alternative-designer" :card :catalog/original-expansion-g-1-alternative-designer :name "Alternative Designer" :players 2
+    :description "Use Farm Expansion to add a wooden room. Click the material icons to substitute up to two clay and two stone for wood in that room. Fences and stables allow unrestricted one-for-one substitutions."}
+   {:id "fish-seller" :card :catalog/original-expansion-g-17-fish-seller :name "Fish Seller" :players 3
+    :description "Fishing just supplied four food. Click up to two goods to buy with that pile food: building materials cost one, grain or sheep or boar two, and vegetables or cattle three. Clear an item to change the purchase, or decline."}
+   {:id "stonepiler" :card :catalog/original-expansion-g-53-stonepiler :name "Stonepiler" :players 2
+    :description "Use Fences to draw a single-space pasture. Click the stone payment option: two stone replace its four wood. Odd wood costs may be rounded up when paid with stone."}
+   {:id "vegetarian" :card :catalog/original-expansion-g-57-vegetarian :name "Vegetarian" :players 2
+    :description "Convert grain and vegetables using the pictured food exchanges. Vegetarian adds one food per converted crop and prevents every animal-to-food exchange for the rest of the game."}
+   {:id "bartering-hut" :card :catalog/original-expansion-g-64-bartering-hut :name "Bartering Hut" :players 2
+    :description "Choose up to two animals, then click building-resource icons to pay their pictured prices. The pasture can hold two sheep. Confirm to receive the animals and pass Bartering Hut left, or decline the purchase."}
+   {:id "corral" :card :catalog/original-expansion-g-70-corral :name "Corral" :players 2
+    :description "Take Sheep to house four sheep in the two empty fields beside your home. Each occupied corral scores one bonus point; the fields remain fields and are not pastures."}
+   {:id "gimlet" :card :catalog/original-expansion-g-77-gimlet :name "Gimlet" :players 2
+    :description "Use Farm Expansion to add a wooden room and two stables. The room costs one less wood and each of the first two stables built this round also costs one less wood."}
+   {:id "paddocks" :card :catalog/original-expansion-g-90-paddocks :name "Paddocks" :players 2
+    :description "Draw new internal fence edges to split the existing pasture for free. Only edges inside that pasture are allowed, at most four; the card then passes left."}
+   {:id "scythe" :card :catalog/original-expansion-g-103-scythe :name "Scythe" :players 2
+    :description "Use Sow and Bake and click the already planted grain field to sow more grain on top. Each field can be sown only once in the action, and its crop type cannot change."}
+   {:id "sheepdog" :card :catalog/original-expansion-g-108-sheepdog :name "Sheepdog" :players 2
+    :description "Feeding has begun with sheep housed on unused farm spaces. Feed your family and dog: the dog requires one additional food. Only sheep may be kept in your home."}
+   {:id "bee-keeper" :card :catalog/original-expansion-wm-5-bee-keeper :name "Bee Keeper" :players 2
+    :description "Click an empty farm space to place a free stable on its side. It does not house animals or multiply pasture capacity, but remains a built stable and provides one food each feeding phase."}
+   {:id "cowboy" :card :catalog/original-expansion-wm-13-cowboy :name "Cowboy" :players 3
+    :description "Partner occupies Cattle. Click that occupied space to receive one cattle with your worker. Cowboy also supplies a two-animal holding space of one species that still counts as unused."}
+   {:id "hunter" :card :catalog/original-expansion-wm-32-hunter :name "Hunter" :players 2
+    :description "You just received sheep. Click the pictured conversion to cook some or all of these newly received animals without an improvement, or decline. Previously owned animals and ordinary breeding offspring are excluded."}
+   {:id "pawnbroker" :card :catalog/original-expansion-wm-39-pawnbroker :name "Pawnbroker" :players 2
+    :description "Open Pawnbroker and click your Well to exchange all four printed points for twelve food. The Well keeps its effects but cannot be returned or removed, and its lost points stay lost even without Pawnbroker."}
+   {:id "village-fool" :card :catalog/original-expansion-wm-53-village-fool :name "Village Fool" :players 2
+    :description "The next round is starting. Click a hand card to place it permanently face down under Village Fool, or decline. Stored cards score except the third, fifth, seventh and ninth."}
+   {:id "bonfire" :card :catalog/original-expansion-wm-64-bonfire :name "Bonfire" :players 2
+    :description "Click an unused farm space for the wood marker. Later open Bonfire to remove it and enable the pictured animal cooking rates for the rest of that round; the space becomes unused again."}
+   {:id "raspberries" :card :catalog/original-expansion-wm-103-raspberries :name "Raspberries" :players 2
+    :description "Click up to three unused farm spaces to mark them with food. Plow one of those marked spaces afterward and observe its food return to your supply."}
+   {:id "reed-nursery" :card :catalog/original-expansion-wm-104-reed-nursery :name "Reed Nursery" :players 2
+    :description "Use Sow and Bake, choose reed, and click empty fields to plant reed stacks. Reed harvests like grain but remains reed. Its supply and planted pieces can be exchanged for points at game end."}
+   {:id "storage-shed" :card :catalog/original-expansion-wm-110-storage-shed :name "Storage Shed" :players 2
+    :description "Click your built stable to store it permanently on the card. Then play Shovel and choose one building resource before paying its cost; that resource can fund the improvement."}
+   {:id "wine-closet" :card :catalog/original-expansion-wm-114-wine-closet :name "Wine Closet" :players 2
+    :description "Two vegetables scheduled five rounds ago are arriving. Choose how many become points; each remaining vegetable becomes two food. Later, open Wine Closet and click a future round to schedule another vegetable; choosing at least five rounds ahead adds a second."}
+   {:id "five-rings" :card :catalog/original-expansion-fr-20-five-rings :name "Five Rings" :players 2
+    :description "Play Five Rings at Meeting Place and choose its wood or stone cost. The matching marker determines the discount on every later improvement; the card does not discount itself."}
+   {:id "grain-mill-oven" :card :catalog/original-expansion-fr-25-grain-mill-oven :name "Grain Mill Oven" :players 2
+    :description "Use Meeting Place to build the Clay Oven as a minor improvement. Return Grain Mill Oven instead of paying the oven price, then optionally bake. Grain Mill Oven itself has no baking capacity."}
+   {:id "boatswain" :card :catalog/original-expansion-fr-66-boatswain :name "Boatswain" :players 2
+    :description "Fishing has finished. Click empty physical fields to place one grain from the supply in each, or decline. This plants the fields without performing a sow action or spending your grain."}
+   {:id "fiddler" :card :catalog/original-expansion-fr-81-fiddler :name "Fiddler" :players 2
+    :description "It is the final worker action of an even round, and you have received no building resources. Take Grain Seeds and observe one wood plus one food at round end."}
+   {:id "harvester" :card :catalog/original-expansion-fr-85-harvester :name "Harvester" :players 2
+    :description "The final harvest is about to begin with five planted fields. Take Grain Seeds with the last worker: all five harvested goods count toward the shared three-point award."}
+   {:id "head-of-the-revolution" :card :catalog/original-expansion-fr-86-head-of-the-revolution :name "Head Of The Revolution" :players 3
+    :description "Your farm has one unused space and was eligible when this card was played. Click Farmland and plow the last space to claim the first-completion award of three points."}
+   {:id "manual-labourer" :card :catalog/original-expansion-fr-91-manual-labourer :name "Manual Labourer" :players 2
+    :description "You received only wood among building-resource types this round. Take Grain Seeds with the final worker and observe one additional wood at round end."}
+   {:id "mastermind" :card :catalog/original-expansion-fr-93-mastermind :name "Mastermind" :players 2
+    :description "Use Major Improvement to build Joinery, which carries a bonus-point symbol. Mastermind records one bonus point for that play; returning and replaying a qualifying card can count again."}
+   {:id "sailboat-constructor" :card :catalog/original-expansion-fr-106-sailboat-constructor :name "Sailboat Constructor" :players 2
+    :description "The harvest field phase is starting. Click resource stacks to buy them in order at increasing food prices, or decline. Unbought stacks remain on the card for later harvests."}
+   {:id "stroller" :card :catalog/original-expansion-fr-110-stroller :name "Stroller" :players 2
+    :description "Build a stack of six resource icons, including at least one wood, clay, reed and stone. Reorder it directly before confirming; each harvest field phase delivers its top resource."}
+   {:id "reed-nursery-scoring" :card :catalog/original-expansion-wm-104-reed-nursery :name "Reed Nursery · final scoring" :players 2
+    :description "Final scoring is paused for Reed Nursery. Click reed in your supply and directly on the planted fields to allocate exactly one, four, six or eight reed for one, two, three or four points. Try one supply reed plus three from one field, leaving the other field untouched, or decline."}
+   {:id "workshop-combinations" :card :catalog/original-expansion-g-94-potter-s-wheel :name "Workshop combinations" :players 2
+    :description "Feeding is paused with Pottery, Joinery, Potter’s Wheel and Artisan. Select Pottery first to preview one clay for five food, then Joinery for two food. Reverse the order to preview Joinery for four and Pottery for three. Artisan adds two food only once this harvest; both orders total seven food."}
    {:id "animal-farmer" :card :catalog/original-expansion-g-2-animal-farmer :name "Animal Farmer" :players 2
     :description "Take Sheep to fill the second pasture. Both pastures then earn one point and the all-full bonus earns one more; animal housing and stable capacity matter."}
    {:id "artisan" :card :catalog/original-expansion-g-6-artisan :name "Artisan" :players 2
@@ -14,7 +78,7 @@
    {:id "understudy" :card :catalog/original-expansion-g-56-understudy :name "Understudy" :players 2
     :description "Your first person already occupies Farmland. Click that space again and plow next to your first field with your second person. A space with two of your people cannot be reused."}
    {:id "beehive-oven" :card :catalog/original-expansion-g-65-beehive-oven :name "Beehive Oven" :players 2
-    :description "Choose a pictured baking exchange or decline. Your Clay Oven can bake one grain for five food plus the one-food Beehive bonus; using Beehive itself gives four food without that bonus."}
+    :description "Choose a pictured baking exchange or decline. Your Clay Oven alone bakes one grain for six food including the Beehive bonus. You can instead bake two grain, one in each oven, for nine food; using Beehive excludes its extra-food bonus."}
    {:id "cow-bell" :card :catalog/original-expansion-g-71-cow-bell :name "Cow Bell" :players 2
     :description "Take four Cattle from the board. Cow Bell houses them on unused farm spaces, at most two per space and four total; those spaces still count as unused for scoring."}
    {:id "hammer" :card :catalog/original-expansion-g-79-hammer :name "Hammer" :players 2
@@ -442,6 +506,51 @@
         base (game/initialize (a/new-game names (vec (mapcat identity a/stages)) 0))
         funded (update base :players #(mapv (fn [p] (a/gain p {:food 12 :wood 8 :clay 8 :reed 6 :stone 8 :grain 3 :vegetable 2})) %))]
     (case id
+      "alternative-designer" (-> funded (played 0 card) (assoc-in [:players 0 :goods :wood] 1))
+      "fish-seller" (-> funded (prepared-round 4) (played 0 card) (game/command 0 {:type :action :space :fishing}))
+      "stonepiler" (-> funded (prepared-round 4) (played 0 card))
+      "vegetarian" (-> funded (a/build-improvement 0 {:improvement :fireplace-2}) (played 0 card))
+      "bartering-hut" (-> funded (update-in [:players 0] a/build-fences (vec (a/edges 0))) (played 0 card))
+      "corral" (-> funded (played 0 :catalog/original-expansion-g-49-seed-master) (prepare-fields [0 1 6]) (played 0 card) (prepared-round 4))
+      "gimlet" (-> funded (played 0 card) (update-in [:players 0] a/gain {:wood 3}))
+      "paddocks" (-> funded (played 0 :catalog/original-expansion-g-49-seed-master)
+                     (update-in [:players 0] a/build-fences (vec (map key (filter #(= 1 (val %)) (frequencies (mapcat a/edges [1 2 6 7]))))))
+                     (played 0 card))
+      "scythe" (-> funded (played 0 :catalog/original-expansion-g-49-seed-master) (prepare-fields [0])
+                   (update-in [:players 0] a/sow [{:cell 0 :crop :grain}]) (played 0 card) (prepared-round 3))
+      "sheepdog" (-> funded (played 0 card) (update-in [:players 0] a/gain {:sheep 4}) (prepared-round 4) last-harvest-action)
+      "bee-keeper" (played funded 0 card)
+      "cowboy" (-> funded (played 0 card) (prepared-round 10) (assoc :turn 1)
+                   (game/command 1 {:type :action :space :cattle}) (assoc :turn 0))
+      "hunter" (-> funded (played 0 card) (prepared-round 3) (game/command 0 {:type :action :space :sheep}))
+      "pawnbroker" (-> funded (a/build-improvement 0 {:improvement :well}) (played 0 card))
+      "village-fool" (-> funded (played 0 card) (put-in-hand 0 :catalog/original-expansion-g-5-architect)
+                         (put-in-hand 0 :catalog/original-expansion-g-110-shovel) game/begin-round game/drain)
+      "bonfire" (-> funded (update-in [:players 0] a/gain {:boar 1}) (played 0 card))
+      "raspberries" (-> funded (played 0 (cards/id :a109)) (played 0 (cards/id :a115)) (played 0 card))
+      "reed-nursery" (-> funded (played 0 card) (prepare-fields [0 1]) (prepared-round 3))
+      "storage-shed" (-> funded (update-in [:players 0] a/build-stables [0] 2) (assoc-in [:players 0 :goods :wood] 0)
+                         (put-in-hand 0 :catalog/original-expansion-g-110-shovel) (played 0 card))
+      "wine-closet" (-> funded (played 0 card) (game/command 0 {:type :ability :card card :round 6}) (prepared-round 6))
+      "five-rings" (put-in-hand funded 0 card)
+      "grain-mill-oven" (-> funded (played 0 card) (prepared-round 2))
+      "boatswain" (-> funded (prepare-fields [0 1]) (played 0 card) (game/command 0 {:type :action :space :fishing}))
+      "fiddler" (-> funded (played 0 card) (prepared-round 2) final-worker)
+      "harvester" (-> funded (played 0 card) (prepared-round 14) (prepare-fields [0 1 2 3 4])
+                      (update-in [:players 0] a/gain {:grain 2})
+                      (update-in [:players 0] a/sow (mapv #(hash-map :cell % :crop :grain) [0 1 2 3 4])) final-worker)
+      "head-of-the-revolution" (-> funded (prepare-fields [1 2 3 4 6 7 8 9 11 12 13 14]) (played 0 card))
+      "manual-labourer" (-> funded (played 0 card) (prepared-round 2)
+                            (game/command 0 {:type :action :space :wood}) final-worker)
+      "mastermind" (-> funded (played 0 card) (prepared-round 2))
+      "sailboat-constructor" (-> funded (played 0 card) (prepared-round 4) last-harvest-action)
+      "stroller" (played funded 0 card)
+      "reed-nursery-scoring" (-> funded (played 0 card) (prepare-fields [0 1])
+                                  (update-in [:players 0] a/sow [{:cell 0 :crop :reed} {:cell 1 :crop :reed}])
+                                  (assoc :round 14 :phase :finish-round) game/finish-game game/drain)
+      "workshop-combinations" (-> funded (a/build-improvement 0 {:improvement :pottery})
+                                  (a/build-improvement 0 {:improvement :joinery}) (played 0 card)
+                                  (played 0 :catalog/original-expansion-g-6-artisan) (prepared-round 4) last-harvest-action)
       "animal-farmer" (-> funded (played 0 card)
                           (update-in [:players 0] #(-> % (a/build-fences (vec (distinct (mapcat a/edges [0 1])))) (a/gain {:sheep 1 :boar 2 :cattle 1}))))
       "artisan" (-> funded (a/build-improvement 0 {:improvement :pottery}) (played 0 card) (prepared-round 4) last-harvest-action)

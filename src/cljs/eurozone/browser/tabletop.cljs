@@ -136,9 +136,15 @@
                                     (if (= cid (or (:card slot) key))
                                       (merge-with + goods (:under-crops slot)) goods)) {} (:card-fields p))
                           animals)]
-    (when (or (seq goods) (seq (:bag state)) (:marked-space state) (and (= cid :catalog/original-base-k-138-reed-hut) (:reed-hut? p) (not (:reed-hut-placed? p)))
+    (when (or (pos? (get-in p [:stored-stables cid] 0)) (contains? (:pawned-improvements p) cid) (pos? (:hidden-count state 0)) (seq goods) (seq (:bag state)) (:marked-space state) (and (= cid :catalog/original-base-k-138-reed-hut) (:reed-hut? p) (not (:reed-hut-placed? p)))
               (and (= cid :catalog/original-base-i-265-fence-deliveryman) (seq (:reserved-fences p))))
       [:div.tt-card-markers {:aria-label "Goods on card"}
+       (when (pos? (get-in p [:stored-stables cid] 0))
+         [:span {:aria-label "Stable stored on this card"}
+          [:svg.piece {:viewBox "0 0 24 24" :aria-hidden true} [:path {:d "M2 9L12 2L22 9V22H2Z" :fill "#b07949" :stroke "#704729"}]]
+          [:b (get-in p [:stored-stables cid])]])
+       (when (contains? (:pawned-improvements p) cid) [:span {:aria-label "Pawned improvement · printed points exchanged"} "Pawned · ★ 0"])
+       (when (pos? (:hidden-count state 0)) [:span {:aria-label "Cards under Village Fool"} (str (:hidden-count state) " face-down cards")])
        (when (and (= cid :catalog/original-base-k-138-reed-hut) (:reed-hut? p) (not (:reed-hut-placed? p)))
          [:img.piece {:src (art/worker-url (:id p)) :alt "Reed Hut occupant" :draggable false
                       :data-piece-key (str "hut:" (:id p)) :data-piece-type (str "worker:" (:id p))}])

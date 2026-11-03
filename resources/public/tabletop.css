@@ -434,3 +434,18 @@
 @media(max-width:760px) {.card-review {padding:8px}.card-review-actions {gap:5px}.card-review-actions .button {font-size:12px;padding:6px 8px}}
 
 .stock-offer .tt-card-markers {position:static;margin:8px 0 16px}
+
+.craft-choice {align-items:center;max-width:100%;white-space:normal}
+.craft-bonuses {display:flex;flex-direction:column;gap:4px;max-width:190px}
+.craft-bonus {display:flex;align-items:center;justify-content:center;gap:4px;font-size:.76rem;flex-wrap:wrap}
+.craft-bonus .piece {width:21px;height:21px}
+.purchase-queue .resource-queue-item {display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #b9a77e;border-radius:7px;background:#fff9e7;color:#675539;cursor:pointer;box-shadow:0 2px 4px #45351e15}
+.purchase-queue .resource-queue-item .piece {width:30px;height:30px}
+.purchase-queue .resource-queue-item:hover {background:#f4e5bd}
+@media(max-width:900px) {
+ .tt-modal .player-panel {grid-template-columns:minmax(0,1fr)}
+ .tt-modal .player-panel>.panel {min-width:0}
+}
+@media(max-width:600px) {
+ .tt-modal .harvest-panel .conversion-grid {grid-template-columns:minmax(0,1fr)}
+}

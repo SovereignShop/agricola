@@ -1,0 +1,33 @@
+;; Supplemental physical bonus-point symbols for Mastermind. Cards with :score
+;; already qualify. These cards award points through events/abilities instead.
+;; English prints visually inspected; source images and hashes are in the art
+;; manifest. Tavern and Clay Deposit are explicitly confirmed by the Compendium.
+#{:catalog/original-base-i-100-tavern
+  :catalog/original-base-i-337-clay-deposit
+  :catalog/original-expansion-g-23-glutton
+  :catalog/original-expansion-g-66-birthstone
+  :catalog/original-expansion-g-88-meat-pie
+  :catalog/original-expansion-g-98-pumpkin-pie
+  :catalog/original-expansion-wm-26-hedge-master
+  :catalog/original-expansion-wm-72-crib
+  :catalog/original-expansion-wm-97-open-gate
+  :catalog/original-expansion-wm-104-reed-nursery
+  :catalog/original-expansion-wm-114-wine-closet
+  :catalog/original-expansion-fr-8-barber-shop
+  :catalog/original-expansion-fr-58-winter-deadwood
+  :catalog/original-expansion-fr-64-award-winner
+  :catalog/original-expansion-fr-86-head-of-the-revolution
+  :revised-base/a033
+  :revised-base/b033
+  :catalog/revised-artifex-expansion-a-29-ale-benches
+  :catalog/revised-artifex-expansion-a-30-baking-sheet
+  :catalog/revised-artifex-expansion-a-35-swimming-class
+  :catalog/revised-artifex-expansion-a-36-facades-carving
+  :catalog/revised-artifex-expansion-a-37-bucksaw
+  :catalog/revised-artifex-expansion-a-58-asparagus-knife
+  :catalog/revised-artifex-expansion-a-62-beer-keg
+  :catalog/revised-artifex-expansion-a-100-curator
+  :catalog/revised-artifex-expansion-a-132-publican
+  :catalog/revised-artifex-expansion-a-153-pig-owner
+  :catalog/revised-artifex-expansion-a-154-paymaster
+  :catalog/revised-wizkids-white-expansion-d-107-bellfounder}

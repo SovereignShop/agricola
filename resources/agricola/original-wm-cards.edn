@@ -270,4 +270,20 @@
  :catalog/original-expansion-wm-99-pig-wallow
  {:requires-effect? true :play [{:op :remove-empty-field :then :pasture}]}
  :catalog/original-expansion-wm-113-wild-breeding {:play [{:op :wild-breeding}]}
+
+;; Community batch fourteen: verified final English prints.
+
+ :catalog/original-expansion-wm-5-bee-keeper {:requires-effect? true :play [{:op :bee-keeper}]
+  :triggers [{:event :feeding-start :condition [:test [:bee-stable]] :effect {:op :gain :goods {:food 1}}}]}
+ :catalog/original-expansion-wm-13-cowboy {:passive {:cowboy true}}
+ :catalog/original-expansion-wm-32-hunter {:passive {:hunter true}}
+ :catalog/original-expansion-wm-39-pawnbroker {:ability {:op :pawn-improvement}}
+ :catalog/original-expansion-wm-53-village-fool {:triggers [{:event :round-start :effect {:op :stash-card :optional? true}}] :score {:type :village-fool}}
+ :catalog/original-expansion-wm-64-bonfire {:requires-effect? true :play [{:op :farm-markers :kind :bonfire :count 1}]
+  :ability {:op :light-bonfire}}
+ :catalog/original-expansion-wm-103-raspberries {:play [{:op :farm-markers :kind :raspberries :count 3 :optional? true}]
+  :triggers [{:event :check-state :effect {:op :collect-raspberries}}]}
+ :catalog/original-expansion-wm-104-reed-nursery {:passive {:reed-nursery true} :final-choice {:op :reed-nursery-points :optional? true}}
+ :catalog/original-expansion-wm-110-storage-shed {:requires-effect? true :play [{:op :storage-shed}] :passive {:storage-shed true}}
+ :catalog/original-expansion-wm-114-wine-closet {:play [{:op :gain :goods {:vegetable 1}}] :ability {:op :wine-closet}}
 }
