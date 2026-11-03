@@ -6,7 +6,7 @@
  {:cost :return-oven :requires [:> [:ovens] 0]
   :passive {:bake 5 :limit 2} :play [{:op :bake :optional? true}]}
  :catalog/original-base-i-66-village-well
- {:cost :return-well :requires [:owns-major :well] :preserve-well-deliveries? true
+ {:cost :return-well :requires [:or [:owns-major :well] [:owns-card :catalog/original-expansion-wm-62-backyard-well]] :preserve-well-deliveries? true
   :play [{:op :schedule :offsets [1 2 3] :goods {:food 1}}]}
  :catalog/original-base-i-67-threshing-board
  {:triggers [{:event :use-space :spaces #{:plow :cultivation} :effect {:op :bake :optional? true}}]}

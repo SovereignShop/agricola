@@ -208,4 +208,18 @@
                {:label "Grain + Cattle → 3 Points" :cost {:grain 1 :cattle 1} :effects [{:op :points :amount 3}]}]}}]}
  :catalog/original-expansion-g-92-pine-forest
  {:triggers [{:event :before-round-deliveries :effect {:op :pine-forest :optional? true}}]}
+
+;; Community batch thirteen: final English prints and documented errata.
+ :catalog/original-expansion-g-2-animal-farmer {:passive {:full-pastures-score true} :score {:type :animal-farmer}}
+ :catalog/original-expansion-g-6-artisan {:passive {:artisan true}}
+ :catalog/original-expansion-g-47-resource-collector {:play [{:op :schedule-resource-order}]}
+ :catalog/original-expansion-g-56-understudy {:passive {:understudy true}}
+ :catalog/original-expansion-g-65-beehive-oven {:passive {:beehive-oven true :bake 4 :limit 1 :oven true} :play [{:op :bake :optional? true}]}
+ :catalog/original-expansion-g-71-cow-bell {:passive {:unused-cattle-capacity 4}}
+ :catalog/original-expansion-g-79-hammer {:passing? true :requires-effect? true :play [{:op :build-fences :hammer? true}]}
+ :catalog/original-expansion-g-94-potter-s-wheel {:passive {:potters-wheel true :major-as-minor #{:pottery}}}
+ :catalog/original-expansion-g-101-remodeling {:requires [:and [:= [:house] :wood] [:>= [:stables] 1]] :requires-effect? true
+  :play [{:op :return-stables :min-stables 1 :max-stables 1 :then :room}]}
+ :catalog/original-expansion-g-104-seasonal-plants
+ {:triggers [{:event :sow :condition [:test [:= [:mod [:round] 2] 0]] :effect {:op :seasonal-plants}}]}
 }

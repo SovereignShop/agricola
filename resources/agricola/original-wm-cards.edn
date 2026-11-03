@@ -248,4 +248,26 @@
   :score {:type :expression :value [:room-resources :catalog/original-expansion-wm-60-attic]}}
  :catalog/original-expansion-wm-70-clockwork-man {:passive {:counts-as-occupation 1}}
  :catalog/original-expansion-wm-90-honeymoon {:passive {:honeymoon true}}
+
+;; Community batch thirteen: final English prints and documented errata.
+ :catalog/original-expansion-wm-21-fence-dealer {:passive {:fence-limit 12 :fences-per-wood 2}}
+ :catalog/original-expansion-wm-34-livestock-keeper
+ {:play [{:op :gain :goods {:boar [:if [:> [:goods :boar] 0] 0 1] :cattle [:if [:> [:goods :boar] 0] 1 0]}}]
+  :triggers [{:event :breeding-start :effect {:op :livestock-keeper :optional? true}}]}
+ :catalog/original-expansion-wm-45-stable-deliveryman
+ {:play [{:op :reserve-stables :offsets [3 5 7 9] :arrival-cost {:wood 1} :optional? true}]}
+ :catalog/original-expansion-wm-49-sunrise-admirer
+ {:play [{:op :schedule :offsets [1 2 3] :marker-goods {:field 1}
+          :effect {:op :plow :only-cells [4 9 14] :cost {:food 2} :optional? true :discard-on-skip? true}}]}
+ :catalog/original-expansion-wm-58-apple-tree
+ {:requires-effect? true :play [{:op :apple-tree}]
+  :triggers [{:event :field-phase :effect {:op :gain :goods {:food 1}}}]}
+ :catalog/original-expansion-wm-62-backyard-well {:passive {:is-well true} :ability {:op :backyard-well}}
+ :catalog/original-expansion-wm-69-changing-plans
+ {:requires-effect? true :play [{:op :return-stables :min-stables 1 :max-stables 2 :then :plow}]}
+ :catalog/original-expansion-wm-87-gold-medal
+ {:play [{:op :choose-score-category}] :global-score? true :score {:type :gold-medal}}
+ :catalog/original-expansion-wm-99-pig-wallow
+ {:requires-effect? true :play [{:op :remove-empty-field :then :pasture}]}
+ :catalog/original-expansion-wm-113-wild-breeding {:play [{:op :wild-breeding}]}
 }

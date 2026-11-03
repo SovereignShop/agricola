@@ -5,6 +5,66 @@
 
 (def scenarios
   [
+   {:id "animal-farmer" :card :catalog/original-expansion-g-2-animal-farmer :name "Animal Farmer" :players 2
+    :description "Take Sheep to fill the second pasture. Both pastures then earn one point and the all-full bonus earns one more; animal housing and stable capacity matter."}
+   {:id "artisan" :card :catalog/original-expansion-g-6-artisan :name "Artisan" :players 2
+    :description "Feeding has begun. Click Pottery to convert one clay to food and receive two additional food. Artisan pays at most once per harvest, even if another workshop is also used."}
+   {:id "resource-collector" :card :catalog/original-expansion-g-47-resource-collector :name "Resource Collector" :players 2
+    :description "Arrange the four building-resource icons onto the next four rounds. Confirm the order and inspect the future delivery markers."}
+   {:id "understudy" :card :catalog/original-expansion-g-56-understudy :name "Understudy" :players 2
+    :description "Your first person already occupies Farmland. Click that space again and plow next to your first field with your second person. A space with two of your people cannot be reused."}
+   {:id "beehive-oven" :card :catalog/original-expansion-g-65-beehive-oven :name "Beehive Oven" :players 2
+    :description "Choose a pictured baking exchange or decline. Your Clay Oven can bake one grain for five food plus the one-food Beehive bonus; using Beehive itself gives four food without that bonus."}
+   {:id "cow-bell" :card :catalog/original-expansion-g-71-cow-bell :name "Cow Bell" :players 2
+    :description "Take four Cattle from the board. Cow Bell houses them on unused farm spaces, at most two per space and four total; those spaces still count as unused for scoring."}
+   {:id "hammer" :card :catalog/original-expansion-g-79-hammer :name "Hammer" :players 2
+    :description "Draw fences on your farm to form a pasture. Partner already has fences and receives one wood from you. Hammer passes left after this immediate fencing action."}
+   {:id "potters-wheel" :card :catalog/original-expansion-g-94-potter-s-wheel :name "Potter's Wheel" :players 2
+    :description "Feeding has begun. Click Pottery to convert one clay into three food with the wheel bonus. Pottery can also be bought through a minor-improvement action."}
+   {:id "remodeling" :card :catalog/original-expansion-g-101-remodeling :name "Remodeling" :players 2
+    :description "Click the stable to return it, then click a legal farm space to add a free wooden room. Only the printed wood-and-reed card cost is paid; the card then passes left."}
+   {:id "seasonal-plants" :card :catalog/original-expansion-g-104-seasonal-plants :name "Seasonal Plants" :players 2
+    :description "You just sowed grain and vegetables in an even-numbered round. Click either newly sown field to add one extra resource of its crop type."}
+   {:id "fence-dealer" :card :catalog/original-expansion-wm-21-fence-dealer :name "Fence Dealer" :players 2
+    :description "Use Fences and draw a four-edge pasture to pay two wood. Fence Dealer allows at most twelve built fences and charges one wood per pair, rounded up."}
+   {:id "livestock-keeper" :card :catalog/original-expansion-wm-34-livestock-keeper :name "Livestock Keeper" :players 2
+    :description "Breeding is beginning with two sheep in a stable pasture. Click sheep to pay one food for two offspring instead of one, or decline. Only one animal type receives the extra offspring."}
+   {:id "stable-deliveryman" :card :catalog/original-expansion-wm-45-stable-deliveryman :name "Stable Deliveryman" :players 2
+    :description "Click the future round spaces to reserve up to four physical stables. On their arrival rounds, click a farm space and pay one wood, or decline to return the reserved piece."}
+   {:id "sunrise-admirer" :card :catalog/original-expansion-wm-49-sunrise-admirer :name "Sunrise Admirer" :players 2
+    :description "At round start, pay two food and click an unused space in the easternmost column to plow. Declining discards Sunrise Admirer and cancels its later opportunities."}
+   {:id "apple-tree" :card :catalog/original-expansion-wm-58-apple-tree :name "Apple Tree" :players 2
+    :description "Click an empty field to plant the apple tree. The field stays a field but cannot be sown or otherwise used; each harvest field phase grants one food."}
+   {:id "backyard-well" :card :catalog/original-expansion-wm-62-backyard-well :name "Backyard Well" :players 2
+    :description "Open Backyard Well and click an unused farm space beside your home. A stone marks that space as used and one food is scheduled for each of the next three rounds. This ability is once per game."}
+   {:id "changing-plans" :card :catalog/original-expansion-wm-69-changing-plans :name "Changing Plans" :players 2
+    :description "Click one or both stables to return them, then click the same number of legal spaces to plow. The returned stable spaces may become fields; the card then passes left."}
+   {:id "gold-medal" :card :catalog/original-expansion-wm-87-gold-medal :name "Gold Medal" :players 2
+    :description "Click a scoring-category icon. At game end, every player tied for the highest score in that category receives two bonus points."}
+   {:id "pig-wallow" :card :catalog/original-expansion-wm-99-pig-wallow :name "Pig Wallow" :players 2
+    :description "Click the empty field to remove it, then click a space for a free single-space pasture. Normal fence adjacency still applies and Pig Wallow passes left."}
+   {:id "wild-breeding" :card :catalog/original-expansion-wm-113-wild-breeding :name "Wild Breeding" :players 2
+    :description "An animal was added to every accumulation containing at least two animals. Click an eligible animal action space to take one added animal, or decline. This passing card does not grant a worker action."}
+   {:id "absinthe" :card :catalog/original-expansion-fr-2-absinthe :name "Absinthe" :players 2
+    :description "The next round has reached its Work phase. Click an action space to place the scheduled food there; the next person using it receives that food."}
+   {:id "artists-garden" :card :catalog/original-expansion-fr-5-artists-garden :name "Artists Garden" :players 2
+    :description "People are returning home. Click the planted grain field to harvest one crop now, or decline. This is a real extra field harvest before any regular harvest."}
+   {:id "chocolade" :card :catalog/original-expansion-fr-14-chocolate :name "Chocolade" :players 2
+    :description "Chocolade holds four food. Use Lessons to play Architect and observe the occupation fee come from the card before your personal food. Its stored food cannot feed your family."}
+   {:id "straw-thatched-hut" :card :catalog/original-expansion-fr-46-straw-thatched-hut :name "Straw-Thatched Hut" :players 2
+    :description "You have a clay hut and two plowed fields. Use Farm Expansion, click a legal room space, and choose the pictured two-clay, one-grain, one-food room price."}
+   {:id "animal-welfarist" :card :catalog/original-expansion-fr-62-animal-welfarist :name "Animal Welfarist" :players 4
+    :description "This round you built stables and fences on their proper action spaces. Take Grain Seeds with the final worker and observe one sheep, boar, and cattle arrive as people return home."}
+   {:id "benefactor" :card :catalog/original-expansion-fr-65-benefactor :name "Benefactor" :players 3
+    :description "Four fenced pastures and one sheep are ready. Open Benefactor, click the sheep to return it, then click a legal space for a free wooden room. This exchange is once per game."}
+   {:id "cabbage-lover" :card :catalog/original-expansion-fr-67-cabbage-lover :name "Cabbage Lover" :players 4
+    :description "You just converted one vegetable to food. Click the pictured clay payment to store one clay for one bonus point, or decline. Stored clay scores at most five points."}
+   {:id "country-doctor" :card :catalog/original-expansion-fr-74-country-doctor :name "Country Doctor" :players 2
+    :description "Three fields are planted, including a vegetable field, and your two rooms are full. Use Family Growth to grow without a spare room once this game."}
+   {:id "martial-artist" :card :catalog/original-expansion-fr-92-martial-artist :name "Martial Artist" :players 4
+    :description "The harvest is about to start. Click up to two minor-improvement card faces to discard for two food each, or decline. Discarded cards are removed from your hand."}
+   {:id "parquet-setter" :card :catalog/original-expansion-fr-97-parquet-setter :name "Parquet Setter" :players 2
+    :description "Two previously unused farm spaces became fields this round. Take Grain Seeds with the final worker and observe one wood plus one food arrive at Returning Home."}
    {:id "bakers-daughter" :card :catalog/original-expansion-g-9-baker-s-daughter :name "Baker's Daughter" :players 3
     :description "Partner has played Baker. Accept the free play of Baker's Daughter, then choose whether to bake with your Clay Oven. Her shared Grain Seeds and Sow and Bake spaces remain usable when opponents occupy them."}
    {:id "carrot-cake-baker" :card :catalog/original-expansion-g-11-carrot-cake-baker :name "Carrot Cake Baker" :players 2
@@ -382,6 +442,53 @@
         base (game/initialize (a/new-game names (vec (mapcat identity a/stages)) 0))
         funded (update base :players #(mapv (fn [p] (a/gain p {:food 12 :wood 8 :clay 8 :reed 6 :stone 8 :grain 3 :vegetable 2})) %))]
     (case id
+      "animal-farmer" (-> funded (played 0 card)
+                          (update-in [:players 0] #(-> % (a/build-fences (vec (distinct (mapcat a/edges [0 1])))) (a/gain {:sheep 1 :boar 2 :cattle 1}))))
+      "artisan" (-> funded (a/build-improvement 0 {:improvement :pottery}) (played 0 card) (prepared-round 4) last-harvest-action)
+      "resource-collector" (played funded 0 card)
+      "understudy" (-> funded (played 0 card) (game/command 0 {:type :action :space :plow :cell 0}) (assoc :turn 0))
+      "beehive-oven" (-> funded (a/build-improvement 0 {:improvement :clay-oven}) (played 0 card))
+      "cow-bell" (-> funded (played 0 card) (prepared-round 13))
+      "hammer" (-> funded (update-in [:players 1] a/build-fences (vec (a/edges 0))) (played 0 card))
+      "potters-wheel" (-> funded (a/build-improvement 0 {:improvement :pottery}) (played 0 card) (prepared-round 4) last-harvest-action)
+      "remodeling" (-> funded (update-in [:players 0] a/build-stables [0] 2) (played 0 card))
+      "seasonal-plants" (-> funded (played 0 :catalog/original-expansion-g-49-seed-master) (played 0 card)
+                            (prepared-round 4) (prepare-fields [0 1])
+                            (game/command 0 {:type :action :space :sow-bake :plantings [{:cell 0 :crop :grain} {:cell 1 :crop :vegetable}]}))
+      "fence-dealer" (-> funded (played 0 card) (prepared-round 4))
+      "livestock-keeper" (-> funded (update-in [:players 0] #(-> % (a/build-fences (vec (a/edges 0))) (a/build-stables [0] 2) (a/gain {:sheep 2})))
+                             (played 0 card) (prepared-round 4) last-harvest-action
+                             (game/command 0 {:type :feed}) (game/command 1 {:type :feed}))
+      "stable-deliveryman" (played funded 0 card)
+      "sunrise-admirer" (-> funded (played 0 card) game/begin-round game/drain)
+      "apple-tree" (-> funded (prepare-fields [0 1]) (played 0 card))
+      "backyard-well" (played funded 0 card)
+      "changing-plans" (-> funded (update-in [:players 0] a/build-stables [0 1] 2) (played 0 card))
+      "gold-medal" (played funded 0 card)
+      "pig-wallow" (-> funded (prepare-fields [0]) (played 0 card))
+      "wild-breeding" (-> funded (prepared-round 10) (played 0 card))
+      "absinthe" (-> funded (played 0 (cards/id :a109)) (played 0 (cards/id :a115))
+                     (played 0 :catalog/original-expansion-g-49-seed-master) (played 0 card) game/begin-round game/drain)
+      "artists-garden" (-> funded (played 0 (cards/id :a109)) (played 0 (cards/id :a115))
+                           (played 0 :catalog/original-expansion-g-49-seed-master) (played 0 card)
+                           (prepare-fields [0]) (update-in [:players 0] a/sow [{:cell 0 :crop :grain}]) last-harvest-action)
+      "chocolade" (-> funded (a/build-improvement 0 {:improvement :pottery}) (played 0 card)
+                      (played 0 :catalog/original-expansion-g-49-seed-master)
+                      (put-in-hand 0 :catalog/original-expansion-g-5-architect))
+      "straw-thatched-hut" (-> funded (assoc-in [:players 0 :house] :clay) (prepare-fields [1 2]) (played 0 card))
+      "animal-welfarist" (-> funded (played 0 card) (prepared-round 4)
+                            (update-in [:players 0] a/gain {:wood 12})
+                            (game/command 0 {:type :action :space :build :stables [0]}) (assoc :turn 0)
+                            (game/command 0 {:type :action :space :fences :fences (vec (distinct (mapcat a/edges [0 1 2])))}) final-worker)
+      "benefactor" (-> funded (update-in [:players 0] a/gain {:wood 12})
+                       (update-in [:players 0] a/build-fences (vec (distinct (mapcat a/edges [1 2 3 4]))))
+                       (update-in [:players 0] a/gain {:sheep 1}) (played 0 card))
+      "cabbage-lover" (-> funded (played 0 card) (game/command 0 {:type :convert :goods {:vegetable 1}}))
+      "country-doctor" (-> funded (played 0 card) (prepare-fields [0 1 2])
+                           (update-in [:players 0] a/sow [{:cell 0 :crop :grain} {:cell 1 :crop :vegetable} {:cell 2 :crop :grain}]) (prepared-round 5))
+      "martial-artist" (-> funded (played 0 card) (put-in-hand 0 :catalog/original-expansion-g-110-shovel)
+                           (put-in-hand 0 :catalog/original-expansion-wm-70-clockwork-man) (prepared-round 4) last-harvest-action)
+      "parquet-setter" (-> funded (played 0 card) (prepared-round 2) (prepare-fields [0 1]) final-worker)
       "bakers-daughter" (-> funded (a/build-improvement 0 {:improvement :clay-oven}) (put-in-hand 0 card)
                             (put-in-hand 1 :catalog/original-base-e-150-baker) (assoc :turn 1)
                             (game/command 1 {:type :action :space :lessons :card :catalog/original-base-e-150-baker}))

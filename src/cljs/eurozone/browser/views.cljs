@@ -438,6 +438,12 @@
              [:image {:data-piece-key (str "home:" (:id p) ":" n) :data-piece-type (str "worker:" (:id p)) :href (art/worker-url (:id p)) :x (+ x 6 (* 25 (mod n 3))) :y (+ y 5 (* 34 (quot n 3))) :width 32 :height 40}])])
         (when (contains? (get-in p [:card-state (cards/id :a040) :clay-cells] #{}) i)
           [:image {:aria-label "Potter's Yard clay" :href (art/piece-url :clay) :x (+ x 36) :y (+ y 40) :width 30 :height 30}])
+        (when (seq (:marker-goods cell))
+          [:g.farm-card-markers {:aria-label (str (:name (cards/card (or (:blocked-card cell) (:card cell)))) " farm marker")}
+           [:title (str (:name (cards/card (or (:blocked-card cell) (:card cell)))) " · unavailable for spending")]
+           (for [[resource quantity] (:marker-goods cell) :when (pos? quantity)] ^{:key resource}
+             [:image {:href (art/piece-url resource) :data-marker-resource (name resource)
+                      :x (+ x 32) :y (+ y 30) :width 40 :height 40}])])
         (when (:stable cell) [:g [:rect {:x (+ x 30) :y (+ y 38) :width 40 :height 30 :fill "#b07949"}]
                                 [:path {:d (str "M" (+ x 23) " " (+ y 38) "l27 -18 27 18Z") :fill "#6f563a"}]])
         (when (pos? (get-in cell [:under-crops :vegetable] 0))
@@ -507,7 +513,8 @@
            [:div.field-card-crops [goods (cond-> (a/field-crops tile)
                                           (get marks cid) (assoc (get marks cid) 1))]]])])]))
 (defn empty-field-ids [p]
-  (filter #(zero? (get-in p (conj (a/field-path %) :count) 0))
+  (filter #(and (zero? (get-in p (conj (a/field-path %) :count) 0))
+                 (nil? (get-in p (conj (a/field-path %) :blocked-card))))
           (concat (a/tiles p :field) (keys (:card-fields p)))))
 (defn sow-picker [p draft crops & [effect]]
   (let [crops (or crops (vec (distinct (concat [:grain :vegetable] (keep :allowed-crop (vals (:card-fields p)))))))
@@ -722,9 +729,9 @@
         [:button.field-card-choice {:type "button" :aria-label (:name (cards/card cid))
                                     :aria-pressed (if (set? selected) (contains? selected cid) (= cid selected)) :on-click #(choose! cid)}
          [tabletop/card-face cid false nil]])])])
-(defn round-picker [g selected choose!]
+(defn round-picker [g selected choose! & [effect]]
   [:div.round-assignment-track {:role "group" :aria-label "Reserve stables on future rounds"}
-   (for [round (card-game/planner-rounds g)] ^{:key round}
+   (for [round (card-game/planner-rounds g effect)] ^{:key round}
      [:button.round-assignment {:type "button" :aria-label (str "Reserve stable for round " round)
                                 :aria-pressed (boolean (some #{round} selected)) :on-click #(choose! round)}
       [art/round-card-art :back (dec round)] [:span (str "Round " round)]
@@ -762,7 +769,7 @@
 (defn hand-card-draft [draft cid]
   (if (= cid (:card draft)) draft
     (-> draft (assoc :card cid)
-        (dissoc :improvement :upgrade :bake-grain :cook-with-bake :payment-option :return-improvement :return-improvements :as-major? :discount-resource :discount-resources))))
+        (dissoc :improvement :upgrade :bake-grain :use-beehive? :cook-with-bake :payment-option :return-improvement :return-improvements :as-major? :discount-resource :discount-resources))))
 (defn improvement-discount-select [p cid draft]
   [:div
    (let [options (a/improvement-discount-options p cid draft)
@@ -883,6 +890,20 @@
      (when (and (= kind :occupation) (cards/has? p :a028))
        [field "Wood for occupation cost" [number-input (get draft :occupation-wood 0) #(draft! :occupation-wood %)
                                          (+ 3 (:additional-food-cost (cards/card (:card draft)) 0))]])
+     (when (and (= kind :occupation) (pos? (card-game/chocolate-food-available p)))
+       (let [maximum (card-game/chocolate-payment-limit g (:id p) draft)
+             selected (get draft :chocolate-food maximum)
+             stock-card (first (filter #(get-in (cards/card %) [:passive :occupation-stock-food]) (cards/active-owned p)))]
+         [:div
+          [:div.choice-recipe {:role "group" :aria-label "Chocolade occupation payment"}
+           [:div.choice-card-face [tabletop/card-face stock-card false p]]
+           [goods {:food selected}] [:span "→ occupation fee"]]
+          (when (pos? maximum)
+            [graphical-choices "Food from Chocolade" selected #(draft! :chocolate-food %)
+             (for [n (range (inc maximum))]
+               [n (if (zero? n) "Keep stored food" (str "Use " n " stored food"))
+                (if (zero? n) [choice-icon :none] [goods {:food n}])])])
+          [:p.small (str (card-game/chocolate-food-available p) " food stored. Only the regular occupation fee can use this food.")]]))
      [:div.card-choice-picker
       [:h4 (if (= kind :occupation) "Occupation" "Minor improvement")]
       (when optional? [button (if (= :freshman-bake (get-in g [:effect-queue 0 :effect :op])) "Bake bread instead" "No hand card")
@@ -956,12 +977,18 @@
       [graphical-choices "Clay Roof: reed replaced with clay" (:clay-reed draft 0) #(edit! :clay-reed %)
        (for [n (range 3)] [n (if (zero? n) "Keep reed payment" (str "Replace " n " reed with clay"))
                           (if (zero? n) [art/piece :reed] [recipe {:reed n} {:clay n}])])])
+    (when (and (= :clay (:house p)) (some true? (cards/passives p :straw-thatched-hut))
+               (or (seq (:rooms draft)) (#{:build :house-building} (:space draft))))
+      [graphical-choices "Straw-Thatched Hut room payment" (boolean (:straw-thatched-hut? draft)) #(edit! :straw-thatched-hut? %)
+       [[false "Standard room payment" [goods (a/room-cost p (dissoc draft :straw-thatched-hut?))]]
+        [true "2 Clay + Grain + Food → Clay room" [:div.choice-effect-pieces [goods {:clay 2 :grain 1 :food 1}] [:span "→"] [choice-icon :clay-room]]]]])
     (when (and (= :clay (:house p)) (some true? (cards/passives p :clay-supports)))
       [:label.checkbox [:input {:type "checkbox" :checked (boolean (:clay-supports? draft))
                                :on-change #(edit! :clay-supports? (.. % -target -checked))}]
        "Clay Supports: rooms cost 2 clay, 1 wood and 1 reed before other discounts"])
     (when (and (> (count (:rooms draft)) 1)
-               (or (some true? (cards/passives p :clay-roof)) (some true? (cards/passives p :clay-supports)) (some true? (cards/passives p :brushwood-roof))))
+               (or (some true? (cards/passives p :clay-roof)) (some true? (cards/passives p :clay-supports)) (some true? (cards/passives p :brushwood-roof))
+                   (some true? (cards/passives p :straw-thatched-hut))))
       [room-payment-picker p draft edit-entry!])
     (when (and (some true? (cards/passives p :direct-stone)) (= :wood (:house p)))
       [graphical-choices "Renovate to" (:renovate-to draft :clay) #(edit! :renovate-to %)
@@ -1064,13 +1091,21 @@
                     new-oven (update :improvements conj new-oven))
         grain (get draft key default) cost (or cost {})
         ovens (a/baking-improvement-ids p)
-        maximum (or (last (filter (fn [n] (try (a/bake p n) true (catch :default _ false)))
+        maximum (or (last (filter (fn [n] (try (a/bake p n nil (select-keys draft [:use-beehive?])) true (catch :default _ false)))
                                   (range (inc (a/amount p :grain))))) 0)
-        result (try (a/bake (a/pay p cost) grain (:cook-with-bake draft)) (catch :default _ nil))
+        result (try (a/bake (a/pay p cost) grain (:cook-with-bake draft) (select-keys draft [:use-beehive?])) (catch :default _ nil))
         food (when result (- (a/amount result :food) (a/amount p :food)))
         adjust! #(dispatch :draft-adjust key default % maximum)]
     [:div.bake-workflow
      [:h4 "Bake bread"]
+     (when-let [beehive (a/beehive-oven-id p)]
+       [graphical-choices "Beehive Oven baking" (:use-beehive? draft) #(draft! :use-beehive? %)
+        [[nil "Highest food return" [:div.choice-effect-pieces [art/piece :food] [:span "Auto"]]]
+         [true "Use Beehive Oven" [:div [:div.choice-card-face [tabletop/card-face beehive false p]] [recipe {:grain 1} {:food 4}]]]
+         [false "Use other baking improvements · +1 food" [:div.choice-effect-pieces
+           (for [cid (remove #{beehive} ovens)] ^{:key cid} [:div.choice-card-face [tabletop/card-face cid false p]])
+           [goods {:food 1}]]]]])
+
      (when (seq cost)
        [:div.bake-entry-cost [goods cost] [:span "Pay once for this baking action"]])
      [:div.bake-exchange {:role "group" :aria-label "Baking exchange"}
@@ -1184,6 +1219,29 @@
       [:span {:role "status" :aria-live "polite"} (str (count selected) " of " amount " selected")]
       (when (seq selected) [button "Clear choices" #(change-selection! :clear nil) "text-button" busy?])]]))
 
+(defn ordered-resource-picker [g draft busy?]
+  (let [selected (vec (resource-selection g draft))
+        choices [:wood :clay :reed :stone]
+        edit! #(dispatch :draft-resource-queue (:decision-id g) 4 %1 %2)]
+    [:div.resource-picker
+     [:p.resource-picker-instruction "Click each material once, in delivery order. Click a queued piece to remove it and adjust the order."]
+     [:div.resource-picker-options {:role "group" :aria-label "Materials to schedule"}
+      (for [resource choices] ^{:key resource}
+        [:button.resource-choice {:type "button" :aria-label (str "Schedule " (labels resource))
+                                  :disabled (or busy? (some #{resource} selected)) :on-click #(edit! :add resource)}
+         [art/piece resource] [:span (labels resource)]])]
+     [:div.round-assignment-track {:role "group" :aria-label "Resource delivery order"}
+      (for [index (range 4) :let [round (+ (:round g) index 1) resource (get selected index)]] ^{:key index}
+        [(if resource :button.round-assignment :div.round-assignment)
+         (if resource {:type "button" :aria-label (str "Remove " (labels resource) " from delivery " (inc index))
+                       :disabled busy? :on-click #(edit! :remove index)}
+                      {:aria-label (str "Empty delivery " (inc index))})
+         (when (<= round 14) [art/round-card-art :back (dec round)])
+         (when resource [:img.choice-piece {:src (art/piece-url resource) :alt "" :draggable false}])
+         [:span (if (<= round 14) (str "Round " round) "Returned")]])]
+     [:p.small {:role "status"} (str (count selected) " / 4 materials arranged")]
+     (when (seq selected) [button "Clear delivery order" #(edit! :clear nil) "text-button" busy?])]))
+
 (defn card-entry-payments [g p head effect]
   (let [base (expr/quantities g (:id p) (:context head) (:cost effect))
         discount (card-game/hand-food-discount p)
@@ -1219,19 +1277,21 @@
         resource-count (if (= op :choose-good) (card-game/resource-choice-count g) 1)
         selected-resources (resource-selection g draft)
         keep (get draft :keep (select-keys (:goods p) a/animals))
-        choice (merge (select-keys draft [:salesman? :smallholder? :adopt-reed-hut? :wood-reed :wood-carver? :manufacturer-discount :spaces :purchase :perpetual-student? :from-space :animals :space :owner :buyer :cultivation-first? :return-animals :cook-with-bake :plow-card :plow-maker? :sow-before? :return-improvement :return-improvements :as-major? :discount-resource :discount-resources :accommodate-taken? :grain-source :animal :cell :cells :rooms :stables :fences :fence-material :rounds :person-kind :cards :frame? :brushwood? :clay-reed :clay-supports? :room-options :renovate-to :paper-maker? :occupation-wood :card :cook? :option :payment-option :improvement :upgrade :bake-grain :exchange?])
+        choice (merge (select-keys draft [:use-beehive? :straw-thatched-hut? :chocolate-food :category :salesman? :smallholder? :adopt-reed-hut? :wood-reed :wood-carver? :manufacturer-discount :spaces :purchase :perpetual-student? :from-space :animals :space :owner :buyer :cultivation-first? :return-animals :cook-with-bake :plow-card :plow-maker? :sow-before? :return-improvement :return-improvements :as-major? :discount-resource :discount-resources :accommodate-taken? :grain-source :animal :cell :cells :rooms :stables :fences :fence-material :rounds :person-kind :cards :frame? :brushwood? :clay-reed :clay-supports? :room-options :renovate-to :paper-maker? :occupation-wood :card :cook? :option :payment-option :improvement :upgrade :bake-grain :exchange?])
                       (when (contains? draft :effect-fields) {:fields (:effect-fields draft)})
                       {:type :resolve :decision (:decision-id g) :keep keep :grain (get draft :effect-grain 1)
                        :action (or (:effect-action draft) (if (= op :young-artist) :draw :room))
                        :resource (or (:effect-resource draft) (first (or (:choices effect) (if (= op :boat-painter) [:grain :food] [:grain :vegetable]))))
                        :plantings (if (#{:sow :take-field-crops} op) (:plantings draft)
                                     (when (and (= op :countryman) (some? (:cell draft))) [{:cell (:cell draft) :crop (or (:effect-resource draft) :grain)}]))})
-        choice (cond-> choice (= op :pearl-seeker) (assoc :amount (max 1 (min (card-game/pearl-seeker-max g (:id p) (:context head)) (get draft :effect-amount 1))))
+        choice (cond-> choice (= op :cabbage-lover) (assoc :amount (get draft :effect-amount 1))
+                             (= op :schedule-resource-order) (assoc :resources (vec (resource-selection g draft)))
+                             (= op :pearl-seeker) (assoc :amount (max 1 (min (card-game/pearl-seeker-max g (:id p) (:context head)) (get draft :effect-amount 1))))
                              (#{:collect-cooked-animal :cover-unused :pelts :wet-nurse :adopt-original :basin-maker} op)
                              (assoc :amount (get draft :effect-amount (if (#{:pelts :wet-nurse :adopt-original} op) 1 (get-in head [:context :converted-goods (:resource effect)] 0))))
                              (= op :classify-fields) (assoc :mixed-as-grain (count (:grain-classified draft)) :dual-as-major (count (:major-classified draft)))
                              (#{:plow-many :wheel-plow} op) (update :cells #(vec (filter integer? %)))
-                             (and (= op :card-action) (:card choice)) (dissoc :improvement :upgrade :bake-grain :cook-with-bake))
+                             (and (= op :card-action) (:card choice)) (dissoc :improvement :upgrade :bake-grain :use-beehive? :cook-with-bake))
         choice (cond-> choice (= op :cover-unused) (assoc :amount (count (:covered-cells draft)))
                               (= op :pelts) (assoc :amount (count (:pelt-rooms draft))))
         choice (if resource-picker?
@@ -1252,6 +1312,66 @@
                                                                 :wheel-plow "Plow fields"
                                                                 :housing "Make room for your animals"
                                                                 "Resolve a card effect")))]
+     (when (= op :cabbage-lover)
+       (let [maximum (card-game/cabbage-lover-max g (:id p) (:context head))
+             amount (max 1 (min maximum (get draft :effect-amount 1)))
+             stored (get-in p [:card-state (:card head) :stored-goods :clay] 0)]
+         [:div
+          [:div.form-row {:role "group" :aria-label "Clay to store"}
+           [button "−" #(dispatch :draft-adjust :effect-amount 1 -1 maximum) "button" (<= amount 1)]
+           [badge :clay amount]
+           [button "+" #(dispatch :draft-adjust :effect-amount 1 1 maximum) "button" (>= amount maximum)]]
+          [:div.choice-recipe {:role "group" :aria-label "Clay for Cabbage Lover points"}
+           [goods {:clay amount}] [:span "→"] [:div.choice-card-face [tabletop/card-face (:card head) false p]]
+           [:strong (str "★ " (min 5 (+ stored amount)))]]
+          [:p.small "Store up to one clay for each vegetable just converted. Stored clay scores one point each, to a maximum of five points."]]))
+     (when (= op :livestock-keeper)
+       [graphical-choices "Extra offspring" (:animal draft) #(draft! :animal %)
+        (for [animal a/animals :when (>= (a/amount p animal) 2)]
+          [animal (str "Food → extra " (labels animal)) [recipe {:food 1} {animal 1} ]])])
+     (when (= op :schedule-resource-order) [ordered-resource-picker g draft busy?])
+     (when (= op :return-stables)
+       (let [selected (vec (:stables draft)) maximum (:max-stables effect 2)
+             eligible (filter #(get-in p [:farm % :stable]) (range 15))]
+         [:div
+          [:div.choice-recipe {:role "group" :aria-label "Return stables"}
+           [choice-icon :stable] [:span "→"] [choice-icon (if (= :room (:then effect)) :wood-room :field)]]
+          [:p.small (str "Click " (if (= 1 maximum) "one stable" (str "up to " maximum " stables"))
+                         " to return. Then choose " (if (= :room (:then effect)) "the free room." "one field for each stable returned."))]
+          [farm-picker p (if (< (count selected) maximum) eligible selected) selected #(dispatch :draft-toggle-value :stables %)]
+          [:p.small {:role "status"} (str (count selected) " / " maximum " stables selected")]]))
+     (when (= op :harvest-field)
+       [:div [:p.small "Click a planted field to harvest its crops now."]
+        [farm-picker p (card-game/harvestable-field-cells g (:id p)) [(:cell draft)] #(draft! :cell %)]])
+     (when (= op :apple-tree)
+       [:div
+        [:div.choice-recipe {:role "group" :aria-label "Plant Apple Tree"} [goods {:wood 1}] [:span "→"] [choice-icon :field]
+         [:span "→ each harvest"] [goods {:food 1}]]
+        [:p.small "Click an empty field for the tree. It remains a field but cannot be sown or used for other effects."]
+        [farm-picker p (card-game/apple-tree-cells g (:id p)) [(:cell draft)] #(draft! :cell %) (when (some? (:cell draft)) {(:cell draft) :wood})]])
+     (when (= op :seasonal-plants)
+       (let [plantings (card-game/seasonal-plantings g (:id p) (:context head)) eligible (map :cell plantings)]
+         [:div [:p.small "Click one field just sown to add one extra crop of its planted type."]
+          [farm-picker p eligible [(:cell draft)] #(draft! :cell %) (into {} (map (juxt :cell :crop) plantings))]]))
+     (when (= op :take-wild-breeding)
+       [:div [:p.small "Click an animal accumulation space to take one of the animals just added, if you can accommodate it."]
+        [board-picker g (get-in head [:context :added-spaces]) (:space draft) #(draft! :space %)]])
+     (when (= op :discard-minors)
+       (let [selected (set (:cards draft)) maximum (:max effect 2)]
+         [:div
+          [:div.choice-recipe {:role "group" :aria-label "Discarded cards for food"} [choice-icon :draw] [:span "→"] [goods {:food 2}]]
+          [:p.small (str "Choose up to " maximum " minor improvements to discard. Open a card to select it; select it again to keep it.")]
+          [:div.card-choice-spread {:role "group" :aria-label "Minor improvements to discard"}
+           (for [cid (get-in (with-private-hand g (:id p) ui) [:players (:id p) :hand :minor])] ^{:key cid}
+             [card-choice cid (selected cid) #(dispatch :draft-toggle-value :cards cid)
+              {:disabled (and (>= (count selected) maximum) (not (selected cid)))}])]
+          [:div.choice-recipe [goods {:food (* 2 (count selected))}] [:span (str "for " (count selected) " selected cards")]]]))
+     (when (= op :choose-score-category)
+       [graphical-choices "Gold Medal scoring category" (:category draft) #(draft! :category %)
+        (for [[category label icon] [[:grain "Grain" :grain] [:vegetables "Vegetables" :vegetable] [:sheep "Sheep" :sheep]
+                                     [:boar "Wild boar" :boar] [:cattle "Cattle" :cattle] [:fields "Fields" :field]
+                                     [:pastures "Pastures" :fence] [:stables "Fenced stables" :stable]]]
+          [category label [:div.choice-effect-pieces [choice-icon icon] [:strong "★ 2"]]])])
      (when (= op :play-hand-response)
        (if (some #{(:card effect)} (get-in (with-private-hand g (:id p) ui) [:players (:id p) :hand :occupation]))
          [:div [:p.small (str "You may play " (:name (cards/card (:card effect))) " now for free, or keep it in your hand.")]
@@ -1466,7 +1586,10 @@
                  (when (pos? (:newborn p 0)) [[:newborn "Newborn" [choice-icon :newborn (:id p)]]]))]])
      (when (= op :reserve-stables)
        [:div [:p.small (str (a/stables-available p) " stable pieces available. Click future round cards to reserve them.")]
-        [round-picker g (:rounds draft) #(dispatch :draft-toggle-value :rounds %)]])
+        (when (seq (:arrival-cost effect))
+          [:div.choice-recipe {:role "group" :aria-label "Stable arrival payment"}
+           [goods (:arrival-cost effect)] [:span "→"] [choice-icon :stable] [:span "when each stable arrives"]])
+        [round-picker g (:rounds draft) #(dispatch :draft-toggle-value :rounds %) effect]])
      (when (= op :build-stables)
        (let [maximum (min (a/stables-available p) (:max-stables effect 4))
              selected (vec (:stables draft))
@@ -1478,11 +1601,16 @@
                                        (or (< (count selected) maximum) (some #{%} selected))) (range 15))
            selected #(dispatch :draft-toggle-value :stables %)]]))
      (when (= op :remove-empty-field)
-       [:div [:div.choice-recipe [choice-icon :field] [:span "→"] [goods (:goods effect)]]
+       [:div [:div.choice-recipe [choice-icon :field] [:span "→"]
+               (if (= :pasture (:then effect)) [choice-icon :fence] [goods (:goods effect)])]
         [:p.small "Click an empty field to return it. Your remaining fields must stay connected."]
         [farm-picker p (a/removable-field-cells p) [(:cell draft)] #(draft! :cell %)]])
      (when (= op :build-fences)
        [:div [:p.small "Select farm edges to enclose pastures."]
+        (when (:hammer? effect)
+          [:div {:role "group" :aria-label "Hammer payment to opponents"}
+           (for [other (:players g) :when (and (not= (:id p) (:id other)) (seq (:fences other)))] ^{:key (:id other)}
+             [:div.choice-recipe [goods {:wood 1}] [:span "→"] [choice-icon :person (:id other)] [:span (:name other)]])])
         (when (:pay-actor? effect)
           [:div.choice-recipe {:role "group" :aria-label "Payment to fencing player"}
            [goods (:cost effect)] [:span "→"] [choice-icon :person (get-in head [:context :actor])]
@@ -1517,11 +1645,18 @@
      (when (= op :cottage)
        [graphical-choices "Cottager action" (:effect-action draft :room) #(draft! :effect-action %)
         [[:room "Build one room" [choice-icon :room]] [:renovate "Renovate" [choice-icon (if (= :wood (:house p)) :clay-room :stone-room)]]]])
+     (when (and (#{:plow :stable} op) (seq (:cost effect)))
+       [:div.choice-recipe {:role "group" :aria-label "Farm action payment"}
+        [goods (expr/quantities g (:id p) (:context head) (:cost effect))] [:span "→"]
+        [choice-icon (if (= :plow op) :field :stable)]])
+     (when (:discard-on-skip? effect)
+       [:p.small "Declining this arrival discards the card and cancels its later arrivals."])
      (when (or (#{:plow :mini-pasture :fence-overseer :stable :corral-builder :amateur-fencer :plowsmith} op)
                (and (= op :cottage) (not= :renovate (:effect-action draft))))
        [:div [:p.small "Click the space on your farm, then confirm below."]
         [farm-picker p (filter #(= :empty (get-in p [:farm % :type]))
-                               (if (= :fence-overseer op) (card-game/fence-overseer-cells g (:id p) (:context head)) (range 15)))
+                               (cond (= :fence-overseer op) (card-game/fence-overseer-cells g (:id p) (:context head))
+                                     (and (= :plow op) (:only-cells effect)) (:only-cells effect) :else (range 15)))
          [(:cell draft)] #(do (draft! :cell %) (when (#{:mini-pasture :fence-overseer :corral-builder :amateur-fencer} op) (draft! :fences [])))]] )
      (when (and (#{:mini-pasture :fence-overseer :corral-builder :amateur-fencer} op)
                 (pos? (a/turn-free-fences-available p)) (a/cell? (:cell draft)))
@@ -1715,6 +1850,21 @@
          :tinsmith [:div [recipe {:clay (:amount @selection)}
                                     {:food (+ (:amount @selection) (if (= 2 (:clay (card-game/tinsmith-rates g))) (quot (:amount @selection) 2) 0))}]
                     [field "Clay to exchange" [number-input (:amount @selection) #(swap! selection assoc :amount %) (a/amount p :clay)]]]
+         :backyard-well
+         [:div
+          [:div.choice-recipe {:role "group" :aria-label "Backyard Well"} [goods {:stone 1}] [:span "→"] [choice-icon :wood-room]
+           [:span "→ next three rounds"] [goods {:food 1}]]
+          [:p.small "Click an unused space next to your house. The stone comes from the general supply; this space becomes used."]
+          [farm-picker p (card-game/backyard-well-cells g (:id p))
+           [(:cell @selection)] #(swap! selection assoc :cell %) (when (some? (:cell @selection)) {(:cell @selection) :stone})]]
+         :benefactor
+         [:div
+          [graphical-choices "Animal for a free room" (:animal @selection) #(swap! selection assoc :animal %)
+           (for [animal a/animals :when (pos? (a/amount p animal))]
+             [animal (str (labels animal) " → Wooden room") [:div.choice-effect-pieces [art/piece animal] [:span "→"] [choice-icon :wood-room]]])]
+          [:p.small "Click an unused space beside your house for the free room."]
+          [farm-picker p (card-game/backyard-well-cells g (:id p))
+           (:rooms @selection) #(swap! selection assoc :rooms [%])]]
          :return-animal-loan [animal-loan-controls p cid @selection #(swap! selection assoc-in [:return-animals %1] %2)]
          :corn-profiteer [:p.small "Offer one grain. Other players can offer two food; if nobody buys, receive three food from the supply."]
          :claim-goods [:p.small "Claim once, while every other player has more than two rooms. You can leave these goods here until you need them."]
@@ -2034,7 +2184,7 @@
            [button (str "Minors · " (count (:minor hand))) #(reset! kind :minor) (when (= @kind :minor) "selected")]]
           [:p.small "Choose an appropriate action space, then select a card to play in the action panel."]
           [:div.hand-grid (for [cid (get hand @kind)
-                               :let [reason (when active? (card-action-error g pid (-> draft (assoc :card cid) (dissoc :improvement :upgrade :bake-grain :cook-with-bake)) ui))]] ^{:key cid}
+                               :let [reason (when active? (card-action-error g pid (-> draft (assoc :card cid) (dissoc :improvement :upgrade :bake-grain :use-beehive? :cook-with-bake)) ui))]] ^{:key cid}
                             [:div.hand-choice
                              [hand-card cid {:on-click #(draft! :card cid) :disabled (or (not active?) (boolean reason))
                                              :title (or reason (when-not active? "Choose an action that allows playing this card."))

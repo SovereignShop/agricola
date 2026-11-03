@@ -43,6 +43,36 @@
 
 (def review-commands
   {
+   "animal-farmer" [{:type :action :space :sheep}]
+   "artisan" [{:type :feed :craft [:pottery]}]
+   "resource-collector" [{:resources [:wood :clay :reed :stone]}]
+   "understudy" [{:type :action :space :plow :cell 1}]
+   "beehive-oven" [{:grain 1 :use-beehive? false}]
+   "cow-bell" [{:type :action :space :cattle}]
+   "hammer" [{:fences ["h:0:0" "h:1:0" "v:0:0" "v:0:1"]}]
+   "potters-wheel" [{:type :feed :craft [:pottery]}]
+   "remodeling" [{:stables [0]} {:rooms [0]}]
+   "seasonal-plants" [{:cell 1}]
+   "fence-dealer" [{:type :action :space :fences :fences ["h:0:0" "h:1:0" "v:0:0" "v:0:1"]}]
+   "livestock-keeper" [{:animal :sheep} {:type :breed :offspring {:sheep 2}}]
+   "stable-deliveryman" [{:rounds [4 6 8 10]}]
+   "sunrise-admirer" [{:cell 4}]
+   "apple-tree" [{:cell 0}]
+   "backyard-well" [{:type :ability :card :catalog/original-expansion-wm-62-backyard-well :cell 0}]
+   "changing-plans" [{:stables [0 1]} {:cells [0 1]}]
+   "gold-medal" [{:category :grain}]
+   "pig-wallow" [{:cell 0} {:cell 0}]
+   "wild-breeding" [{:space :sheep}]
+   "absinthe" [{:spaces [:grain]}]
+   "artists-garden" [{:cell 0}]
+   "chocolade" [{:type :action :space :lessons :card :catalog/original-expansion-g-5-architect}]
+   "straw-thatched-hut" [{:type :action :space :build :rooms [0] :straw-thatched-hut? true}]
+   "animal-welfarist" [{:type :action :space :grain}]
+   "benefactor" [{:type :ability :card :catalog/original-expansion-fr-65-benefactor :animal :sheep :rooms [0]}]
+   "cabbage-lover" [{:amount 1}]
+   "country-doctor" [{:type :action :space :growth}]
+   "martial-artist" [{:cards [:catalog/original-expansion-g-110-shovel :catalog/original-expansion-wm-70-clockwork-man]}]
+   "parquet-setter" [{:type :action :space :grain}]
    "bakers-daughter" [{} {:grain 1} {:skip? true}]
    "carrot-cake-baker" [{:grain 1}]
    "freeloader" [{:type :action :space :plow :cell 0}]
@@ -230,3 +260,23 @@
         (is (= (:state room) (get-in @(:rooms (store/make-store path)) [id :state])) scenario)
         (is (= (:state room) (last (:frames (recording/timeline (:recording room))))))
         (is (not= (:state initial) (:state room)) scenario)))))
+
+(deftest community-thirteen-prepared-tables-demonstrate-their-rewards
+  ;; These passive tables must visibly exercise their card, not merely accept a
+  ;; legal unrelated action. In particular Parquet Setter needs a native work
+  ;; baseline before the farm changes made during preparation.
+  (doseq [[id expected] [["artisan" {:food 0 :clay -1}]
+                         ["potters-wheel" {:food -1 :clay -1}]
+                         ["beehive-oven" {:food 6 :grain -1}]
+                         ["cow-bell" {:cattle 4}]
+                         ["animal-welfarist" {:sheep 1 :boar 1 :cattle 1}]
+                         ["parquet-setter" {:wood 1 :food 1}]]]
+    (let [before (scenarios/initial-state id (:names (scenarios/options id "Ada")))
+          after (reduce (fn [state choice]
+                          (game/command state (game/acting-player state)
+                                        (if (:type choice) choice
+                                            (merge {:type :resolve :decision (:decision-id state)} choice))))
+                        before (get review-commands id))]
+      (doseq [[resource delta] expected]
+        (is (= delta (- (a/amount (game/p after 0) resource)
+                        (a/amount (game/p before 0) resource))) [id resource])))))

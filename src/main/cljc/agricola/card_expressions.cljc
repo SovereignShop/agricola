@@ -28,7 +28,7 @@
       (let [[op & args] form x (first args)]
         (case op
           :+ (reduce + 0 (map ev args)) :- (apply - (map ev args)) :* (reduce * 1 (map ev args))
-          :min (apply min (map ev args)) :max (apply max (map ev args)) :quot (apply quot (map ev args))
+          :min (apply min (map ev args)) :max (apply max (map ev args)) :quot (apply quot (map ev args)) :mod (apply mod (map ev args))
           := (apply = (map ev args)) :< (apply < (map ev args)) :<= (apply <= (map ev args))
           :> (apply > (map ev args)) :>= (apply >= (map ev args))
           :and (every? ev args) :or (boolean (some ev args)) :not (not (ev x))
@@ -52,6 +52,8 @@
           :all-plows (count (for [player (:players g) cid (cards/active-owned player)
                                  :when (or (get-in (cards/card cid) [:passive :action-plow])
                                            (#{(cards/id :a018) (cards/id :b019)} cid))] cid))
+          :welfarist-qualified (= #{:stables :fences} (get-in p [:work-actions (:round g)] #{}))
+          :work-used-spaces (max 0 (- (:work-unused-baseline p (count (filter #(a/empty-cell? p %) (range 15)))) (count (filter #(a/empty-cell? p %) (range 15)))))
           :converted (get-in context [:converted-goods x] 0)
           :newborns-added (:newborns-added context (max 0 (- (:family p) (:family-before context (:family p)))))
           :growths-this-round (if (= (:round g) (get-in g [:round-growths pid :round])) (get-in g [:round-growths pid :count] 0) 0)
@@ -99,7 +101,7 @@
           (count (filter #(some pos? (vals (a/field-crops %)))
                          (concat (filter #(= :field (:type %)) (:farm p)) (vals (:card-fields p)))))
           :planted-fields (count (filter #(pos? (:count % 0)) (field-list p)))
-          :empty-fields (count (filter #(zero? (:count % 0)) (field-list p)))
+          :empty-fields (count (filter #(and (not (:blocked-card %)) (zero? (:count % 0))) (field-list p)))
           :empty-farm-fields (count (filter #(and (= :field (:type %)) (not-any? pos? (vals (a/field-crops %)))) (:farm p)))
           :unused (count (filter #(a/empty-cell? p %) (range 15)))
           :pastures (count (a/pastures p))

@@ -332,7 +332,8 @@
 .field-card-crops .resource>span {display:none}
 .round-assignment-track {display:flex;flex-wrap:wrap;gap:12px;margin:12px 0}
 .round-assignment {position:relative;width:96px;height:140px;padding:0;border:0;border-radius:5px;cursor:pointer;background:#eee2c6;overflow:hidden}
-.round-assignment>span {position:absolute;bottom:4px;left:4px;right:4px;background:#f5ecd9ed;color:#403527;padding:3px;font-weight:600}
+.round-assignment>span:not(.round-card-art) {position:absolute;bottom:4px;left:4px;right:4px;background:#f5ecd9ed;color:#403527;padding:3px;font-weight:600}
+.round-assignment>.round-card-art {left:0;width:100%}
 .round-assignment>.choice-piece {position:absolute;width:45px;height:45px;left:25px;top:42px;filter:drop-shadow(1px 2px 2px #0005)}
 .tt-modal .table-dialog:has(.board-picker) {width:1200px}
 .board-picker {width:100%;container-type:inline-size}
@@ -369,7 +370,7 @@
  .board-picker .round-card-slot:not(:has(.action-card:not(:disabled))) {display:none}
  .board-picker .original-board .round-card-slot .action-card {width:100%;height:100%;min-height:0}
  .board-picker .original-board .placed-worker {max-width:36px;height:auto}
- .board-picker .future-round-markers {display:none}
+ .board-picker .future-round-markers,.board-picker .future-round-resources {display:none}
 }
 .bake-workflow {margin:12px 0}
 .bake-workflow h4 {font:600 22px Georgia,serif;margin:8px 0 12px}

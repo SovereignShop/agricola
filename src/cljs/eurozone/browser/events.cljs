@@ -11,8 +11,8 @@
 (rf/reg-event-db :draft
   (fn [db [_ key value]]
     (cond-> (assoc-in db [:draft key] value)
-      (= key :improvement) (update :draft dissoc :upgrade :bake-grain :card :discount-resource :discount-resources :manufacturer-discount :wood-carver? :return-improvement :return-improvements :as-major?)
-      (= key :card) (update :draft dissoc :improvement :upgrade :bake-grain :payment-option :return-improvement :return-improvements :as-major? :discount-resource :discount-resources :manufacturer-discount :wood-carver?)
+      (= key :improvement) (update :draft dissoc :upgrade :bake-grain :use-beehive? :card :discount-resource :discount-resources :manufacturer-discount :wood-carver? :return-improvement :return-improvements :as-major?)
+      (= key :card) (update :draft dissoc :improvement :upgrade :bake-grain :use-beehive? :payment-option :return-improvement :return-improvements :as-major? :discount-resource :discount-resources :manufacturer-discount :wood-carver?)
       (= key :payment-option) (update :draft dissoc :discount-resource :discount-resources)
       (= key :discount-resource) (update :draft dissoc :discount-resources))))
 (rf/reg-event-db :draft-discount-choice

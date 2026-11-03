@@ -214,4 +214,27 @@
   :ability {:op :return-animal-loan} :score {:type :unreturned-animals}}
  :catalog/original-expansion-fr-107-sculptors-son
  {:triggers [{:event :use-space :effect {:op :gain :goods {:wood [:workshop-source-bonus :wood] :clay [:workshop-source-bonus :clay] :reed [:workshop-source-bonus :reed]}}}]}
+
+;; Community batch thirteen: final English prints and documented errata.
+ :catalog/original-expansion-fr-2-absinthe
+ {:play [{:op :schedule :offsets [1 2 3 4 5] :marker-goods {:food 1} :effect {:op :absinthe-ready}}]
+  :triggers [{:event :work-start :condition [:test [:= [:card-state :catalog/original-expansion-fr-2-absinthe :ready-round] [:round]]]
+              :effect {:op :place-space-goods :count 1 :goods {:food 1}}}]}
+ :catalog/original-expansion-fr-5-artists-garden
+ {:triggers [{:event :return-home :effect {:op :harvest-field :optional? true}}]}
+ :catalog/original-expansion-fr-14-chocolate {:name "Chocolade" :play [{:op :store-goods :goods {:food 4}}] :passive {:occupation-stock-food true}}
+ :catalog/original-expansion-fr-46-straw-thatched-hut {:requires [:>= [:fields] 2] :passive {:straw-thatched-hut true}}
+ :catalog/original-expansion-fr-62-animal-welfarist
+ {:triggers [{:event :return-home :condition [:test [:welfarist-qualified]] :effect {:op :gain :goods {:sheep 1 :boar 1 :cattle 1}}}]}
+ :catalog/original-expansion-fr-65-benefactor {:ability {:op :benefactor}}
+ :catalog/original-expansion-fr-67-cabbage-lover
+ {:play [{:op :gain :goods {:vegetable 1}}]
+  :triggers [{:event :convert-food :condition [:test [:> [:converted :vegetable] 0]] :effect {:op :cabbage-lover :optional? true}}]
+  :score {:type :expression :value [:min 5 [:stored-good :catalog/original-expansion-fr-67-cabbage-lover :clay]]}}
+ :catalog/original-expansion-fr-74-country-doctor {:passive {:country-doctor true}}
+ :catalog/original-expansion-fr-92-martial-artist
+ {:triggers [{:event :before-field-phase :condition [:test [:not [:= [:context :manure?] true]]]
+              :effect {:op :discard-minors :max-cards 2 :food-per-card 2 :optional? true}}]}
+ :catalog/original-expansion-fr-97-parquet-setter
+ {:triggers [{:event :return-home :effect {:op :gain :goods {:wood [:if [:> [:work-used-spaces] 0] 1 0] :food [:if [:>= [:work-used-spaces] 2] 1 0]}}}]}
 }

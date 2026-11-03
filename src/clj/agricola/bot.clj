@@ -91,8 +91,10 @@
                    n (range 1 (inc (min 3 (- (a/amount p resource) (if (= resource :grain) grain 0)))))]
                {resource n}))))
 (defn with-bake-cooking [p option grain-key]
-  (for [goods (bake-cooking-options p (get option grain-key 0))]
-    (cond-> option (seq goods) (assoc :cook-with-bake goods))))
+  (for [goods (bake-cooking-options p (get option grain-key 0))
+        use-beehive? (if (and (a/beehive-oven-id p) (pos? (get option grain-key 0))) [nil true false] [nil])]
+    (cond-> option (seq goods) (assoc :cook-with-bake goods)
+                   (some? use-beehive?) (assoc :use-beehive? use-beehive?))))
 (defn major-options [state p]
   (for [cid (sort (:available-improvements state))
         upgrade (if (:upgrade (a/improvements cid))
@@ -210,6 +212,29 @@
                                       {:animals {:sheep sheep :boar boar :cattle cattle}}))
                   :mark-fence-space (map #(hash-map :space %) (g/fence-marker-spaces state pid))
                   :harvest-helper (g/harvest-helper-options state pid)
+                  :schedule-resource-order
+                  (for [wood [:wood :clay :reed :stone]
+                        clay (remove #{wood} [:wood :clay :reed :stone])
+                        reed (remove #{wood clay} [:wood :clay :reed :stone])
+                        stone (remove #{wood clay reed} [:wood :clay :reed :stone])]
+                    {:resources [wood clay reed stone]})
+                  :harvest-field (map #(hash-map :cell %) (g/harvestable-field-cells state pid))
+                  :apple-tree (map #(hash-map :cell %) (g/apple-tree-cells state pid))
+                  :seasonal-plants (map #(hash-map :cell (:cell %)) (g/seasonal-plantings state pid (:context head)))
+                  :return-stables
+                  (for [stables (subsets (filter #(get-in p [:farm % :stable]) (range 15)))
+                        :when (<= (:min-stables effect 1) (count stables) (:max-stables effect 2))]
+                    {:stables stables})
+                  :take-wild-breeding (map #(hash-map :space %) (get-in head [:context :added-spaces]))
+                  :discard-minors
+                  (let [hand (vec (get-in p [:hand :minor]))]
+                    (map #(hash-map :cards %)
+                         (concat [[]] (map vector hand)
+                                 (for [i (range (count hand)) j (range (inc i) (count hand))]
+                                   [(nth hand i) (nth hand j)]))))
+                  :choose-score-category (map #(hash-map :category %) [:grain :vegetables :sheep :boar :cattle :fields :pastures :stables])
+                  :cabbage-lover (map #(hash-map :amount %) (range 1 (inc (g/cabbage-lover-max state pid (:context head)))))
+                  :livestock-keeper (map #(hash-map :animal %) (filter #(>= (a/amount p %) 2) a/animals))
                   :room-resource
                   (let [allowed (if (= :context (first (:cells effect))) (expression/evaluate state pid (:context head) (:cells effect)) (:cells effect))
                         cells (vec (remove (set (keys (get-in p [:card-state (:card head) :room-resources])))
@@ -243,7 +268,7 @@
                   :juggler [{}]
                   :return-animal-loan (g/animal-loan-choices p (:card head))
                   :collect-cooked-animal (map #(hash-map :amount %) (range 1 (inc (get-in head [:context :converted-goods (:resource effect)] 0))))
-                  (:plow :stable :plowsmith) (map #(hash-map :cell %) (range 15))
+                  (:plow :stable :plowsmith) (map #(hash-map :cell %) (or (:only-cells effect) (range 15)))
                   (:mini-pasture :fence-overseer :corral-builder :amateur-fencer) (mini-pasture-choices p)
                   :remove-empty-field (map #(hash-map :cell %) (a/removable-field-cells p))
                   :wheel-plow (plow-decision-candidates p effect)
@@ -265,7 +290,7 @@
                   :silage (g/silage-choices p)
                   :sow-offer [{}]
                   :lodger-remove [{:person-kind :adult} {:person-kind :newborn}]
-                  :reserve-stables (map #(hash-map :rounds %) (remove empty? (subsets (g/planner-rounds state))))
+                  :reserve-stables (map #(hash-map :rounds %) (remove empty? (subsets (g/planner-rounds state effect))))
                   :build-stables (let [cells (filter #(and (= :empty (get-in p [:farm % :type])) (not (get-in p [:farm % :stable]))) (range 15))]
                                    (concat (map #(hash-map :stables [%]) cells)
                                            (for [one cells two cells :when (< one two)] {:stables [one two]})
@@ -360,6 +385,13 @@
        (map #(merge {:type :ability :card cid} %)
             (case (get-in (c/card cid) [:ability :op])
               :tinsmith (map #(hash-map :amount %) (range 1 (inc (a/amount p :clay))))
+              :backyard-well
+              (for [cell (range 15) :when (and (a/empty-cell? p cell) (some (set (a/tiles p :room)) (a/neighbors cell)))]
+                {:cell cell})
+              :benefactor
+              (for [animal a/animals :when (pos? (a/amount p animal))
+                    cell (range 15) :when (and (a/empty-cell? p cell) (some (set (a/tiles p :room)) (a/neighbors cell)))]
+                {:animal animal :rooms [cell]})
               :return-animal-loan (when-not (get-in p [:card-state cid :loan-settled?]) (g/animal-loan-choices p cid))
               (:adopt :buy-stock :cash-card :reed-food :claim-goods :corn-profiteer) [{}]
               :release-stored (if-let [resource (get-in (c/card cid) [:ability :partial-resource])]
