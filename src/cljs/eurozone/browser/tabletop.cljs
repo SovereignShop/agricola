@@ -159,6 +159,31 @@
        (when (= cid :catalog/original-base-i-265-fence-deliveryman)
          (for [[round n] (sort (:reserved-fences p))] ^{:key round}
            [:span (str "Round " round ": " n " fences")]))])))
+(def card-activation-highlights
+  (r/create-class
+   {:display-name "Card activation highlights"
+    :component-did-update
+    (fn [this old-argv]
+      (let [before (second old-argv) after (second (r/argv this))]
+        ;; Never replay old effects when opening a table or reconnecting.
+        (when (and (= (:id before) (:id after))
+                   (not (.-matches (.matchMedia js/window "(prefers-reduced-motion: reduce)"))))
+          (doseq [[pid history] (:card-impact after)
+                  [cid events] history
+                  :let [old (set (map (juxt :move :index) (get-in before [:card-impact pid cid])))]
+                  :when (some #(and (not (old [(:move %) (:index %)]))
+                                    (not (:skipped? %)) (seq (:changes %))) events)
+                  el (array-seq (.querySelectorAll js/document "[data-activation-card]"))
+                  :when (and (= (str cid) (.getAttribute el "data-activation-card"))
+                             (= (str pid) (.getAttribute el "data-activation-player")))]
+            ;; Animate only the halo, preserving stack placement and hover transforms.
+            (.animate el
+                      (clj->js [{:boxShadow "0 0 0 0 rgba(222,174,64,0)"}
+                                {:boxShadow "0 0 0 3px rgba(222,174,64,.9), 0 0 20px 7px rgba(222,174,64,.55)"}
+                                {:boxShadow "0 0 0 0 rgba(222,174,64,0)"}])
+                      #js {:duration 950 :easing "ease-out"})))))
+    :reagent-render (fn [_] nil)}))
+
 (defn table-card [cid hidden? p attrs]
   ;; The enlarged face is a stable hover target outside the scaled camera.
   ;; Native leave events can fire when it covers the source; only real pointer
@@ -216,7 +241,7 @@
                                                             :--card-return-scale-x (/ (.-width rect) w)
                                                             :--card-return-scale-y (/ (.-height rect) h)})))) 350)))))]
     [:<>
-     [:button.tt-card (merge attrs {:ref (native-ref {"onpointerenter" #(when (and (not hidden?) (nil? @preview)) (enter! %))
+     [:button.tt-card (merge attrs (when-not hidden? {:data-activation-card (str cid) :data-activation-player (str (:id p))}) {:ref (native-ref {"onpointerenter" #(when (and (not hidden?) (nil? @preview)) (enter! %))
                                                       "onpointerleave" #(when-not @preview (cancel!))
                                                       "onpointercancel" cancel!})})
       [card-face cid hidden? p]
@@ -557,6 +582,7 @@
           inspect-from-deck! (fn [cid p] (reset! popup {:kind :card :id cid :player p :deck-path deck-path}))]
 
       [:main.game.tt-game {:data-revision (:revision room) :data-motion-table (:id room) :data-material (name (if (some #{(:material @prefs)} (map first materials)) (:material @prefs) :tan)) :data-view (if (number? @view) (str "player-" @view) (name @view))}
+       [card-activation-highlights room]
        [:div.tt-toolbar
         [button "← Tables" #(dispatch :navigate nil) {:class "tt-back"}]
         [:nav.tt-views {:aria-label "Table views"}
