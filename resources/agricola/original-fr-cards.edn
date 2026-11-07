@@ -252,4 +252,49 @@
   :score {:type :expression :value [:card-state :catalog/original-expansion-fr-93-mastermind :bonus-plays]}}
  :catalog/original-expansion-fr-106-sailboat-constructor {:triggers [{:event :field-phase :effect {:op :sailboat-constructor :optional? true}}]}
  :catalog/original-expansion-fr-110-stroller {:play [{:op :stroller}] :triggers [{:event :field-phase :effect {:op :take-stroller}}]}
+
+;; FR batch fifteen: verified final English prints and compendium errata.
+ :catalog/original-expansion-fr-26-grotto
+ {:play [{:op :store-goods :goods {:clay 3 :stone 2}}]
+  :passive {:grotto true}
+  :triggers [{:event :round-end :effect {:op :choose :optional? true :options
+   [{:label "2 food → 1 clay" :cost {:food 2} :when [:> [:stored-good :catalog/original-expansion-fr-26-grotto :clay] 0]
+     :effects [{:op :discard-stored :goods {:clay 1}} {:op :gain :goods {:clay 1}}]}
+    {:label "2 food → 1 stone" :cost {:food 2} :when [:> [:stored-good :catalog/original-expansion-fr-26-grotto :stone] 0]
+     :effects [{:op :discard-stored :goods {:stone 1}} {:op :gain :goods {:stone 1}}]}]}}]}
+ :catalog/original-expansion-fr-50-threshing-machine-plow
+ {:passive {:action-plow {:extra-fields 2 :spaces #{:plow} :exact-cells [6 7 8]}}
+  :play [{:op :set-uses :uses 1}]}
+ :catalog/original-expansion-fr-60-wood-saw {:ability {:op :wood-saw}}
+ :catalog/original-expansion-fr-73-convict-number-24601
+ {:play [{:op :set-card-state :values {:played-round [:round]}}]
+  :passive {:convict true}
+  :score {:type :expression :value [:* 2 [:- 15 [:card-state :catalog/original-expansion-fr-73-convict-number-24601 :played-round]]]}}
+ :catalog/original-expansion-fr-75-cowboy-and-mother
+ {:triggers [{:event :return-home :condition [:test [:and [:>= [:round] 4] [:<= [:family] 2] [:<= [:cowboy-mother-actions] 2]]]
+  :effect {:op :choose :options
+   [{:label "Receive one food" :effects [{:op :gain :goods {:food 1}}]}
+    {:label "Receive one sheep" :when [:>= [:round] 8] :effects [{:op :gain :goods {:sheep 1}}]}
+    {:label "Receive one wild boar" :when [:>= [:round] 8] :effects [{:op :gain :goods {:boar 1}}]}
+    {:label "Receive one cattle" :when [:>= [:round] 8] :effects [{:op :gain :goods {:cattle 1}}]}
+    {:label "Plow one field" :when [:>= [:round] 12] :effects [{:op :plow}]}]}}]}
+ :catalog/original-expansion-fr-83-good-friend
+ {:play [{:op :store-goods :goods {:wood 3 :clay 2 :stone 2 :reed 1}}]
+  :triggers [{:event :build-improvement :scope :others :condition [:test [:context :minor-play?]]
+             :effect {:op :choose :optional? true :options
+   [{:label "Receive one wood" :when [:and [:> [:paid :wood] 0] [:> [:stored-good :catalog/original-expansion-fr-83-good-friend :wood] 0]] :effects [{:op :discard-stored :goods {:wood 1}} {:op :gain :goods {:wood 1}}]}
+   {:label "Receive one clay" :when [:and [:> [:paid :clay] 0] [:> [:stored-good :catalog/original-expansion-fr-83-good-friend :clay] 0]] :effects [{:op :discard-stored :goods {:clay 1}} {:op :gain :goods {:clay 1}}]}
+   {:label "Receive one reed" :when [:and [:> [:paid :reed] 0] [:> [:stored-good :catalog/original-expansion-fr-83-good-friend :reed] 0]] :effects [{:op :discard-stored :goods {:reed 1}} {:op :gain :goods {:reed 1}}]}
+   {:label "Receive one stone" :when [:and [:> [:paid :stone] 0] [:> [:stored-good :catalog/original-expansion-fr-83-good-friend :stone] 0]] :effects [{:op :discard-stored :goods {:stone 1}} {:op :gain :goods {:stone 1}}]}
+   ]}}]}
+ :catalog/original-expansion-fr-94-miser {:passive {:miser true}}
+ :catalog/original-expansion-fr-114-turkey-breeder
+ {:play [{:op :build-fences :free-fences 4 :max-fences 4 :optional? true}
+         {:op :build-stables :stable-cost 0 :max-stables 1 :optional? true}]
+  :triggers [{:event :before-final-score :effect {:op :fr-turkey-debt}}]}
+ :catalog/original-expansion-fr-118-wood-gatherers
+ {:triggers [{:event :round-end :condition [:test [:>= [:construction-wood-spent] 4]] :effect {:op :gain :goods {:wood 2}}}]}
+ :catalog/original-expansion-fr-119-workaholic
+ {:play [{:op :conditional :condition [:test [:= [:animals] 0]] :effect {:op :store-goods :goods {:wood 5 :clay 4 :stone 3}}}]
+  :ability {:op :workaholic}}
 }
