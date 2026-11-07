@@ -972,13 +972,15 @@
 (defn room-payment-picker [p draft edit-entry!]
   (r/with-let [chosen (r/atom nil)]
     (let [cell (if (some #{@chosen} (:rooms draft)) @chosen (first (:rooms draft)))
-          options (get-in draft [:room-options cell]) choices (vec (a/room-payment-choices p))]
+          options (get-in draft [:room-options cell])
+          discount (when (and (#{:build :house-building} (:space draft)) (not= false (:miser? draft)) (= 1 (count (:rooms draft))) (some true? (cards/passives p :miser))) {(:house p) 1 :reed 1})
+          choices (keep (fn [option] (try [option (a/room-cost p option discount)] (catch :default _ nil))) (a/room-payment-choices p))]
       [:div.room-payment-picker
        [:p.small "Click a planned room to set its payment. Each room can use different materials."]
        [farm-picker (reduce #(assoc-in %1 [:farm %2 :type] :room) p (:rooms draft)) (:rooms draft) [cell] #(reset! chosen %)]
        [graphical-choices "Payment for the highlighted room" options #(edit-entry! :room-options cell %)
         (cons [nil "Use the choices above" [choice-icon :none]]
-              (for [option choices :let [cost (a/room-cost p option (when (and (#{:build :house-building} (:space draft)) (not= false (:miser? draft)) (= 1 (count (:rooms draft))) (some true? (cards/passives p :miser))) {(:house p) 1 :reed 1}))]]
+              (for [[option cost] choices]
                 [option (str/join ", " (for [[r n] cost :when (pos? n)] (str n " " (labels r)))) [goods cost]]))]])))
 (declare construction-substitution-picker)
 (defn payment-options
@@ -992,8 +994,8 @@
    [:div
     (when (and (#{:build :house-building} (:space draft)) (= 1 (count (:rooms draft))) (some true? (cards/passives p :miser)))
       [graphical-choices "Miser room payment" (not= false (:miser? draft)) #(edit! :miser? %)
-       [[true "Use Miser discount" [goods (a/room-cost p draft {(:house p) 1 :reed 1})]]
-        [false "Pay the full room price" [goods (a/room-cost p draft)]]]])
+       [[true "Use Miser discount" (try [goods (a/room-cost p draft {(:house p) 1 :reed 1})] (catch :default _ [:span.small "Adjust substitutions"]))]
+        [false "Pay the full room price" (try [goods (a/room-cost p draft)] (catch :default _ [:span.small "Adjust substitutions"]))]]])
     (when (or (cards/has? p :a123) (some true? (cards/passives p :original-frame-builder))) [:label.checkbox [:input {:type "checkbox" :checked (boolean (:frame? draft)) :on-change #(edit! :frame? (.. % -target -checked))}] (if (some true? (cards/passives p :original-frame-builder)) "Frame Builder: 2 room materials or 1 renovation material → 1 wood" "Frame Builder: replace 2 clay/stone with 1 wood")])
     (when (a/collector? p) [:label.checkbox [:input {:type "checkbox" :checked (boolean (:brushwood? draft)) :on-change #(edit! :brushwood? (.. % -target -checked))}] "Brushwood Collector: replace reed with 1 wood"])
     (when (some true? (cards/passives p :brushwood-roof))
