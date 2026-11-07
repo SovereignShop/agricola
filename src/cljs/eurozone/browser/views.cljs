@@ -1485,7 +1485,7 @@
                                        :disabled (and (not picked?) (>= (count selected) maximum))
                                        :on-click #(draft! :wm-resources (toggle-value selected resource))}
              [goods {resource 1}] [:span "→"]
-             (if deposit? [choice-icon :draw]
+             (if deposit? [:span "Store"]
                  [goods {resource (inc (get-in p [:card-state cid :stored-goods resource] 0))}])])]
          (when (seq selected) [:div.choice-recipe [goods (frequencies selected)] [:span (if deposit? "→ stored on card" "from general supply → card")]
                                 [:div.choice-card-face {:style {:width "80px"}} [tabletop/card-face cid false p]]])])
