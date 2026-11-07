@@ -103,7 +103,7 @@ def check(base):
                     point = svg.evaluate("(svg,label)=>{const root=svg.getBoundingClientRect(),edge=svg.querySelector('[aria-label=\"'+label+'\"]').getBoundingClientRect();return {x:edge.x-root.x+edge.width/2,y:edge.y-root.y+edge.height/2}}", 'Fence '+edge)
                     svg.click(position=point)
                 snap('turkey-fences'); resolve(d)
-                d = pending('Turkey Breeder'); shape(d, True); cell(d, 1); snap('turkey-stable'); resolve(d)
+                d = pending('Turkey Breeder'); shape(d, True); cell(d, 1, 'empty, pasture'); snap('turkey-stable'); resolve(d)
                 expect(d).to_have_count(0); qty('wood', wood)
                 restart('Turkey Breeder'); pending('Turkey Breeder').get_by_role('button', name='Skip this effect', exact=True).click()
                 pending('Turkey Breeder').get_by_role('button', name='Skip this effect', exact=True).click(); expect(pending('Turkey Breeder')).to_have_count(0)
