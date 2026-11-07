@@ -190,6 +190,12 @@
   (let [p (g/p state pid) head (first (:effect-queue state)) effect (g/plow-effect (:effect head))
         effect (cond-> effect (contains? effect :max-fields) (update :max-fields #(expression/evaluate state pid (:context head) %)))
         options (case (:op effect)
+                  (:chemist :fish-pond-place :fish-pond-store :lady-arrival :almshouse :slapdash-return)
+                  (g/wm-fifteen-choices state pid (:card head) effect (:context head))
+                  :reserve-family (map #(hash-map :rounds %) (remove empty? (subsets (g/family-planner-rounds state))))
+                  (:minder-deposit :minder-increase)
+                  (for [resources (remove empty? (subsets (if (= :minder-deposit (:op effect)) g/building-resources (g/minder-resources p (:card head)))))
+                        :when (<= (count resources) (if (= :minder-deposit (:op effect)) 4 2))] {:resources resources})
                   (:fiddler :manual-labourer) [{}]
                   :fish-seller (for [one (keys g/fish-seller-prices) two (cons nil (keys g/fish-seller-prices))]
                                  {:goods (cond-> [one] two (conj two))})
@@ -425,6 +431,8 @@
      (fn [cid]
        (map #(merge {:type :ability :card cid} %)
             (case (get-in (c/card cid) [:ability :op])
+              :borrower-repay [{}]
+              :minder-collect (map #(hash-map :resource %) (g/minder-resources p cid))
               :pawn-improvement (map #(hash-map :improvement %) (g/pawnable-improvements p))
               :light-bonfire [{}]
               :wine-closet (map #(hash-map :round %) (range (inc (:round state)) 15))

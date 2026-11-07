@@ -203,7 +203,7 @@
   (- 4 (count (filter :stable (:farm p))) (reduce + 0 (vals (:reserved-stables p))) (reduce + 0 (vals (:stored-stables p)))))
 (defn family-limit [p] (- 5 (:removed-family p 0)))
 (defn reed-hut-count [p] (if (:reed-hut? p) 1 0))
-(defn unused-person-tokens [p] (max 0 (- (family-limit p) (:family p) (reed-hut-count p))))
+(defn unused-person-tokens [p] (max 0 (- (family-limit p) (:family p) (reed-hut-count p) (reduce + 0 (vals (:reserved-family p))))))
 (defn workers-in-play [p] (+ (:family p) (:guests p 0) (reed-hut-count p)))
 
 (defn build-stables-legacy
@@ -1006,16 +1006,20 @@
     (max 0 (- (+ family-food (* rate (reed-hut-count p)) (if (some true? (cards/passives p :sheepdog)) 1 0))
               (reduce + 0 (cards/passives p :harvest-food-discount))
               (if (= (:round g) (get-in p [:round-feeding-discount :round])) (get-in p [:round-feeding-discount :amount] 0) 0)))))
-(defn field-harvest [p]
+(defn field-harvest
+  ([p] (field-harvest p {}))
+  ([p context]
   (reduce (fn [p cell]
             (let [path (field-path cell) {:keys [crop count]} (get-in p path)]
               (if (and crop (pos? (or count 0)))
-                (cond-> (gain p {crop 1})
+                (cond-> (if (and (not (:manure? context)) (:harvest? context) (= cell :catalog/original-expansion-wm-68-cash-crop))
+                          (update p :bonus-points (fnil inc 0)) (gain p {crop 1}))
                   (not (and (= crop :vegetable) (some true? (cards/passives p :preserve-harvest-vegetables))))
                   (remove-field-crop cell crop)) p)))
-          p (concat (range 15) (keys (:card-fields p)))))
+          p (concat (range 15) (keys (:card-fields p))))))
 (defn craft-stock [p resource]
   (+ (amount p resource)
+     (get-in p [:card-state :catalog/original-expansion-wm-47-storehouse-minder :stored-goods resource] 0)
      (if (= resource :wood) (reduce + 0 (map #(field-crop-count % :wood) (vals (:card-fields p)))) 0)))
 (defn threshold-score [n thresholds] (if (< n (first thresholds)) -1 (count (filter #(>= n %) thresholds))))
 (defn score [p]
@@ -1150,12 +1154,19 @@
                (require! (and ((:improvements p) id) craft) "You do not own that craft improvement.")
                (-> (gain (pay p goods) {:food (+ rate wheel (if plane (if plane-extra? 2 1) 0))})
                    (artisan-bonus goods context true)))) p craft)))
+(def begging-origin-cards #{:catalog/original-expansion-wm-6-borrower :catalog/original-expansion-wm-56-almshouse})
+(defn track-feeding-begging? [g]
+  (or (some begging-origin-cards (:minor-deck g)) (some begging-origin-cards (:occupation-deck g))
+      (some (fn [p] (or (:begging-origins p)
+                    (some begging-origin-cards (concat (cards/owned p) (mapcat val (:hand p)))))) (:players g))))
 (defn feed [g pid {:keys [convert craft plane-extra?] :or {convert {} craft []}}]
   (require! (= :feeding (:phase g)) "It is not the feeding phase.")
   (let [p (convert-food (get-in g [:players pid]) convert (select-keys g [:phase :round]))
         p (craft-food p craft plane-extra? (select-keys g [:phase :round]))
         needed (food-needed g p) missing (max 0 (- needed (amount p :food)))
-        g (-> g (assoc-in [:players pid] (-> p (pay {:food (min needed (amount p :food))}) (update :begging + missing)))
+        g (-> g (assoc-in [:players pid] (-> p (pay {:food (min needed (amount p :food))}) (update :begging + missing)
+                          (cond-> (and (pos? missing) (track-feeding-begging? g))
+                            (update-in [:begging-origins :feeding] (fnil + 0) missing))))
               (update :fed conj pid) (log-event (str (:name p) " fed their family" (when (pos? missing) (str " · " missing " begging marks")))))
         next (first (remove (:fed g) (or (:feeding-order g)
                                         (map #(mod (+ pid %) (count (:players g))) (range 1 (inc (count (:players g))))))))]

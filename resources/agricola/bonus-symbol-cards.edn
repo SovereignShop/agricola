@@ -2,7 +2,8 @@
 ;; already qualify. These cards award points through events/abilities instead.
 ;; English prints visually inspected; source images and hashes are in the art
 ;; manifest. Tavern and Clay Deposit are explicitly confirmed by the Compendium.
-#{:catalog/original-base-i-100-tavern
+#{:catalog/original-expansion-wm-68-cash-crop
+ :catalog/original-base-i-100-tavern
   :catalog/original-base-i-337-clay-deposit
   :catalog/original-expansion-g-23-glutton
   :catalog/original-expansion-g-66-birthstone

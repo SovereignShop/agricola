@@ -286,4 +286,36 @@
  :catalog/original-expansion-wm-104-reed-nursery {:passive {:reed-nursery true} :final-choice {:op :reed-nursery-points :optional? true}}
  :catalog/original-expansion-wm-110-storage-shed {:requires-effect? true :play [{:op :storage-shed}] :passive {:storage-shed true}}
  :catalog/original-expansion-wm-114-wine-closet {:play [{:op :gain :goods {:vegetable 1}}] :ability {:op :wine-closet}}
+
+ :catalog/original-expansion-wm-6-borrower
+ {:play [{:op :borrower-start}]
+  :ability {:op :borrower-repay}}
+ :catalog/original-expansion-wm-9-chemist
+ {:triggers [{:event :use-space :effect {:op :chemist :optional? true}}]}
+ :catalog/original-expansion-wm-19-family-planner
+ {:play [{:op :reserve-family :optional? true}]}
+ :catalog/original-expansion-wm-33-lady-in-waiting
+ {:play [{:op :reserve-lady}]}
+ :catalog/original-expansion-wm-47-storehouse-minder
+ {:play [{:op :minder-deposit :optional? true}]
+  :triggers [{:event :before-field-phase :condition [:test [:not [:= [:context :manure?] true]]]
+              :effect {:op :minder-increase :optional? true}}]
+  :ability {:op :minder-collect}}
+ :catalog/original-expansion-wm-56-almshouse
+ {:triggers [{:event :after-feed :effect {:op :almshouse :optional? true}}]}
+ :catalog/original-expansion-wm-68-cash-crop
+ {:passive {:card-field :any :cash-crop true}}
+ :catalog/original-expansion-wm-81-fish-pond
+ {:requires [:>= [:unused] 1] :requires-effect? true
+  :play [{:op :fish-pond-place}]
+  :triggers [{:event :use-space :spaces #{:fishing} :effect {:op :fish-pond-store :optional? true}}]
+  :score {:type :expression :value [:if [:>= [:stored-good :catalog/original-expansion-wm-81-fish-pond :food] 8] 4
+                                  [:if [:>= [:stored-good :catalog/original-expansion-wm-81-fish-pond :food] 6] 3
+                                   [:if [:>= [:stored-good :catalog/original-expansion-wm-81-fish-pond :food] 4] 2
+                                    [:if [:>= [:stored-good :catalog/original-expansion-wm-81-fish-pond :food] 1] 1 -1]]]]}}
+ :catalog/original-expansion-wm-105-rotherham-plow
+ {:passive {:action-plow {:extra-fields 1 :spaces #{:plow} :unlimited? true :separated? true}}}
+ :catalog/original-expansion-wm-107-slapdash-renovation
+ {:triggers [{:event :turn-end :spaces #{:renovate :redevelop :farm-redevelopment}
+              :effect {:op :slapdash-return :optional? true}}]}
 }

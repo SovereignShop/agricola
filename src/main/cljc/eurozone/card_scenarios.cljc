@@ -5,6 +5,26 @@
 
 (def scenarios
   [
+   {:id "borrower" :card :catalog/original-expansion-wm-6-borrower :name "Borrower" :players 2
+    :description "Borrower has supplied seven food and two begging cards. Open its card and click the pictured three-food repayment to discard one eligible begging card."}
+   {:id "chemist" :card :catalog/original-expansion-wm-9-chemist :name "Chemist" :players 3
+    :description "Wood has just been taken from the Forest. Click another building-resource accumulation space to leave one clay there and receive two food, or decline."}
+   {:id "family-planner" :card :catalog/original-expansion-wm-19-family-planner :name "Family Planner" :players 2
+    :description "Click the future round cards to reserve available family pieces for rounds five, eight and eleven. Reserved pieces cannot be used for earlier growth; each arrival still needs room."}
+   {:id "lady-in-waiting" :card :catalog/original-expansion-wm-33-lady-in-waiting :name "Lady in Waiting" :players 3
+    :description "The person reserved in stage one is arriving in round twelve. Pay two food to bring this adult home and act this round even without a spare room, or decline."}
+   {:id "storehouse-minder" :card :catalog/original-expansion-wm-47-storehouse-minder :name "Storehouse Minder" :players 3
+    :description "Click distinct building-resource icons to put one of each selected type on the card. At each harvest choose up to two remaining types to increase; once per round collect every piece of one type."}
+   {:id "almshouse" :card :catalog/original-expansion-wm-56-almshouse :name "Almshouse" :players 2
+    :description "Feed your family with too little food. After feeding, Almshouse offers to discard one feeding penalty; begging cards from Borrower and other cards are ineligible."}
+   {:id "cash-crop" :card :catalog/original-expansion-wm-68-cash-crop :name "Cash Crop" :players 2
+    :description "Take Grain Seeds with the final worker to start harvest. The grain harvested from Cash Crop becomes a permanent bonus point instead of entering your supply."}
+   {:id "fish-pond" :card :catalog/original-expansion-wm-81-fish-pond :name "Fish Pond" :players 2
+    :description "Click an unused farm space to place the clay pond marker. Then take Fishing and choose how much of that pile food to store for the displayed scoring thresholds."}
+   {:id "rotherham-plow" :card :catalog/original-expansion-wm-105-rotherham-plow :name "Rotherham Plow" :players 2
+    :description "Farmland is staged with the first field at the upper left. Click an additional field that does not touch that first field, even diagonally. Both fields must still join the existing fields."}
+   {:id "slapdash-renovation" :card :catalog/original-expansion-wm-107-slapdash-renovation :name "Slapdash Renovation" :players 2
+    :description "Renovation has just finished. Return the person who took that action to your farm so they can take another action later this round, or decline."}
    {:id "alternative-designer" :card :catalog/original-expansion-g-1-alternative-designer :name "Alternative Designer" :players 2
     :description "Use Farm Expansion to add a wooden room. Click the material icons to substitute up to two clay and two stone for wood in that room. Fences and stables allow unrestricted one-for-one substitutions."}
    {:id "fish-seller" :card :catalog/original-expansion-g-17-fish-seller :name "Fish Seller" :players 3
@@ -506,6 +526,18 @@
         base (game/initialize (a/new-game names (vec (mapcat identity a/stages)) 0))
         funded (update base :players #(mapv (fn [p] (a/gain p {:food 12 :wood 8 :clay 8 :reed 6 :stone 8 :grain 3 :vegetable 2})) %))]
     (case id
+      "borrower" (played funded 0 card)
+      "chemist" (-> funded (played 0 card) (game/command 0 {:type :action :space :wood}))
+      "family-planner" (played funded 0 card)
+      "lady-in-waiting" (-> funded (played 0 card) (prepared-round 12))
+      "storehouse-minder" (played funded 0 card)
+      "almshouse" (-> funded (played 0 card) (prepared-round 4) (assoc-in [:players 0 :goods :food] 1) last-harvest-action)
+      "cash-crop" (-> funded (played 0 :catalog/original-base-e-174-tutor) (played 0 card)
+                      (update-in [:players 0] a/sow [{:cell card :crop :grain}]) (prepared-round 4) final-worker)
+      "fish-pond" (played funded 0 card)
+      "rotherham-plow" (-> funded (played 0 :catalog/original-base-e-174-tutor) (played 0 card)
+                           (prepare-fields [1 6]) (game/command 0 {:type :action :space :plow :cell 0}))
+      "slapdash-renovation" (-> funded (played 0 card) (prepared-round 7) (game/command 0 {:type :action :space :renovate}))
       "alternative-designer" (-> funded (played 0 card) (assoc-in [:players 0 :goods :wood] 1))
       "fish-seller" (-> funded (prepared-round 4) (played 0 card) (game/command 0 {:type :action :space :fishing}))
       "stonepiler" (-> funded (prepared-round 4) (played 0 card))

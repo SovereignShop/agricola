@@ -3289,6 +3289,66 @@
       "source": "http://playagricola.com/Agricola/Cards/Cards/xminorWineCloset_2278_31.jpg",
       "sha256": "f837c4b6386d701d82699b18110cf87e0bde6e9bc6e7b9d0401e6b51cb6fc7bc",
       "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-wm068.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorCashCrop_2714_11.jpg",
+      "sha256": "62a4fce37f6da12bad62fe2b56f5f46d0f127cebc87fdc75b9ecc9aae2951448",
+      "note": "Original WM068 Cash Crop; final English physical print. Identity and printed rules visually verified. Batch fifteen."
+    },
+    {
+      "file": "cards/original-wm006.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx1Borrower_176_3.jpg",
+      "sha256": "1ec6399e319ebdaefe9a79a61b2d6fa6f932242707453ebfbe21d3b3a0eef331",
+      "note": "Original WM006 Borrower; final English physical print. Identity and printed rules visually verified. Batch fifteen."
+    },
+    {
+      "file": "cards/original-wm009.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx3Chemist_151_16.jpg",
+      "sha256": "efbb534f7e6c16af952febe8fd9248681b9066ddabef991c0d62696cc832b3c7",
+      "note": "Original WM009 Chemist; final English physical print. Identity and printed rules visually verified. Batch fifteen."
+    },
+    {
+      "file": "cards/original-wm019.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx1FamilyPlanner_646_5.jpg",
+      "sha256": "8d80ecb79de760d03b3defe3487199a5abd2294eb9fc41bc998a4161566d5dec",
+      "note": "Original WM019 Family Planner; final English physical print. Identity and printed rules visually verified. Batch fifteen."
+    },
+    {
+      "file": "cards/original-wm047.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx3StorehouseMinder_886_9.jpg",
+      "sha256": "55241222d5abc297d558a345dc64cadd8c402ddb1a48fb8034bf6b7813781adb",
+      "note": "Original WM047 Storehouse Minder; final English physical print. Identity and printed rules visually verified. Batch fifteen."
+    },
+    {
+      "file": "cards/original-wm056.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorAlmshouse_655_8.jpg",
+      "sha256": "8e1348ae69838454f2bc093263524c7237667e824ee6d39ff09c4cb5188df1f1",
+      "note": "Original WM056 Almshouse; final English physical print. Identity and printed rules visually verified. Batch fifteen."
+    },
+    {
+      "file": "cards/original-wm081.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorFishPond_2237_6.jpg",
+      "sha256": "4f4c496b0b6d61b8509cc51f1161f0421c9a817fef97de23901b31eae3b41cad",
+      "note": "Original WM081 Fish Pond; final English physical print. Identity and printed rules visually verified. Batch fifteen."
+    },
+    {
+      "file": "cards/original-wm105.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorRotherhamPlow_559_6.jpg",
+      "sha256": "493045eec4c4a8e6e3f0c31dec691f00947cb99107ec48685d57e5b9b53dd71d",
+      "note": "Original WM105 Rotherham Plow; final English physical print. Identity and printed rules visually verified. Batch fifteen."
+    },
+    {
+      "file": "cards/original-wm033.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx3LadyinWaiting_146_16.jpg",
+      "sha256": "6c146259fc863c7bd02b0b06944d7a8d58bb46f60a8ff416305b63a2531cf84b",
+      "note": "Original WM033 Lady in Waiting; final English physical print. Identity and printed rules visually verified. Batch fifteen."
+    },
+    {
+      "file": "cards/original-wm107.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorSlapdashRenovation_621_4.jpg",
+      "sha256": "db5be6742fc775f589b66a90db874af3d4f1a7ed36ec48c0f6317e006fc12ad4",
+      "note": "Original WM107 Slapdash Renovation; final English physical print. Identity and printed rules visually verified. Batch fifteen."
     }
   ]
 }
