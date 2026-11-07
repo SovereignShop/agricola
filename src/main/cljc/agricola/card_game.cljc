@@ -3072,10 +3072,12 @@
     (a/require! (#{:preparation :work :return-home :field-harvest :feeding :breeding :housing :finish-round} (:phase g)) "This ability is unavailable during the current phase.")
     (case op
       :wood-saw (do (a/require! (fr/wood-saw-available? g pid) "Every other player must have a larger family.")
-                    (queue-front g [(task pid card {:op :build-rooms :optional? true} {})]))
+                    (let [head (task pid card {:op :build-rooms :optional? true} {})]
+                      (if (seq (:rooms cmd)) (run-effect g head cmd) (queue-front g [head]))))
       :workaholic (let [options (fr/workaholic-options player card)]
                     (a/require! (seq options) "House enough animals to collect a remaining resource pile.")
-                    (queue-front g [(task pid card {:op :choose :optional? true :options options} {})]))
+                    (let [head (task pid card {:op :choose :optional? true :options options} {})]
+                      (if (contains? cmd :option) (run-effect g head cmd) (queue-front g [head]))))
       :tinsmith (let [rate (tinsmith-rates g) n (get cmd :amount 1)]
                   (a/require! (and (a/natural? n) (pos? n)) "Choose a positive amount of clay to exchange.")
                   (update-in g [:players pid] #(-> % (a/pay {:clay n})
