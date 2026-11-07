@@ -1019,7 +1019,8 @@
           p (concat (range 15) (keys (:card-fields p))))))
 (defn craft-stock [p resource]
   (+ (amount p resource)
-     (get-in p [:card-state :catalog/original-expansion-wm-47-storehouse-minder :stored-goods resource] 0)
+     (if (cards/has? p :catalog/original-expansion-wm-47-storehouse-minder)
+       (get-in p [:card-state :catalog/original-expansion-wm-47-storehouse-minder :stored-goods resource] 0) 0)
      (if (= resource :wood) (reduce + 0 (map #(field-crop-count % :wood) (vals (:card-fields p)))) 0)))
 (defn threshold-score [n thresholds] (if (< n (first thresholds)) -1 (count (filter #(>= n %) thresholds))))
 (defn score [p]

@@ -95,3 +95,14 @@
   (is (= {:wood 1 :reed 1} (:printed-cost (c/card :catalog/original-expansion-wm-56-almshouse))))
   (is (= 3 (:min-players (c/card minder))))
   (is (c/bonus-symbol? cash)))
+(deftest origin-preservation-and-reservation-cleanup
+  (let [p (-> (g/p (table "borrower") 0) (assoc :begging 4 :begging-origins {:feeding 1 :borrower 2}))
+        one (g/discard-any-begging p) two (g/discard-any-begging one)]
+    (is (= {:feeding 1 :borrower 2} (:begging-origins one)))
+    (is (= {:feeding 1 :borrower 1} (:begging-origins two))))
+  (let [x (resolve! (table "family-planner") {:rounds [5 8 11]})
+        p (g/remove-owned-improvement (g/p x 0) :catalog/original-expansion-wm-19-family-planner)]
+    (is (= 3 (a/unused-person-tokens p)))
+    (is (empty? (:schedule p))))
+  (let [x (table "chemist")]
+    (is (empty? (g/chemist-spaces x 0 {:space :fishing :source-goods {:food 1 :wood 1}})))))
