@@ -14,7 +14,11 @@
 (def improvements (:improvements board-data))
 
 (defn require! [condition message] (when-not condition (throw (ex-info message {:type :illegal-command}))))
-(defn amount [p r] (get-in p [:goods r] 0))
+(defn personal-food-cards [p]
+  (filter #(get-in (cards/card %) [:passive :personal-stock-food]) (cards/active-owned p)))
+(defn personal-stock-food [p]
+  (reduce + 0 (map #(get-in p [:card-state % :stored-goods :food] 0) (personal-food-cards p))))
+(defn amount [p r] (+ (get-in p [:goods r] 0) (if (= r :food) (personal-stock-food p) 0)))
 (defn natural? [n] (and (integer? n) (<= 0 n)))
 (defn quantities! [m allowed]
   (require! (and (map? m) (every? (set allowed) (keys m)) (every? natural? (vals m))) "Invalid resource quantities."))
@@ -24,7 +28,12 @@
 (defn pay [p goods]
   (quantities! goods resources)
   (require! (every? (fn [[r n]] (>= (amount p r) n)) goods) "You do not have enough resources.")
-  (gain p (into {} (map (fn [[r n]] [r (- n)]) goods))))
+  (let [stock (max 0 (- (:food goods 0) (get-in p [:goods :food] 0)))
+        paid (gain p (into {} (map (fn [[r n]] [r (- (if (= r :food) (- n stock) n))]) goods)))]
+    (first (reduce (fn [[player left] cid]
+                     (let [n (min left (get-in player [:card-state cid :stored-goods :food] 0))]
+                       [(if (pos? n) (update-in player [:card-state cid :stored-goods :food] - n) player) (- left n)]))
+                   [paid stock] (if (pos? stock) (personal-food-cards p) [])))))
 (defn cell? [i] (and (integer? i) (<= 0 i 14)))
 (defn neighbors [i]
   (let [r (quot i 5) c (mod i 5)]
@@ -974,7 +983,7 @@
                   (let [a (action-definition g id)]
                     (if (:accumulate a) (update-in g [:piles id] #(merge-with + (or % {}) (:gain a))) g))) g ids)
         (update :players #(mapv (fn [p]
-                                 (let [food (+ (well-food p r) (get-in p [:well-deliveries r] 0))
+                                 (let [food (if (cards/has? p :catalog/original-expansion-g-45-pilgrim) 0 (+ (well-food p r) (get-in p [:well-deliveries r] 0)))
                                        ;; Stage prices apply before any optional start-round action.
                                        p (cond-> p
                                            (:temporary-animal-cooking p) (dissoc :temporary-animal-cooking)

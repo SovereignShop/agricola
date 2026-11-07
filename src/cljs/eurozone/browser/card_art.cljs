@@ -2,7 +2,17 @@
 (def available #{:revised-base/a002 :revised-base/a005 :revised-base/a009 :revised-base/a012 :revised-base/a016 :revised-base/a019 :revised-base/a024 :revised-base/a026 :revised-base/a032 :revised-base/a033 :revised-base/a038 :revised-base/a044 :revised-base/a050 :revised-base/a053 :revised-base/a055 :revised-base/a056 :revised-base/a063 :revised-base/a067 :revised-base/a069 :revised-base/a071 :revised-base/a075 :revised-base/a078 :revised-base/a080 :revised-base/a086 :revised-base/a087 :revised-base/a088 :revised-base/a090 :revised-base/a098 :revised-base/a102 :revised-base/a108 :revised-base/a110 :revised-base/a112 :revised-base/a114 :revised-base/a116 :revised-base/a119 :revised-base/a120 :revised-base/a123 :revised-base/a125 :revised-base/a143 :revised-base/a147 :revised-base/a155 :revised-base/a160 :revised-base/a165 :revised-base/b002 :revised-base/b008 :revised-base/b010 :revised-base/b013 :revised-base/b016 :revised-base/b019 :revised-base/b024 :revised-base/b025 :revised-base/b033 :revised-base/b036 :revised-base/b039 :revised-base/b045 :revised-base/b047 :revised-base/b050 :revised-base/b056 :revised-base/b057 :revised-base/b061 :revised-base/b062 :revised-base/b066 :revised-base/b068 :revised-base/b074 :revised-base/b077 :revised-base/b080 :revised-base/b084 :revised-base/b087 :revised-base/b089 :revised-base/b091 :revised-base/b095 :revised-base/b097 :revised-base/b098 :revised-base/b099 :revised-base/b102 :revised-base/b104 :revised-base/b107 :revised-base/b108 :revised-base/b109 :revised-base/b114 :revised-base/b121 :revised-base/b123 :revised-base/b126 :revised-base/b136 :revised-base/b142 :revised-base/b145 :revised-base/b156 :revised-base/b163 :revised-base/b164 :revised-base/b166})
 ;; Exact pack identities keep reprints and Original cards separate.
 (def printed-files
-  {:catalog/original-expansion-fr-20-five-rings "original-fr020.jpg"
+  {:catalog/original-expansion-g-30-headmaster "original-g030.jpg"
+:catalog/original-expansion-g-39-mathematician "original-g039.jpg"
+:catalog/original-expansion-g-40-miner "original-g040.jpg"
+:catalog/original-expansion-g-43-opportunist "original-g043.jpg"
+:catalog/original-expansion-g-45-pilgrim "original-g045.jpg"
+:catalog/original-expansion-g-46-pond-watchman "original-g046.jpg"
+:catalog/original-expansion-g-62-animal-farm "original-g062.jpg"
+:catalog/original-expansion-g-67-bountiful-harvest "original-g067.jpg"
+:catalog/original-expansion-g-68-chronicle "original-g068.jpg"
+:catalog/original-expansion-g-72-dunghill "original-g072.jpg"
+   :catalog/original-expansion-fr-20-five-rings "original-fr020.jpg"
    :catalog/original-expansion-fr-25-grain-mill-oven "original-fr025.jpg"
    :catalog/original-expansion-fr-66-boatswain "original-fr066.jpg"
    :catalog/original-expansion-fr-81-fiddler "original-fr081.jpg"

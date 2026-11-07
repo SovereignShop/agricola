@@ -3289,6 +3289,66 @@
       "source": "http://playagricola.com/Agricola/Cards/Cards/xminorWineCloset_2278_31.jpg",
       "sha256": "f837c4b6386d701d82699b18110cf87e0bde6e9bc6e7b9d0401e6b51cb6fc7bc",
       "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-g030.jpg",
+      "source": "http://playagricola.com/Agricola/Images/occg4headmaster_v3.jpg",
+      "sha256": "2269b6a1953053d884828e18c629bae78c215ab37d1f0090f0d9b33f07781cf0",
+      "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-g039.jpg",
+      "source": "http://playagricola.com/Agricola/Images/occg4mathematician_v5.jpg",
+      "sha256": "8b7c768a12478a1cedf404e122847d701c7a54b44f341eaae16d0abba4e31d1c",
+      "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-g040.jpg",
+      "source": "http://playagricola.com/Agricola/Images/occg1miner.jpg",
+      "sha256": "75c20cbf1cced4568c8efb96d578e25f529a8cb46427725030483914dc9e9911",
+      "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-g043.jpg",
+      "source": "http://playagricola.com/Agricola/Images/occg4opportunist_v2.jpg",
+      "sha256": "1f00cb403d6a0bb7f806276f595da84b4b9d241f406426c6cfdd36539c8ca492",
+      "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-g045.jpg",
+      "source": "http://playagricola.com/Agricola/Images/occg1pilgrim_v2.jpg",
+      "sha256": "4b590dce79f1ae044252a0d9f145f647c85b4116d0a18f7eaa52cd19ccc9f48b",
+      "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-g046.jpg",
+      "source": "http://playagricola.com/Agricola/Images/occg4pondwatchman_v2.jpg",
+      "sha256": "6e5b01e9a14bb7ce807f0378129f0698d08da9a1aef18e0b6db0a1e38455e26e",
+      "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-g062.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminoranimalfarm.jpg",
+      "sha256": "c3133820f8bb964f562a94f23fad81e491a03c9384380ea1cf1bc472f972fab3",
+      "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-g067.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminorbountifulharvest_v2.jpg",
+      "sha256": "564ae55f559928af8bbc3998ec1fb3d2e71807ef8c8b7eefa7ba3d8df7d21245",
+      "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-g068.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminorchronicle_v3.jpg",
+      "sha256": "43eafbb2c113dd6f73c44c755454ffee0d0b2e26f27b3767cfa86a4284fb4a47",
+      "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-g072.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminordunghill_v2.jpg",
+      "sha256": "758d046e1a6772891813302fc1266aa3ed75483bf1062bb0e1117b880001ab46",
+      "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
     }
   ]
 }

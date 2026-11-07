@@ -190,6 +190,8 @@
   (let [p (g/p state pid) head (first (:effect-queue state)) effect (g/plow-effect (:effect head))
         effect (cond-> effect (contains? effect :max-fields) (update :max-fields #(expression/evaluate state pid (:context head) %)))
         options (case (:op effect)
+                  (:g-mathematician :g-miner :g-opportunist :g-pilgrim :g-animal-farm :g-dunghill)
+                  (g/g-fifteen-choices state pid (:card head) (:op effect) (:context head))
                   (:fiddler :manual-labourer) [{}]
                   :fish-seller (for [one (keys g/fish-seller-prices) two (cons nil (keys g/fish-seller-prices))]
                                  {:goods (cond-> [one] two (conj two))})
@@ -425,6 +427,8 @@
      (fn [cid]
        (map #(merge {:type :ability :card cid} %)
             (case (get-in (c/card cid) [:ability :op])
+              :g-animal-farm (for [r a/animals :when (pos? (a/amount p r))] {:resource r})
+              :g-pilgrim-discard []
               :pawn-improvement (map #(hash-map :improvement %) (g/pawnable-improvements p))
               :light-bonfire [{}]
               :wine-closet (map #(hash-map :round %) (range (inc (:round state)) 15))

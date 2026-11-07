@@ -309,6 +309,9 @@
                                  :style {:left (str (* 100 (/ (nth [16 363 710 1057 1403] (mod i 5)) 1725)) "%")
                                          :top (str (* 100 (/ (if (< i 5) 77 660) 1234)) "%")
                                          :width (str (* 100 (/ 310 1725)) "%") :height (str (* 100 (/ 500 1234)) "%")}}
+         (when available?
+           (for [player (:players g) :when (contains? (get-in player [:card-state :catalog/original-expansion-g-68-chronicle :marked-majors] #{}) cid)]
+             ^{:key (:id player)} [:span.tt-card-markers {:aria-label (str "Chronicle food for " (:name player))} [art/piece :food] [:b 1]]))
          (if available? [card-face cid false nil]
            [:span.tt-major-owner {:style {:border-color (get colors (:id owner))}} (str "Built by " (:name owner))])])]]))
 
