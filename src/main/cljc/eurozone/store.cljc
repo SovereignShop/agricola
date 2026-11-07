@@ -146,7 +146,9 @@
   ;; food and printed scoring; only newly created games use the new defaults.
   ;; Network packets still require an exact match between running clients.
   (or (= @engine-fingerprint fingerprint)
-      (contains? #{;; Community batch fourteen preserves previous saves; 1,146 historical moves verified.
+      (contains? #{;; Community batch fifteen preserves existing saves; historical replay verification required.
+                   "8b15324041cfc7fca80ccaf09d9c18453076d1f0c0e1bca55061eac4933736c1"
+                   ;; Community batch fourteen preserves previous saves; 1,146 historical moves verified.
                    "c8ba3e3fed4def366f2609c73024b3d35ed58739233c4fe83c7139bda221775a"
                    ;; Community batch thirteen preserves previous saves; 1,146 historical moves verified.
                    "9cdd0f378bf8e180c9b85b8e3acae514d9da9b2e158273a0b00fa388e6c8eb0e"
