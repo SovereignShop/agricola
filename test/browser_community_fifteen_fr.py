@@ -106,6 +106,7 @@ def check(base):
                 d = pending('Turkey Breeder'); shape(d, True); cell(d, 1, 'empty, pasture'); snap('turkey-stable'); resolve(d)
                 expect(d).to_have_count(0); qty('wood', wood)
                 restart('Turkey Breeder'); pending('Turkey Breeder').get_by_role('button', name='Skip this effect', exact=True).click()
+                expect(pending('Turkey Breeder').get_by_role('group', name='Stable payment', exact=True)).to_be_visible()
                 pending('Turkey Breeder').get_by_role('button', name='Skip this effect', exact=True).click(); expect(pending('Turkey Breeder')).to_have_count(0)
 
                 next_card('Wood Gatherers'); wood = amount('wood'); action('grain'); qty('wood', wood+2); snap('wood-gatherers')
