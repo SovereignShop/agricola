@@ -1483,9 +1483,10 @@
                                        :disabled (and (not picked?) (>= (count selected) maximum))
                                        :on-click #(draft! :wm-resources (toggle-value selected resource))}
              [goods {resource 1}] [:span "→"]
-             (if deposit? [:div.choice-card-face [tabletop/card-face cid false p]]
+             (if deposit? [choice-icon :draw]
                  [goods {resource (inc (get-in p [:card-state cid :stored-goods resource] 0))}])])]
-         (when (seq selected) [:div.choice-recipe [goods (frequencies selected)] [:span (if deposit? "→ stored on card" "from general supply → card")]])])
+         (when (seq selected) [:div.choice-recipe [goods (frequencies selected)] [:span (if deposit? "→ stored on card" "from general supply → card")]
+                                [:div.choice-card-face {:style {:width "80px"}} [tabletop/card-face cid false p]]])])
       :almshouse [:div.choice-recipe [choice-icon :points] [:span "Remove one feeding penalty · +3 points"]]
       :fish-pond-place [:div [:div.choice-recipe [goods {:clay 1}] [:span "→"] [choice-icon :field]]
                         [:p.small "Place the supply clay on an unused space. The pond permanently occupies it."]
