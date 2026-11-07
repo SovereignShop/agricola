@@ -641,7 +641,8 @@
                             :data-action (name id) :aria-label (str (:name action) ": " (:description action))
                             :title (or (:description action) (:name action))}
        (when (#{:stone-west :stone-east} id)
-         (for [player (:players g) :when (= (:round g) (get-in player [:card-state :catalog/original-expansion-g-40-miner :claim-round]))]
+         (for [player (:players g) :when (and (= (:round g) (get-in player [:card-state :catalog/original-expansion-g-40-miner :claim-round]))
+                      (or (= :work (:phase g)) (some #(and (= (:id player) (:player %)) (= :g-miner (get-in % [:effect :op]))) (:effect-queue g))))]
            ^{:key (:id player)} [:span.action-marker {:aria-label (str "Miner claim · " (:name player))}
                                  [art/piece :stone] [:span "Miner"]]))
        (when round [art/round-card-art :front (art/round-card-indices id)])

@@ -163,3 +163,15 @@
        result (g/run-effect s (g/task 0 :catalog/original-base-i-223-harvest-helper {:op :harvest-helper} {}) {:owner 1 :cell 0})]
   (is (= 2 (get-in result [:players 0 :g-harvest-count])))
   (is (= 1 (stock result 0 :grain)))))
+
+(deftest bountiful-counts-cash-crop-before-its-good-becomes-a-point
+  (let [cash (cid "WM" 68)
+        state (-> (fresh) rich (own 0 (cid "G" 67)) (own 0 cash)
+                  (field 0 :grain 2)
+                  (assoc-in [:players 0 :card-fields cash] {:type :field :crop :grain :count 2})
+                  (assoc-in [:players 0 :g-harvest-count] 0))
+        after (g/crop-harvest state [0] {})]
+    (is (= 2 (get-in after [:players 0 :g-harvest-count])))
+    (is (= 1 (- (stock after 0 :grain) (stock state 0 :grain))))
+    (is (= 1 (- (get-in after [:players 0 :bonus-points] 0)
+                (get-in state [:players 0 :bonus-points] 0))))))

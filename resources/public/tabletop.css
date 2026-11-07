@@ -449,3 +449,5 @@
 @media(max-width:600px) {
  .tt-modal .harvest-panel .conversion-grid {grid-template-columns:minmax(0,1fr)}
 }
+/* Stored goods come from the card; this is a small source marker, not a new card choice. */
+.choice-effect-pieces[aria-label="Take from this card"] .choice-card-back {width:24px;height:36px;flex:0 0 24px}
