@@ -171,7 +171,7 @@
                                    (not (:preparation-reconsider? context)))
                              (or (:effects trigger) [(:effect trigger)]))))))
           (:triggers (c/card cid)))))
-       (c/active-owned (p g owner))))
+       (sort-by #(if (= % :catalog/original-expansion-g-30-headmaster) 0 1) (c/active-owned (p g owner)))))
     (map #(mod (+ (:starting-player g) %) (count (:players g))) (range (count (:players g)))))
            (:arrival-effects context)
            (public-hand-response-tasks g source)
@@ -1100,7 +1100,10 @@
       :g-opportunist (map #(hash-map :resource %) (g-opportunist-resources g context))
       :g-pilgrim (if (every? #(zero? (a/amount player %)) [:wood :clay :reed :stone]) (map #(hash-map :resource %) [:wood :clay :reed :stone]) [{}])
       :g-animal-farm (map #(hash-map :resource %) a/animals)
-      :g-dunghill (map #(hash-map :fields [%]) (g-dunghill-fields player))
+      :g-dunghill (let [fields (g-dunghill-fields player)]
+                     (concat (map #(hash-map :fields [%]) fields)
+                             (when (= 2 (g-dunghill-limit player))
+                               (for [i (range (count fields)) j (range (inc i) (count fields))] {:fields [(nth fields i) (nth fields j)]}))))
       [{}])))
 (defn run-g-fifteen-effect [g {:keys [player card effect context]} choice]
   (let [pid player current (p g pid)]
@@ -1140,7 +1143,7 @@
       :g-dunghill
       (let [fields (:fields choice) eligible (set (g-dunghill-fields current))]
         (a/require! (and (vector? fields) (<= 1 (count fields) (g-dunghill-limit current)) (= (count fields) (count (set fields))) (every? eligible fields)) "Click one or two distinct planted fields, according to your animal types.")
-        (reduce (fn [state cell] (let [field (get-in current (a/field-path cell)) crop (or (get (:crops choice) cell) (:crop field))]
+        (reduce (fn [state cell] (let [field (get-in current (a/field-path cell)) crop (or (get (:crops choice) cell) (when (pos? (:count field 0)) (:crop field)) (first (keys (a/field-crops field))))]
                                   (a/require! (pos? (a/field-crop-count field crop)) "Add a resource matching the selected planted stack.")
                                   (update-in state (into [:players pid] (a/field-path cell))
                                     #(if (= crop (:crop %)) (update % :count inc) (update-in % [:under-crops crop] (fnil inc 0)))))) g fields)))))
@@ -1288,6 +1291,9 @@
             (a/require! (some #{selected} (harvest-helper-options g pid)) "Choose one grain on another player's field.")
             (-> g (update-in [:players owner] #(-> % (a/remove-field-crop (:cell selected) :grain) (a/gain {:food 2})))
                 (update-in [:players pid] a/gain {:grain 1})
+                (cond-> (and (contains? current :g-harvest-count) (not (:manure? context))
+                            (#{:field-harvest :feeding :breeding} (:phase g)))
+                  (update-in [:players pid :g-harvest-count] inc))
                 (cond-> (some true? (c/passives current :observe-extra-grain-harvest))
                   (queue-front [(event :harvest-crops pid {:harvested-grain-fields 1
                                                          :harvested-vegetable-fields 0})]))))
@@ -2223,6 +2229,14 @@
   (let [players (mapv #(p g %) pids)
         after (reduce #(update-in %1 [:players %2] a/field-harvest (assoc context :harvest? true)) g pids)
         after (note-gain-receipts g after :harvest)
+        ;; Track the harvest itself even if Bountiful Harvest is played after
+        ;; the field phase. Only games containing the card opt into this state.
+        after (if (:manure? context) after
+                (reduce (fn [state player]
+                          (if (contains? player :g-harvest-count)
+                            (update-in state [:players (:id player) :g-harvest-count] +
+                              (reduce + 0 (for [resource [:grain :vegetable :reed :wood]]
+                                (- (get-in after [:players (:id player) :received resource] 0) (get-in player [:received resource] 0))))) state)) after players))
         after (if (and (= 14 (:round g)) (not (:manure? context)) (game-has-cards? g #{:catalog/original-expansion-fr-85-harvester}))
                 (reduce (fn [state player]
                           (assoc-in state [:players (:id player) :final-harvest-goods]
@@ -2254,9 +2268,10 @@
           :else player)) %)))
 (defn harvest-members [g] (filterv #(harvest-participant? g %) (range (count (:players g)))))
 (defn start-harvest [g]
+  (let [track-bountiful? (game-has-cards? g #{g-bountiful})]
   (-> g
       (assoc :harvest-skipped (set (for [player (:players g) :when (:skip-next-harvest? player)] (:id player))))
-      (update :players #(mapv (fn [player] (cond-> (dissoc player :skip-next-harvest?) (c/has? player g-bountiful) (assoc :g-harvest-count 0))) %))))
+      (update :players #(mapv (fn [player] (cond-> (dissoc player :skip-next-harvest?) track-bountiful? (assoc :g-harvest-count 0))) %)))))
 (defn continue-step [g name]
   (case name
     :resume-breeding (assoc g :phase :breeding)

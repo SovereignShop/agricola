@@ -261,7 +261,6 @@
  {:printed-cost {} :requires [:>= [:occupations] 2]
   :passive {:personal-stock-food true :observe-harvest-count true :observe-extra-grain-harvest true}
   :ability {:op :release-stored :partial-resource :food}
-  :triggers [{:event :harvest-crops :effect {:op :g-bountiful-crops}}]
   :score {:type :expression :value [:stored-good :catalog/original-expansion-g-67-bountiful-harvest :food]}}
  :catalog/original-expansion-g-68-chronicle
  {:cost-options [{:wood 2} {:clay 2}] :requires [:>= [:occupations] 1]
