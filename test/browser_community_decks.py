@@ -21,7 +21,7 @@ def check(base, fixture_ids):
             expect(page.get_by_role('checkbox', name='Include '+label, exact=True)).to_be_checked()
         page.goto(base+'/#'+gallery)
         prints=set()
-        for deck, label, count in [('hand-occupation','Hand · occupations',121),('hand-minor','Hand · minors',141)]:
+        for deck, label, count in [('hand-occupation','Hand · occupations',139),('hand-minor','Hand · minors',153)]:
             page.locator('[data-owner="0"][data-deck="'+deck+'"]').get_by_role('button',name='Open '+label+' spread',exact=True).click()
             images=page.get_by_role('dialog').locator('img[src*="/cards/original-"]')
             expect(images).to_have_count(count)
