@@ -45,6 +45,7 @@
     (cond
       (and (map? (:cost effect)) (map? (or (:goods effect) (:gain effect))))
       [recipe (amounts (:cost effect)) (amounts (or (:goods effect) (:gain effect)))]
+      (= :discard-stored (:op effect)) [:div.choice-effect-pieces {:aria-label "Take from this card"} [choice-icon :draw] [:span "→"]]
       (= :store-goods (:op effect)) [:div.choice-effect-pieces [choice-icon :draw] [goods (amounts (:goods effect))]]
       (map? (:gain effect)) [goods (amounts (:gain effect))]
       (map? (:goods effect)) [goods (amounts (:goods effect))]
