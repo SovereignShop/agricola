@@ -2109,6 +2109,16 @@
   (let [players (mapv #(p g %) pids)
         after (reduce #(update-in %1 [:players %2] a/field-harvest (assoc context :harvest? true)) g pids)
         after (note-gain-receipts g after :harvest)
+        ;; Presentation only: Cash Crop exchanges its harvest before receipts.
+        ;; Attribute just its permanent points, never the other fields' goods.
+        _ (when *impact-observer*
+            (doseq [pid pids
+                    :let [cid :catalog/original-expansion-wm-68-cash-crop
+                          old-points (get-in g [:players pid :bonus-points] 0)
+                          earned (- (get-in after [:players pid :bonus-points] 0) old-points)]
+                    :when (and (owned? g pid cid) (pos? earned) (not (:manure? context)))]
+              (*impact-observer* (assoc-in after [:players pid :bonus-points] old-points) after
+                                 {:player pid :card cid :effect {:op :cash-crop-harvest} :context context} {})))
         after (if (and (= 14 (:round g)) (not (:manure? context)) (game-has-cards? g #{:catalog/original-expansion-fr-85-harvester}))
                 (reduce (fn [state player]
                           (assoc-in state [:players (:id player) :final-harvest-goods]

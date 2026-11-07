@@ -1,6 +1,6 @@
 (ns agricola.community-wm-fifteen-test
   (:require [clojure.test :refer :all] [agricola.engine :as a] [agricola.card-game :as g]
-            [agricola.card-rules :as c] [eurozone.card-scenarios :as s] [agricola.bot :as bot]))
+            [agricola.card-rules :as c] [agricola.card-impact :as impact] [eurozone.card-scenarios :as s] [agricola.bot :as bot]))
 (defn table [id] (s/initial-state id (:names (s/options id "Ada"))))
 (defn resolve! [state choice] (g/command state (g/acting-player state) (merge {:type :resolve :decision (:decision-id state)} choice)))
 (def borrower :catalog/original-expansion-wm-6-borrower)
@@ -106,3 +106,19 @@
     (is (empty? (:schedule p))))
   (let [x (table "chemist")]
     (is (empty? (g/chemist-spaces x 0 {:space :fishing :source-goods {:food 1 :wood 1}})))))
+
+(deftest cash-crop-impact-is-presentation-only-and-points-only
+  (let [x (table "cash-crop") observed (atom []) trace (atom []) plain-trace (atom [])
+        plain (binding [g/*effect-observer* #(swap! plain-trace conj %)] (g/command x 0 {:type :action :space :grain}))
+        watched (binding [g/*impact-observer* (fn [before after head choice] (swap! observed conj (impact/event before after head choice)))
+                          g/*effect-observer* #(swap! trace conj %)]
+                  (g/command x 0 {:type :action :space :grain}))
+        events (filter #(= cash (:card %)) @observed)]
+    (is (= plain watched))
+    (is (= @plain-trace @trace))
+    (is (= 1 (count events)))
+    (is (= [{:player 0 :gained {} :spent {} :farm {:bonus-points 1}}] (:changes (first events))))
+    (reset! observed [])
+    (binding [g/*impact-observer* (fn [& args] (swap! observed conj args))]
+      (g/crop-harvest x [0] {:manure? true}))
+    (is (empty? @observed))))
