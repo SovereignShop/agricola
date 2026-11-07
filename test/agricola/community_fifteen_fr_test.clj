@@ -36,6 +36,11 @@
         after (reviewed "wood-saw")]
     (is (= 3 (count (a/tiles (g/p after 0) :room))))
     (is (= (:remaining player) (get-in after [:players 0 :remaining])))
+    (let [base (resolve! state {:skip? true})
+          built (g/command base 0 {:type :ability :card cid :rooms [0]})]
+      (is (= 3 (count (a/tiles (g/p built 0) :room))))
+      (is (empty? (:effect-queue built)))
+      (is (some :rooms (filter #(= cid (:card %)) (bot/ability-candidates base 0)))))
     (is (not (fr/wood-saw-available? (assoc state :players [player]) 0)))
     (is (not (fr/wood-saw-available? (assoc-in state [:players 1 :family] 2) 0)))
     (let [with-miser (update-in state [:players 0] own :catalog/original-expansion-fr-94-miser)
@@ -117,5 +122,9 @@
     (is (= (+ 5 (a/amount player :wood)) (a/amount (g/p after 0) :wood)))
     (is (empty? (fr/workaholic-options (g/p after 0) cid)))
     (is (empty? (fr/workaholic-options (a/gain player {:sheep 9}) cid)))
+    (let [base (resolve! state {:skip? true})
+          claimed (g/command base 0 {:type :ability :card cid :option 0})]
+      (is (= (+ 5 (a/amount player :wood)) (a/amount (g/p claimed 0) :wood)))
+      (is (empty? (:effect-queue claimed))))
     (is (= 4 (get-in after [:players 0 :card-state cid :stored-goods :clay])))
     (is (= 3 (get-in after [:players 0 :card-state cid :stored-goods :stone])))))
