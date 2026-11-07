@@ -320,6 +320,10 @@
                                                  :when (seq kept)] [round kept]))))
     (and (= cid g-animal-farm) (get-in player [:card-state cid :unplaced?]))
     (-> (update :remaining #(max 0 (dec %))) (update :guests #(max 0 (dec (or % 0)))))
+    (and (#{:catalog/original-expansion-wm-19-family-planner :catalog/original-expansion-wm-33-lady-in-waiting} cid)
+         (:reserved-family player))
+    (update :reserved-family (fn [reserved] (into {} (for [[round n] reserved]
+        [round (max 0 (- n (count (filter #(and (= cid (:card %)) (= :reserved-family-arrival (get-in % [:effect :op]))) (get-in player [:schedule round])))))]))))
     (some #{cid} (:occupations player)) (update :occupations #(vec (remove #{cid} %)))
     (= cid :well) (assoc :well-rounds #{})
     (and (= cid :catalog/original-base-k-138-reed-hut) (:reed-hut? player))
@@ -803,7 +807,7 @@
 (defn chemist-spaces [g pid context]
   (let [source (:space context) action (a/action-definition g source)]
     (when (and (pos? (get-in context [:source-goods :wood] 0))
-               (or (:accumulate action) (and (= source :market) (= 5 (count (:players g)))))
+               (or (and (:accumulate action) (some (set building-resources) (keys (:gain action)))) (and (= source :market) (= 5 (count (:players g)))))
                (pos? (a/amount (p g pid) :clay)))
       (filterv #(let [action (a/action-definition g %)]
                   (and (not= % source) (:accumulate action)
@@ -817,6 +821,13 @@
   (a/require! (pos? (eligible-begging player borrower?)) "No begging card of the permitted origin remains.")
   (let [origin (if (and borrower? (pos? (get-in player [:begging-origins :borrower] 0))) :borrower :feeding)]
     (-> player (update :begging dec) (update-in [:begging-origins origin] dec))))
+(defn discard-any-begging [player]
+  (a/require! (pos? (:begging player 0)) "You have no begging card to discard.")
+  ;; Preserve the most restricted (feeding-only) origin when the choice is free.
+  (let [origins (:begging-origins player)
+        untracked (- (:begging player) (reduce + 0 (vals origins)))]
+    (if (or (nil? origins) (pos? untracked)) (update player :begging dec)
+        (discard-eligible-begging player true))))
 (defn wm-fifteen-choices [g pid cid effect context]
   (let [player (p g pid)]
     (case (:op effect)
@@ -1501,8 +1512,7 @@
               (if (:source-command effect)
                 (queue-front after [(task pid card {:op :resume-stableman :source-command (:source-command effect)} {})]) after)))
           :resume-stableman (take-action (assoc g :stableman-plan true) pid (:source-command effect))
-          :discard-begging (do (a/require! (pos? (:begging current 0)) "You have no begging card to discard.")
-                              (update-in g [:players pid :begging] dec))
+          :discard-begging (update-in g [:players pid] discard-any-begging)
           :pearl-seeker
           (let [n (:amount choice)]
             (a/require! (and (a/natural? n) (<= 1 n (pearl-seeker-max g pid context))) "Buy stone only with food actually taken from Fishing, at two food per stone.")

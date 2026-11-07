@@ -96,7 +96,7 @@ def check(base):
                 return frame.get_by_role('dialog',name=name,exact=True)
             def feed():
                 h=frame.get_by_role('dialog',name='Harvest',exact=True)
-                expect(h).to_be_visible();h.get_by_role('button',name='Feed family →',exact=True).click()
+                expect(h).to_be_visible();h.get_by_role('button',name=re.compile(r'^Feed (family|& take)')).click()
             def exchange_card(name,resource,n,reward,label,occupation=False):
                 harvest();food,before=amount('food'),amount(resource)
                 d=open_played(name,occupation);shape(d)
