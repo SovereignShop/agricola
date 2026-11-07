@@ -124,3 +124,42 @@
   (is (= 0 (stock s 0 :food)))
   (let [after (resolve! s {:resource :wood})]
    (is (= 3 (stock after 0 :wood))) (is (= 2 (stock after 0 :food))))))
+
+(deftest headmaster-income-can-fund-earlier-played-educator
+ (let [headmaster (cid "G" 30)
+       s (-> (fresh) (own 0 :catalog/original-base-k-271-educator) (own 0 headmaster)
+             (assoc-in [:players 0 :goods :food] 0)
+             (assoc-in [:players 0 :card-state headmaster :stored-goods :food] 2)
+             (assoc-in [:players 0 :hand :occupation] [(cid "G" 40)])
+             (emit :occupation 1))
+       after (resolve! s {:card (cid "G" 40)})]
+  (is (= :educator (op s)))
+  (is (= 3 (g/headmaster-food (g/p s 0))))
+  (is (= 0 (g/headmaster-food (g/p after 0))))
+  (is (c/has? (g/p after 0) (cid "G" 40)))))
+
+(deftest dunghill-can-top-up-only-an-underlying-stack
+ (let [s (-> (fresh) (assoc-in [:players 0 :goods :sheep] 1) (assoc-in [:players 0 :goods :boar] 1)
+             (assoc-in [:players 0 :card-fields :mixed] {:type :field :under-crops {:reed 2}}))
+       result (run s 72 :g-dunghill {:fields [:mixed]})]
+  (is (= 3 (get-in result [:players 0 :card-fields :mixed :under-crops :reed])))))
+
+(deftest bountiful-can-be-played-after-the-field-phase
+ (require 'eurozone.card-scenarios)
+ (let [bountiful (cid "G" 67)
+       s ((resolve 'eurozone.card-scenarios/initial-state) "dunghill" ["Ada" "Ben"])
+       s (-> (resolve! s {:skip? true})
+             (assoc-in [:players 0 :hand :minor] [bountiful])
+             (update-in [:players 0] a/build-stables [0] 0))
+       played (g/drain (g/run-effect s (g/task 0 nil {:op :card-action :kinds #{:minor}} {}) {:card bountiful}))
+       result (reduce (fn [s cmd] (g/command s (g/acting-player s) cmd)) played [{:type :feed} {:type :feed} {:type :breed}])]
+  (is (= 2 (get-in s [:players 0 :g-harvest-count])))
+  (is (= 1 (get-in result [:players 0 :card-state bountiful :stored-goods :food])))))
+
+(deftest harvest-helper-counts-before-bountiful-is-played
+ (let [s (-> (fresh) (assoc :phase :field-harvest)
+             (assoc-in [:players 0 :g-harvest-count] 1)
+             (assoc-in [:players 1 :farm 0] {:type :field :crop :grain :count 2}))
+       result (g/run-effect s (g/task 0 :catalog/original-base-i-223-harvest-helper {:op :harvest-helper} {}) {:owner 1 :cell 0})]
+  (is (= 2 (get-in result [:players 0 :g-harvest-count])))
+  (is (= 1 (stock result 0 :grain)))))
