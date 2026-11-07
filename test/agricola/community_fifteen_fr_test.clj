@@ -82,6 +82,17 @@
           major (g/command (assoc base :turn 1) 1 {:type :action :space :improvement :improvement :well})]
       (is (not= cid (get-in major [:effect-queue 0 :card]))))))
 
+(deftest good-friend-disregards-discounted-away-resources
+  (let [cid :catalog/original-expansion-g-110-shovel
+        base (-> (table "good-friend") (resolve! {:skip? true})
+                 (s/played 1 :catalog/original-base-k-301-wood-carver)
+                 (update-in [:players 1 :minors] #(vec (remove #{cid} %)))
+                 (s/put-in-hand 1 cid))
+        played (g/drain (g/play-card base 1 cid 0 {:wood-carver? true}))]
+    (is (= {:wood 0 :clay 1} (select-keys (get-in played [:effect-queue 0 :context :paid]) [:wood :clay])))
+    (is (thrown? clojure.lang.ExceptionInfo (resolve! played {:option 0})))
+    (is (= (inc (a/amount (g/p played 0) :clay)) (a/amount (g/p (resolve! played {:option 1}) 0) :clay)))))
+
 (deftest miser-discounts-before-substitution-and-only-single-action-room
   (let [state (table "miser") player (g/p state 0) after (reviewed "miser")]
     (is (zero? (a/amount (g/p after 0) :wood))) (is (zero? (a/amount (g/p after 0) :reed)))
