@@ -196,6 +196,8 @@
                   (:minder-deposit :minder-increase)
                   (for [resources (remove empty? (subsets (if (= :minder-deposit (:op effect)) g/building-resources (g/minder-resources p (:card head)))))
                         :when (<= (count resources) (if (= :minder-deposit (:op effect)) 4 2))] {:resources resources})
+                  (:g-mathematician :g-miner :g-opportunist :g-pilgrim :g-animal-farm :g-dunghill)
+                  (g/g-fifteen-choices state pid (:card head) (:op effect) (:context head))
                   (:fiddler :manual-labourer) [{}]
                   :fish-seller (for [one (keys g/fish-seller-prices) two (cons nil (keys g/fish-seller-prices))]
                                  {:goods (cond-> [one] two (conj two))})
@@ -433,6 +435,8 @@
             (case (get-in (c/card cid) [:ability :op])
               :borrower-repay [{}]
               :minder-collect (map #(hash-map :resource %) (g/minder-resources p cid))
+              :g-animal-farm (for [r a/animals :when (pos? (a/amount p r))] {:resource r})
+              :g-pilgrim-discard []
               :pawn-improvement (map #(hash-map :improvement %) (g/pawnable-improvements p))
               :light-bonfire [{}]
               :wine-closet (map #(hash-map :round %) (range (inc (:round state)) 15))

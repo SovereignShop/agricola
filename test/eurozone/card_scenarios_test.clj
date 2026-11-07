@@ -63,6 +63,19 @@
    "fish-pond" [{:cell 0} {:type :action :space :fishing} {:amount 1}]
    "rotherham-plow" [{:cells [7]}]
    "slapdash-renovation" [{}]
+
+
+   "headmaster" [{:type :action :space :lessons :card :catalog/original-base-e-172-chief}]
+   "mathematician" [{:space :wood :resource :wood}]
+   "miner" [{:space :stone-west}]
+   "opportunist" [{:type :action :space :clay} {:resource :clay}]
+   "pilgrim" [{:resource :wood}]
+   "pond-watchman" [{:option 0} {:action-command {:type :action :space :wood}}]
+   "animal-farm" [{:resource :sheep} {:type :action :space :wood}]
+   "bountiful-harvest" [{:type :feed} {:type :feed} {:type :breed}]
+   "chronicle" [{:type :action :space :improvement :improvement :clay-oven}]
+   "dunghill" [{:fields [1 2]}]
+
    "alternative-designer" [{:type :action :space :build :rooms [0] :room-options {0 {:wood-clay 2 :wood-stone 2}}}]
    "fish-seller" [{:goods [:vegetable :wood]}]
    "stonepiler" [{:type :action :space :fences :fences ["h:0:0" "h:1:0" "v:0:0" "v:0:1"] :stonepiler-stone 2}]

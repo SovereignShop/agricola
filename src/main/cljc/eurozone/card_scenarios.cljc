@@ -45,6 +45,26 @@
     :description "Farmland is staged with the first field at the upper left. Click an additional field that does not touch that first field, even diagonally. Both fields must still join the existing fields."}
    {:id "slapdash-renovation" :card :catalog/original-expansion-wm-107-slapdash-renovation :name "Slapdash Renovation" :players 2
     :description "Renovation has just finished. Return the person who took that action to your farm so they can take another action later this round, or decline."}
+   {:id "headmaster" :card :catalog/original-expansion-g-30-headmaster :name "Headmaster" :players 4
+    :description "Three opponents have played occupations, leaving three food on Headmaster. Use Lessons to play Chief: the stored food can pay both the lesson fee and the two extra printed food. Use the payment icons to keep the stock instead."}
+   {:id "mathematician" :card :catalog/original-expansion-g-39-mathematician :name "Mathematician" :players 4
+    :description "Round six has begun with equal wood piles. Click one of the highlighted action spaces to take exactly one wood without placing a worker, or decline."}
+   {:id "miner" :card :catalog/original-expansion-g-40-miner :name "Miner" :players 2
+    :description "Your last worker just used Day Laborer. Click one marked Stone action space to take its entire pile in Returning Home, without placing another worker, or decline."}
+   {:id "opportunist" :card :catalog/original-expansion-g-43-opportunist :name "Opportunist" :players 4
+    :description "Place your last worker on Clay Pit. Nobody has taken clay this work phase, so choose the extra clay after collecting the pile. Card bonuses never count as earlier action-space collections."}
+   {:id "pilgrim" :card :catalog/original-expansion-g-45-pilgrim :name "Pilgrim" :players 2
+    :description "A new round begins with no food or building materials in your supply. Choose a building-resource icon to receive it together with one food. The card ability can return unwanted supply resources."}
+   {:id "pond-watchman" :card :catalog/original-expansion-g-46-pond-watchman :name "Pond Watchman" :players 4
+    :description "Work has ended with your fisherman on Fishing. Select that worker, then click a free wood accumulation space to move there for one food and collect its pile. Declining costs nothing."}
+   {:id "animal-farm" :card :catalog/original-expansion-g-62-animal-farm :name "Animal Farm" :players 2
+    :description "Your last family member has acted, but Animal Farm offers one final guest. Click the sheep or boar to return it for a guest this round, or decline. The guest can then take a normal action."}
+   {:id "bountiful-harvest" :card :catalog/original-expansion-g-67-bountiful-harvest :name "Bountiful Harvest" :players 2
+    :description "Two crop stacks have been harvested. Feed both players, then breed a sheep: one food is stored on Bountiful Harvest. It counts as supply and can pay costs or feeding; unused food scores one point each."}
+   {:id "chronicle" :card :catalog/original-expansion-g-68-chronicle :name "Chronicle" :players 2
+    :description "Chronicle has placed a food marker on every available major improvement. Build any marked major; Chronicle receives that food immediately, even if another player builds it."}
+   {:id "dunghill" :card :catalog/original-expansion-g-72-dunghill :name "Dunghill" :players 2
+    :description "The harvest is about to begin with three animal types. Click one or two planted farm spaces to add a matching crop before harvesting, or decline. Planted cards are supported too."}
    {:id "alternative-designer" :card :catalog/original-expansion-g-1-alternative-designer :name "Alternative Designer" :players 2
     :description "Use Farm Expansion to add a wooden room. Click the material icons to substitute up to two clay and two stone for wood in that room. Fences and stables allow unrestricted one-for-one substitutions."}
    {:id "fish-seller" :card :catalog/original-expansion-g-17-fish-seller :name "Fish Seller" :players 3
@@ -576,6 +596,45 @@
       "rotherham-plow" (-> funded (played 0 :catalog/original-base-e-174-tutor) (played 0 card)
                            (prepare-fields [1 6]) (game/command 0 {:type :action :space :plow :cell 0}))
       "slapdash-renovation" (-> funded (played 0 card) (prepared-round 7) (game/command 0 {:type :action :space :renovate}))
+
+      "headmaster" (-> funded (played 0 card)
+                       (played 1 :catalog/original-expansion-g-21-hermit)
+                       (played 2 :catalog/original-expansion-g-21-hermit)
+                       (played 3 :catalog/original-expansion-g-21-hermit)
+                       (assoc-in [:players 0 :goods :food] 0)
+                       (put-in-hand 0 :catalog/original-base-e-172-chief))
+      "mathematician" (-> funded (prepared-round 5) (played 0 card)
+                          (assoc-in [:piles :wood :wood] 0) (assoc-in [:piles :copse :wood] 2)
+                          game/begin-round game/drain)
+      "miner" (-> funded (prepared-round 7) (played 0 card) final-worker
+                   (game/command 0 {:type :action :space :labor}))
+      "opportunist" (-> funded (prepared-round 3) (played 0 card) (assoc-in [:players 0 :remaining] 1))
+      "pilgrim" (-> funded (played 0 card)
+                     (update-in [:players 0 :goods] merge {:food 0 :wood 0 :clay 0 :reed 0 :stone 0})
+                     game/begin-round game/drain)
+      "pond-watchman" (-> funded (played 0 card) final-worker (game/command 0 {:type :action :space :fishing}))
+      "animal-farm" (-> funded (update-in [:players 0] a/build-stables [0] 0)
+                         (update-in [:players 0] a/gain {:sheep 1 :boar 1})
+                         (played 0 card) final-worker (game/command 0 {:type :action :space :grain}))
+      "bountiful-harvest" (-> funded (prepared-round 4)
+                               (assoc-in [:players 0 :occupations] [:catalog/original-expansion-g-21-hermit :catalog/original-expansion-g-5-architect])
+                               (prepare-fields [1 2])
+                               (assoc-in [:players 0 :farm 1] {:type :field :crop :grain :count 2})
+                               (assoc-in [:players 0 :farm 2] {:type :field :crop :vegetable :count 2})
+                               (update-in [:players 0] a/build-fences (a/edges 0))
+                               (update-in [:players 0] a/build-stables [0] 0)
+                               (update-in [:players 0] a/gain {:sheep 2})
+                               (played 0 card) last-harvest-action)
+      "chronicle" (-> funded (prepared-round 2) (assoc-in [:players 0 :occupations] [:catalog/original-expansion-g-21-hermit]) (played 0 card))
+      "dunghill" (-> funded (prepared-round 4)
+                      (assoc-in [:players 0 :occupations] [:catalog/original-expansion-g-21-hermit :catalog/original-expansion-g-5-architect])
+                      (prepare-fields [1 2])
+                      (assoc-in [:players 0 :farm 1] {:type :field :crop :grain :count 2})
+                      (assoc-in [:players 0 :farm 2] {:type :field :crop :vegetable :count 2})
+                      (update-in [:players 0] a/build-fences (a/edges 0))
+                      (update-in [:players 0] a/build-stables [3] 0)
+                      (update-in [:players 0] a/gain {:sheep 2 :boar 1 :cattle 1})
+                      (played 0 card) last-harvest-action)
       "alternative-designer" (-> funded (played 0 card) (assoc-in [:players 0 :goods :wood] 1))
       "fish-seller" (-> funded (prepared-round 4) (played 0 card) (game/command 0 {:type :action :space :fishing}))
       "stonepiler" (-> funded (prepared-round 4) (played 0 card))

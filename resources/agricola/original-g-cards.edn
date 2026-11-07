@@ -235,4 +235,39 @@
  :catalog/original-expansion-g-90-paddocks {:passing? true :prerequisites "1 Pasture, 1 Occupation" :requires [:and [:>= [:pastures] 1] [:>= [:occupations] 1]] :play [{:op :build-fences :paddocks? true :free-fences 4 :max-fences 4 :optional? true}]}
  :catalog/original-expansion-g-103-scythe {:passive {:scythe true}}
  :catalog/original-expansion-g-108-sheepdog {:passive {:sheepdog true}}
+
+ :catalog/original-expansion-g-30-headmaster
+ {:passive {:headmaster true}
+  :triggers [{:event :occupation :scope :others :effect {:op :g-headmaster}}]
+  :score {:type :expression :value [:quot [:stored-good :catalog/original-expansion-g-30-headmaster :food] [:if [:= [:player-count] 4] 3 4]]}}
+ :catalog/original-expansion-g-39-mathematician
+ {:triggers [{:event :round-start :effect {:op :g-mathematician :optional? true}}]}
+ :catalog/original-expansion-g-40-miner
+ {:triggers [{:event :use-space :spaces #{:labor} :effect {:op :g-miner-mark}}
+             {:event :return-home :effect {:op :g-miner :optional? true}}]}
+ :catalog/original-expansion-g-43-opportunist
+ {:passive {:opportunist true}}
+ :catalog/original-expansion-g-45-pilgrim
+ {:food-before-payment 2
+  :triggers [{:event :before-round-deliveries :effect {:op :g-pilgrim :optional? true}}
+             {:event :round-start :effect {:op :g-pilgrim :optional? true}}]
+  :ability {:op :g-pilgrim-discard}}
+ :catalog/original-expansion-g-46-pond-watchman
+ {:passive {:pond-watchman true}}
+ :catalog/original-expansion-g-62-animal-farm
+ {:printed-cost {:wood 1} :cost {:wood 1} :requires [:>= [:animal-types] 2]
+  :ability {:op :g-animal-farm}}
+ :catalog/original-expansion-g-67-bountiful-harvest
+ {:printed-cost {} :requires [:>= [:occupations] 2]
+  :passive {:personal-stock-food true :observe-harvest-count true :observe-extra-grain-harvest true}
+  :ability {:op :release-stored :partial-resource :food}
+  :triggers [{:event :harvest-crops :effect {:op :g-bountiful-crops}}]
+  :score {:type :expression :value [:stored-good :catalog/original-expansion-g-67-bountiful-harvest :food]}}
+ :catalog/original-expansion-g-68-chronicle
+ {:cost-options [{:wood 2} {:clay 2}] :requires [:>= [:occupations] 1]
+  :play [{:op :g-chronicle-mark}]
+  :triggers [{:event :build-improvement :scope :all :effect {:op :g-chronicle}}]}
+ :catalog/original-expansion-g-72-dunghill
+ {:printed-cost {:wood 1} :cost {:wood 1} :requires [:>= [:occupations] 2]
+  :triggers [{:event :before-field-phase :effect {:op :g-dunghill :optional? true}}]}
 }
