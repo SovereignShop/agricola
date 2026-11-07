@@ -29,7 +29,7 @@ def check(base, fixture_ids):
                 assert page.request.get(base+src).ok, src
                 prints.add(src)
             page.get_by_role('button',name='Close dialog',exact=True).click()
-        assert len(prints)==262
+        assert len(prints)==292
         page.set_viewport_size({'width':390,'height':844})
         page.locator('.action-card[data-action="meeting"]').click()
         page.get_by_role('group',name='Playable minor improvements',exact=True).get_by_role('button',name='Drained Pond',exact=True).click()
@@ -101,7 +101,7 @@ def check(base, fixture_ids):
         page.get_by_role('dialog').get_by_role('button',name='Politician',exact=True).click()
         expect(page.get_by_role('dialog').get_by_text('0 exchanges remaining this round.',exact=True)).to_be_visible()
         assert not errors, errors
-        print('G/WM/FR: 262 English images, deck setup, mobile selection, field markers, saved field/point/major decisions and exchange limits passed')
+        print('G/WM/FR: 292 English images, deck setup, mobile selection, field markers, saved field/point/major decisions and exchange limits passed')
         browser.close()
 
 
