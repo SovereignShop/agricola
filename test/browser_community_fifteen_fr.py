@@ -35,7 +35,9 @@ def check(base):
                 expect(dialog.locator('svg.farm')).to_have_count(1 if farm else 0)
                 box = dialog.bounding_box(); assert box['x'] >= 0 and box['x']+box['width'] <= width+1, box
                 assert dialog.evaluate('(el)=>el.scrollWidth<=el.clientWidth+1')
-            def snap(name): page.screenshot(path=f'/tmp/eurozone-fifteen-fr-{name}-{mobile}-{activity}.png')
+            def snap(name):
+                page.evaluate('() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))')
+                page.screenshot(path=f'/tmp/eurozone-fifteen-fr-{name}-{mobile}-{activity}.png')
             def marker(resource): return frame.locator(f'.tt-player[data-player="0"] .tt-inventory [data-goods="{resource}"] .pile-count')
             def amount(resource): return int(marker(resource).inner_text()) if marker(resource).count() else 0
             def qty(resource, n):
@@ -62,7 +64,10 @@ def check(base):
                 frame.get_by_label('Card to test').select_option('grotto')
                 frame.get_by_role('button', name='Open test table', exact=True).click(); card('Grotto')
                 d = pending('Grotto'); shape(d); food, clay = amount('food'), amount('clay')
-                d.get_by_role('button', name='2 food → 1 clay', exact=True).click(); snap('grotto'); resolve(d)
+                clay_choice = d.get_by_role('button', name='2 food → 1 clay', exact=True)
+                expect(clay_choice.get_by_label('Take from this card', exact=True)).to_be_visible()
+                expect(clay_choice.locator('img[src$="/clay.png"]')).to_have_count(1)
+                clay_choice.click(); expect(clay_choice).to_have_attribute('aria-pressed', 'true'); snap('grotto'); resolve(d)
                 expect(d).to_have_count(0); qty('food', food-2); qty('clay', clay+1)
                 restart('Grotto'); pending('Grotto').get_by_role('button', name='Skip this effect', exact=True).click()
                 expect(pending('Grotto')).to_have_count(0)
@@ -94,7 +99,8 @@ def check(base):
                 expect(payment.get_by_role('button', name='Use Miser discount', exact=True)).to_have_attribute('aria-pressed', 'true')
                 payment.get_by_role('button', name='Pay the full room price', exact=True).click()
                 expect(d.get_by_role('button', name='Place family member →', exact=True)).to_be_disabled()
-                payment.get_by_role('button', name='Use Miser discount', exact=True).click(); snap('miser')
+                payment.get_by_role('button', name='Use Miser discount', exact=True).click()
+                expect(payment.get_by_role('button', name='Use Miser discount', exact=True)).to_have_attribute('aria-pressed', 'true'); snap('miser')
                 d.get_by_role('button', name='Place family member →', exact=True).click(); expect(d).to_have_count(0); qty('wood', 0); qty('reed', 0)
 
                 next_card('Turkey Breeder'); d = pending('Turkey Breeder'); shape(d, True); wood = amount('wood')
