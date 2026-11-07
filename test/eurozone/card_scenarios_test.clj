@@ -42,7 +42,17 @@
       (is (= (:players (scenarios/scenario id) 2) (count (:players state)))))))
 
 (def review-commands
-  {
+  {"grotto" [{:option 0}]
+   "threshing-machine-plow" [{:plow-card :catalog/original-expansion-fr-50-threshing-machine-plow :cells [7 8]}]
+   "wood-saw" [{:rooms [0]}]
+   "convict-number-24601" [{:type :action :space :grain}]
+   "cowboy-and-mother" [{:option 4} {:cell 0}]
+   "good-friend" [{:option 0}]
+   "miser" [{:type :action :space :build :rooms [0]}]
+   "turkey-breeder" [{:fences ["h:0:0" "h:1:0" "v:0:0" "v:0:1"]} {:stables [0]}]
+   "wood-gatherers" [{:type :action :space :grain}]
+   "workaholic" [{:option 0}]
+
    "alternative-designer" [{:type :action :space :build :rooms [0] :room-options {0 {:wood-clay 2 :wood-stone 2}}}]
    "fish-seller" [{:goods [:vegetable :wood]}]
    "stonepiler" [{:type :action :space :fences :fences ["h:0:0" "h:1:0" "v:0:0" "v:0:1"] :stonepiler-stone 2}]
@@ -280,7 +290,7 @@
           initial (get @(:rooms service) id)
           optional? (get-in initial [:state :effect-queue 0 :effect :optional?])
           commands (if (and decline? optional?)
-                     (repeat (if (#{"businesswoman" "homework"} scenario) 2 1) {:skip? true}) commands)]
+                     (repeat (if (#{"businesswoman" "homework" "turkey-breeder"} scenario) 2 1) {:skip? true}) commands)]
       (is (= scenario (:scenario initial)))
       (is (= scenario (get-in @(:rooms (store/make-store path)) [id :scenario])))
       (is (= (:state initial) (get-in @(:rooms (store/make-store path)) [id :state])) scenario)

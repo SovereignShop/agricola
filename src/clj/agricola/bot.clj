@@ -437,7 +437,7 @@
                     cell (range 15) :when (and (a/empty-cell? p cell) (some (set (a/tiles p :room)) (a/neighbors cell)))]
                 {:animal animal :rooms [cell]})
               :return-animal-loan (when-not (get-in p [:card-state cid :loan-settled?]) (g/animal-loan-choices p cid))
-              (:adopt :buy-stock :cash-card :reed-food :claim-goods :corn-profiteer) [{}]
+              (:wood-saw :workaholic :adopt :buy-stock :cash-card :reed-food :claim-goods :corn-profiteer) [{}]
               :release-stored (if-let [resource (get-in (c/card cid) [:ability :partial-resource])]
                                 (map #(hash-map :amount %) (range 1 (inc (get-in p [:card-state cid :stored-goods resource] 0)))) [{}])
               :renovate-clay-stone (map #(assoc % :renovate-to :stone) (payment-options p))

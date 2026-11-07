@@ -5,6 +5,26 @@
 
 (def scenarios
   [
+   {:id "grotto" :card :catalog/original-expansion-fr-26-grotto :name "Grotto" :players 2
+    :description "Round end has arrived. Click a pictured clay or stone to pay two food and collect it from Grotto, or decline. Once all five pieces have been collected, Grotto provides room for one additional family member."}
+   {:id "threshing-machine-plow" :card :catalog/original-expansion-fr-50-threshing-machine-plow :name "Threshing Machine Plow" :players 2
+    :description "Farmland is waiting for your plow choice. Click the other two highlighted middle farm spaces to plow the exact three-space middle row. This uses the plow once; skipping leaves a normal one-field action."}
+   {:id "wood-saw" :card :catalog/original-expansion-fr-60-wood-saw :name "Wood Saw" :players 2
+    :description "Every opponent has a larger family. Click an empty farm space next to your home to build a room at its normal cost, or decline. This card action uses no worker and does not receive Miser discounts."}
+   {:id "convict-number-24601" :card :catalog/original-expansion-fr-73-convict-number-24601 :name "Convict Number 24601" :players 2
+    :description "Convict was played in round twelve. It is now round thirteen: one family member stays home but still needs food. Take a normal action and inspect the six bonus points earned for rounds twelve through fourteen."}
+   {:id "cowboy-and-mother" :card :catalog/original-expansion-fr-75-cowboy-and-mother :name "Cowboy And Mother" :players 2
+    :description "Round twelve is returning home after at most two work actions. Choose one food, one pictured animal, or a field. Choosing a field opens direct farm placement; a newborn would prevent this reward."}
+   {:id "good-friend" :card :catalog/original-expansion-fr-83-good-friend :name "Good Friend" :players 3
+    :description "Another player just paid wood and clay for Shovel. Click either resource to take one matching piece from your Good Friend stock, or decline. Only resources actually paid qualify."}
+   {:id "miser" :card :catalog/original-expansion-fr-94-miser :name "Miser" :players 3
+    :description "Build exactly one wooden room on Build Rooms. Your four wood and one reed cover its discounted cost. Card-granted room building and building multiple rooms receive no Miser discount."}
+   {:id "turkey-breeder" :card :catalog/original-expansion-fr-114-turkey-breeder :name "Turkey Breeder" :players 2
+    :description "Choose up to four free fence edges on your farm, then optionally place one free stable. At the end of the final harvest, pay four wood; each missing wood becomes a begging card."}
+   {:id "wood-gatherers" :card :catalog/original-expansion-fr-118-wood-gatherers :name "Wood Gatherers" :players 2
+    :description "You spent five wood on a room before playing Wood Gatherers this round. Take Grain Seeds with the final worker and observe two wood received at round end."}
+   {:id "workaholic" :card :catalog/original-expansion-fr-119-workaholic :name "Workaholic" :players 4
+    :description "Five sheep are housed in your pasture. Click the wood pile to collect all five wood, or decline. Seven housed animals unlock the clay pile and nine unlock the stone pile; each pile can be collected once."}
    {:id "alternative-designer" :card :catalog/original-expansion-g-1-alternative-designer :name "Alternative Designer" :players 2
     :description "Use Farm Expansion to add a wooden room. Click the material icons to substitute up to two clay and two stone for wood in that room. Fences and stables allow unrestricted one-for-one substitutions."}
    {:id "fish-seller" :card :catalog/original-expansion-g-17-fish-seller :name "Fish Seller" :players 3
@@ -506,6 +526,24 @@
         base (game/initialize (a/new-game names (vec (mapcat identity a/stages)) 0))
         funded (update base :players #(mapv (fn [p] (a/gain p {:food 12 :wood 8 :clay 8 :reed 6 :stone 8 :grain 3 :vegetable 2})) %))]
     (case id
+      "grotto" (-> funded (played 0 :catalog/original-expansion-g-49-seed-master)
+                   (played 0 :catalog/original-expansion-g-5-architect) (played 0 card) final-worker
+                   (game/command 0 {:type :action :space :grain}))
+      "threshing-machine-plow" (-> funded (played 0 card) (game/command 0 {:type :action :space :plow :cell 6}))
+      "wood-saw" (-> funded (update-in [:players 1] a/build-rooms [0]) (update-in [:players 1] a/grow true)
+                     (played 0 card) (game/command 0 {:type :ability :card card}))
+      "convict-number-24601" (-> funded (prepared-round 12) (played 0 card) game/begin-round game/drain)
+      "cowboy-and-mother" (-> funded (prepared-round 12) (played 0 card) final-worker (game/command 0 {:type :action :space :grain}))
+      "good-friend" (-> funded (played 0 card) (played 1 :catalog/original-expansion-g-110-shovel))
+      "miser" (-> funded (played 0 card) (assoc-in [:players 0 :goods :wood] 4) (assoc-in [:players 0 :goods :reed] 1))
+      "turkey-breeder" (played funded 0 card)
+      "wood-gatherers" (-> funded (put-in-hand 0 card) game/begin-round game/drain
+                           (game/command 0 {:type :action :space :build :rooms [0]}) (played 0 card) final-worker)
+      "workaholic" (-> funded (played 0 card)
+                       (update-in [:players 0] a/gain {:wood 8})
+                       (update-in [:players 0] a/build-fences (vec (map key (filter #(= 1 (val %)) (frequencies (mapcat a/edges [0 1 2]))))))
+                       (update-in [:players 0] a/gain {:sheep 5})
+                       (game/command 0 {:type :ability :card card}))
       "alternative-designer" (-> funded (played 0 card) (assoc-in [:players 0 :goods :wood] 1))
       "fish-seller" (-> funded (prepared-round 4) (played 0 card) (game/command 0 {:type :action :space :fishing}))
       "stonepiler" (-> funded (prepared-round 4) (played 0 card))

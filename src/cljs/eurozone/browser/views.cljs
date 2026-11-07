@@ -381,10 +381,12 @@
                     (+ (if selected (get-in (cards/card selected) [:passive :action-plow :extra-fields] 2) 0)
                        (if (:plow-maker? draft) 1 0)))]
     (assoc draft :space :plow :tool :fields :max-fields maximum
+           :only-cells (when-not (:plow-maker? draft) (get-in (cards/card selected) [:passive :action-plow :exact-cells]))
            :cells (vec (filter integer? (:cells draft))) :base-field (get-in effect [:source-command :cell]))))
 (defn plow-space-selectable? [p draft i]
   (or (some #{i} (:cells draft))
-      (and (< (count (:cells draft)) (:max-fields draft))
+      (and (or (nil? (:only-cells draft)) (some #{i} (:only-cells draft)))
+           (< (count (:cells draft)) (:max-fields draft))
            (not= i (:base-field draft))
            (try
              (let [base (:base-field draft)
@@ -976,7 +978,7 @@
        [farm-picker (reduce #(assoc-in %1 [:farm %2 :type] :room) p (:rooms draft)) (:rooms draft) [cell] #(reset! chosen %)]
        [graphical-choices "Payment for the highlighted room" options #(edit-entry! :room-options cell %)
         (cons [nil "Use the choices above" [choice-icon :none]]
-              (for [option choices :let [cost (a/room-cost p option)]]
+              (for [option choices :let [cost (a/room-cost p option (when (and (#{:build :house-building} (:space draft)) (not= false (:miser? draft)) (= 1 (count (:rooms draft))) (some true? (cards/passives p :miser))) {(:house p) 1 :reed 1}))]]
                 [option (str/join ", " (for [[r n] cost :when (pos? n)] (str n " " (labels r)))) [goods cost]]))]])))
 (declare construction-substitution-picker)
 (defn payment-options
@@ -988,6 +990,10 @@
                                     (assoc (get draft key {}) entry value))))))
   ([p draft edit! edit-entry!]
    [:div
+    (when (and (#{:build :house-building} (:space draft)) (= 1 (count (:rooms draft))) (some true? (cards/passives p :miser)))
+      [graphical-choices "Miser room payment" (not= false (:miser? draft)) #(edit! :miser? %)
+       [[true "Use Miser discount" [goods (a/room-cost p draft {(:house p) 1 :reed 1})]]
+        [false "Pay the full room price" [goods (a/room-cost p draft)]]]])
     (when (or (cards/has? p :a123) (some true? (cards/passives p :original-frame-builder))) [:label.checkbox [:input {:type "checkbox" :checked (boolean (:frame? draft)) :on-change #(edit! :frame? (.. % -target -checked))}] (if (some true? (cards/passives p :original-frame-builder)) "Frame Builder: 2 room materials or 1 renovation material → 1 wood" "Frame Builder: replace 2 clay/stone with 1 wood")])
     (when (a/collector? p) [:label.checkbox [:input {:type "checkbox" :checked (boolean (:brushwood? draft)) :on-change #(edit! :brushwood? (.. % -target -checked))}] "Brushwood Collector: replace reed with 1 wood"])
     (when (some true? (cards/passives p :brushwood-roof))
@@ -2018,6 +2024,11 @@
       [(if expanded? :div.card-ability :details.card-ability)
        [(if expanded? :h3 :summary) (:name card)] [:p.small (:text card)]
        (case op
+         :wood-saw [:div [:p.small "Every other player has a larger family. Choose one or more room spaces on your farm and pay the normal room costs."] [goods (a/room-cost p {})]]
+         :workaholic [:div [:p.small "Keep the required animals on your farm to collect a remaining pile."]
+                      (for [[resource n threshold] [[:wood 5 5] [:clay 4 7] [:stone 3 9]]
+                            :when (pos? (get-in p [:card-state cid :stored-goods resource] 0))]
+                        ^{:key resource} [:div [goods {resource n}] [:span.small (str threshold " housed animals")]])]
          :tinsmith [:div [recipe {:clay (:amount @selection)}
                                     {:food (+ (:amount @selection) (if (= 2 (:clay (card-game/tinsmith-rates g))) (quot (:amount @selection) 2) 0))}]
                     [field "Clay to exchange" [number-input (:amount @selection) #(swap! selection assoc :amount %) (a/amount p :clay)]]]
