@@ -231,7 +231,7 @@
 
   {:id :original-k-brushwood-printing :cards [:catalog/original-base-k-136-brushwood-roof]
    :source "https://lookout-spiele.de/upload/archive/agricola-cards-completelist-v7.pdf" :authority :publisher
-   :rule "Brushwood Roof requires two occupations according to the publisher card list and compendium; the available English scan says three. Native play uses two. Partial wood/reed replacement can combine with Clay Roof and vary per room."
+   :rule "Brushwood Roof uses the three occupations printed on the English K136 face shipped in this app, as requested by the user. The older publisher list and compendium say two; this is an explicit printing-policy choice, not a claim that those sources say three. Partial wood/reed replacement can combine with Clay Roof and vary per room."
    :test agricola.original-k-minors-test/original-roof-supports-mixed-and-per-room-payment}
   {:id :original-k-greenhouse-cost :cards [:catalog/original-base-k-117-greenhouse]
    :source "https://agricola.no/wp-content/uploads/2024/07/compendium.pdf" :authority :unofficial-compilation

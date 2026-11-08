@@ -418,3 +418,30 @@
         (is (= (:round before) (:artisan-used-round fed)))
         (is (= after (get-in @(:rooms (store/make-store path)) [id :state])))
         (is (= after (last (:frames (recording/timeline (:recording room))))))))))
+
+(deftest brushwood-english-print-prerequisite-persists-and-replays
+  (let [path (str (.resolve (Files/createTempDirectory "brushwood-prerequisite" (make-array java.nio.file.attribute.FileAttribute 0)) "games.edn"))
+        service (store/make-store path)
+        id (:id (store/transact! service "reviewer" {:event :create :name "Ada" :scenario "brushwood-roof-prerequisite"}))
+        roof :catalog/original-base-k-136-brushwood-roof
+        send! (fn [command] (store/transact! service "reviewer" {:event :command :id id :revision (:revision (get @(:rooms service) id)) :command command}))
+        before (get @(:rooms service) id)]
+    (is (= 2 (count (get-in before [:state :players 0 :occupations]))))
+    (is (thrown-with-msg? clojure.lang.ExceptionInfo #"Requires: 3 Occupations"
+          (send! {:type :action :space :meeting :card roof})))
+    (is (= before (get @(:rooms service) id)))
+    (send! {:type :action :space :lessons :card :catalog/original-base-e-187-clay-deliveryman})
+    (send! {:type :action :space :grain})
+    (send! {:type :action :space :meeting :card roof})
+    (let [room (get @(:rooms service) id)]
+      (is (some #{roof} (get-in room [:state :players 0 :minors])))
+      (is (= (:state room) (get-in @(:rooms (store/make-store path)) [id :state])))
+      (is (= (:state room) (last (:frames (recording/timeline (:recording room)))))))))
+
+(deftest straw-thatched-hut-needs-plowed-farm-tiles
+  (let [card (cards/card :catalog/original-expansion-fr-46-straw-thatched-hut)
+        state (-> (game/initialize (a/new-game ["A" "B"] (vec (mapcat identity a/stages)) 0))
+                  (assoc-in [:players 0 :card-fields :catalog/original-base-e-18-bean-field] {:type :field :crop :vegetable :count 1})
+                  (update-in [:players 0] a/place-tile :field 0))]
+    (is (not (game/prerequisites? state 0 card)))
+    (is (game/prerequisites? (update-in state [:players 0] a/place-tile :field 1) 0 card))))

@@ -4,7 +4,10 @@
   (:require [agricola.engine :as a] [agricola.card-game :as game] [agricola.card-rules :as cards]))
 
 (def scenarios
-  [   {:id "family-counselor" :card :catalog/original-expansion-g-15-family-counselor :name "Family Counselor" :players 2
+  [
+   {:id "brushwood-roof-prerequisite" :card :catalog/original-base-k-136-brushwood-roof :name "Brushwood Roof - 3 occupations" :players 2
+    :description "You have two occupations: Brushwood Roof must be unavailable at Meeting Place. Cancel, play your third occupation at Lessons, then after the other player's turn use Meeting Place to play the Roof. The English print requires three."}
+   {:id "family-counselor" :card :catalog/original-expansion-g-15-family-counselor :name "Family Counselor" :players 2
     :description "Your first adult took Forest. Place the final worker on Clay Pit: both adults occupy the early-round board, so receive one food at Returning Home. A different board would not qualify."}
    {:id "job-seeker" :card :catalog/original-expansion-g-35-job-seeker :name "Job Seeker" :players 4
     :description "Two opponents have more occupations. A new round offers a pictured one-food payment to play a card from your hand; decline is allowed. Job Seeker itself does not count."}
@@ -626,6 +629,10 @@
         base (game/initialize (a/new-game names (vec (mapcat identity a/stages)) 0))
         funded (update base :players #(mapv (fn [p] (a/gain p {:food 12 :wood 8 :clay 8 :reed 6 :stone 8 :grain 3 :vegetable 2})) %))]
     (case id
+      "brushwood-roof-prerequisite" (-> funded (put-in-hand 0 card)
+          (played 0 :catalog/original-base-e-176-woodcutter)
+          (played 0 :catalog/original-base-e-174-tutor)
+          (put-in-hand 0 :catalog/original-base-e-187-clay-deliveryman))
       "family-counselor" (-> funded (played 0 card) (game/command 0 {:type :action :space :wood})
                               (game/command 1 {:type :action :space :grain}) final-worker)
       "job-seeker" (-> funded (played 1 :catalog/original-expansion-g-21-hermit)

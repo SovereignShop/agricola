@@ -223,7 +223,7 @@
  :catalog/original-expansion-fr-5-artists-garden
  {:triggers [{:event :return-home :effect {:op :harvest-field :optional? true}}]}
  :catalog/original-expansion-fr-14-chocolate {:name "Chocolade" :play [{:op :store-goods :goods {:food 4}}] :passive {:occupation-stock-food true}}
- :catalog/original-expansion-fr-46-straw-thatched-hut {:requires [:>= [:fields] 2] :passive {:straw-thatched-hut true}}
+ :catalog/original-expansion-fr-46-straw-thatched-hut {:requires [:>= [:field-tiles] 2] :passive {:straw-thatched-hut true}}
  :catalog/original-expansion-fr-62-animal-welfarist
  {:triggers [{:event :return-home :condition [:test [:welfarist-qualified]] :effect {:op :gain :goods {:sheep 1 :boar 1 :cattle 1}}}]}
  :catalog/original-expansion-fr-65-benefactor {:ability {:op :benefactor}}

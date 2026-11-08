@@ -30,7 +30,7 @@
  :catalog/original-base-k-134-ox-team {:requires [:>= [:goods :cattle] 2] :play [{:op :plow-many :optional? true :max-fields [:min 3 [:rounds-left]]}]}
  :catalog/original-base-k-135-horse {:score {:type :expression :value [:if [:< [:animal-types] 3] 2 0]}}
  ;; Lookout's official card list and compendium both correct the scan's 3 to 2.
- :catalog/original-base-k-136-brushwood-roof {:requires [:>= [:occupations] 2] :prerequisites "2 Occupations" :passive {:brushwood-roof true}}
+ :catalog/original-base-k-136-brushwood-roof {:requires [:>= [:occupations] 3] :prerequisites "3 Occupations" :passive {:brushwood-roof true}}
  :catalog/original-base-k-137-turnip-field {:passive {:card-field :vegetable} :play [{:op :sow-offer :optional? true}]}
  :catalog/original-base-k-139-sleeping-corner {:requires [:>= [:grain-fields] 2] :passive {:share-growth-spaces true}}
  :catalog/original-base-k-140-swan-lake {:play [{:op :schedule :offsets [1 2 3 4 5] :goods {:food 1}}]}

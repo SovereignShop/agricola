@@ -1,0 +1,129 @@
+#:catalog{:original-base-e-14-baker-s-oven
+          {:text "Return 1 Oven of your choice",
+           :requires [:> [:ovens] 0],
+           :reason
+           "Returning an oven requires an owned returnable oven; payment handles the return."},
+          :original-base-e-33-ceramics
+          {:text "1 Oven",
+           :requires [:> [:ovens] 0],
+           :reason "Requires an owned oven."},
+          :original-base-e-38-madonna-statue
+          {:text "Remove 2 played Improvements",
+           :requires [:>= [:improvements] 2],
+           :reason
+           "Requires two improvements to remove; the native resolution chooses them."},
+          :original-base-e-44-outhouse
+          {:text "See Below",
+           :requires [:other-occupations-below 2],
+           :reason
+           "Printed See Below refers to another player having fewer than two occupations."},
+          :original-base-e-55-stone-house-extension
+          {:text "",
+           :requires [:= [:house] :stone],
+           :reason
+           "Effect extends a stone house, so a stone house is necessary."},
+          :original-base-i-65-baker-s-kitchen
+          {:text "Return 1 Oven of your choice",
+           :requires [:> [:ovens] 0],
+           :reason
+           "Returning an oven requires an owned returnable oven."},
+          :original-base-i-66-village-well
+          {:text "Return Well",
+           :requires
+           [:or
+            [:owns-major :well]
+            [:owns-card
+             :catalog/original-expansion-wm-62-backyard-well]],
+           :reason
+           "Returns the Well; native rule also permits Backyard Well's explicit substitution."},
+          :original-base-i-71-holiday-house
+          {:text "",
+           :requires [:<= [:round] 13],
+           :reason "Cannot skip round 14 after that round has begun."},
+          :original-base-i-81-wooden-hut-extension
+          {:text "",
+           :requires [:= [:house] :wood],
+           :reason
+           "Effect extends a wooden hut, requiring a wooden house."},
+          :original-base-i-85-cooking-corner
+          {:text "Return Cooking Hearth",
+           :requires [:> [:returnable-hearths] 0],
+           :reason "Requires an owned returnable cooking hearth."},
+          :original-base-k-106-bakehouse
+          {:text "Return 1 Oven of your choice",
+           :requires [:> [:ovens] 0],
+           :reason "Requires an owned returnable oven."},
+          :original-base-k-108-beehive
+          {:text "2 Improvements and 3 Occupations",
+           :requires
+           [:and [:>= [:occupations] 3] [:>= [:improvements] 2]],
+           :reason
+           "Conjunction is equivalent; only operand order differs."},
+          :original-base-k-122-sawmill
+          {:text "Return Joinery",
+           :requires [:owns-major :joinery],
+           :reason "Requires the Joinery that the upgrade returns."},
+          :original-base-k-128-cooking-hearth
+          {:text "Return 1 Fireplace",
+           :requires [:> [:returnable-fireplaces] 0],
+           :reason
+           "Requires an owned returnable Fireplace, including Simple Fireplace."},
+          :original-base-k-132-clay-hut-extension
+          {:text "",
+           :requires [:= [:house] :clay],
+           :reason
+           "Effect extends a clay hut, requiring a clay house."},
+          :original-expansion-fr-1-abandoned-willow
+          {:text "1 empty field",
+           :requires [:>= [:empty-farm-fields] 1],
+           :reason
+           "The field is removed from the farmyard; card fields cannot be removed as farm tiles."},
+          :original-expansion-fr-21-flat-hill
+          {:text "4 Planted Fields",
+           :requires [:>= [:harvestable-planted-fields] 4],
+           :reason
+           "Counts planted fields including native multi-crop card fields, using actual crop quantities."},
+          :original-expansion-fr-35-lighthouse
+          {:text "Exactly 2 stone rooms",
+           :requires [:and [:= [:house] :stone] [:= [:rooms] 2]],
+           :reason
+           "Exactly two rooms and a stone house, both conditions required."},
+          :original-expansion-fr-41-peasants-boutique
+          {:text "Return Basket Maker's Workshop",
+           :requires [:owns-major :basketry],
+           :reason
+           "Requires the Basketmaker's Workshop that the upgrade returns."},
+          :original-expansion-fr-49-the-port-le-havre
+          {:text "1 Oven",
+           :requires [:> [:ovens] 0],
+           :reason "Requires an owned oven."},
+          :original-expansion-g-101-remodeling
+          {:text "1 Stable",
+           :requires [:and [:= [:house] :wood] [:>= [:stables] 1]],
+           :reason
+           "The stable is replaced by a wooden room; a wooden house is required too."},
+          :original-expansion-g-90-paddocks
+          {:text "1 Pasture, 1 Occupation",
+           :requires [:and [:>= [:pastures] 1] [:>= [:occupations] 1]],
+           :reason
+           "Comma joins the pasture and occupation prerequisites."},
+          :original-expansion-wm-100-plum-patch
+          {:text "1 Grain field and 1 Veggie field",
+           :requires
+           [:and [:>= [:grain-fields] 1] [:>= [:vegetable-fields] 1]],
+           :reason
+           "Veggie is vegetable; both crop-field prerequisites apply."},
+          :original-expansion-wm-61-back-door
+          {:text "\"Family growth\" action is revealed",
+           :requires [:revealed-space :growth],
+           :reason
+           "Checks that the Family Growth action is revealed."},
+          :original-expansion-wm-86-glassblowers-shop
+          {:text "Return Pottery",
+           :requires [:owns-major :pottery],
+           :reason "Requires the Pottery that the upgrade returns."},
+          :revised-artifex-expansion-a-3-paper-knife
+          {:text "",
+           :requires [:>= [:occupation-hand] 3],
+           :reason
+           "The mandatory effect needs three occupation cards in hand to select randomly."}}

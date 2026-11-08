@@ -21,7 +21,8 @@
       (is (or (:requires (c/card id)) (some? (expr/requirement (:prerequisites (c/card id))))) (str id)))
     (is (= {:wood 2} (:printed-cost (c/card (cid 117)))))
     (is (not (g/prerequisites? (fresh) 0 (c/card (cid 136)))))
-    (is (g/prerequisites? (assoc-in (fresh) [:players 0 :occupations] [(cid 266) (cid 267)]) 0 (c/card (cid 136))))))
+    (is (not (g/prerequisites? (assoc-in (fresh) [:players 0 :occupations] [(cid 266) (cid 267)]) 0 (c/card (cid 136)))))
+    (is (g/prerequisites? (assoc-in (fresh) [:players 0 :occupations] [(cid 266) (cid 267) (cid 268)]) 0 (c/card (cid 136))))))
 
 (deftest passing-improvements-pay-print-and-leave-the-owners-table
   (doseq [[n goods cost] [[107 {:wood 3} {:stone 1}] [129 {:grain 1} {}] [141 {:boar 1} {:food 1}]]]
