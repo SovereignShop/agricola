@@ -242,8 +242,19 @@
        [button "Open test table"
         #(card-review/open! @selected)
         "button" (or (:busy? ui) (and (not (:activity-lobby? ui)) (not (:connected? ui))))]])))
+(defn game-picker []
+  [:section.panel.eurozone-game-picker {:aria-label "Eurozone games"}
+   [:div [:div.eyebrow "EUROZONE GAMES"] [:h2 "Choose your table"]]
+   [:div.form-row
+    [:span.button.secondary {:aria-current "page"} "Agricola · 1–5 players"]
+    [button "Ascension: Claim the Throne · 2–4 players"
+     #(let [url (js/URL. "/ascension/index.html" (.-origin js/location))]
+        (set! (.-search url) (.-search js/location))
+        (doseq [key ["peer" "key" "transport" "replay"]] (.delete (.-searchParams url) key))
+        (.assign js/location (str url))) "button primary"]]])
 (defn library []
   [:main.library
+   [game-picker]
    [:div.hero
     [:div.hero-copy [:div.eyebrow "EUROZONE"] [:h1 "Agricola"]
      [:p "A farming game by Uwe Rosenberg"]
@@ -2760,6 +2771,7 @@
   (r/with-let [refresh (js/setInterval #(dispatch :activity/refresh) 5000)]
     (let [ui @(rf/subscribe [:ui])]
       [:main.library.activity-lobby
+       [game-picker]
        [:div.section-heading
         [:div [:div.eyebrow "AGRICOLA"] [:h1 "Activity tables"] [:p "Join a table or start a new game with people in this Activity."]]
         [:div.form-row [recordings-button]

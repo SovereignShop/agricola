@@ -32,6 +32,7 @@ async function openDiscord() {
   const embedded = window.parent !== window && params.has('frame_id') && params.has('instance_id');
   progress('Connecting to Eurozone…');
   const config = await json('/discord/config');
+  window.EUROZONE_PUBLIC_URL = config.publicUrl || location.origin;
   if (!embedded && params.get('discord') !== '1' && !config.private) {
     window.EUROZONE_RTC_CONFIG = await json('/discord/rtc');
     return;

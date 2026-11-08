@@ -1,5 +1,5 @@
 (ns eurozone.server
-  (:require [org.httpkit.server :as http] [eurozone.store :as store] [eurozone.chat :as chat] [eurozone.peer :as peer] [eurozone.discord :as discord]
+  (:require [org.httpkit.server :as http] [eurozone.store :as store] [eurozone.chat :as chat] [eurozone.peer :as peer] [eurozone.discord :as discord] [eurozone.ascension :as ascension]
             [eurozone.table-flow :as flow] [eurozone.bot-player :as bot]
             [clojure.edn :as edn] [clojure.java.io :as io] [clojure.string :as str])
   (:import [java.io ByteArrayOutputStream] [java.security MessageDigest] [java.util.zip GZIPOutputStream])
@@ -104,6 +104,14 @@
     (cond
       (= uri "/health") {:status 200 :headers {"Content-Type" "text/plain"} :body "Eurozone is ready"}
       (str/starts-with? uri "/discord/") (discord/handler app request)
+      (= uri "/ascension/ws")
+      (if (and (= :get (:request-method request)) (same-origin? request))
+        (http/with-channel request channel
+          (if (:websocket? request)
+            (do (http/on-receive channel #(ascension/route! (:ascension-service app) http/send! channel %))
+                (http/on-close channel (fn [_] (swap! (:clients (:ascension-service app)) dissoc channel))))
+            (http/send! channel {:status 400 :body "WebSocket connection required"})))
+        {:status 403 :body "Origin not allowed"})
       (= uri "/peer")
       (if (and (= :get (:request-method request)) (same-origin? request))
         (http/with-channel request channel
@@ -148,10 +156,14 @@
   (let [config (discord/config)
         app {:store (store/make-store path) :clients (atom {}) :peers (atom {})
              :peer-service (assoc (peer/service (when path (str path ".peers"))) :authorize #(discord/authorize-peer! config %1 %2))
+             :ascension-service (assoc (ascension/service (when path (str path ".ascension"))) :authorize #(discord/authorize-peer! config %1 %2))
              :discord-config config :activity-options (atom {}) :clock-jobs (atom #{}) :stopped (atom false)}
         stop (http/run-server #(handler app %) {:port port :ip host :max-body 32768 :max-ws 1200000})
-        clock (future (while (not @(:stopped app)) (tick! app) (Thread/sleep 250)))]
-    (assoc app :stop (fn [& args] (reset! (:stopped app) true) (future-cancel clock) (apply stop args)))))
+        clock (future (while (not @(:stopped app)) (tick! app)
+                        (try (ascension/tick! (:ascension-service app) http/send!)
+                             (catch Exception e (binding [*out* *err*] (println "Ascension:" (.getMessage e)))))
+                        (Thread/sleep 250)))]
+    (assoc app :stop (fn [& args] (reset! (:stopped app) true) (future-cancel clock) (ascension/stop-worker! (:ascension-service app)) (apply stop args)))))
 (defn -main [& args]
   (let [port (Integer/parseInt (or (first args) (System/getenv "PORT") "3001"))
         host (or (System/getenv "HOST") "127.0.0.1")

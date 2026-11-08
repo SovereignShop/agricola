@@ -1,5 +1,9 @@
 # Eurozone
 
+**Ascension: Claim the Throne** is now playable from the web and Discord game picker,
+with 2–4 players, optional bots, observers and saved online tables. See the
+[Ascension multiplayer guide](docs/ascension-multiplayer.md).
+
 The [AI and recording guide](ai/README.md) covers the EDN game definitions,
 verified browser playback, legal action interface, and MuZero-style training.
 
