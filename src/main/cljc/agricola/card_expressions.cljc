@@ -153,6 +153,7 @@
                                                      ;; without adding state to older recordings.
                                                      (not-any? (fn [task] (= :field-harvest (:step task))) (:effect-queue g)))) a/harvest-rounds))
           :harvest-round (boolean (a/harvest-rounds (:round g)))
+          :revealed-space (boolean (some #{x} (:active g)))
           :occupied (contains? (:occupied g) x)
           :owns-space (let [owner (get-in g [:occupied x])] (if (vector? owner) (boolean (some #{pid} owner)) (= pid owner)))
           :lessons-used (boolean (some #(contains? (:occupied g) %) [:lessons :lessons-extra :lessons-copse :lessons-growth]))

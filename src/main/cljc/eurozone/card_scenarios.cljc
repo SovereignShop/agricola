@@ -65,6 +65,26 @@
     :description "You spent five wood on a room before playing Wood Gatherers this round. Take Grain Seeds with the final worker and observe two wood received at round end."}
    {:id "workaholic" :card :catalog/original-expansion-fr-119-workaholic :name "Workaholic" :players 4
     :description "Five sheep are housed in your pasture. Click the wood pile to collect all five wood, or decline. Seven housed animals unlock the clay pile and nine unlock the stone pile; each pile can be collected once."}
+   {:id "branch-collector" :card :catalog/original-expansion-wm-7-branch-collector :name "Branch Collector" :players 2
+    :description "Build a clay room at the upper left. Receive one wood before paying clay and reed. Fully substituted clay/stone costs give no wood."}
+   {:id "contractor" :card :catalog/original-expansion-wm-11-contractor :name "Contractor" :players 2
+    :description "Build a wooden room at the upper left. Your four wood need the Contractor exchange: click wood to replace one wood with one food."}
+   {:id "crop-rotator" :card :catalog/original-expansion-wm-14-crop-rotator :name "Crop Rotator" :players 2
+    :description "The last grain was just harvested from your field when Crop Rotator entered play. Sow one vegetable into that same field, or decline."}
+   {:id "forest-farmer" :card :catalog/original-expansion-wm-23-forest-farmer :name "Forest Farmer" :players 2
+    :description "Work has ended with your worker on Farmland. Select that worker and move to a free action for one wood and one marker, or decline."}
+   {:id "godfather" :card :catalog/original-expansion-wm-25-godfather :name "Godfather" :players 3
+    :description "Your neighbor has used Family Growth. Use the adjacent Major Improvement action to receive one grain before building a fireplace."}
+   {:id "animal-nursery" :card :catalog/original-expansion-wm-57-animal-nursery :name "Animal Nursery" :players 2
+    :description "Your sheep pasture is full and the pet is a boar. Complete breeding: store the newborn sheep on Animal Nursery, where it counts for scoring but cannot be used."}
+   {:id "back-door" :card :catalog/original-expansion-wm-61-back-door :name "Back Door" :players 2
+    :description "Play Back Door on Meeting Place with your first worker. Immediately place your remaining worker on Family Growth, even though your neighbor occupies it, and optionally play another minor."}
+   {:id "donkey" :card :catalog/original-expansion-wm-74-donkey :name "Donkey" :players 2
+    :description "Click either fenced pasture to place the clay donkey marker. That pasture cannot hold animals. The card ability moves the marker; Farmland grants one extra field."}
+   {:id "fish-hook" :card :catalog/original-expansion-wm-80-fish-hook :name "Fish Hook" :players 2
+    :description "Your worker just used Reed Bank next to Fishing. Take one food from the Fishing pile, or decline. Fishing card effects do not trigger."}
+   {:id "ram" :card :catalog/original-expansion-wm-102-ram :name "Ram" :players 2
+    :description "Harvest has reached feeding. Pay one food to retain the ram or discard its card. It counts as a sheep for breeding/scoring and gives additional sheep births in rounds six, eight, ten and twelve."}
    {:id "borrower" :card :catalog/original-expansion-wm-6-borrower :name "Borrower" :players 2
     :description "Borrower has supplied seven food and two begging cards. Open its card and click the pictured three-food repayment to discard one eligible begging card."}
    {:id "chemist" :card :catalog/original-expansion-wm-9-chemist :name "Chemist" :players 3
@@ -664,6 +684,22 @@
                        (update-in [:players 0] a/build-fences (vec (map key (filter #(= 1 (val %)) (frequencies (mapcat a/edges [0 1 2]))))))
                        (update-in [:players 0] a/gain {:sheep 5})
                        (game/command 0 {:type :ability :card card}))
+      "branch-collector" (-> funded (played 0 card) (assoc-in [:players 0 :house] :clay))
+      "contractor" (-> funded (played 0 card) (assoc-in [:players 0 :goods :wood] 4))
+      "crop-rotator" (-> funded (prepare-fields [0]) (update-in [:players 0] a/sow [{:cell 0 :crop :grain}])
+                         (assoc-in [:players 0 :farm 0 :count] 1) (played 0 card))
+      "forest-farmer" (-> funded (played 0 card) final-worker (game/command 0 {:type :action :space :plow :cell 0}))
+      "godfather" (-> funded (prepared-round 7) (played 0 card) (update-in [:players 1] a/build-rooms [0])
+                     (assoc :turn 1) (game/command 1 {:type :action :space :growth}) (assoc :turn 0))
+      "animal-nursery" (-> funded (prepared-round 4) (played 0 card)
+                           (update-in [:players 0] a/build-fences (a/edges 0)) (update-in [:players 0] a/gain {:sheep 2 :boar 1})
+                           last-harvest-action (game/command 0 {:type :feed}) (game/command 1 {:type :feed}))
+      "back-door" (-> funded (prepared-round 7) (put-in-hand 0 card)
+                     (update-in [:players 0] a/build-rooms [0]) (update-in [:players 1] a/build-rooms [0])
+                     (assoc :turn 1) (game/command 1 {:type :action :space :growth}) (assoc :turn 0))
+      "donkey" (-> funded (update-in [:players 0] a/build-fences (vec (distinct (mapcat a/edges [0 1])))) (played 0 card))
+      "fish-hook" (-> funded (played 0 :catalog/original-base-e-174-tutor) (played 0 :catalog/original-expansion-g-49-seed-master) (played 0 card) (game/command 0 {:type :action :space :reed}))
+      "ram" (-> funded (prepared-round 4) (update-in [:players 0] a/gain {:sheep 2}) (played 0 card) last-harvest-action)
       "borrower" (played funded 0 card)
       "chemist" (-> funded (played 0 card) (game/command 0 {:type :action :space :wood}))
       "family-planner" (played funded 0 card)

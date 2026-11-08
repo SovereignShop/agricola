@@ -382,7 +382,7 @@
         selected (if (contains? draft :plow-card) (:plow-card draft) (first (:plows effect)))
         maximum (if (= :plow-many (:op effect)) (:max-fields effect 2)
                     (+ (if selected (get-in (cards/card selected) [:passive :action-plow :extra-fields] 2) 0)
-                       (if (:plow-maker? draft) 1 0)))]
+                       (if (:plow-maker? draft) 1 0) (if (:donkey? effect) 1 0)))]
     (assoc draft :space :plow :tool :fields :max-fields maximum :separated-plow? (get-in (cards/card selected) [:passive :action-plow :separated?])
            :only-cells (when-not (:plow-maker? draft) (get-in (cards/card selected) [:passive :action-plow :exact-cells]))
            :cells (vec (filter integer? (:cells draft))) :base-field (get-in effect [:source-command :cell]))))
@@ -881,7 +881,7 @@
                 (update draft :room-options
                   (fn [options] (reduce (fn [result cell]
                     (if (contains? result cell) result
-                      (assoc result cell (select-keys draft [:frame? :brushwood? :wood-reed :clay-reed :clay-supports? :straw-thatched-hut? :alternative-first? :frame-materials :wood-carver?]))))
+                      (assoc result cell (select-keys draft [:contractor-resource :frame? :brushwood? :wood-reed :clay-reed :clay-supports? :straw-thatched-hut? :alternative-first? :frame-materials :wood-carver?]))))
                     (or options {}) (:rooms draft)))) draft)]
   (cond-> (merge {:type :action :choice (if (= :animal-market (:space draft)) :sheep :reed)} (dissoc draft :tool))
     (:card-space draft) (assoc :type :card-action :action (:space draft) :bundle (or (:bundle draft) :resources)))))
@@ -1028,6 +1028,11 @@
                                     (assoc (get draft key {}) entry value))))))
   ([p draft edit! edit-entry!]
    [:div
+    (when (and (some true? (cards/passives p :contractor))
+               (or (seq (:rooms draft)) (#{:renovate :redevelop :farm-redevelopment} (:space draft)) (:improvement draft) (:as-major? draft)))
+      [graphical-choices "Contractor · replace one material per room/action" (:contractor-resource draft) #(edit! :contractor-resource %)
+       (cons [nil "Pay normal materials" [choice-icon :none]]
+             (for [r [:wood :clay :reed :stone]] [r (str "Replace " (labels r)) [recipe {r 1} {:food 1}]]))])
     (when (and (#{:build :house-building} (:space draft)) (= 1 (count (:rooms draft))) (some true? (cards/passives p :miser)))
       [graphical-choices "Miser room payment" (not= false (:miser? draft)) #(edit! :miser? %)
        [[true "Use Miser discount" (try [goods (a/room-cost p draft {(:house p) 1 :reed 1})] (catch :default _ [:span.small "Adjust substitutions"]))]
@@ -1056,7 +1061,7 @@
        "Clay Supports: rooms cost 2 clay, 1 wood and 1 reed before other discounts"])
     (when (and (seq (:rooms draft))
                (or (pos? (a/cat-lover-discount p)) (some true? (cards/passives p :alternative-designer)) (> (count (:rooms draft)) 1))
-               (or (pos? (a/cat-lover-discount p)) (some true? (cards/passives p :alternative-designer)) (some true? (cards/passives p :clay-roof)) (some true? (cards/passives p :clay-supports)) (some true? (cards/passives p :brushwood-roof))
+               (or (some true? (cards/passives p :contractor)) (pos? (a/cat-lover-discount p)) (some true? (cards/passives p :alternative-designer)) (some true? (cards/passives p :clay-roof)) (some true? (cards/passives p :clay-supports)) (some true? (cards/passives p :brushwood-roof))
                    (some true? (cards/passives p :straw-thatched-hut))))
       [room-payment-picker p draft edit-entry!])
     (when (and (some true? (cards/passives p :direct-stone)) (= :wood (:house p)))
@@ -1203,6 +1208,7 @@
      (when (a/crock? p)
        [:div [:p.small "Cook other goods in the same batch. Gypsy's Crock adds 1 food per pair converted with a Fireplace or Cooking Hearth."]
         [conversion-controls p draft :cook-with-bake]])]))
+(declare quantity-icons)
 (defn harvest-panel [g p draft busy?]
   (case (:phase g)
     :feeding
@@ -1224,14 +1230,19 @@
        [button (if (pos? missing) (str "Feed & take " missing " begging marks") "Feed family →") #(dispatch :command {:type :feed :convert convert :craft (or (:craft draft) []) :plane-extra? plane-extra?}) "button primary" (or busy? (:error result))]])
     :breeding
     (let [options (a/breeding-options p) default (a/default-breeding p)
-          offspring (get draft :offspring default)]
+          offspring (get draft :offspring default)
+          nursery? (some true? (cards/passives p :animal-nursery))
+          nursery (get draft :nursery (a/default-nursery p offspring))]
       [:div.harvest-panel [:div.eyebrow "HARVEST · BREEDING"] [:h3 "Breed animals"]
        [:p.small "Breed the offspring allowed by your animals and cards, as long as they fit. Animals cannot be cooked during breeding."]
        (if (seq options)
          (for [[animal n] options] ^{:key animal}
            [field (str "New " (str/lower-case (labels animal))) [number-input (get offspring animal 0) #(draft! :offspring (assoc offspring animal %)) n]])
          [:p "No pairs to breed this harvest."])
-       [button "Complete breeding →" #(dispatch :command {:type :breed :offspring offspring}) "button primary" busy?]])
+       (when nursery? [:div [:p.small "Newborns placed in Animal Nursery cannot be moved or used, but count when scoring."]
+                           (for [[animal n] offspring] ^{:key animal}
+                             [quantity-icons (str "Store newborn " (labels animal)) animal (get nursery animal 0) n #(draft! :nursery (assoc nursery animal %))])])
+       [button "Complete breeding →" #(dispatch :command (cond-> {:type :breed :offspring offspring} nursery? (assoc :nursery nursery))) "button primary" busy?]])
     :housing
     (let [keep (get draft :keep (select-keys (:goods p) a/animals)) cook? (get draft :cook? (boolean (some (:improvements p) [:fireplace-2 :fireplace-3 :hearth-4 :hearth-5])))]
       [:div.harvest-panel [:div.eyebrow "ANIMAL HUSBANDRY"] [:h3 "House your animals"]
@@ -1545,6 +1556,19 @@
          (when (seq selected) [:div.choice-recipe [goods (frequencies selected)] [:span (if deposit? "→ stored on card" "from general supply → card")]
                                 [:div.choice-card-face {:style {:width "80px"}} [tabletop/card-face cid false p]]])])
       :almshouse [:div.choice-recipe [choice-icon :points] [:span "Remove one feeding penalty · +3 points"]]
+      :wm-donkey [:div [:p.small "Click a pasture for the donkey. That entire pasture cannot hold animals; you may move the marker later."]
+                   [farm-picker p (vec (mapcat identity (a/pastures p))) [(:cell draft)] #(draft! :cell %)]
+                   [:div.choice-recipe [goods {:clay 1}] [:span "→"] [choice-icon :field]]]
+      :wm-ram-feed [:div [graphical-choices "Feed the ram or discard its card" (:discard? draft false) #(draft! :discard? %)
+                         [[false "Feed the ram" [:div.choice-recipe [goods {:food 1}] [:span "→ retain Ram"]]]
+                          [true "Discard Ram" [choice-icon :none]]]]]
+      :wm-rotate [:div [:div.choice-recipe [goods {(:crop effect) 1}] [:span "→"] [choice-icon :field]]
+                  [:p.small "Sow the other crop in the field that just emptied, or decline."]
+                  (if (integer? (:cell effect)) [farm-picker p [(:cell effect)] [(:cell effect)] (fn [_] nil)]
+                    [:div.choice-card-face [tabletop/card-face (:cell effect) false p]])]
+      :wm-fish-hook [:div.choice-recipe [choice-icon :food] [:span "1 food from the Fishing pile → your supply"]]
+      :wm-ram-breed [graphical-choices "Place the newborn sheep" (:nursery? draft false) #(draft! :nursery? %)
+                       (mapv (fn [choice] [(:nursery? choice) (if (:nursery? choice) "Store in Animal Nursery" "Keep on your farm") [goods {:sheep 1}]]) (card-game/wm-sixteen-choices g (:id p) cid effect (:context head)))]
       :fish-pond-place [:div [:div.choice-recipe [goods {:clay 1}] [:span "→"] [choice-icon :field]]
                         [:p.small "Place the supply clay on an unused space. The pond permanently occupies it."]
                         [farm-picker p (filter #(a/empty-cell? p %) (range 15)) [(:cell draft)] #(draft! :cell %)]]
@@ -1597,7 +1621,7 @@
         resource-count (if (= op :choose-good) (card-game/resource-choice-count g) 1)
         selected-resources (resource-selection g draft)
         keep (get draft :keep (select-keys (:goods p) a/animals))
-        choice (merge (select-keys draft [:pelt-roof-reed :timetable? :timetable-resources :wood-clay :wood-stone :stonepiler-stone :alternative-first? :frame-materials :grain-mill-oven? :storage-shed-resource :use-beehive? :straw-thatched-hut? :headmaster-food :headmaster-entry-food :chocolate-food :category :salesman? :smallholder? :adopt-reed-hut? :wood-reed :wood-carver? :manufacturer-discount :spaces :purchase :perpetual-student? :from-space :animals :space :owner :buyer :cultivation-first? :return-animals :cook-with-bake :plow-card :plow-maker? :sow-before? :return-improvement :return-improvements :as-major? :discount-resource :discount-resources :accommodate-taken? :grain-source :animal :cell :cells :rooms :stables :fences :fence-material :rounds :person-kind :cards :frame? :brushwood? :clay-reed :clay-supports? :room-options :renovate-to :paper-maker? :occupation-wood :card :cook? :option :payment-option :improvement :upgrade :bake-grain :exchange?])
+        choice (merge (select-keys draft [:contractor-resource :discard? :pelt-roof-reed :timetable? :timetable-resources :wood-clay :wood-stone :stonepiler-stone :alternative-first? :frame-materials :grain-mill-oven? :storage-shed-resource :use-beehive? :straw-thatched-hut? :headmaster-food :headmaster-entry-food :chocolate-food :category :salesman? :smallholder? :adopt-reed-hut? :wood-reed :wood-carver? :manufacturer-discount :spaces :purchase :perpetual-student? :from-space :animals :space :owner :buyer :cultivation-first? :return-animals :cook-with-bake :plow-card :plow-maker? :sow-before? :return-improvement :return-improvements :as-major? :discount-resource :discount-resources :accommodate-taken? :grain-source :animal :cell :cells :rooms :stables :fences :fence-material :rounds :person-kind :cards :frame? :brushwood? :clay-reed :clay-supports? :room-options :renovate-to :paper-maker? :occupation-wood :card :cook? :option :payment-option :improvement :upgrade :bake-grain :exchange?])
                       (when (contains? draft :effect-fields) {:fields (:effect-fields draft)})
                       {:type :resolve :decision (:decision-id g) :keep keep :grain (get draft :effect-grain 1)
                        :action (or (:effect-action draft) (if (= op :young-artist) :draw :room))
@@ -1608,6 +1632,8 @@
                              (= op :g-tax-resource) (assoc :resource (:effect-resource draft))
                              (= op :g-pelt-roof) (assoc :amount (get draft :effect-amount (:amount (first (card-game/g-sixteen-choices g (:id p) (:card head) op (:context head))))))
                              (= op :g-harvest-feast) (assoc :takes (:g-feast-takes draft {}))
+                             (= op :wm-ram-feed) (assoc :discard? (:discard? draft false))
+                             (= op :wm-ram-breed) (assoc :nursery? (:nursery? draft false))
                              (#{:minder-deposit :minder-increase} op) (assoc :resources (vec (:wm-resources draft)))
                              (= op :fish-pond-store) (assoc :amount (get draft :effect-amount 1))
                              (#{:g-mathematician :g-opportunist :g-pilgrim :g-animal-farm} op) (assoc :resource (:effect-resource draft))
@@ -2010,7 +2036,7 @@
      (when (#{:plow-many :wheel-plow} op)
        (let [selected (if (contains? draft :plow-card) (:plow-card draft) (first (:plows effect)))
              maximum (if (= op :plow-many) (:max-fields effect 2)
-                       (+ (if selected (get-in (cards/card selected) [:passive :action-plow :extra-fields] 2) 0) (if (:plow-maker? draft) 1 0)))]
+                       (+ (if selected (get-in (cards/card selected) [:passive :action-plow :extra-fields] 2) 0) (if (:plow-maker? draft) 1 0) (if (:donkey? effect) 1 0)))]
          [:div
           (when (and (= op :wheel-plow) (or (> (count (:plows effect)) 1) (:plow-maker? effect)))
             [graphical-choices "Plow" selected #(do (draft! :plow-card %) (draft! :cells []))
@@ -2111,6 +2137,8 @@
              choose! (fn [option] (dispatch :select-action (:space option)) (draft! :extra-space option))
              card-options (filter :card-space options)]
          [:div [:p.small "Click an eligible action space."]
+          (when (= :catalog/original-expansion-wm-23-forest-farmer (:card head))
+            [:div.choice-recipe [goods {:wood 1}] [:span " + 1 ➜ marker → "] [choice-icon :person (:id p)] [:span "move to a free action"]])
           [board-picker g (map :space (remove :card-space options)) (when-not (:card-space selected) (:space selected))
            #(choose! {:space %})]
           (when (seq card-options)

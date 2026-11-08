@@ -104,3 +104,18 @@
                     (a/log-event (str (:name winner) " claimed Sequestrator's " goods " " (name resource)))) g)))
           g [:reed :clay]))))
    g (range (count (:players g)))))
+
+(def crop-rotator :catalog/original-expansion-wm-14-crop-rotator)
+(defn crop-snapshot [p]
+  (into {} (for [cell (concat (a/tiles p :field) (keys (:card-fields p)))
+                 :let [field (get-in p (a/field-path cell)) crop (:crop field)]
+                 :when (and (#{:grain :vegetable} crop) (pos? (:count field 0)))] [cell crop])))
+(defn sync-crop-rotator [g]
+  (reduce (fn [g p]
+            (if-not (c/has? p crop-rotator) g
+              (let [now (crop-snapshot p) old (get-in p [:card-state crop-rotator :crops-seen] now)
+                    emptied (for [[cell crop] old :when (and (not (contains? now cell))
+                                               (= :field (get-in p (conj (a/field-path cell) :type)))
+                                               (empty? (a/field-crops (get-in p (a/field-path cell)))))]
+                              (task (:id p) crop-rotator {:op :wm-rotate :optional? true :cell cell :crop ({:grain :vegetable :vegetable :grain} crop)}))]
+                (-> g (assoc-in [:players (:id p) :card-state crop-rotator :crops-seen] now) (prepend emptied))))) g (:players g)))

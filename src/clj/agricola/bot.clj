@@ -182,7 +182,7 @@
         one (vec (extend [[initial []]])) two (vec (extend one))
         three (delay (take 64 (extend two)))]
     (for [cid (cons nil (:plows effect)) maker? (if (:plow-maker? effect) [false true] [false])
-          :let [maximum (+ (if cid (get-in (c/card cid) [:passive :action-plow :extra-fields] 2) 0) (if maker? 1 0))]
+          :let [maximum (+ (if cid (get-in (c/card cid) [:passive :action-plow :extra-fields] 2) 0) (if maker? 1 0) (if (:donkey? effect) 1 0))]
           [_ cells] (concat (when (pos? maximum) one) (when (>= maximum 2) two) (when (= maximum 3) @three))]
       {:cells cells :plow-card cid :plow-maker? maker?})))
 (declare ability-candidates card-action-candidates)
@@ -190,6 +190,8 @@
   (let [p (g/p state pid) head (first (:effect-queue state)) effect (g/plow-effect (:effect head))
         effect (cond-> effect (contains? effect :max-fields) (update :max-fields #(expression/evaluate state pid (:context head) %)))
         options (case (:op effect)
+                  (:wm-fish-hook :wm-donkey :wm-back-door :wm-ram-feed :wm-ram-breed :wm-crop-harvest :wm-rotate)
+                  (g/wm-sixteen-choices state pid (:card head) effect (:context head))
                   (:chemist :fish-pond-place :fish-pond-store :lady-arrival :almshouse :slapdash-return)
                   (g/wm-fifteen-choices state pid (:card head) effect (:context head))
                   :reserve-family (map #(hash-map :rounds %) (remove empty? (subsets (g/family-planner-rounds state))))

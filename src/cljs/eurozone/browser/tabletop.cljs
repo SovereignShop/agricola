@@ -136,13 +136,14 @@
                                     (if (= cid (or (:card slot) key))
                                       (merge-with + goods (:under-crops slot)) goods)) {} (:card-fields p))
                           animals)]
-    (when (or (and (= cid :catalog/original-expansion-fr-80-fencing-master) (pos? (get-in p [:reserved-fences :fr-fencing-master] 0))) (pos? (get-in p [:stored-stables cid] 0)) (contains? (:pawned-improvements p) cid) (pos? (:hidden-count state 0)) (seq goods) (seq (:bag state)) (:marked-space state) (and (= cid :catalog/original-base-k-138-reed-hut) (:reed-hut? p) (not (:reed-hut-placed? p)))
+    (when (or (pos? (:markers state 0)) (and (= cid :catalog/original-expansion-fr-80-fencing-master) (pos? (get-in p [:reserved-fences :fr-fencing-master] 0))) (pos? (get-in p [:stored-stables cid] 0)) (contains? (:pawned-improvements p) cid) (pos? (:hidden-count state 0)) (seq goods) (seq (:bag state)) (:marked-space state) (and (= cid :catalog/original-base-k-138-reed-hut) (:reed-hut? p) (not (:reed-hut-placed? p)))
               (and (= cid :catalog/original-base-i-265-fence-deliveryman) (seq (:reserved-fences p))))
       [:div.tt-card-markers {:aria-label "Goods on card"}
        (when (and (= cid :catalog/original-expansion-fr-80-fencing-master) (pos? (get-in p [:reserved-fences :fr-fencing-master] 0)))
          [:span {:aria-label "Fences stored on this card"}
           [:svg.piece {:viewBox "0 0 24 24" :aria-hidden true} [:path {:d "M4 2V22M20 2V22M4 7H20M4 17H20" :fill "none" :stroke "#b07949" :stroke-width 4}]]
           [:b (get-in p [:reserved-fences :fr-fencing-master])]])
+       (when (pos? (:markers state 0)) [:span.resource {:aria-label (str (:markers state) " arrow markers")} [:span "➜"] [:b (:markers state)]])
        (when (pos? (get-in p [:stored-stables cid] 0))
          [:span {:aria-label "Stable stored on this card"}
           [:svg.piece {:viewBox "0 0 24 24" :aria-hidden true} [:path {:d "M2 9L12 2L22 9V22H2Z" :fill "#b07949" :stroke "#704729"}]]

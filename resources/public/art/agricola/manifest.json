@@ -3589,6 +3589,66 @@
       "source": "http://playagricola.com/Agricola/Cards/Cards/xminorNecklace_3530_5.jpg",
       "sha256": "2d9d3ec853e6798cc1ead52b9ee5a2ae740c8dcbef0ccb3f004473f71c10924e",
       "note": "Unmodified final English print; identity, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-wm007.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx1BranchCollector_859_10.jpg",
+      "sha256": "d0a833b5511fcff314bf1435c3e8293288d2c144fa1215959436397a713a30ad",
+      "note": "Unmodified final English Original WM print; card identity and printed rules visually verified."
+    },
+    {
+      "file": "cards/original-wm011.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx1Contractor_2120_8.jpg",
+      "sha256": "b435373f3861bca734b784e7464bdb164b270c8a961c010fe55b323e9fb7bea9",
+      "note": "Unmodified final English Original WM print; card identity and printed rules visually verified."
+    },
+    {
+      "file": "cards/original-wm014.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx1CropRotator_1900_12.jpg",
+      "sha256": "d54e3d503915bed8410ed955f99e32c5a7613acf8093822acd78429f37a83c2e",
+      "note": "Unmodified final English Original WM print; card identity and printed rules visually verified."
+    },
+    {
+      "file": "cards/original-wm023.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx1ForestFarmer_2299_6.jpg",
+      "sha256": "404e03b1319327fb4c71bd050212bb190b4c230a79b4a3562ef6c21919d71b32",
+      "note": "Unmodified final English Original WM print; card identity and printed rules visually verified."
+    },
+    {
+      "file": "cards/original-wm025.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx3Godfather_921_10.jpg",
+      "sha256": "bfea5a7b2dce1103164822b0bb409025446303be7a00f34abf9f990a19cc9fcc",
+      "note": "Unmodified final English Original WM print; card identity and printed rules visually verified."
+    },
+    {
+      "file": "cards/original-wm057.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorAnimalNursery_665_10.jpg",
+      "sha256": "00f48b4d738493004fcdb4482cf6e68217698162b29208e33479e7b19e710c65",
+      "note": "Unmodified final English Original WM print; card identity and printed rules visually verified."
+    },
+    {
+      "file": "cards/original-wm061.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorBackDoor_2217_8.jpg",
+      "sha256": "c8b8fa0c47b8d8c591906dc18b2d97b9b22ac1ff3fb1fac93ea5d64499ccae44",
+      "note": "Unmodified final English Original WM print; card identity and printed rules visually verified."
+    },
+    {
+      "file": "cards/original-wm074.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorDonkey_138_9.jpg",
+      "sha256": "9b8def66577372d21335e8d8b008d6ed4ae3e2785e3a6b7f40fdd61c15d1da10",
+      "note": "Unmodified final English Original WM print; card identity and printed rules visually verified."
+    },
+    {
+      "file": "cards/original-wm080.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorFishHook_630_4.jpg",
+      "sha256": "0a38f38b414608fa537673a3fd2dacbc249f89160aa38c8fcea8d83bfd5487ac",
+      "note": "Unmodified final English Original WM print; card identity and printed rules visually verified."
+    },
+    {
+      "file": "cards/original-wm102.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorRam_2141_8.jpg",
+      "sha256": "89a0f71c40fb6ba6d1cb76325e2ec7510c0a6a464c08eb9db55ddf51be038a06",
+      "note": "Unmodified final English Original WM print; card identity and printed rules visually verified."
     }
   ]
 }

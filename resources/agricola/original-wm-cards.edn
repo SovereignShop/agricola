@@ -318,4 +318,16 @@
  :catalog/original-expansion-wm-107-slapdash-renovation
  {:triggers [{:event :turn-end :spaces #{:renovate :redevelop :farm-redevelopment}
               :effect {:op :slapdash-return :optional? true}}]}
+
+ ;; Community batch sixteen.
+ :catalog/original-expansion-wm-7-branch-collector {:passive {:branch-collector true}}
+ :catalog/original-expansion-wm-11-contractor {:passive {:contractor true}}
+ :catalog/original-expansion-wm-14-crop-rotator {:play [{:op :wm-crop-harvest}] :passive {:crop-rotator true}}
+ :catalog/original-expansion-wm-23-forest-farmer {:play [{:op :set-card-state :values {:markers 3}}] :passive {:forest-farmer true}}
+ :catalog/original-expansion-wm-25-godfather {:passive {:godfather true}}
+ :catalog/original-expansion-wm-57-animal-nursery {:passive {:animal-nursery true}}
+ :catalog/original-expansion-wm-61-back-door {:requires-effect? true :requires [:revealed-space :growth] :play [{:op :wm-back-door}]}
+ :catalog/original-expansion-wm-74-donkey {:requires-effect? true :play [{:op :wm-donkey}] :ability {:op :wm-donkey} :passive {:donkey true}}
+ :catalog/original-expansion-wm-80-fish-hook {:triggers [{:event :use-space :effect {:op :wm-fish-hook :optional? true}}]}
+ :catalog/original-expansion-wm-102-ram {:passive {:ram true} :triggers [{:event :feeding-start :effect {:op :wm-ram-feed}} {:event :round-end :effect {:op :wm-ram-breed}}]}
 }
