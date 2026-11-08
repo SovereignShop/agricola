@@ -22,7 +22,7 @@
                      (get-in player [:well-deliveries round] 0))
         fences (get-in player [:reserved-fences round] 0)
         guests (get-in player [:guest-schedule round] 0)]
-    (filterv #(seq (:goods %))
+    (filterv #(or (seq (:goods %)) (:withheld-person %))
       (concat
         (for [entry (get-in player [:schedule round]) :when (owned (:card entry))]
           {:card (:card entry)
@@ -35,6 +35,8 @@
           [{:card fence-deliveryman :goods {:fence fences} :optional? true :cost {:food 2}}])
         ;; Guest passes on immediately, but the promised worker stays with the
         ;; player who played it; ownership is intentionally not checked here.
+        (when (= (dec round) (get-in player [:card-state :catalog/original-expansion-g-82-hired-helpers :used-round]))
+          [{:card :catalog/original-expansion-g-82-hired-helpers :goods {} :withheld-person true}])
         (when (pos? guests) [{:card guest :goods {:guest guests}}])))))
 
 (defn by-round [g]

@@ -196,6 +196,8 @@
                   (:minder-deposit :minder-increase)
                   (for [resources (remove empty? (subsets (if (= :minder-deposit (:op effect)) g/building-resources (g/minder-resources p (:card head)))))
                         :when (<= (count resources) (if (= :minder-deposit (:op effect)) 4 2))] {:resources resources})
+                  (:g-apprentice-mark :g-tax-resource :g-harvest-feast :g-pelt-roof :g-late-sleeper :g-hired-helpers)
+                  (g/g-sixteen-choices state pid (:card head) (:op effect) (:context head))
                   (:g-mathematician :g-miner :g-opportunist :g-pilgrim :g-animal-farm :g-dunghill)
                   (g/g-fifteen-choices state pid (:card head) (:op effect) (:context head))
                   (:fiddler :manual-labourer) [{}]
@@ -435,6 +437,7 @@
             (case (get-in (c/card cid) [:ability :op])
               :borrower-repay [{}]
               :minder-collect (map #(hash-map :resource %) (g/minder-resources p cid))
+              :g-hired-helpers [{}]
               :g-animal-farm (for [r a/animals :when (pos? (a/amount p r))] {:resource r})
               :g-pilgrim-discard []
               :pawn-improvement (map #(hash-map :improvement %) (g/pawnable-improvements p))
@@ -478,6 +481,7 @@
     (fn [{:keys [card kind owner]}]
       (when-not (g/card-space-error state pid card)
         (case kind
+          :private-school (map #(assoc % :type :card-action :card-space card :action :lessons) (hand-options (g/p state pid) :occupation))
           :substitute-teacher (for [bundle [:resources :crops]] {:type :card-action :card-space card :bundle bundle})
           (:tavern :clay-deposit) (cond-> [{:type :card-action :card-space card}]
                                     (= pid owner) (conj {:type :card-action :card-space card :action :points}))

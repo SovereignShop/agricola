@@ -89,13 +89,13 @@
   "Physical cards that count as occupations. Clockwork Man remains in minors;
    Academic remains one physical card even when its count is doubled."
   [p]
-  (concat (:occupations p)
+  (concat (remove #(get-in (card %) [:passive :zero-occupation]) (:occupations p))
           (filter #(pos? (get-in (card %) [:passive :counts-as-occupation] 0)) (:minors p))))
 (defn occupation-count
   "Academic is two only for minor prerequisites and original Tutor/Reeve.
    Playing it, occupation costs, and all other counts still see one card."
   [p purpose]
-  (+ (count (:occupations p))
+  (+ (count (remove #(get-in (card %) [:passive :zero-occupation]) (:occupations p)))
      (reduce + 0 (for [cid (:minors p)] (get-in (card cid) [:passive :counts-as-occupation] 0)))
      (if (#{:minor-prerequisite :original-tutor :original-reeve} purpose)
        (count (filter true? (passives p :academic))) 0)))

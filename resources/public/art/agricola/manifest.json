@@ -3469,6 +3469,66 @@
       "source": "http://playagricola.com/Agricola/Images/gminordunghill_v2.jpg",
       "sha256": "758d046e1a6772891813302fc1266aa3ed75483bf1062bb0e1117b880001ab46",
       "note": "Unmodified final English print; identity, cost, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-g015.jpg",
+      "source": "http://playagricola.com/Agricola/Images/occg1familycounselor.jpg",
+      "sha256": "92cb430a1603b56cf856ff5cb78334c9bb7c4754c07d69d1e0f50d46f2929911",
+      "note": "Original G015 final English print. Identity, costs, prerequisite position and printed rules visually verified; community batch sixteen."
+    },
+    {
+      "file": "cards/original-g035.jpg",
+      "source": "http://playagricola.com/Agricola/Images/occg4jobseeker.jpg",
+      "sha256": "0baa0ada9e19c49b1a4e62de046dc5fe8756694b1679819608bceb6b05c61e58",
+      "note": "Original G035 final English print. Identity, costs, prerequisite position and printed rules visually verified; community batch sixteen."
+    },
+    {
+      "file": "cards/original-g037.jpg",
+      "source": "http://playagricola.com/Agricola/Images/occg4latesleeper_v2.jpg",
+      "sha256": "b3c9060a6989aff6d6647a1ff143e422ed0d73b7bb37e10c7173090365e3e46e",
+      "note": "Original G037 final English print. Identity, costs, prerequisite position and printed rules visually verified; community batch sixteen."
+    },
+    {
+      "file": "cards/original-g038.jpg",
+      "source": "http://playagricola.com/Agricola/Images/occg1masterbakersapprentice.jpg",
+      "sha256": "25d1dc6644c8b4b95e31a921712f143be7c1b2d2b973dad46aa9108df33202a4",
+      "note": "Original G038 final English print. Identity, costs, prerequisite position and printed rules visually verified; community batch sixteen."
+    },
+    {
+      "file": "cards/original-g042.jpg",
+      "source": "http://playagricola.com/Agricola/Images/occg4oldestoccupation_v3.jpg",
+      "sha256": "b7738eabdf3cd59f805147fbc6dfb8763dd011f1c25a72952d4f8c8c6d35c99c",
+      "note": "Original G042 final English print. Identity, costs, prerequisite position and printed rules visually verified; community batch sixteen."
+    },
+    {
+      "file": "cards/original-g054.jpg",
+      "source": "http://playagricola.com/Agricola/Images/occg3taxcollector_v2.jpg",
+      "sha256": "0952d6e1bc4816cce4b408c78b67a477d17077d6754e9b59f588aa6e02314547",
+      "note": "Original G054 final English print. Identity, costs, prerequisite position and printed rules visually verified; community batch sixteen."
+    },
+    {
+      "file": "cards/original-g080.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminorharvestfeast.jpg",
+      "sha256": "a21117fc650264b914577f576f735663d1dd95a5f5327fe5a4d38e029225090d",
+      "note": "Original G080 final English print. Identity, costs, prerequisite position and printed rules visually verified; community batch sixteen."
+    },
+    {
+      "file": "cards/original-g082.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminorhiredhelpers_v3.jpg",
+      "sha256": "4ef5dbe688b644c14d8a017fbba1deed3c07e54c69717f9fd617061edaaba217",
+      "note": "Original G082 final English print. Identity, costs, prerequisite position and printed rules visually verified; community batch sixteen."
+    },
+    {
+      "file": "cards/original-g091.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminorpeltroof_v3.jpg",
+      "sha256": "80750a96081568dd9b193950b4eedc1a8085ceaed1274084a197a6e93d1c06ba",
+      "note": "Original G091 final English print. Identity, costs, prerequisite position and printed rules visually verified; community batch sixteen."
+    },
+    {
+      "file": "cards/original-g096.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminorprivateschool.jpg",
+      "sha256": "b01366d7690dab805797c2673df82a18b877f2cdab94ae04c1562756684319c5",
+      "note": "Original G096 final English print. Identity, costs, prerequisite position and printed rules visually verified; community batch sixteen."
     }
   ]
 }

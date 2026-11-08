@@ -4,7 +4,27 @@
   (:require [agricola.engine :as a] [agricola.card-game :as game] [agricola.card-rules :as cards]))
 
 (def scenarios
-  [
+  [   {:id "family-counselor" :card :catalog/original-expansion-g-15-family-counselor :name "Family Counselor" :players 2
+    :description "Your first adult took Forest. Place the final worker on Clay Pit: both adults occupy the early-round board, so receive one food at Returning Home. A different board would not qualify."}
+   {:id "job-seeker" :card :catalog/original-expansion-g-35-job-seeker :name "Job Seeker" :players 4
+    :description "Two opponents have more occupations. A new round offers a pictured one-food payment to play a card from your hand; decline is allowed. Job Seeker itself does not count."}
+   {:id "late-sleeper" :card :catalog/original-expansion-g-37-late-sleeper :name "Late Sleeper" :players 4
+    :description "At round preparation, choose the extra guest and delay all your workers until every other player finishes, or decline to keep normal order."}
+   {:id "master-bakers-apprentice" :card :catalog/original-expansion-g-38-master-baker-s-apprentice :name "Master Baker’s Apprentice" :players 2
+    :description "Click a revealed action space to mark it with Bake Bread for everyone. You may bake now; later other players baking through that marker pay you one food from the supply."}
+   {:id "oldest-occupation" :card :catalog/original-expansion-g-42-oldest-occupation :name "Oldest Occupation" :players 4
+    :description "Day Laborer in round five has triggered optional family growth. You have a spare room. Your own growth is free; an opponent would pay you two food."}
+   {:id "tax-collector" :card :catalog/original-expansion-g-54-tax-collector :name "Tax Collector" :players 3
+    :description "An opponent built a Fireplace with clay. Click the clay icon for the free resource, then optionally pay one food for another clay. Only resources actually paid qualify."}
+   {:id "harvest-feast" :card :catalog/original-expansion-g-80-harvest-feast :name "Harvest Feast" :players 2
+    :description "Click planted fields and use crop icons to collect any amount into your supply. Each player receives their own optional choice. This is not a harvest."}
+   {:id "hired-helpers" :card :catalog/original-expansion-g-82-hired-helpers :name "Hired Helpers" :players 2
+    :description "Your last family member has acted. Accept one guest for a final placement this round or decline. Accepting reserves one fewer worker next round; consecutive use and round fourteen are forbidden."}
+   {:id "pelt-roof" :card :catalog/original-expansion-g-91-pelt-roof :name "Pelt Roof" :players 2
+    :description "A pair of sheep has just been cooked. Store one reed on Pelt Roof, or decline. The stored reed can pay for room building or renovation but is not ordinary supply."}
+   {:id "private-school" :card :catalog/original-expansion-g-96-private-school :name "Private School" :players 2
+    :description "Private School is a shared occupation action space. Choose its action to play a card: the owner uses it free; another player pays the owner one food plus any printed occupation costs."}
+
    {:id "grotto" :card :catalog/original-expansion-fr-26-grotto :name "Grotto" :players 2
     :description "Round end has arrived. Click a pictured clay or stone to pay two food and collect it from Grotto, or decline. Once all five pieces have been collected, Grotto provides room for one additional family member."}
    {:id "threshing-machine-plow" :card :catalog/original-expansion-fr-50-threshing-machine-plow :name "Threshing Machine Plow" :players 2
@@ -566,6 +586,25 @@
         base (game/initialize (a/new-game names (vec (mapcat identity a/stages)) 0))
         funded (update base :players #(mapv (fn [p] (a/gain p {:food 12 :wood 8 :clay 8 :reed 6 :stone 8 :grain 3 :vegetable 2})) %))]
     (case id
+      "family-counselor" (-> funded (played 0 card) (game/command 0 {:type :action :space :wood})
+                              (game/command 1 {:type :action :space :grain}) final-worker)
+      "job-seeker" (-> funded (played 1 :catalog/original-expansion-g-21-hermit)
+                        (played 2 :catalog/original-expansion-g-21-hermit) (played 0 card)
+                        (put-in-hand 0 :catalog/original-expansion-g-5-architect) game/begin-round game/drain)
+      "late-sleeper" (-> funded (played 0 card) game/begin-round game/drain)
+      "master-bakers-apprentice" (-> funded (a/build-improvement 0 {:improvement :clay-oven :bake-grain 0}) (played 0 card))
+      "oldest-occupation" (-> funded (prepared-round 5) (update-in [:players 0] a/build-rooms [0])
+                               (played 0 card) (game/command 0 {:type :action :space :labor}))
+      "tax-collector" (-> funded (prepared-round 4) (played 0 card) (assoc :turn 1)
+                          (game/command 1 {:type :action :space :improvement :improvement :fireplace-2}))
+      "harvest-feast" (-> funded (played 0 (cards/id :a109)) (played 0 (cards/id :a115))
+                          (played 0 :catalog/original-expansion-g-49-seed-master) (prepare-fields [0 1])
+                          (update-in [:players 0] a/sow [{:cell 0 :crop :grain} {:cell 1 :crop :vegetable}]) (played 0 card))
+      "hired-helpers" (-> funded (played 0 card) final-worker (game/command 0 {:type :action :space :grain}))
+      "pelt-roof" (-> funded (played 0 (cards/id :a109)) (played 0 (cards/id :a115))
+                       (a/build-improvement 0 {:improvement :fireplace-2}) (played 0 card)
+                       (update-in [:players 0] a/gain {:sheep 2}) (game/command 0 {:type :convert :goods {:sheep 2}}))
+      "private-school" (-> funded (played 0 card) (put-in-hand 0 :catalog/original-expansion-g-5-architect))
       "grotto" (-> funded (played 0 :catalog/original-expansion-g-49-seed-master)
                    (played 0 :catalog/original-expansion-g-5-architect) (played 0 card) final-worker
                    (game/command 0 {:type :action :space :grain}))

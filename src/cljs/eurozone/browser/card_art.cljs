@@ -2,7 +2,17 @@
 (def available #{:revised-base/a002 :revised-base/a005 :revised-base/a009 :revised-base/a012 :revised-base/a016 :revised-base/a019 :revised-base/a024 :revised-base/a026 :revised-base/a032 :revised-base/a033 :revised-base/a038 :revised-base/a044 :revised-base/a050 :revised-base/a053 :revised-base/a055 :revised-base/a056 :revised-base/a063 :revised-base/a067 :revised-base/a069 :revised-base/a071 :revised-base/a075 :revised-base/a078 :revised-base/a080 :revised-base/a086 :revised-base/a087 :revised-base/a088 :revised-base/a090 :revised-base/a098 :revised-base/a102 :revised-base/a108 :revised-base/a110 :revised-base/a112 :revised-base/a114 :revised-base/a116 :revised-base/a119 :revised-base/a120 :revised-base/a123 :revised-base/a125 :revised-base/a143 :revised-base/a147 :revised-base/a155 :revised-base/a160 :revised-base/a165 :revised-base/b002 :revised-base/b008 :revised-base/b010 :revised-base/b013 :revised-base/b016 :revised-base/b019 :revised-base/b024 :revised-base/b025 :revised-base/b033 :revised-base/b036 :revised-base/b039 :revised-base/b045 :revised-base/b047 :revised-base/b050 :revised-base/b056 :revised-base/b057 :revised-base/b061 :revised-base/b062 :revised-base/b066 :revised-base/b068 :revised-base/b074 :revised-base/b077 :revised-base/b080 :revised-base/b084 :revised-base/b087 :revised-base/b089 :revised-base/b091 :revised-base/b095 :revised-base/b097 :revised-base/b098 :revised-base/b099 :revised-base/b102 :revised-base/b104 :revised-base/b107 :revised-base/b108 :revised-base/b109 :revised-base/b114 :revised-base/b121 :revised-base/b123 :revised-base/b126 :revised-base/b136 :revised-base/b142 :revised-base/b145 :revised-base/b156 :revised-base/b163 :revised-base/b164 :revised-base/b166})
 ;; Exact pack identities keep reprints and Original cards separate.
 (def printed-files
-  {:catalog/original-expansion-fr-26-grotto "original-fr026.jpg"
+  {:catalog/original-expansion-g-15-family-counselor "original-g015.jpg"
+:catalog/original-expansion-g-35-job-seeker "original-g035.jpg"
+:catalog/original-expansion-g-37-late-sleeper "original-g037.jpg"
+:catalog/original-expansion-g-38-master-baker-s-apprentice "original-g038.jpg"
+:catalog/original-expansion-g-42-oldest-occupation "original-g042.jpg"
+:catalog/original-expansion-g-54-tax-collector "original-g054.jpg"
+:catalog/original-expansion-g-80-harvest-feast "original-g080.jpg"
+:catalog/original-expansion-g-82-hired-helpers "original-g082.jpg"
+:catalog/original-expansion-g-91-pelt-roof "original-g091.jpg"
+:catalog/original-expansion-g-96-private-school "original-g096.jpg"
+   :catalog/original-expansion-fr-26-grotto "original-fr026.jpg"
    :catalog/original-expansion-fr-50-threshing-machine-plow "original-fr050.jpg"
    :catalog/original-expansion-fr-60-wood-saw "original-fr060.jpg"
    :catalog/original-expansion-fr-73-convict-number-24601 "original-fr073.jpg"

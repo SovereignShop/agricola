@@ -155,7 +155,7 @@
        (when (seq (:bag state))
          [:span {:aria-label "Veterinarian bag"} (str "Bag: " (count (:bag state)) " animals")])
        (when-let [space (:marked-space state)]
-         [:span (str "Fence: " (or (:name (a/actions space)) (:name (cards/card space))))])
+         [:span (str (if (= cid :catalog/original-expansion-g-38-master-baker-s-apprentice) "Bake bread: " "Fence: ") (or (:name (a/actions space)) (:name (cards/card space))))])
        (when (= cid :catalog/original-base-i-265-fence-deliveryman)
          (for [[round n] (sort (:reserved-fences p))] ^{:key round}
            [:span (str "Round " round ": " n " fences")]))])))

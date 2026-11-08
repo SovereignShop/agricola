@@ -269,4 +269,29 @@
  :catalog/original-expansion-g-72-dunghill
  {:printed-cost {:wood 1} :cost {:wood 1} :requires [:>= [:occupations] 2]
   :triggers [{:event :before-field-phase :effect {:op :g-dunghill :optional? true}}]}
+
+ ;; Batch sixteen: verified final English G-deck prints.
+ :catalog/original-expansion-g-15-family-counselor
+ {:triggers [{:event :return-home :effect {:op :g-family-counselor}}]}
+ :catalog/original-expansion-g-35-job-seeker
+ {:passive {:zero-occupation true}
+  :triggers [{:event :round-start :effect {:op :g-job-seeker}}]}
+ :catalog/original-expansion-g-37-late-sleeper
+ {:triggers [{:event :round-start :effect {:op :g-late-sleeper :optional? true}}]}
+ :catalog/original-expansion-g-38-master-baker-s-apprentice
+ {:play [{:op :g-apprentice-mark} {:op :bake :optional? true}]
+  :triggers [{:event :after-use-space :scope :all :effect {:op :g-apprentice-use}}]}
+ :catalog/original-expansion-g-42-oldest-occupation
+ {:triggers [{:event :after-use-space :scope :all :spaces #{:labor} :effect {:op :g-oldest-occupation}}]}
+ :catalog/original-expansion-g-54-tax-collector
+ {:triggers [{:event :build-improvement :scope :others :effect {:op :g-tax-start}}]}
+ :catalog/original-expansion-g-80-harvest-feast
+ {:requires [:>= [:occupations] 3] :play [{:op :g-harvest-feast-start}]}
+ :catalog/original-expansion-g-82-hired-helpers
+ {:cost {:food 1} :printed-cost {:food 1} :ability {:op :g-hired-helpers}}
+ :catalog/original-expansion-g-91-pelt-roof
+ {:requires [:>= [:occupations] 2] :passive {:pelt-roof true}
+  :triggers [{:event :convert-food :effect {:op :g-pelt-roof :optional? true}}]}
+ :catalog/original-expansion-g-96-private-school
+ {:requires true :prerequisites "" :cost-options [{:wood 3} {:clay 3}] :action-space :private-school}
 }

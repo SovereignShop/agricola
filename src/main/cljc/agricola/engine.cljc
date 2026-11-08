@@ -146,6 +146,13 @@
     (if (:brushwood? options)
       (do (require! (and (collector? p) (pos? (:reed cost 0))) "Brushwood Collector needs reed remaining in this cost.")
           (-> cost (assoc :reed 0) (update :wood (fnil inc 0)))) cost)))
+(def pelt-roof-id :catalog/original-expansion-g-91-pelt-roof)
+(defn pelt-roof-reed [p] (if (cards/has? p pelt-roof-id) (get-in p [:card-state pelt-roof-id :stored-goods :reed] 0) 0))
+(defn pay-home-construction [p cost options]
+  (let [maximum (min (:reed cost 0) (pelt-roof-reed p)) n (get options :pelt-roof-reed maximum)]
+    (require! (and (natural? n) (<= n maximum)) "Use only stored Pelt Roof reed required by this extension or renovation.")
+    (-> (cond-> p (pos? n) (update-in [:card-state pelt-roof-id :stored-goods :reed] - n))
+          (pay-construction (update cost :reed (fnil - 0) n)))))
 (defn room-cost
   ([p options] (room-cost p options {}))
   ([p options early-discount]
@@ -194,18 +201,21 @@
           carve? (if (wood-carver-available? p) [false true] [false])]
       (cond-> plan carve? (assoc :wood-carver? true)))
     (construction-payment-options p)))
-(defn build-rooms
-  ([p cells] (build-rooms p cells {}))
-  ([p cells options] (build-rooms p cells options {}))
-  ([p cells options {:keys [room-discount free? action-space?]}]
+(defn room-construction-payment [p cells options {:keys [room-discount free? action-space?]}]
    (let [miser-discount (when (and action-space? (not= false (:miser? options)) (= 1 (count cells)) (some true? (cards/passives p :miser))) {(:house p) 1 :reed 1})
          per-room (mapv #(discounted (room-cost p (get-in options [:room-options %] options) miser-discount) room-discount) cells)
          cost (apply merge-with + {} per-room)
          reductions (when (and (>= (count cells) 2) (some true? (cards/passives p :batch-room-discount)))
                       {:reed 2 (:house p) ({:wood 2 :clay 3 :stone 4} (:house p))})]
+     {:per-room per-room :cost (if free? {} (carve-cost p (discounted cost reductions) options))}))
+(defn build-rooms
+  ([p cells] (build-rooms p cells {}))
+  ([p cells options] (build-rooms p cells options {}))
+  ([p cells options {:keys [room-discount free? action-space?]}]
+   (let [{:keys [per-room cost]} (room-construction-payment p cells options {:room-discount room-discount :free? free? :action-space? action-space?})]
      (require! (or (not (:wood-carver? options)) (and (not free?) (= :wood (:house p)))) "Wood Carver discounts only paid wooden rooms.")
-     (let [paid (if free? {} (carve-cost p (discounted cost reductions) options))
-           built (reduce #(place-tile %1 :room %2) (use-wood-carver (pay-construction p paid) options) cells)]
+     (let [paid cost
+           built (reduce #(place-tile %1 :room %2) (use-wood-carver (pay-home-construction p paid options) options) cells)]
        (cond-> built
          (some true? (cards/passives p :rock-pyramid))
          (assoc :last-room-payment {:cells (vec cells)
@@ -736,10 +746,7 @@
                                            (min 2 (count (filter #(and (get-in p [:farm % :stable]) (not (get-in p [:farm % :stable-disabled?]))) (neighbors cell)))) 0)
                                          (if (and (integer? cell) (some (set (tiles p :room)) (neighbors cell)))
                                            (reduce + 0 (map #(get % crop 0) (cards/passives p :adjacent-room-sow-bonus))) 0)))))))) p plantings))))
-(defn renovate
-  ([p] (renovate p {}))
-  ([p options] (renovate p options {}))
-  ([p options modifiers]
+(defn renovation-payment [p options modifiers]
    (let [material (if (and (= :wood (:house p)) (some true? (cards/passives p :direct-stone)) (= :stone (:renovate-to options))) :stone ({:wood :clay :clay :stone} (:house p)))
          _ (require! (not (some true? (cards/passives p :no-renovation))) "An improvement prevents further renovation.")
          _ (require! material "Your house is already stone.")
@@ -755,7 +762,13 @@
                                  (assoc :clay (reduce + 0 (cards/passives p :renovation-clay-discount)))))
          cost (construction-replacements p cost options material true)
          _ (require! (not (:wood-carver? options)) "Wood Carver cannot discount renovation.")]
-     (assoc (pay p (if (:free? modifiers) {} cost)) :house material))))
+     {:material material :cost (if (:free? modifiers) {} cost)}))
+(defn renovate
+  ([p] (renovate p {}))
+  ([p options] (renovate p options {}))
+  ([p options modifiers]
+   (let [{:keys [material cost]} (renovation-payment p options modifiers)]
+     (assoc (pay-home-construction p cost options) :house material))))
 (defn family-capacity [p]
   (let [field-cells (set (tiles p :field)) pasture-cells (pasture-cells p)
         homekeeper? (and (some true? (cards/passives p :homekeeper)) (#{:clay :stone} (:house p))
@@ -921,7 +934,7 @@
                   (cond-> (:grain-mill-oven? options)
                     (as-> player (let [cid (grain-mill-oven-id p)]
                                   (-> player (update :minors #(vec (remove #{cid} %))) (update :card-state dissoc cid)))))
-                  (cond-> (or (cards/has? p :catalog/original-expansion-fr-64-award-winner) (some #(cards/has? % :catalog/original-expansion-fr-83-good-friend) (:players g)))
+                  (cond-> (or (cards/has? p :catalog/original-expansion-fr-64-award-winner) (some #(or (cards/has? % :catalog/original-expansion-fr-83-good-friend) (cards/has? % :catalog/original-expansion-g-54-tax-collector)) (:players g)))
                     (assoc :last-improvement-payment {:improvement improvement :paid cost}))
                   (cond-> (and (:wood-carver? options) (not upgrade)) (assoc :wood-carver-used? true))
                   (update :improvements #(cond-> (conj % improvement) upgrade (disj upgrade)))
