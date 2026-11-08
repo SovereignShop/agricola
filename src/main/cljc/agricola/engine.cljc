@@ -211,7 +211,7 @@
                                  (assoc :clay (reduce + 0 (cards/passives p :room-clay-discount)))))]
     (let [cost (construction-replacements p (discounted cost early-discount) options material false)]
       (contractor-cost p (cat-lover-cost p (if (:alternative-first? options) cost (construction-substitutions p cost options true)) options) options)))))
-(defn room-payment-choices [p]
+(defn base-room-payment-choices [p]
   ;; Validate and deduplicate combinations; include both card orders because
   ;; Frame Builder can turn Alternative Designer's clay/stone back into wood.
   (vals (reduce (fn [out options]
@@ -225,9 +225,8 @@
                       first? (if (and (:frame? options) (some true? (cards/passives p :alternative-designer))) [false true] [false])
                       materials (if first? (cond-> [[:clay] [:stone]] (some true? (cards/passives p :original-frame-builder)) (conj [:clay :stone])) [nil])]
                   (cond-> (merge options substitutions) first? (assoc :alternative-first? true :frame-materials materials))))))
-(def room-payment-choices-without-cat room-payment-choices)
 (defn room-payment-choices [p]
-  (for [options (room-payment-choices-without-cat p)
+  (for [options (base-room-payment-choices p)
         discount (cat-lover-plans p (room-cost p options))]
     (cond-> options (seq discount) (assoc :cat-lover-resources discount))))
 (defn room-payment-plans [p rooms]
