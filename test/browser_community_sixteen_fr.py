@@ -29,6 +29,8 @@ def check(base):
                 print(f'FR review {name}: mobile={mobile}, activity={activity}', flush=True)
             def pending(name): return frame.get_by_role('dialog', name='Resolve '+name, exact=True)
             def next_card(name):
+                expect(frame.get_by_role('dialog')).to_have_count(0)
+                expect(frame.locator('.app')).to_have_attribute('aria-busy', 'false')
                 review().get_by_role('button', name='Next card →', exact=True).click(); card(name)
             def shape(dialog, farm=False):
                 expect(dialog.get_by_role('combobox')).to_have_count(0)
@@ -46,11 +48,14 @@ def check(base):
             def resolve(dialog):
                 dialog.get_by_role('button', name='Resolve effect →', exact=True).click()
             def cell(dialog, n, kind='empty'):
-                button = dialog.get_by_role('button', name=f'Farm space {n}: {kind}', exact=True)
+                button = dialog.get_by_role('button', name=f'Farm space {n+1}: {kind}', exact=True)
                 button.click(); expect(button).to_have_attribute('aria-pressed', 'true')
             def action(space):
+                rev = frame.locator('.game').get_attribute('data-revision')
                 frame.locator(f'.action-card[data-action={space}]').click()
                 frame.get_by_role('button', name='Place family member →', exact=True).click()
+                expect(frame.locator('.game')).not_to_have_attribute('data-revision', rev)
+                expect(frame.get_by_role('dialog')).to_have_count(0)
             def close_harvest():
                 d = frame.get_by_role('dialog', name='Harvest', exact=True)
                 if d.count(): d.get_by_role('button', name='Close dialog', exact=True).click()
@@ -59,7 +64,7 @@ def check(base):
                 review().get_by_role('button', name='Restart test', exact=True).click()
                 expect(frame.locator('.game')).not_to_have_attribute('data-motion-table', old, timeout=30000); card(name)
             def choose_hand(name, direct=False):
-                frame.get_by_role('button', name=name, exact=True).click()
+                frame.get_by_role('dialog').get_by_role('button', name=name, exact=True).click()
                 face = frame.get_by_role('dialog', name=name, exact=True)
                 face.get_by_role('button', name=('Play occupation →' if direct else 'Select card'), exact=True).click()
             try:
@@ -75,7 +80,10 @@ def check(base):
                 pottery = d.get_by_role('button', name='Use Pottery', exact=True)
                 expect(pottery.get_by_label('Prefect adds 1 food', exact=True)).to_be_visible()
                 expect(pottery).to_have_attribute('data-food', '3'); pottery.click(); snap('prefect')
-                d.get_by_role('button', name='Feed family →', exact=True).click(); close_harvest()
+                rev = frame.locator('.game').get_attribute('data-revision')
+                d.get_by_role('button', name='Feed family →', exact=True).click()
+                expect(frame.locator('.game')).not_to_have_attribute('data-revision', rev)
+                close_harvest()
 
                 next_card('Prosecutor'); frame.locator('.action-card[data-action=meeting]').click()
                 choose_hand('Shovel'); d = frame.get_by_role('dialog')
@@ -107,19 +115,38 @@ def check(base):
                 payments.get_by_role('button', name='4 Wood', exact=True).click()
                 expect(d.get_by_role('combobox')).to_have_count(0); snap('cat-lover')
                 d.get_by_role('button', name='Place family member →', exact=True).click()
-                expect(frame.locator('.tt-player[data-player="0"] [aria-label="Farm space 6: room"]')).to_have_count(1)
+                expect(frame.locator('.tt-player[data-player="0"] [aria-label="Farm space 7: room"]')).to_have_count(1)
 
                 next_card('Sunday School'); d = pending('Sunday School'); shape(d)
                 choose_hand('Chief', True)
-                d = frame.get_by_role('dialog').filter(has=frame.get_by_role('button', name='Skip this effect', exact=True))
-                d.get_by_role('button', name='Skip this effect', exact=True).click()
+                d = frame.get_by_role('dialog', name='Resolve card effect', exact=True)
+                d.get_by_role('button', name='Continue', exact=True).click()
                 choose_hand('Tutor', True); snap('sunday-school'); expect(pending('Sunday School')).to_have_count(0)
                 restart('Sunday School')
-                for _ in range(2): pending('Sunday School').get_by_role('button', name='Skip this effect', exact=True).click()
+                for _ in range(2):
+                    rev = frame.locator('.game').get_attribute('data-revision')
+                    pending('Sunday School').get_by_role('button', name='Skip this effect', exact=True).click()
+                    expect(frame.locator('.game')).not_to_have_attribute('data-revision', rev)
 
                 next_card('Park Cemetery'); d = pending('Park Cemetery'); shape(d)
                 stone = amount('stone'); d.get_by_role('button', name='Take one stone from Park Cemetery', exact=True).click(); snap('park-cemetery'); resolve(d)
                 qty('stone', stone+1)
+                for n in [1, 2]:
+                    for space in ['grain', 'wood', 'clay']: action(space)
+                    frame.locator('.action-card[data-action=plow]').click()
+                    d = frame.get_by_role('dialog'); cell(d, n)
+                    d.get_by_role('button', name='Place family member →', exact=True).click()
+                    d = pending('Park Cemetery'); shape(d)
+                    d.get_by_role('button', name='Take one stone from Park Cemetery', exact=True).click(); resolve(d)
+                    qty('stone', stone+n+1)
+                expect(frame.get_by_role('dialog')).to_have_count(0)
+                frame.locator('.tt-player[data-player="0"]').get_by_role('button', name='Park Cemetery', exact=True).click()
+                frame.get_by_role('dialog').get_by_role('button', name='Park Cemetery', exact=True).click()
+                d = frame.get_by_role('dialog', name='Park Cemetery', exact=True)
+                shape(d, True); cell(d, 3); snap('park-discard-plow')
+                d.get_by_role('button', name='Use card ability', exact=True).click()
+                expect(frame.locator('.tt-player[data-player="0"] [aria-label="Farm space 4: field"]')).to_have_count(1)
+                if d.count(): d.get_by_role('button', name='Close dialog', exact=True).click()
                 restart('Park Cemetery'); pending('Park Cemetery').get_by_role('button', name='Skip this effect', exact=True).click()
 
                 next_card('Fencing Master'); d = pending('Fencing Master'); shape(d)

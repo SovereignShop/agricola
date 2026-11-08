@@ -18,3 +18,5 @@ Actual English prints were visually checked as a contact sheet, installed locall
 All ten prepared positions trigger native effects and appear in Card test tables. Native tests verify resolution, optional declines, native save/load, recording playback, and bot decision candidates. Final targeted native verification: 21 tests / 331 assertions passed, including the existing round-marker suite. Print coverage: 894 / 894 implemented hand cards.
 
 `test/browser_community_g_sixteen.py` covers desktop web, desktop Discord and mobile Discord, including actual action-board and farm clicks. It is prepared for the parent's combined advanced bundle; browser success is not claimed until that run completes.
+
+Combined release verification: all ten cards passed desktop web, desktop Discord and mobile Discord browser reviews (30 per deck); the combined suite passed 1,040 tests / 27,999 assertions, plus 17 follow-up tests / 121 assertions for Ram/Shepherd and cross-deck combinations. All 914 implemented hand cards have verified local prints. See `community-sixteen-review.md` for the combined release record.
