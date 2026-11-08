@@ -30,3 +30,5 @@ The server needs Node.js 20+ for Ascension. Set `EUROZONE_NODE` if Node is not o
 - `test/browser_ascension.py`: real independent browser clients, game selection, lobby create/join/start, private hands, observers, creator departure/rejoin, direct map targeting, temporary network loss, four-human tables, Discord SDK/OAuth, mobile play, terminal game and reload.
 
 Release verification passed: 1,044 Clojure tests with 28,149 assertions, zero failures/errors; all 300 engine simulations; and the independent-client browser checks listed above. The production browser build completed with advanced ClojureScript optimization and minified Ascension/Discord bundles.
+
+Deployed to the existing private Eurozone service on 2026-11-07 after backing up its saves. Local/public health checks passed; public HTML, Ascension and Discord bundles matched disk checksums. The public Ascension WebSocket accepted connections and correctly rejected a valid identity without Discord authentication.
