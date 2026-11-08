@@ -25,3 +25,12 @@
   (let [g (game 4 14)]
     (is (not (board/adjacent? g :fishing :lessons)))
     (is (not (board/adjacent? g (nth (:round-order g) 1) (nth (:round-order g) 5))))))
+
+(deftest public-observations-and-card-actions-do-not-change-round-identities
+  (let [g (game 4 7) public (dissoc g :round-order)
+        card-space :catalog/original-expansion-g-96-private-school
+        active (:active g) split (- (count active) 7)
+        with-extra (assoc public :active (vec (concat (take split active) [card-space] (drop split active))))]
+    (is (= (board/locations g) (board/locations public)))
+    (is (= (board/locations public) (board/locations with-extra)))
+    (is (nil? (board/space-board with-extra card-space)))))

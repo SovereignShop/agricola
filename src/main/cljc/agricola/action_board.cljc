@@ -42,7 +42,7 @@
                               [subindex space] (map-indexed vector group)
                               :let [h (/ row-height (count group))]]
                           [space {:board :actions :rect [(mod index 2) (+ (* (quot index 2) row-height) (* subindex h)) 1 h]}])
-        revealed (vec (remove base-ids (:active g)))]
+        revealed (vec (remove #(or (base-ids %) (namespace %)) (:active g)))]
     (into {} (concat
               (for [[space rect] base-rects :when (active space)]
                 [space {:board (if (#{:wood :clay :reed :fishing} space) :early-rounds :actions) :rect rect}])
