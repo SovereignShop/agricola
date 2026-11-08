@@ -145,3 +145,8 @@
   (is (= 0 (stock (run (assoc-in s [:players 0 :worker-spaces] [:wood :clay :grain]) 15 :g-family-counselor {}) 0 :grain)))))
 (deftest school-bot-can-select-an-occupation
  (is (seq (bot/card-action-candidates (scenario "private-school") 0))))
+
+(deftest counselor-ignores-returned-worker-history-placeholder
+ (let [s (-> (fresh) (own 0 (cid "G" 15))
+             (assoc-in [:players 0 :worker-spaces] [nil :wood :clay]))]
+  (is (= (inc (stock s 0 :food)) (stock (run s 15 :g-family-counselor {}) 0 :food)))))

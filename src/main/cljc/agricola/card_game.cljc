@@ -396,7 +396,7 @@
   (let [card (c/card cid) before (p g pid) kind (:kind card)]
     (when (:major-action-only? card)
       (a/require! (:major-action? timing) "This card requires a Major Improvement action."))
-    (let [payment (when (and (= kind :minor) (or (c/has? before :catalog/original-expansion-fr-64-award-winner) (game-has-cards? g #{fr/good-friend})))
+    (let [payment (when (and (= kind :minor) (or (c/has? before :catalog/original-expansion-fr-64-award-winner) (game-has-cards? g #{fr/good-friend :catalog/original-expansion-g-54-tax-collector})))
                     (card-cost g pid card occupation-cost options))
           player (-> (paid-card-player g pid cid occupation-cost options)
                      (update-in [:hand kind] #(vec (remove #{cid} %)))
@@ -1174,7 +1174,7 @@
   (let [pid player owner (p g pid) actor (:actor context) op (:op effect)]
     (case op
       :g-family-counselor
-      (let [spaces (:worker-spaces owner) boards (map #(board/space-board g %) spaces) n (count spaces)
+      (let [spaces (remove nil? (:worker-spaces owner)) boards (map #(board/space-board g %) spaces) n (count spaces)
             adults (+ (- (:family owner) (:newborn owner 0)) (:guests owner 0))]
         (if (and (>= n 2) (= n adults) (every? some? boards) (= 1 (count (set boards))))
           (update-in g [:players pid] a/gain {(cond (= n 2) :food (= n 3) :grain :else :vegetable) 1}) g))
