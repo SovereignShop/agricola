@@ -37,3 +37,7 @@ For example, Fishing adjoins Reed, Day Laborer and the currently revealed round-
 Browser review also corrected three interaction issues: growth-only actions show a read-only farm; Park Cemetery offers its clickable plowing farm only once all stone is gone; Donkey's ability dismisses card inspection to expose the queued relocation decision.
 
 Every card in the table above has a namesake entry in **Card test tables**. Start with **Family Counselor**, **Branch Collector**, or **Necklace** and use **Next card** through that deck's ten-card review group. Each review opens a fresh creator-controlled table.
+
+## Deployment
+
+Merged and pushed to `main`, then deployed on 2026-11-07 to the existing private Eurozone Activity server at `https://johndesktop.tailbe6034.ts.net:8443/` (local port 3002). Existing saved data was backed up before restart. Local and public health checks returned 200; public main/bot bundles and representative new prints from all three decks matched local SHA-256 checksums. The release's thirty namesake test tables are available through the browser and Discord lobby.
