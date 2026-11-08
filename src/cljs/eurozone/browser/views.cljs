@@ -2205,7 +2205,7 @@
        #(dispatch :command choice) "button primary" (or busy? (boolean reason))])
       (when (card-game/optional-effect? g head) [button (if (= :play-hand-response op) "Continue" "Skip this effect") #(dispatch :command {:type :resolve :decision (:decision-id g) :skip? true}) "text-button" busy?])]]))
 
-(defn card-ability [g p cid & [expanded?]]
+(defn card-ability [g p cid & [expanded? on-decision!]]
   (r/with-let [selection (r/atom {:amount (if-let [resource (get-in (cards/card cid) [:ability :partial-resource])]
                                           (get-in p [:card-state cid :stored-goods resource] 0) 2)
                                   :resource :boar :option 0 :times 1})]
@@ -2218,8 +2218,11 @@
       [(if expanded? :div.card-ability :details.card-ability)
        [(if expanded? :h3 :summary) (:name card)] [:p.small (:text card)]
        (case op
-         :fr-park-plow [:div [:p.small "Discard Park Cemetery to plow one field. All stone has been taken from Farmland."]
-                            [farm p {:space :plow :cell (:cell @selection)} true #(swap! selection assoc %1 %2)]]
+         :fr-park-plow (if (zero? (fr16/park-stone g))
+                        [:div [:p.small "Discard Park Cemetery to plow one field. All stone has been taken from Farmland."]
+                         [farm p {:space :plow :cell (:cell @selection)} true #(swap! selection assoc %1 %2)]]
+                        [:div [goods {:stone (fr16/park-stone g)}]
+                         [:p.small "Collect all stone from Farmland before discarding this card to plow."]])
          :wood-saw [:div [:p.small "Every other player has a larger family. Choose one or more room spaces on your farm and pay the normal room costs."] [goods (a/room-cost p {})]]
          :workaholic [:div [:p.small "Keep the required animals on your farm to collect a remaining pile."]
                       (for [[resource n threshold] [[:wood 5 5] [:clay 4 7] [:stone 3 9]]
@@ -2339,7 +2342,8 @@
 
          nil)
        (when reason [:p.card-unavailable reason])
-       [button (case op :release-stored "Collect goods →" :return-animal-loan "Settle loan" "Use card ability") #(dispatch :command cmd) "button secondary"
+       [button (case op :release-stored "Collect goods →" :return-animal-loan "Settle loan" "Use card ability") #(do (dispatch :command cmd)
+                                    (when (and (= op :wm-donkey) on-decision!) (on-decision!))) "button secondary"
         (or (:busy? ui) (not (:connected? ui)) (boolean reason))]])))
 (defn card-abilities [g p]
   (let [permission @(rf/subscribe [:permission]) abilities (filter #(get-in (cards/card %) [:ability]) (cards/active-owned p))]
@@ -2364,6 +2368,14 @@
               draft)
      (and can-play? (= (:id p) (card-game/acting-player g))
           (not busy?)
+          ;; A growth/resource action can show the farm for context without
+          ;; pretending its cells are choices. Only spatial actions edit it.
+          (#{:build :house-building :side-job :plow :cultivation :sow-bake :fences :redevelop}
+           (:space (case op
+                     (:plow :plow-many :wheel-plow) (assoc draft :space :plow)
+                     :sidekick (assoc draft :space (five/stage-left g (get-in g [:effect-queue 0 :context :space])))
+                     :extra-action (extra-action-draft g draft)
+                     draft)))
           (if op (#{:extra-action :sidekick :plow :plow-many :wheel-plow} op) (= :work (:phase g))))]
     [:div.farm-stats [:span (str (count (:fences p)) "/15 fences")] [:span (str (count (filter :stable (:farm p))) "/4 stables" (when (seq (:reserved-stables p)) (str " · " (reduce + (vals (:reserved-stables p))) " reserved")))]
      [:span (str "Pet: " (or (some #(when (= :pet (:kind %)) (labels (:animal %))) (a/animal-housing p)) "none"))]]

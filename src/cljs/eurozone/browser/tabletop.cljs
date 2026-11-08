@@ -719,7 +719,7 @@
                        (when (and p (owned (:id p)) (not finished?)
                                   (not (game/committed-action? g (:id p)))
                                   (some #{cid} (cards/active-owned p)) (:ability card))
-                         [(:card-ability renderers) g p cid true])]]))
+                         [(:card-ability renderers) g p cid true #(do (reset! popup nil) (reset! dismissed nil))])]]))
              :cloth [:div.tt-material-picker
                      (for [[id label] materials] ^{:key id}
                        [button [:<> [:span.tt-material-swatch {:style {:background-image (str "url(/art/tablecloths/" (name id) ".webp)")}}] [:strong label]]
