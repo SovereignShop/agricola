@@ -2351,10 +2351,15 @@
       [:div.panel [:div.eyebrow "CARD ABILITIES"]
        (for [cid abilities] ^{:key cid} [card-ability g p cid])])))
 
-(def farm-decision-ops #{:extra-action :sidekick :housing})
+(def farm-action-spaces #{:build :house-building :side-job :plow :cultivation :sow-bake :fences :redevelop})
+(def farm-context-spaces (into farm-action-spaces #{:growth :modest-growth :growth-no-room}))
+(def farm-decision-ops #{:housing})
 (defn player-panel [g p draft can-play? busy? & [decision-only?]]
   (let [op (get-in g [:effect-queue 0 :effect :op])
-        show-farm? (or (not decision-only?) (nil? op) (farm-decision-ops op))]
+        extra-space (case op :extra-action (:space (extra-action-draft g draft))
+                              :sidekick (five/stage-left g (get-in g [:effect-queue 0 :context :space])) nil)
+        show-farm? (or (not decision-only?) (nil? op) (farm-decision-ops op)
+                       (farm-context-spaces extra-space))]
   [:aside.player-panel {:class (when-not show-farm? "decision-without-farm")}
    (when show-farm? [:div.panel.farm-panel
     [:div.section-heading [:div [:h2 (str (:name p) "'s farm")]]
@@ -2370,7 +2375,7 @@
           (not busy?)
           ;; A growth/resource action can show the farm for context without
           ;; pretending its cells are choices. Only spatial actions edit it.
-          (#{:build :house-building :side-job :plow :cultivation :sow-bake :fences :redevelop}
+          (farm-action-spaces
            (:space (case op
                      (:plow :plow-many :wheel-plow) (assoc draft :space :plow)
                      :sidekick (assoc draft :space (five/stage-left g (get-in g [:effect-queue 0 :context :space])))
