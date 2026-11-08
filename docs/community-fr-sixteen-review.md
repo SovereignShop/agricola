@@ -1,0 +1,22 @@
+# Original FR/G3 batch sixteen
+
+Rules checked against the final English prints and the [unofficial Agricola compendium](https://www.reedstonefood.com/agricola/compendium). Each actual print was downloaded, inspected at readable resolution, installed locally, and recorded with its source URL and SHA-256 in `resources/public/art/agricola/manifest.json`. The browser lookup uses these local prints; no generated faces are substituted.
+
+| Card / prepared table | Native behavior and interaction review |
+|---|---|
+| FR037 Necklace | Automatic Returning Home award for actual orthogonal board adjacency. Reuses the shared physical board geometry and excludes newborns who have not placed actions. **Necklace** starts before the last adjacent placement. |
+| FR040 Park Cemetery | Visible shared stone on Farmland; any user of that action gets a graphical optional stone choice. Stone Buyer receives the actual gain. Discard becomes available only after all stone on the space is gone, including other sources; then click the actual farm to plow. **Park Cemetery** pauses before collecting stone. |
+| FR047 Sunday School | Passing the card does not transfer the original player's next-round obligation. One fewer person works; normal feeding remains. Two native free occupation decisions occur at the end of that round, retaining printed surcharges and public responses. **Sunday School** pauses at the first occupation choice. Card faces, direct play, or decline. |
+| FR051 Timetable | Four material markers remain outside personal supply. Minor payment, including major-as-minor routes, can use them; actual-paid receipts include stock resources. Graphical individual resource toggles and use/keep controls allow partial or no use. **Timetable** provides Shovel and enough stock, but no personal wood/clay. |
+| FR069 Cat Lover | Animal thresholds 1/2/4/7 yield 1/2/3/4 material discounts per wooden room. Choose rooms directly on farm, then graphical payment plan per room. **Cat Lover** has four housed animals and pauses before construction. |
+| FR080 Fencing Master | Optional graphical one/two fence reservation after occupations, including itself; fourth occupation onwards caps at one. Reserved fences reduce available supply and appear as pieces on the card. Normal Fences actions spend them for free; mini-pasture/free-placement abilities exclude them. **Fencing Master** pauses at its first reservation. |
+| FR099 Pear Peeler | Three graphical exchanges return only wood actually taken and not already returned by another card. The goods remain on the action space. **Pear Peeler** pauses after taking three wood. Optional decline preserves the wood. |
+| FR102 Prefect | Tracks distinct converting cards each harvest, across all players. Workshop food arrives before paying for feeding and shares the automatic card-impact path. Workshop controls include the bonus graphically. **Prefect** pauses before feeding with Pottery. |
+| FR103 Prosecutor | Live comparison of improvements determines 0–3 material discounts. Reuses the graphical improvement payment selectors; no dropdown. **Prosecutor** offers Shovel with three richer opponents. |
+| FR112 Tower Builder | Only actual Build Rooms action spaces qualify, with exactly two rooms before building and no other two-room player. Free additional room uses direct farm placement or decline. **Tower Builder** pauses before the triggering normal room. |
+
+Native checks: `agricola.community-sixteen-fr-test`, previous batch regression `agricola.community-fifteen-fr-test`, and all ten entries in `community-tables-resolve-decline-save-and-replay` (including decline, store reload, and complete recording playback).
+
+Browser review script: `test/browser_community_sixteen_fr.py`. It covers all ten tables in standalone desktop, Discord desktop, and Discord mobile size, including real farm clicks, graphical payment controls, printed faces, optional declines, reload, no resolution dropdowns and dialog width checks. Execution is delegated to the integrating parent after its combined advanced build; this branch does not claim an independent browser pass or deployment.
+
+Integration notes: Cat Lover's discount must run before Contractor's final material-to-food substitution. Timetable payment hooks expose both personal cost and stock used; Branch Collector should inspect the full actual material cost. The shared board geometry was cherry-picked as `e040f44` (equivalent to parent's `1152adf`).

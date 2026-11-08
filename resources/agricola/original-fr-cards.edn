@@ -297,4 +297,31 @@
  :catalog/original-expansion-fr-119-workaholic
  {:play [{:op :conditional :condition [:test [:= [:animals] 0]] :effect {:op :store-goods :goods {:wood 5 :clay 4 :stone 3}}}]
   :ability {:op :workaholic}}
+
+;; FR batch sixteen: actual final English prints.
+ :catalog/original-expansion-fr-37-necklace
+ {:triggers [{:event :return-home :condition [:test [:fr-necklace]] :effect {:op :gain :goods {:food 1}}}]}
+ :catalog/original-expansion-fr-102-prefect
+ {:triggers [{:event :fr-prefect :scope :all :effect {:op :gain :goods {:food [:context :amount]}}}]}
+ :catalog/original-expansion-fr-103-prosecutor {:passive {:prosecutor true}}
+ :catalog/original-expansion-fr-112-tower-builder
+ {:triggers [{:event :build-rooms :condition [:test [:fr-tower]] :effect {:op :build-rooms :free? true :max-rooms 1 :optional? true}}]}
+ :catalog/original-expansion-fr-51-timetable
+ {:play [{:op :store-goods :goods {:wood 1 :clay 1 :reed 1 :stone 1}}] :passive {:timetable true}}
+ :catalog/original-expansion-fr-69-cat-lover {:passive {:cat-lover true}}
+ :catalog/original-expansion-fr-47-sunday-school
+ {:play [{:op :fr-school-start}]}
+ :catalog/original-expansion-fr-40-park-cemetery
+ {:play [{:op :fr-park-start}]
+  :triggers [{:event :use-space :scope :all :spaces #{:plow} :effect {:op :fr-park-offer}}]
+  :ability {:op :fr-park-plow}}
+ :catalog/original-expansion-fr-80-fencing-master
+ {:passive {:fencing-master true} :triggers [{:event :occupation :effect {:op :choose :optional? true :options
+  [{:label "Store one fence" :when [:>= [:fr-fences-store] 1] :effects [{:op :fr-fence-store :amount 1}]}
+   {:label "Store two fences" :when [:>= [:fr-fences-store] 2] :effects [{:op :fr-fence-store :amount 2}]}]}}]}
+ :catalog/original-expansion-fr-99-pear-peeler
+ {:triggers [{:event :use-space :condition [:test [:> [:taken :wood] 0]] :effect {:op :choose :optional? true :options
+  [{:label "Leave one wood → grain" :when [:>= [:fr-source-wood] 1] :effects [{:op :return-goods :from-taken? true :cost {:wood 1} :goods {:grain 1}}]}
+   {:label "Leave two wood → vegetable" :when [:>= [:fr-source-wood] 2] :effects [{:op :return-goods :from-taken? true :cost {:wood 2} :goods {:vegetable 1}}]}
+   {:label "Leave three wood → grain and vegetable" :when [:>= [:fr-source-wood] 3] :effects [{:op :return-goods :from-taken? true :cost {:wood 3} :goods {:grain 1 :vegetable 1}}]}]}}]}
 }

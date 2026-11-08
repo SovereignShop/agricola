@@ -459,6 +459,7 @@
               :renovate-wood-clay (remove #(= :stone (:renovate-to %)) (payment-options p))
               :free-placement-fences (map #(hash-map :fences %) (fence-plans p))
               :free-room (map #(hash-map :rooms [%]) (range 15))
+              :fr-park-plow (map #(hash-map :cell %) (range 15))
               :wood-saw (for [rooms (g/room-plans p) opts (a/room-payment-plans p rooms)] (assoc opts :rooms rooms))
               :workaholic (map #(hash-map :option %) (range 3))
               :exchange-options

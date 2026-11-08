@@ -3529,6 +3529,66 @@
       "source": "http://playagricola.com/Agricola/Images/gminorprivateschool.jpg",
       "sha256": "b01366d7690dab805797c2673df82a18b877f2cdab94ae04c1562756684319c5",
       "note": "Original G096 final English print. Identity, costs, prerequisite position and printed rules visually verified; community batch sixteen."
+    },
+    {
+      "file": "cards/original-fr047.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorSundaySchool_2347_10.jpg",
+      "sha256": "c401063a58f6b07bb59c069312bfd3b6e5e3567313d3f65d33e0027b51525d9f",
+      "note": "Unmodified final English print; identity, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-fr102.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx3Prefect_3798_8.jpg",
+      "sha256": "a7551c77304a36557ab9734dfc8a622f86512e15e7ad7150649fc6ea16003aa8",
+      "note": "Unmodified final English print; identity, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-fr103.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx4Prosecutor_2797_5.jpg",
+      "sha256": "ead2fdc05e0024b2fcc9376baee85266aa5090834ba55ffc4cf9588285408fe5",
+      "note": "Unmodified final English print; identity, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-fr051.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorTimetable_2822_5.jpg",
+      "sha256": "7a6950511bbadee6b4e282c7fcf94aa1a538d891586708d5cb36600fdc85ea56",
+      "note": "Unmodified final English print; identity, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-fr112.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx4TowerBuilder_4334_4.jpg",
+      "sha256": "ebc1f6ce49b149dd249f54d40688041517710b971eeb3d0479cf515e035fde25",
+      "note": "Unmodified final English print; identity, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-fr099.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx4PearPeeler_3016_18.jpg",
+      "sha256": "d2de5dc101f75cac4c4ba484e720a82af547b6b87187ebbd78c8785cf237a8e8",
+      "note": "Unmodified final English print; identity, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-fr069.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx3CatLover_3606_6.jpg",
+      "sha256": "db1d04e786693689cb31890585133b1c66a4f091101b02bcf991461c56ee01f8",
+      "note": "Unmodified final English print; identity, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-fr080.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx3FencingMaster_3071_18.jpg",
+      "sha256": "1d32e1b3d3c02d0203b9e7ea293be2e37479c3d6cc119dc033bbd49ac1801acf",
+      "note": "Unmodified final English print; identity, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-fr040.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorParkCemetery_3685_10.jpg",
+      "sha256": "d5598f8f065cbe3a4ebaafccd6d9446db281164ef45c0d81f39278f34a26b581",
+      "note": "Unmodified final English print; identity, costs, prerequisites and rules visually verified."
+    },
+    {
+      "file": "cards/original-fr037.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorNecklace_3530_5.jpg",
+      "sha256": "2d9d3ec853e6798cc1ead52b9ee5a2ae740c8dcbef0ccb3f004473f71c10924e",
+      "note": "Unmodified final English print; identity, costs, prerequisites and rules visually verified."
     }
   ]
 }

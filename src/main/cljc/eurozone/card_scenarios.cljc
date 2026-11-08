@@ -25,6 +25,26 @@
    {:id "private-school" :card :catalog/original-expansion-g-96-private-school :name "Private School" :players 2
     :description "Private School is a shared occupation action space. Choose its action to play a card: the owner uses it free; another player pays the owner one food plus any printed occupation costs."}
 
+   {:id "necklace" :card :catalog/original-expansion-fr-37-necklace :name "Necklace" :players 2
+    :description "Your first person took Grain Seeds. Take Farmland with your last adult: the two adjacent spaces award one food at Returning Home."}
+   {:id "prefect" :card :catalog/original-expansion-fr-102-prefect :name "Prefect" :players 3
+    :description "The harvest is ready. Use your Pottery when feeding: Prefect receives one food. Each distinct workshop or occupation that converts building materials during this harvest pays once, whoever uses it."}
+   {:id "prosecutor" :card :catalog/original-expansion-fr-103-prosecutor :name "Prosecutor" :players 4
+    :description "Three opponents have more improvements. Play Shovel at Meeting Place: choose two pictured material discounts. The discount count updates when opponents or you gain improvements."}
+   {:id "tower-builder" :card :catalog/original-expansion-fr-112-tower-builder :name "Tower Builder" :players 4
+    :description "You alone have exactly two rooms. Build a normal room at Farm Expansion, then click one additional farm space for Tower Builder’s free room, or decline."}
+   {:id "timetable" :card :catalog/original-expansion-fr-51-timetable :name "Timetable" :players 2
+    :description "Timetable holds one of every building material. Play Shovel at Meeting Place: the stored wood and clay can cover its cost. Toggle the pictured stock payment to keep those materials instead."}
+   {:id "cat-lover" :card :catalog/original-expansion-fr-69-cat-lover :name "Cat Lover" :players 3
+    :description "Four animals are housed on your farm. Select a wooden room at Farm Expansion, then click a graphical payment plan to discount any three building resources for that room."}
+   {:id "sunday-school" :card :catalog/original-expansion-fr-47-sunday-school :name "Sunday School" :players 2
+    :description "Sunday School was passed left after reserving a person. Its next round has ended with one fewer worker. Choose the first of two free occupation plays; printed extra food costs still apply."}
+   {:id "park-cemetery" :card :catalog/original-expansion-fr-40-park-cemetery :name "Park Cemetery" :players 2
+    :description "Farmland was just used. Take one of the three stone markers or decline. After all stone is gone, open Park Cemetery to discard it and plow directly on the farm."}
+   {:id "fencing-master" :card :catalog/original-expansion-fr-80-fencing-master :name "Fencing Master" :players 3
+    :description "Fencing Master has just been played as your first occupation. Click one or two fence markers to store them, or decline. They are reserved and become free when you later take a Fences action."}
+   {:id "pear-peeler" :card :catalog/original-expansion-fr-99-pear-peeler :name "Pear Peeler" :players 4
+    :description "Forest supplied three wood. Click a pictured exchange to leave one, two, or three wood on that space for grain, vegetables, or both; decline to keep all the wood."}
    {:id "grotto" :card :catalog/original-expansion-fr-26-grotto :name "Grotto" :players 2
     :description "Round end has arrived. Click a pictured clay or stone to pay two food and collect it from Grotto, or decline. Once all five pieces have been collected, Grotto provides room for one additional family member."}
    {:id "threshing-machine-plow" :card :catalog/original-expansion-fr-50-threshing-machine-plow :name "Threshing Machine Plow" :players 2
@@ -605,6 +625,27 @@
                        (a/build-improvement 0 {:improvement :fireplace-2}) (played 0 card)
                        (update-in [:players 0] a/gain {:sheep 2}) (game/command 0 {:type :convert :goods {:sheep 2}}))
       "private-school" (-> funded (played 0 card) (put-in-hand 0 :catalog/original-expansion-g-5-architect))
+
+      "necklace" (-> funded (played 0 :catalog/original-base-e-174-tutor) (played 0 card)
+                     (game/command 0 {:type :action :space :grain}) final-worker)
+      "prefect" (-> funded (prepared-round 4) (a/build-improvement 0 {:improvement :pottery}) (played 0 card) last-harvest-action)
+      "prosecutor" (-> (reduce (fn [g pid] (-> g (played pid :catalog/original-base-e-21-half-timbered-house)
+                                               (played pid :catalog/original-base-e-35-corn-scoop))) funded [1 2 3])
+                       (played 0 card) (put-in-hand 0 :catalog/original-expansion-g-110-shovel))
+      "tower-builder" (-> funded (update :players #(mapv (fn [p] (if (zero? (:id p)) p (a/build-rooms p [0] {} {:free? true}))) %))
+                          (played 0 card))
+      "timetable" (-> funded (a/build-improvement 0 {:improvement :fireplace-2}) (played 0 card)
+                      (put-in-hand 0 :catalog/original-expansion-g-110-shovel)
+                      (assoc-in [:players 0 :goods :wood] 0) (assoc-in [:players 0 :goods :clay] 0))
+      "cat-lover" (-> funded (update-in [:players 0] a/build-fences (a/edges 0))
+                      (update-in [:players 0] a/build-stables [0] 0) (update-in [:players 0] a/gain {:sheep 4})
+                      (played 0 card))
+      "sunday-school" (-> funded (put-in-hand 0 :catalog/original-base-e-172-chief) (put-in-hand 0 :catalog/original-base-e-174-tutor)
+                          (played 0 card) game/begin-round game/drain final-worker
+                          (game/command 0 {:type :action :space :grain}))
+      "park-cemetery" (-> funded (played 0 card) (game/command 0 {:type :action :space :plow :cell 0}))
+      "fencing-master" (played funded 0 card)
+      "pear-peeler" (-> funded (played 0 card) (game/command 0 {:type :action :space :wood}))
       "grotto" (-> funded (played 0 :catalog/original-expansion-g-49-seed-master)
                    (played 0 :catalog/original-expansion-g-5-architect) (played 0 card) final-worker
                    (game/command 0 {:type :action :space :grain}))

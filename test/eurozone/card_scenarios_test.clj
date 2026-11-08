@@ -38,11 +38,21 @@
   (doseq [{:keys [id card]} scenarios/scenarios]
     (let [state (scenarios/initial-state id (:names (scenarios/options id "Ada")))
           player (game/p state 0)]
-      (is (some #{card} (concat (cards/owned player) (mapcat val (:hand player)))) id)
+      (is (or (some #{card} (concat (cards/owned player) (mapcat val (:hand player)))) (some #(= card (:card %)) (:effect-queue state))) id)
       (is (= (:players (scenarios/scenario id) 2) (count (:players state)))))))
 
 (def review-commands
-  {"grotto" [{:option 0}]
+  {"necklace" [{:type :action :space :plow :cell 0}]
+   "prefect" [{:type :feed :craft [:pottery]}]
+   "prosecutor" [{:type :action :space :meeting :card :catalog/original-expansion-g-110-shovel :discount-resources [:wood :clay]}]
+   "tower-builder" [{:type :action :space :build :rooms [0]} {:rooms [1]}]
+   "timetable" [{:type :action :space :meeting :card :catalog/original-expansion-g-110-shovel}]
+   "cat-lover" [{:type :action :space :build :rooms [6] :room-options {6 {:cat-lover-resources {:wood 1 :reed 2}}}}]
+   "sunday-school" [{:card :catalog/original-base-e-172-chief} {:skip? true} {:card :catalog/original-base-e-174-tutor}]
+   "park-cemetery" [{:option 0}]
+   "fencing-master" [{:option 1}]
+   "pear-peeler" [{:option 2}]
+   "grotto" [{:option 0}]
    "threshing-machine-plow" [{:plow-card :catalog/original-expansion-fr-50-threshing-machine-plow :cells [7 8]}]
    "wood-saw" [{:rooms [0]}]
    "convict-number-24601" [{:type :action :space :grain}]

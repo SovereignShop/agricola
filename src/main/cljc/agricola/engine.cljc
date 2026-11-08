@@ -153,6 +153,23 @@
     (require! (and (natural? n) (<= n maximum)) "Use only stored Pelt Roof reed required by this extension or renovation.")
     (-> (cond-> p (pos? n) (update-in [:card-state pelt-roof-id :stored-goods :reed] - n))
           (pay-construction (update cost :reed (fnil - 0) n)))))
+(defn cat-lover-discount [p]
+  (if (and (= :wood (:house p)) (some true? (cards/passives p :cat-lover)))
+    (count (filter #(<= % (reduce + 0 (map (partial amount p) animals))) [1 2 4 7])) 0))
+(defn cat-lover-cost [p cost options]
+  (let [discount (:cat-lover-resources options {}) maximum (cat-lover-discount p)]
+    (quantities! discount [:wood :clay :reed :stone])
+    (require! (and (<= (reduce + 0 (vals discount)) maximum)
+                   (every? (fn [[r n]] (<= n (get cost r 0))) discount)) "Cat Lover discounts only required building resources of a wooden room.")
+    (discounted cost discount)))
+(defn cat-lover-plans [p cost]
+  (let [maximum (cat-lover-discount p)]
+    (if (zero? maximum) [{}]
+      (for [w (range (inc (min maximum (:wood cost 0))))
+            c (range (inc (min (- maximum w) (:clay cost 0))))
+            r (range (inc (min (- maximum w c) (:reed cost 0))))
+            st (range (inc (min (- maximum w c r) (:stone cost 0))))]
+        (into {} (filter (comp pos? val) {:wood w :clay c :reed r :stone st}))))))
 (defn room-cost
   ([p options] (room-cost p options {}))
   ([p options early-discount]
@@ -179,7 +196,7 @@
                                  (seq (cards/passives p :room-clay-discount))
                                  (assoc :clay (reduce + 0 (cards/passives p :room-clay-discount)))))]
     (let [cost (construction-replacements p (discounted cost early-discount) options material false)]
-      (if (:alternative-first? options) cost (construction-substitutions p cost options true))))))
+      (cat-lover-cost p (if (:alternative-first? options) cost (construction-substitutions p cost options true)) options)))))
 (defn room-payment-choices [p]
   ;; Validate and deduplicate combinations; include both card orders because
   ;; Frame Builder can turn Alternative Designer's clay/stone back into wood.
@@ -194,8 +211,13 @@
                       first? (if (and (:frame? options) (some true? (cards/passives p :alternative-designer))) [false true] [false])
                       materials (if first? (cond-> [[:clay] [:stone]] (some true? (cards/passives p :original-frame-builder)) (conj [:clay :stone])) [nil])]
                   (cond-> (merge options substitutions) first? (assoc :alternative-first? true :frame-materials materials))))))
+(def room-payment-choices-without-cat room-payment-choices)
+(defn room-payment-choices [p]
+  (for [options (room-payment-choices-without-cat p)
+        discount (cat-lover-plans p (room-cost p options))]
+    (cond-> options (seq discount) (assoc :cat-lover-resources discount))))
 (defn room-payment-plans [p rooms]
-  (if (or (some true? (cards/passives p :alternative-designer)) (some true? (cards/passives p :straw-thatched-hut)) (some true? (cards/passives p :clay-roof)) (some true? (cards/passives p :clay-supports)) (some true? (cards/passives p :brushwood-roof)))
+  (if (or (pos? (cat-lover-discount p)) (some true? (cards/passives p :alternative-designer)) (some true? (cards/passives p :straw-thatched-hut)) (some true? (cards/passives p :clay-roof)) (some true? (cards/passives p :clay-supports)) (some true? (cards/passives p :brushwood-roof)))
     (for [plan (reduce (fn [plans cell] (for [plan plans options (room-payment-choices p)] (assoc-in plan [:room-options cell] (dissoc options :wood-carver?))))
                        [{}] rooms)
           carve? (if (wood-carver-available? p) [false true] [false])]
@@ -275,12 +297,15 @@
 (defn turn-free-fences-available [p]
   (if (:turn-fence-bonus-used? p) 0 (reduce + 0 (cards/passives p :turn-free-fences))))
 (defn reset-turn-fence-bonus [p] (dissoc p :turn-fence-bonus-used?))
+(defn fencing-master-stock [p options]
+  (if (and (not (:not-fence-action? options)) (some true? (cards/passives p :fencing-master)))
+    (get-in p [:reserved-fences :fr-fencing-master] 0) 0))
 (defn fence-construction-cost [p additions options]
   (let [new (set additions) old (set (:fences p))
         material (if (and (= :clay (:fence-material options)) (cards/has? p :a016)) :clay :wood)
         sawhorse (if (some true? (cards/passives p :sawhorse))
                    (count (filter #(zero? (mod % 3)) (range (inc (count old)) (inc (+ (count old) (count new)))))) 0)
-        provided (+ sawhorse (reduce + 0 (cards/passives p :free-fences)) (:free-fences options 0))
+        provided (+ (fencing-master-stock p options) sawhorse (reduce + 0 (cards/passives p :free-fences)) (:free-fences options 0))
         bonus (min (turn-free-fences-available p) (max 0 (- (count new) (max 1 provided))))
         n (max 0 (- (count new) provided bonus))
         rate (if (= material :wood) (apply max 1 (cards/passives p :fences-per-wood)) 1)]
@@ -290,11 +315,11 @@
   ([p additions options]
   (let [new (set additions) old (set (:fences p))]
     (require! (and (seq new) (= (count new) (count additions)) (set/subset? new all-edges) (empty? (set/intersection new old))) "Select new fence edges.")
-    (require! (<= (count new) (fences-available p)) "Not enough fence pieces remain in your supply.")
+    (require! (<= (count new) (+ (fences-available p) (fencing-master-stock p options))) "Not enough fence pieces remain in your supply.")
     (let [material (if (and (= :clay (:fence-material options)) (cards/has? p :a016)) :clay :wood)
           sawhorse (if (some true? (cards/passives p :sawhorse))
                      (count (filter #(zero? (mod % 3)) (range (inc (count old)) (inc (+ (count old) (count new)))))) 0)
-          provided (+ sawhorse (reduce + 0 (cards/passives p :free-fences)) (or (:free-fences options) 0))
+          provided (+ (fencing-master-stock p options) sawhorse (reduce + 0 (cards/passives p :free-fences)) (or (:free-fences options) 0))
           ;; Original Hedge Keeper adds fences after a first fence supplied by
           ;; the player or another card. It cannot make the first fence free.
           bonus (min (turn-free-fences-available p) (max 0 (- (count new) (max 1 provided))))
@@ -302,7 +327,8 @@
           rate (if (= material :wood) (apply max 1 (cards/passives p :fences-per-wood)) 1)
           cost (quot (+ cost (dec rate)) rate)
           p' (cond-> (assoc (use-wood-carver (pay-construction p (construction-substitutions p (carve-cost p {material cost} options) options false)) options) :fences (set/union old new))
-               (pos? bonus) (assoc :turn-fence-bonus-used? true))
+               (pos? bonus) (assoc :turn-fence-bonus-used? true)
+               (pos? (fencing-master-stock p options)) (update-in [:reserved-fences :fr-fencing-master] - (min (count new) (fencing-master-stock p options))))
           regions (pastures p') covered (set (mapcat identity regions))
           borders (set (mapcat (fn [region] (->> region (mapcat edges) frequencies (filter #(= 1 (val %))) (map key))) regions))]
       (require! (and (seq covered) (connected? covered)) "Pastures must be adjacent and fully enclosed.")
@@ -317,7 +343,7 @@
     (require! (<= (count extras) (turn-free-fences-available p)) "Hedge Keeper can provide at most three extra fences, once per turn.")
     ;; Validate only the finished construction: the additional fences may join
     ;; the chosen cell to an existing pasture. Neither half need stand alone.
-    (build-fences p (into base extras) {:free-fences (count base)})))
+    (build-fences p (into base extras) {:free-fences (count base) :not-fence-action? true})))
 (defn sheep-accommodation [space bonus]
   (if (pos? bonus) (assoc space :base-capacity (:capacity space) :capacity (+ (:capacity space) bonus) :sheep-bonus bonus) space))
 (defn accommodations [p]
@@ -852,7 +878,9 @@
                  (filter #(get-in (cards/card %) [:passive :bargaining-baker]) (cards/owned p)))]
     (vec (concat (when (and legacy (seq building)) [{:card legacy :resources building}])
                  (for [cid inventors :when (seq resources)] {:card cid :resources resources})
-                 (for [cid bakers :when (seq building)] {:card cid :resources building})))))
+                 (for [cid bakers :when (seq building)] {:card cid :resources building})
+                 (when (and (seq building) (some true? (cards/passives p :prosecutor)))
+                   (repeat (:prosecutor-discount p 0) {:card :catalog/original-expansion-fr-103-prosecutor :resources building}))))))
 (defn improvement-discount-options
   ([p id] (improvement-discount-options p id {}))
   ([p id options] (mapv :resources (improvement-discount-entitlements p id options))))
@@ -911,6 +939,16 @@
         cost (cond-> cost (:wood-carver? options) (update :wood dec))
         cost (if (some #(contains? % id) (cards/passives p :free-improvements)) {} cost)]
     (if (grain-mill-payment? p id options) {} (apply-improvement-discounts p id cost options))))
+(def timetable-id :catalog/original-expansion-fr-51-timetable)
+(defn timetable-plan [p cost options]
+  (let [available (if (and (some true? (cards/passives p :timetable)) (not= false (:timetable? options)))
+                    (get-in p [:card-state timetable-id :stored-goods] {}) {})
+        selected (:timetable-resources options available)
+        _ (quantities! selected [:wood :clay :reed :stone])
+        used (into {} (for [[r n] cost :let [take (min n (get available r 0) (get selected r 0))] :when (pos? take)] [r take]))]
+    [(merge-with - cost used) used]))
+(defn spend-timetable [p used]
+  (reduce (fn [p [r n]] (update-in p [:card-state timetable-id :stored-goods r] - n)) p used))
 (defn improvement-cost
   ([p improvement upgrade] (improvement-cost p improvement upgrade {}))
   ([p improvement upgrade modifiers]
@@ -930,7 +968,8 @@
      (when (and (pos? (or bake-grain 0)) (not (:oven card))) (require! false "Only a new oven grants an immediate Bake Bread action."))
      (let [p (improvement-food-before-payment p improvement)
            cost (improvement-cost p improvement upgrade (merge (select-keys options [:discount-resource :discount-resources :manufacturer-discount :wood-carver? :grain-mill-oven?]) modifiers))
-           p' (-> (pay-construction p cost)
+           [personal-cost stock] (if (:minor-payment? modifiers) (timetable-plan p cost options) [cost {}])
+           p' (-> (pay-construction (spend-timetable p stock) personal-cost)
                   (cond-> (:grain-mill-oven? options)
                     (as-> player (let [cid (grain-mill-oven-id p)]
                                   (-> player (update :minors #(vec (remove #{cid} %))) (update :card-state dissoc cid)))))
@@ -1183,7 +1222,8 @@
                    wheel (if (and (= id :pottery) (some true? (cards/passives p :potters-wheel))) 1 0)]
                (require! (and ((:improvements p) id) craft) "You do not own that craft improvement.")
                (-> (gain (pay p goods) {:food (+ rate wheel (if plane (if plane-extra? 2 1) 0))})
-                   (artisan-bonus goods context true)))) p craft)))
+                   (artisan-bonus goods context true)
+                   (cond-> (:track-prefect? context) (update :cooking-receipts (fnil conj []) (merge context {:prefect-only? true :recipe-card id :goods goods :rates {} :listeners []})))))) p craft)))
 (def begging-origin-cards #{:catalog/original-expansion-wm-6-borrower :catalog/original-expansion-wm-56-almshouse})
 (defn track-feeding-begging? [g]
   (or (some begging-origin-cards (:minor-deck g)) (some begging-origin-cards (:occupation-deck g))

@@ -1,7 +1,7 @@
 (ns agricola.card-expressions
   "Small, explicit numeric/predicate language shared by card rules and previews.
    Unknown forms fail closed; card prose is never an executable effect."
-  (:require [agricola.engine :as a] [agricola.card-rules :as cards] [clojure.string :as str]))
+  (:require [agricola.engine :as a] [agricola.fr-sixteen :as fr16] [agricola.card-rules :as cards] [clojure.string :as str]))
 (declare evaluate evaluate*)
 (defn field-list [player] (filter #(= :field (:type %)) (concat (:farm player) (vals (:card-fields player)))))
 (defn mixed-fields [player] (filter #(and (pos? (a/field-crop-count % :grain)) (pos? (a/field-crop-count % :vegetable))) (field-list player)))
@@ -34,6 +34,10 @@
           :and (every? ev args) :or (boolean (some ev args)) :not (not (ev x))
           :if (ev (if (ev x) (second args) (nth args 2)))
           :paid (get-in context [:paid x] 0)
+          :fr-necklace (fr16/necklace? g pid)
+          :fr-tower (fr16/tower? g pid context)
+          :fr-fences-store (min (a/fences-available p) (if (< (cards/occupation-count p nil) 4) 2 1))
+          :fr-source-wood (min (a/amount p :wood) (max 0 (- (get-in context [:taken :wood] 0) (get-in g [:action-returned-goods (:action-id context) :wood] 0))))
           :construction-wood-spent (:construction-wood-spent p 0)
           :cowboy-mother-actions (:cowboy-mother-actions p (count (:worker-spaces p)))
           :goods (a/amount p x)

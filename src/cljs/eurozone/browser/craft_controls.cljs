@@ -1,5 +1,5 @@
 (ns eurozone.browser.craft-controls
-  (:require [agricola.engine :as a] [agricola.card-rules :as cards]
+  (:require [agricola.engine :as a] [agricola.fr-sixteen :as fr16] [agricola.card-rules :as cards]
             [eurozone.browser.art :as art]))
 
 (defn attempt [f] (try (f) (catch :default _ nil)))
@@ -20,21 +20,22 @@
         after (craft before [id] extra? context)
         resource (:craft (a/improvements id))
         amount (- (a/amount before resource) (a/amount after resource))
-        food (food-difference before after)
+        prefect (get-in context [:prefect-bonuses id] 0)
+        food (+ prefect (food-difference before after))
         bonuses (for [cid (cards/active-owned before)
                       :when (some #(get-in (cards/card cid) [:passive %]) [:artisan :potters-wheel :plane])
                       :let [without (-> before (update :occupations #(vec (remove #{cid} %))) (update :minors #(vec (remove #{cid} %))))
                             plain (craft without [id] (and extra? (a/plane? without)) context)
-                            bonus (- food (food-difference without plain))]
+                            bonus (- food prefect (food-difference without plain))]
                       :when (pos? bonus)] {:card cid :food bonus})]
-    {:resource resource :amount amount :food food :bonuses bonuses}))
+    {:resource resource :amount amount :food food :bonuses (cond-> (vec bonuses) (pos? prefect) (conj {:card fr16/prefect :food prefect}))}))
 (defn bonus-pieces [bonuses]
   [:div.craft-bonuses
    (for [{:keys [card food]} bonuses] ^{:key card}
      [:span.craft-bonus {:aria-label (str (:name (cards/card card)) " adds " food " food")}
       [:span (:name (cards/card card))] [:span "+"] [art/piece :food] [:b food]])])
 (defn controls [g p selected extra? convert choose! choose-plane!]
-  (let [context {:phase :feeding :round (:round g)}
+  (let [context {:phase :feeding :round (:round g) :prefect-bonuses (into {} (for [id [:joinery :pottery :basketry]] [id (fr16/craft-bonus g (:id p) [id])]))}
         converted (or (attempt #(a/convert-food p convert context)) p)]
     [:div.craft-controls
      [:div.graphical-choice-options {:role "group" :aria-label "Harvest workshops"}
