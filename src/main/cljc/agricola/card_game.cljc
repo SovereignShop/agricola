@@ -1270,6 +1270,30 @@
               (a/plow-action-player planned pid (:space command) (:cell command))
               (take-action planned pid command)))))
 
+(def fr-sixteen-ops #{:fr-school-start :fr-fence-store :fr-park-start :fr-park-offer :fr-park-take})
+(defn run-fr-sixteen-effect [g {:keys [player card effect context]} current]
+  (let [pid player]
+    (case (:op effect)
+          :fr-school-start
+          (if (< (:round g) 14) (update-in g [:players pid :school-rounds (inc (:round g))] (fnil inc 0)) g)
+          :fr-fence-store
+          (let [n (:amount effect) maximum (min (a/fences-available current) (if (< (c/occupation-count current nil) 4) 2 1))]
+            (a/require! (<= n maximum) "Store only available fences, at most two before the fourth occupation and one thereafter.")
+            (update-in g [:players pid :reserved-fences :fr-fencing-master] (fnil + 0) n))
+          :fr-park-start (update g :park-stone (fnil + 0) 3)
+          :fr-park-offer
+          (if (pos? (:park-stone g 0))
+            (queue-front g [(task (:actor context) card {:op :choose :optional? true :options
+              [{:label "Take one stone from Park Cemetery" :effects [{:op :fr-park-take}]}]} context)]) g)
+          :fr-park-take
+          (do (a/require! (pos? (:park-stone g 0)) "No stone remains on Park Cemetery's action space.")
+              (let [first? (not= (:round g) (get-in g [:first-action-goods :stone :round]))
+                    context (assoc context :source-goods {:stone 1} :taken {:stone 1} :first-stone? first?)]
+                (-> g (update :park-stone dec) (update-in [:players pid] a/gain {:stone 1})
+                      (cond-> first? (assoc-in [:first-action-goods :stone] {:round (:round g) :player pid}))
+                      (queue-front [(event :after-resource-returns pid (assoc context :only-card :catalog/original-base-i-255-stone-buyer))]))))
+)))
+
 (defn run-effect* [g {:keys [player card effect context window] :as head} choice]
   (let [pid player current (p g pid) op (:op effect) cost (expr/quantities g pid context (or (:cost effect) {}))
         discount-used (if (and (= :card-action op)
@@ -1317,24 +1341,6 @@
                 (:businessman? effect) (assoc-in [:players pid :card-state card (if (:merchant-repeat? context) :repeat-turn :last-turn)] (freshman-turn-key g))
                 (:once-per-turn? effect) (assoc-in [:players pid :card-state card :last-turn] (freshman-turn-key g)))]
         (case op
-          :fr-school-start
-          (if (< (:round g) 14) (update-in g [:players pid :school-rounds (inc (:round g))] (fnil inc 0)) g)
-          :fr-fence-store
-          (let [n (:amount effect) maximum (min (a/fences-available current) (if (< (c/occupation-count current nil) 4) 2 1))]
-            (a/require! (<= n maximum) "Store only available fences, at most two before the fourth occupation and one thereafter.")
-            (update-in g [:players pid :reserved-fences :fr-fencing-master] (fnil + 0) n))
-          :fr-park-start (update g :park-stone (fnil + 0) 3)
-          :fr-park-offer
-          (if (pos? (:park-stone g 0))
-            (queue-front g [(task (:actor context) card {:op :choose :optional? true :options
-              [{:label "Take one stone from Park Cemetery" :effects [{:op :fr-park-take}]}]} context)]) g)
-          :fr-park-take
-          (do (a/require! (pos? (:park-stone g 0)) "No stone remains on Park Cemetery's action space.")
-              (let [first? (not= (:round g) (get-in g [:first-action-goods :stone :round]))
-                    context (assoc context :source-goods {:stone 1} :taken {:stone 1} :first-stone? first?)]
-                (-> g (update :park-stone dec) (update-in [:players pid] a/gain {:stone 1})
-                      (cond-> first? (assoc-in [:first-action-goods :stone] {:round (:round g) :player pid}))
-                      (queue-front [(event :after-resource-returns pid (assoc context :only-card :catalog/original-base-i-255-stone-buyer))]))))
           :remove-empty-field
           (let [after (update-in g [:players pid] #(-> % (a/remove-empty-field (:cell choice))
                                                        (a/gain (expr/quantities g pid context (:goods effect)))))]
@@ -2023,7 +2029,8 @@
             ;; Preserve the parent's one turn-advance continuation, after this action's effects.
             (assoc after :turn turn :effect-queue
                    (vec (concat (remove #(and (= :continue (:kind %)) (= :advance (:step %))) (:effect-queue after)) queue))))
-          (cond (= :fr-turkey-debt op) (fr/turkey-debt g pid)
+          (cond (fr-sixteen-ops op) (run-fr-sixteen-effect g head current)
+                (= :fr-turkey-debt op) (fr/turkey-debt g pid)
                 (wm-fifteen-ops op) (run-wm-fifteen-effect g head choice)
                 (g-sixteen-ops op) (run-g-sixteen g head choice)
                 (g-fifteen-ops op) (run-g-fifteen-effect g head choice)
