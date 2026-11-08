@@ -156,3 +156,22 @@
               (assoc-in [:players 0 :g-harvest-count] 2))
         y (g/command x 0 {:type :breed :offspring {:sheep 1} :nursery {:sheep 1}})]
     (is (= 1 (get-in y [:players 0 :card-state :catalog/original-expansion-g-67-bountiful-harvest :stored-goods :food])))))
+(deftest ram-counts-for-shepherds-four-sheep-threshold-but-nursery-does-not
+  (let [x (-> (s/initial-state "branch-collector" ["Ada" "Ben" "Cid" "Dee"])
+              (s/prepared-round 4)
+              (update-in [:players 0] a/build-fences (vec (map key (filter #(= 1 (val %)) (frequencies (mapcat a/edges [0 1 2]))))))
+              (update-in [:players 0] a/gain {:sheep 4})
+              (s/played 0 ram) (s/played 0 :catalog/original-base-e-203-shepherd)
+              s/last-harvest-action (resolve! {:discard? false}))
+        breeding (reduce #(g/command %1 %2 {:type :feed}) x (range 4))
+        y (g/command breeding 0 {:type :breed :offspring {:sheep 2}})
+        p (g/p breeding 0)
+        nursery-p (-> p (assoc-in [:goods :sheep] 2) (update :minors conj nursery)
+                      (assoc-in [:card-state nursery :stored-goods :sheep] 20))]
+    (is (= 3 (a/amount p :sheep)))
+    (is (= 4 (a/breeding-animal-count p :sheep)))
+    (is (= {:sheep 2} (a/breeding-options p)))
+    (is (= 5 (a/amount (g/p y 0) :sheep)))
+    (is (= {:sheep 1} (a/breeding-options nursery-p)))
+    (is (= 2 (a/amount nursery-p :sheep)))
+    (is (= 23 (binding [a/*scoring-animals?* true] (a/amount nursery-p :sheep))))))

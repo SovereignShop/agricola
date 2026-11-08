@@ -1263,12 +1263,16 @@
           ;; Woolgrower is played, and make the new capacity available to breed.
           (update :players #(mapv (fn [player] (update player :completed-feeding-phases (fnil inc 0))) %)))
       (assoc g :turn next))))
+(defn breeding-animal-count [p animal]
+  ;; Ram is a breeding animal, but Nursery newborns are permanently unavailable.
+  (+ (get-in p [:goods animal] 0)
+     (if (and (= animal :sheep) (some true? (cards/passives p :ram))) 1 0)))
 (defn breeding-options [p]
-  (into {} (for [animal animals :when (>= (+ (amount p animal) (if (and (= animal :sheep) (some true? (cards/passives p :ram))) 1 0)) 2)]
+  (into {} (for [animal animals :when (>= (breeding-animal-count p animal) 2)]
              ;; Both cards replace the usual one offspring with two; their
              ;; replacement effects do not add together for three offspring.
              [animal (if (or (pos? (get-in p [:extra-breeding animal] 0))
-                             (and (= animal :sheep) (>= (amount p :sheep) 4)
+                             (and (= animal :sheep) (>= (breeding-animal-count p :sheep) 4)
                                   (some true? (cards/passives p :double-sheep-breeding)))) 2 1)])))
 (defn breeding-choices [p]
   (let [options (breeding-options p)]
