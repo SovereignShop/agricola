@@ -21,6 +21,20 @@ def check(base, fixture):
             p.on('pageerror', lambda e: errors.append(str(e)))
             return p
 
+        def save_unfinished(p):
+            revision = p.locator('.game').get_attribute('data-revision')
+            p.get_by_role('button', name='Table menu', exact=True).click()
+            dialog = p.get_by_role('dialog', name='Table menu', exact=True)
+            with p.expect_download() as download:
+                dialog.get_by_role('button', name='Save recording', exact=True).click()
+            text = open(download.value.path()).read()
+            assert ':saved-state ' in text and ':saved-state-hash ' in text
+            assert ':saved-state-hash "' + fixture['unfinished-hash'] + '"' in text
+            assert ':record :result' not in text
+            expect(p.locator('.game')).to_have_attribute('data-revision', revision)
+            expect(p.get_by_role('alert')).to_have_count(0)
+            dialog.get_by_role('button', name='Close dialog', exact=True).click()
+
         def review(p):
             dialog = p.get_by_role('dialog', name='Game complete', exact=True)
             expect(dialog).to_be_visible()
@@ -52,6 +66,12 @@ def check(base, fixture):
         host, guest, observer = page('a'), page('b'), page('c')
         for p in [host, guest, observer]: p.goto(base+'/#'+fixture['online'])
         expect(host.get_by_role('button', name='Replay game', exact=True)).to_have_count(0)
+        save_unfinished(host)
+        guest.get_by_role('dialog').get_by_role('button', name='Close dialog', exact=True).click()
+        guest.get_by_role('button', name='Table menu', exact=True).click()
+        expect(guest.get_by_role('button', name='Save recording', exact=True)).to_have_count(0)
+        guest.get_by_role('dialog', name='Table menu', exact=True).get_by_role('button', name='Close dialog', exact=True).click()
+        guest.get_by_role('button', name='Go to my decision', exact=True).click()
         guest.get_by_role('button', name='Complete breeding →', exact=True).click()
         review(guest); review(host)
         expect(observer.get_by_role('dialog', name='Game complete')).to_be_visible()
@@ -77,6 +97,15 @@ def check(base, fixture):
         peer_save = fixture['peer'].replace('__ROOM__',room).replace('a'*64,host.evaluate('testPeerIdentity.self')).replace('b'*64,guest.evaluate('testPeerIdentity.self'))
         host.evaluate('([id,text])=>EurozonePeer.save(id,text)', [room, peer_save])
         host.reload()
+        expect(host.locator('.game')).to_be_visible()
+        host.set_viewport_size({'width':390,'height':844})
+        save_unfinished(host)
+        host.set_viewport_size({'width':1440,'height':1000})
+        guest.get_by_role('dialog').get_by_role('button', name='Close dialog', exact=True).click()
+        guest.get_by_role('button', name='Table menu', exact=True).click()
+        expect(guest.get_by_role('button', name='Save recording', exact=True)).to_have_count(0)
+        guest.get_by_role('dialog', name='Table menu', exact=True).get_by_role('button', name='Close dialog', exact=True).click()
+        guest.get_by_role('button', name='Go to my decision', exact=True).click()
         guest.get_by_role('button', name='Complete breeding →', exact=True).click()
         review(guest); review(host)
         assert not errors, errors

@@ -77,7 +77,8 @@
 (def community-deck-definitions
   (merge (read-edn "agricola/original-g-cards.edn")
          (read-edn "agricola/original-wm-cards.edn")
-         (read-edn "agricola/original-fr-cards.edn")))
+         (read-edn "agricola/original-fr-cards.edn")
+         (read-edn "agricola/community-final-cards.edn")))
 (def definitions (merge (into {} (map (fn [[code rule]] [(id code) rule]) legacy-definitions)) expansion-definitions original-definitions wizkids-white-definitions community-deck-definitions))
 (def cards (into {} (for [[cid definition] definitions] [cid (merge (metadata cid) definition)])))
 (def public-hand-response-cards (vec (sort (for [[cid rule] cards :when (:public-hand-response rule)] cid))))

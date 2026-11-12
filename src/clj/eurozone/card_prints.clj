@@ -1,15 +1,17 @@
 (ns eurozone.card-prints
   "Build-time audit of the browser's actual print lookup and bundled assets."
-  (:require [agricola.card-rules :as cards] [clojure.java.io :as io]
+  (:require [agricola.card-rules :as cards] [agricola.engine :as a] [clojure.java.io :as io]
             [clojure.data.json :as json])
   (:import [java.security MessageDigest] [java.nio.file Files] [javax.imageio ImageIO]))
 
-(defn lookup []
+(defn lookup
+  ([] (lookup "src/cljs/eurozone/browser/card_art.cljs"))
+  ([path]
   ;; Read data, never evaluate browser code or duplicate its lists.
-  (with-open [r (java.io.PushbackReader. (io/reader "src/cljs/eurozone/browser/card_art.cljs"))]
+  (with-open [r (java.io.PushbackReader. (io/reader path))]
     (into {} (for [form (take-while some? (repeatedly #(read {:eof nil} r)))
                    :when (and (seq? form) (= 'def (first form)))]
-               [(second form) (nth form 2)]))))
+               [(second form) (nth form 2)])))))
 (defn asset [lookup id]
   (or (when-let [file (get-in lookup ['printed-files id])] (str "cards/" file))
       (when ((get lookup 'available) id) (str "cards/" (name id) ".png"))
@@ -17,10 +19,13 @@
 (defn sha256 [file]
   (format "%064x" (java.math.BigInteger. 1 (.digest (MessageDigest/getInstance "SHA-256") (Files/readAllBytes (.toPath file))))))
 (defn audit []
-  (let [lookup (lookup) root "resources/public/art/agricola"
+  (let [lookup (lookup) major-art (eurozone.card-prints/lookup "src/cljs/eurozone/browser/art.cljs")
+        root "resources/public/art/agricola"
         manifest (json/read-str (slurp (io/file root "manifest.json")) :key-fn keyword)
         entries (group-by :file (:files manifest))
-        assets (into {} (for [id (keys cards/cards)] [id (asset lookup id)]))
+        assets (into (into {} (for [id (keys a/improvements)]
+                               [id (when (contains? (get major-art 'major-indices) id) (get major-art 'major-sheet))]))
+                     (for [id (keys cards/cards)] [id (asset lookup id)]))
         missing (vec (sort (for [[id file] assets :when (nil? file)] id)))
         broken (vec
                 (for [path (sort (set (keep val assets)))
@@ -43,5 +48,5 @@
   (let [report (audit)]
     (when (some seq ((juxt :missing :broken :bad-sprites) report))
       (throw (ex-info "Implemented cards must have valid, sourced English prints." report)))
-    (println "Card prints:" (:covered report) "/" (:implemented report) "implemented hand cards covered.")
+    (println "Card prints:" (:covered report) "/" (:implemented report) "implemented improvements and hand cards covered.")
     report))

@@ -5,8 +5,94 @@
 
 (def scenarios
   [
+   {:id "astronomer" :card :catalog/original-expansion-g-7-astronomer :name "Astronomer" :players 3
+    :description "Two guests have taken Grain Seeds and Farmland. Place the last adult at Lessons to complete three equal-sized spaces in a straight line; observe one bonus point at Returning Home."}
+   {:id "food-critic" :card :catalog/original-expansion-g-19-food-critic :name "Food Critic" :players 2
+    :description "A sheep was cooked through the native conversion action. Store its token or decline. Later take Fishing, bake, and use other conversions to collect different items for points."}
+   {:id "badger" :card :catalog/original-expansion-fr-6-badger :name "Badger" :players 2
+    :description "Click a revealed action space to place Badger. Anyone using it gets one food. At the next round, move the marker to a revealed space sharing an edge."}
+   {:id "bathroom" :card :catalog/original-expansion-fr-9-bathroom :name "Bathroom" :players 2
+    :description "One grain and one vegetable have just been converted to food. Store either or both on Bathroom, or decline. Sow the two fields, then click them to add their matching stored crops."}
+   {:id "agrarian" :card :catalog/original-expansion-fr-61-agrarian :name "Agrarian" :players 3
+    :description "A new round offers a one-food reservation on Farmland. Accept or decline. If nobody uses Farmland, the food returns at round end and you may plow directly on your farm."}
+   {:id "card-player" :card :catalog/original-expansion-fr-68-card-player :name "Card Player" :players 2
+    :description "Card Player has wood on top and stone at the bottom. Take Forest to receive one extra wood. At round end the top resource moves to the bottom; inspect the stack on the card."}
+   {:id "late-bloomer" :card :catalog/original-expansion-g-36-late-bloomer :name "Late Bloomer" :players 4
+    :description "Every opponent has a larger family, and you have a spare room. Accept free growth to add an adult who can work immediately, or decline and later use the played card's ability while eligible."}
+   {:id "shared-wall" :card :catalog/original-expansion-g-106-shared-wall :name "Shared Wall" :players 2
+    :description "Use Fencing to surround the unused space above your home with three fences. The room wall closes the fourth side, at no fence or wood cost. Your home cannot later extend into this pasture."}
+   {:id "master-cook" :card :catalog/original-expansion-wm-36-master-cook :name "Master Cook" :players 3
+    :description "Before your first placement, open Master Cook and use its ability. One adult stays on the card, you get two food and a guest, and another player acts next. Taking an ordinary action instead declines this round's opportunity."}
+   {:id "early-riser" :card :catalog/original-expansion-g-14-early-riser :name "Early Riser" :players 2
+    :description "Take Grain Seeds with the final worker to begin harvest. Breed before collecting your field and feeding. The sheep pasture is full and the boar occupies your home; optionally cook the newborn sheep using your Fireplace."}
+   {:id "almanac" :card :catalog/original-expansion-g-61-almanac :name "Almanac" :players 2
+    :description "Play Almanac at Meeting Place. Observe your grain harvest, then breed your sheep. No food is charged for feeding, and the card passes to your neighbor after its harvest finishes."}
+   {:id "stone-crane" :card :catalog/original-expansion-g-112-stone-crane :name "Stone Crane" :players 3
+    :description "A neighbor has built a room. Choose a building-resource discount and click an adjacent farm space for your room, or decline. When a neighbor renovates, the card instead offers discounted renovation."}
+   {:id "baking-field" :card :catalog/original-expansion-g-63-baking-field :name "Baking Field" :players 2
+    :description "Take Grain Seeds with the last worker to begin harvest. Baking Field's grain must immediately become two food through your Fireplace. Its field stack shrinks, and ordinary supply grain is not baked."}
+   {:id "kitchen-table" :card :catalog/original-expansion-fr-34-kitchen-table :name "Kitchen Table" :players 2
+    :description "Use Grain Utilization and choose the pictured option to store one food on Kitchen Table instead of baking. Open the played card to withdraw it and take a Bake Bread action. The Clay Oven can bake one grain for five food."}
+   {:id "downsizing" :card :catalog/original-expansion-wm-75-downsizing :name "Downsizing" :players 2
+    :description "A first pasture has just been fenced. Return the wooden room you built above your home, or decline. After returning it, click up to seven additional free fence edges. The two original rooms cannot be returned."}
+   {:id "expert-builder" :card :catalog/original-expansion-wm-18-expert-builder :name "Expert Builder" :players 3
+    :description "A neighbor has paid wood and reed for a room. That player chooses one paid resource for your Expert Builder, with no additional charge. Later build or renovate and edit the pictured stored-resource payment."}
+   {:id "musketeer" :card :catalog/original-expansion-fr-95-musketeer :name "Musketeer" :players 4
+    :description "Place the arrow directly at a four-space intersection on the action board. Try the corner shared by Grain Seeds, Farmland, Forest, and Clay Pit. Occupying two, three, or four marked spaces at Returning Home gives a sheep, boar, or cattle."}
+   {:id "mailman" :card :catalog/original-expansion-wm-35-mailman :name "Mailman" :players 3
+    :description "Place four pictured packages on different revealed action spaces. Use a marked space and accept or decline its one-food purchase before the action. Try placing reed on Farm Expansion so it can help pay for a room."}
+   {:id "resource-lender" :card :catalog/original-expansion-wm-43-resource-lender :name "Resource Lender" :players 3
+    :description "Forest has just supplied three wood. Choose the extra wood, then click the wood icons to schedule four deliveries on the next four round cards, or decline to keep the three wood now."}
+   {:id "ground-pickaxe-plow" :card :catalog/original-expansion-fr-27-ground-pickaxe-plow :name "Ground Pickaxe Plow" :players 2
+    :description "Farmland has just plowed your first field. Click one or two adjacent action spaces to place one wood on each, then click the actual farm to plow that many extra fields. Declining preserves the once-per-game use."}
+   {:id "winter-garden" :card :catalog/original-expansion-g-118-winter-garden :name "Winter Garden" :players 2
+    :description "Use Grain Utilization and sow directly in one of your rooms. It harvests normally and at the end of rounds 6, 8, 10, and 12. Taking a pet into your home clears its crops; the room never counts as a field tile."}
+   {:id "permaculturist" :card :catalog/original-expansion-wm-40-permaculturist :name "Permaculturist" :players 2
+    :description "Use Grain Utilization and sow grain directly on any unused farm spaces, even far apart. Open Permaculturist to clear selected temporary fields. Their grain and spaces return before final scoring and do not satisfy field prerequisites."}
+   {:id "irrigation-canal" :card :catalog/original-expansion-g-85-irrigation-canal :name "Irrigation Canal" :players 2
+    :description "Farmland has just plowed beside a grain field. Click the new field and then the planted neighbor to move and sow one grain with one fewer supply crop, or decline. Cultivation also offers sowing before plowing."}
+   {:id "sunday-worker" :card :catalog/original-expansion-wm-48-sunday-worker :name "Sunday Worker" :players 3
+    :description "Round seven's Forest action has just collected its pile. Pay one food to collect the same amount again, or decline. For a non-accumulation action, the card instead opens a second native action with its own choices and costs."}
+   {:id "debt-collector" :card :catalog/original-expansion-fr-76-debt-collector :name "Debt Collector" :players 4
+    :description "Click a future round at least three higher to reserve your guest. At that round's start, pay the starting player one food and place the guest before regular starting-player order resumes."}
+   {:id "remodeler" :card :catalog/original-expansion-wm-42-remodeler :name "Remodeler" :players 2
+    :description "House Redevelopment is about to renovate your wooden hut. Return the stable above your home, then click that space or another legal space for a free wooden room, or decline. Renovation pays for all three rooms."}
+   {:id "auctioneer" :card :catalog/original-expansion-g-8-auctioneer :name "Auctioneer" :players 4
+    :description "The round-seven auction is ready. Each player clicks food icons to seal a bid. All bids reveal together; highest wins two reed and pays the Auctioneer, with ties following this round's starting-player order. A winning owner pays the supply."}
+   {:id "writing-maniac" :card :catalog/original-expansion-fr-120-writing-maniac :name "Writing Maniac" :players 3
+    :description "Choose occupation faces and place them on future round cards. At their scheduled round, pay two food to play the assigned card or return it to your hand. Opponents see only face-down assignments."}
+   {:id "unicycle-driver" :card :catalog/original-expansion-fr-115-unicycle-driver :name "Unicycle Driver" :players 4
+    :description "At round start, pay a stone and click two adjacent action spaces for a road, or decline. Try Grain Seeds and Farmland. End work with a worker on Grain Seeds and Farmland empty, then use Farmland through the road without moving the worker."}
+   {:id "mooch" :card :catalog/original-expansion-g-41-mooch :name "Mooch" :players 3
+    :description "Choose the neighbor with a Cooking Hearth, Clay Oven, and Joinery. Your cooking and baking controls immediately borrow those rates; feeding also offers their workshop. The neighbor keeps their cards, and your access expires after the next harvest."}
+   {:id "village-school" :card :catalog/original-expansion-wm-112-village-school :name "Village School" :players 2
+    :description "You have four wood and two reed, one wood short of a room. At Farm Expansion, choose a hand card under Village School, click wood, and place the room above your home. The discarded card stays private and no resource is received. Cancel the discount to keep your card."}
+   {:id "witches-dance-ground" :card :catalog/original-expansion-fr-59-witches-dance-ground :name "Witches’ Dance Ground" :players 2
+    :description "Choose to extend or cover your farm, then click two adjacent squares on the actual farm. Extend beside it for two usable spaces and one point, or cover two unused squares. Try plowing, rooms, or fences on the extension and inspect scoring; restart to try the other placement."}
    {:id "brushwood-roof-prerequisite" :card :catalog/original-base-k-136-brushwood-roof :name "Brushwood Roof - 3 occupations" :players 2
     :description "You have two occupations: Brushwood Roof must be unavailable at Meeting Place. Cancel, play your third occupation at Lessons, then after the other player's turn use Meeting Place to play the Roof. The English print requires three."}
+   {:id "baking-clay-oven" :card :clay-oven :name "Clay Oven · Bake on play" :players 2 :baking-review? true
+    :description "Clay Oven has just been built through its normal action. Use the grain icons to preview baking, then bake or decline. Close and reopen the table to check that the decision persists; the new improvement stays built either way."}
+   {:id "baking-stone-oven" :card :stone-oven :name "Stone Oven · Bake on play" :players 2 :baking-review? true
+    :description "Stone Oven has just been built through its normal action. Use the grain icons to preview baking, then bake or decline. Close and reopen the table to check that the decision persists; the new improvement stays built either way."}
+   {:id "baking-bakers-oven" :card :catalog/original-base-e-14-baker-s-oven :name "Baker's Oven · Bake on play" :players 2 :baking-review? true
+    :description "Baker's Oven has just been built through its normal action. Use the grain icons to preview baking, then bake or decline. Close and reopen the table to check that the decision persists; the new improvement stays built either way."}
+   {:id "baking-wood-fired-oven" :card :catalog/original-base-e-27-wood-fired-oven :name "Wood-Fired Oven · Bake on play" :players 2 :baking-review? true
+    :description "Wood-Fired Oven has just been built through its normal action. Use the grain icons to preview baking, then bake or decline. Close and reopen the table to check that the decision persists; the new improvement stays built either way."}
+   {:id "baking-bakers-kitchen" :card :catalog/original-base-i-65-baker-s-kitchen :name "Baker's Kitchen · Bake on play" :players 2 :baking-review? true
+    :description "Baker's Kitchen has just been built through its normal action. Use the grain icons to preview baking, then bake or decline. Close and reopen the table to check that the decision persists; the new improvement stays built either way."}
+   {:id "baking-bakehouse" :card :catalog/original-base-k-106-bakehouse :name "Bakehouse · Bake on play" :players 2 :baking-review? true
+    :description "Bakehouse has just been built through its normal action. Use the grain icons to preview baking, then bake or decline. Close and reopen the table to check that the decision persists; the new improvement stays built either way."}
+   {:id "baking-grain-mill-oven" :card :catalog/original-expansion-fr-25-grain-mill-oven :name "Grain Mill Oven · Bake on play" :players 2 :baking-review? true
+    :description "Grain Mill Oven has just been built through its normal action. Use the grain icons to preview baking, then bake or decline. Close and reopen the table to check that the decision persists; the new improvement stays built either way."}
+   {:id "baking-beehive-oven" :card :catalog/original-expansion-g-65-beehive-oven :name "Beehive Oven · Bake on play" :players 2 :baking-review? true
+    :description "Beehive Oven has just been built through its normal action. Use the grain icons to preview baking, then bake or decline. Close and reopen the table to check that the decision persists; the new improvement stays built either way."}
+   {:id "baking-errant-oven" :card :catalog/original-expansion-g-73-errant-oven :name "Errant Oven · Bake on play" :players 2 :baking-review? true
+    :description "Errant Oven has just been played through Meeting Place. Bake with your existing Clay Oven or decline, then watch Errant Oven pass to the next player. Close and reopen the table to check that the decision persists."}
+   {:id "baking-meat-pie" :card :catalog/original-expansion-g-88-meat-pie :name "Meat Pie · Bake on play" :players 2 :baking-review? true
+    :description "Meat Pie has just been built through its normal action. Use the grain icons to preview baking, then bake or decline. Close and reopen the table to check that the decision persists; the new improvement stays built either way."}
+   {:id "baking-pumpkin-pie" :card :catalog/original-expansion-g-98-pumpkin-pie :name "Pumpkin Pie · Bake on play" :players 2 :baking-review? true
+    :description "Pumpkin Pie has just been built through its normal action. Use the grain icons to preview baking, then bake or decline. Close and reopen the table to check that the decision persists; the new improvement stays built either way."}
    {:id "family-counselor" :card :catalog/original-expansion-g-15-family-counselor :name "Family Counselor" :players 2
     :description "Your first adult took Forest. Place the final worker on Clay Pit: both adults occupy the early-round board, so receive one food at Returning Home. A different board would not qualify."}
    {:id "job-seeker" :card :catalog/original-expansion-g-35-job-seeker :name "Job Seeker" :players 4
@@ -244,6 +330,8 @@
     :description "This round you built stables and fences on their proper action spaces. Take Grain Seeds with the final worker and observe one sheep, boar, and cattle arrive as people return home."}
    {:id "benefactor" :card :catalog/original-expansion-fr-65-benefactor :name "Benefactor" :players 3
     :description "Four fenced pastures and one sheep are ready. Open Benefactor, click the sheep to return it, then click a legal space for a free wooden room. This exchange is once per game."}
+   {:id "voice-control-review" :card :catalog/original-expansion-fr-65-benefactor :name "Voice controls · Benefactor" :players 3
+    :description "Connect ChatGPT in Voice commands. Ask to show Partner's farm or played improvements, then open your Benefactor. Use voice to return the pictured sheep and choose the room above your house directly on the farm. Clear choices run immediately; ambiguous requests ask for clarification. Check voice stays usable above card dialogs, minimize it on mobile, then reload and replay the recording. This is a fresh table owned by its creator."}
    {:id "cabbage-lover" :card :catalog/original-expansion-fr-67-cabbage-lover :name "Cabbage Lover" :players 4
     :description "You just converted one vegetable to food. Click the pictured clay payment to store one clay for one bonus point, or decline. Stored clay scores at most five points."}
    {:id "country-doctor" :card :catalog/original-expansion-fr-74-country-doctor :name "Country Doctor" :players 2
@@ -625,10 +713,92 @@
       (update :players #(mapv (fn [p] (assoc p :remaining (if (zero? (:id p)) 1 0))) %))))
 
 (defn initial-state [id names]
-  (let [{:keys [card]} (scenario id)
+  (let [{:keys [card baking-review?]} (scenario id)
         base (game/initialize (a/new-game names (vec (mapcat identity a/stages)) 0))
         funded (update base :players #(mapv (fn [p] (a/gain p {:food 12 :wood 8 :clay 8 :reed 6 :stone 8 :grain 3 :vegetable 2})) %))]
+    (if baking-review?
+      (if (a/improvements card)
+        (-> funded (prepared-round 2)
+            (game/command 0 {:type :action :space :improvement :improvement card}))
+        (-> funded
+            (a/build-improvement 0 {:improvement :clay-oven :bake-grain 0})
+            (played 0 :catalog/original-base-e-174-tutor)
+            (put-in-hand 0 card)
+            (game/command 0 (cond-> {:type :action :space :meeting :card card}
+                             (= :return-oven (:cost (cards/card card))) (assoc :return-improvement :clay-oven)))))
     (case id
+      "astronomer" (-> funded (played 0 card) (update-in [:players 0 :remaining] + 2)
+                        (assoc-in [:players 0 :guests] 2)
+                        (game/command 0 {:type :action :space :grain})
+                        (game/command 1 {:type :action :space :wood})
+                        (game/command 2 {:type :action :space :reed})
+                        (game/command 0 {:type :action :space :plow :cell 0})
+                        (put-in-hand 0 :catalog/original-base-e-174-tutor) final-worker)
+      "food-critic" (-> funded (a/build-improvement 0 {:improvement :fireplace-2}) (played 0 card)
+                         (update-in [:players 0] a/gain {:sheep 1})
+                         (game/command 0 {:type :convert :goods {:sheep 1}}))
+      "badger" (played funded 0 card)
+      "bathroom" (-> funded (prepared-round 3) (prepare-fields [0 1]) (played 0 card)
+                      (game/command 0 {:type :convert :goods {:grain 1 :vegetable 1}}))
+      "agrarian" (-> funded (played 0 card) game/begin-round game/drain)
+      "card-player" (played funded 0 card)
+      "late-bloomer" (-> (reduce (fn [state pid] (update-in state [:players pid] #(-> % (a/build-rooms [0]) (a/grow true)))) funded [1 2 3])
+                         (update-in [:players 0] a/build-rooms [0]) (played 0 card))
+      "master-cook" (played funded 0 card)
+      "shared-wall" (-> funded (prepared-round 4) (played 0 :catalog/original-base-e-174-tutor)
+                         (played 0 :catalog/original-base-e-176-woodcutter) (played 0 card))
+      "early-riser" (-> funded (prepared-round 4)
+                        (a/build-improvement 0 {:improvement :fireplace-2})
+                        (update-in [:players 0] #(-> % (a/build-fences ["h:0:0" "h:1:0" "v:0:0" "v:0:1"]) (a/gain {:sheep 1 :boar 1})))
+                        (prepare-fields [1]) (update-in [:players 0] a/sow [{:cell 1 :crop :grain}])
+                        (played 0 card) final-worker)
+      "almanac" (-> funded (put-in-hand 0 card)
+                    (update-in [:players 0] #(-> % (a/build-fences ["h:0:0" "h:1:0" "v:0:0" "v:0:1"]) (a/gain {:sheep 2})))
+                    (prepare-fields [1]) (update-in [:players 0] a/sow [{:cell 1 :crop :grain}]))
+      "stone-crane" (-> funded (played 0 :catalog/original-base-e-174-tutor)
+                        (played 0 :catalog/original-base-e-176-woodcutter) (played 0 card)
+                        (assoc :turn 1) (game/command 1 {:type :action :space :build :rooms [0]}))
+      "baking-field" (-> funded (prepared-round 4)
+                         (a/build-improvement 0 {:improvement :fireplace-2})
+                         (played 0 :catalog/original-base-e-174-tutor) (played 0 :catalog/original-base-e-176-woodcutter)
+                         (played 0 card) (update-in [:players 0] a/sow [{:cell card :crop :grain}]) final-worker)
+      "kitchen-table" (-> funded (prepared-round 3)
+                          (a/build-improvement 0 {:improvement :clay-oven :bake-grain 0}) (played 0 card))
+      "downsizing" (-> funded (prepared-round 4) (played 0 :catalog/original-base-e-174-tutor)
+                       (update-in [:players 0] #(-> % (a/gain {:wood 12}) (a/build-rooms [0]))) (played 0 card)
+                       (game/command 0 {:type :action :space :fences :fences ["h:0:1" "h:1:1" "v:0:1" "v:0:2"]}))
+      "expert-builder" (-> funded (played 0 card) (assoc :turn 1)
+                            (game/command 1 {:type :action :space :build :rooms [0]}))
+      "musketeer" (played funded 0 card)
+      "mailman" (played funded 0 card)
+      "resource-lender" (-> funded (played 0 card) (game/command 0 {:type :action :space :wood}))
+      "ground-pickaxe-plow" (-> funded (played 0 card) (game/command 0 {:type :action :space :plow :cell 0}))
+      "winter-garden" (-> funded (prepared-round 3) (played 0 card))
+      "permaculturist" (-> funded (prepared-round 3) (played 0 card))
+      "irrigation-canal" (-> funded (prepare-fields [0]) (update-in [:players 0] a/sow [{:cell 0 :crop :grain}])
+                             (played 0 card) (game/command 0 {:type :action :space :plow :cell 1}))
+      "sunday-worker" (-> funded (prepared-round 7) (played 0 card) (game/command 0 {:type :action :space :wood}))
+      "debt-collector" (played funded 0 card)
+      "remodeler" (-> funded (prepared-round 7) (update-in [:players 0] a/build-stables [0] 2)
+                       (played 0 card) (game/command 0 {:type :action :space :renovate}))
+      "auctioneer" (-> funded (prepared-round 6) (played 0 card) game/begin-round game/drain)
+      "writing-maniac" (-> funded (prepared-round 4)
+                           (put-in-hand 0 :catalog/original-base-e-174-tutor)
+                           (put-in-hand 0 :catalog/original-base-e-176-woodcutter)
+                           (put-in-hand 0 :catalog/original-base-e-187-clay-deliveryman)
+                           (put-in-hand 0 :catalog/original-expansion-g-5-architect) (played 0 card))
+      "unicycle-driver" (-> funded (played 0 card) game/begin-round game/drain final-worker)
+      "mooch" (-> funded (prepared-round 3) (a/build-improvement 1 {:improvement :hearth-4})
+                  (a/build-improvement 1 {:improvement :clay-oven :bake-grain 0})
+                  (a/build-improvement 1 {:improvement :joinery})
+                  (played 1 :catalog/original-expansion-g-114-stonecutter-s-hall)
+                  (played 0 card))
+      "village-school" (-> funded (played 0 :catalog/original-base-e-174-tutor) (played 0 card)
+                           (put-in-hand 0 :catalog/original-base-e-176-woodcutter)
+                           (assoc-in [:players 0 :goods :wood] 4) (assoc-in [:players 0 :goods :reed] 2))
+      "witches-dance-ground" (-> funded (prepared-round 4) (played 0 :catalog/original-base-e-174-tutor)
+                                (played 0 :catalog/original-base-e-176-woodcutter)
+                                (played 0 :catalog/original-expansion-wm-10-cloister-dweller) (played 0 card))
       "brushwood-roof-prerequisite" (-> funded (put-in-hand 0 card)
           (played 0 :catalog/original-base-e-176-woodcutter)
           (played 0 :catalog/original-base-e-174-tutor)
@@ -841,7 +1011,7 @@
                             (update-in [:players 0] a/gain {:wood 12})
                             (game/command 0 {:type :action :space :build :stables [0]}) (assoc :turn 0)
                             (game/command 0 {:type :action :space :fences :fences (vec (distinct (mapcat a/edges [0 1 2])))}) final-worker)
-      "benefactor" (-> funded (update-in [:players 0] a/gain {:wood 12})
+      ("benefactor" "voice-control-review") (-> funded (update-in [:players 0] a/gain {:wood 12})
                        (update-in [:players 0] a/build-fences (vec (distinct (mapcat a/edges [1 2 3 4]))))
                        (update-in [:players 0] a/gain {:sheep 1}) (played 0 card))
       "cabbage-lover" (-> funded (played 0 card) (game/command 0 {:type :convert :goods {:vegetable 1}}))
@@ -1212,4 +1382,4 @@
           (played 0 :catalog/original-base-e-18-bean-field)
           (update-in [:players 0] a/place-tile :field 0)
           (update-in [:players 0] a/sow [{:cell 0 :crop :grain}])
-          game/begin-round game/drain))))
+          game/begin-round game/drain)))))

@@ -1,0 +1,83 @@
+{:catalog/original-expansion-fr-59-witches-dance-ground {:requires [:>= [:occupations] 3] :play [{:op :final-witches}]}
+ :catalog/original-expansion-wm-112-village-school {:cost {:stone 1 :reed 1} :points 1 :requires [:>= [:occupations] 1]}
+ :catalog/original-expansion-g-41-mooch
+ {:play [{:op :final-mooch}] :ability {:op :final-mooch-convert}
+  :triggers [{:event :harvest-end :effect {:op :final-mooch-expire}}]}
+ :catalog/original-expansion-fr-115-unicycle-driver
+ {:triggers [{:event :round-start :effect {:op :final-road :cost {:stone 1} :optional? true}}]}
+ :catalog/original-expansion-g-8-auctioneer {:play [{:op :final-auction-schedule}]}
+ :catalog/original-expansion-fr-120-writing-maniac {:play [{:op :final-writing-start}]}
+ :catalog/original-expansion-wm-42-remodeler {}
+ :catalog/original-expansion-wm-48-sunday-worker
+ {:triggers [{:event :after-resource-returns :effect {:op :final-sunday-offer}}]}
+ :catalog/original-expansion-fr-76-debt-collector
+ {:play [{:op :final-debt-schedule}]}
+ :catalog/original-expansion-g-85-irrigation-canal
+ {:cost {:wood 1 :stone 1} :points 1
+  :triggers [{:event :plow :effect {:op :final-irrigation :optional? true}}]}
+ :catalog/original-expansion-g-118-winter-garden
+ {:passive {:winter-garden true}
+  :triggers [{:event :round-end :effect {:op :final-winter-harvest}}]}
+ :catalog/original-expansion-wm-40-permaculturist
+ {:passive {:permaculturist true} :ability {:op :final-permaculture-clear}}
+ :catalog/original-expansion-wm-43-resource-lender
+ {:triggers [{:event :after-resource-returns :effect {:op :final-lender :optional? true}}]}
+ :catalog/original-expansion-fr-27-ground-pickaxe-plow
+ {:cost {:wood 1} :plow? true
+  :triggers [{:event :use-space :spaces #{:plow :cultivation} :effect {:op :final-pickaxe :optional? true}}]}
+ :catalog/original-expansion-wm-35-mailman
+ {:play [{:op :final-mailman-place :index 0}]}
+ :catalog/original-expansion-fr-95-musketeer
+ {:play [{:op :final-musketeer-place}]
+  :triggers [{:event :return-home :effect {:op :final-musketeer-reward}}]}
+ :catalog/original-expansion-wm-18-expert-builder
+ {:triggers [{:event :build-rooms :scope :all :effect {:op :final-expert-offer}}]}
+ :catalog/original-expansion-wm-75-downsizing
+ {:requires [:>= [:occupations] 1]
+  :triggers [{:event :fence :effect {:op :final-downsize :optional? true}}]}
+ :catalog/original-expansion-g-63-baking-field
+ {:requires [:and [:>= [:occupations] 2] [:>= [:baking-improvements] 1]] :passive {:card-field :grain}}
+ :catalog/original-expansion-fr-34-kitchen-table
+ {:ability {:op :final-kitchen-table}}
+ :catalog/original-expansion-g-14-early-riser
+ {:play [{:op :gain :goods {:sheep 1}}]
+  :triggers [{:event :before-field-phase :effect {:op :final-early-breeding}}]}
+ :catalog/original-expansion-g-61-almanac
+ {:cost {:wood 1 :stone 1} :passing? true
+  :play [{:op :final-almanac}]}
+ :catalog/original-expansion-g-112-stone-crane
+ {:cost {:wood 2 :stone 2} :requires [:>= [:occupations] 2] :points 1
+  :triggers [{:event :build-rooms :scope :others :effect {:op :final-crane}}
+             {:event :renovate :scope :others :effect {:op :final-crane}}]}
+ :catalog/original-expansion-wm-36-master-cook
+ {:ability {:op :final-master-cook}
+  :triggers [{:event :round-end :effect {:op :final-clear-worker}}]}
+ :catalog/original-expansion-g-36-late-bloomer
+ {:play [{:op :final-late-offer}]
+  :ability {:op :final-late-grow}
+  :triggers [{:event :check-state :scope :all :effect {:op :final-late-offer}}]}
+ :catalog/original-expansion-g-7-astronomer
+ {:play [{:op :gain :goods {:food 2}}]
+  :triggers [{:event :return-home :effect {:op :final-astronomer}}]}
+ :catalog/original-expansion-g-19-food-critic
+ {:triggers [{:event :use-space :spaces #{:fishing} :once? true :effect {:op :final-critic-fishing}}
+             {:event :convert-food :effect {:op :final-store-converted :optional? true}}
+             {:event :bake :effect {:op :final-store-converted :optional? true}}]
+  :score {:type :food-critic}}
+ :catalog/original-expansion-fr-6-badger
+ {:cost {:clay 1} :play [{:op :final-badger}]
+  :triggers [{:event :round-start :effect {:op :final-badger}}]}
+ :catalog/original-expansion-fr-9-bathroom
+ {:requires [:>= [:field-tiles] 1]
+  :triggers [{:event :convert-food :effect {:op :final-store-converted :optional? true}}
+             {:event :bake :effect {:op :final-store-converted :optional? true}}
+             {:event :sow :effect {:op :final-bathroom-sow :optional? true}}]}
+ :catalog/original-expansion-fr-61-agrarian
+ {:triggers [{:event :round-start :effect {:op :final-agrarian-offer}}
+             {:event :use-space :scope :all :spaces #{:plow} :effect {:op :final-agrarian-taken}}
+             {:event :round-end :effect {:op :final-agrarian-end}}]}
+ :catalog/original-expansion-fr-68-card-player
+ {:play [{:op :final-card-player-start}]
+  :triggers [{:event :round-end :effect {:op :final-card-player-rotate}}]}
+ :catalog/original-expansion-g-106-shared-wall
+ {:cost {:stone 1} :requires [:>= [:occupations] 2] :passive {:shared-wall true}}}

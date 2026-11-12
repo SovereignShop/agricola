@@ -39,7 +39,7 @@
         converted (or (attempt #(a/convert-food p convert context)) p)]
     [:div.craft-controls
      [:div.graphical-choice-options {:role "group" :aria-label "Harvest workshops"}
-      (for [id [:joinery :pottery :basketry] :when (contains? (:improvements p) id)
+      (for [id [:joinery :pottery :basketry] :when (some #{id} (a/food-improvement-ids p))
             :let [chosen? (boolean (some #{id} selected))
                   next (if chosen? (vec (remove #{id} selected)) (conj (vec selected) id))
                   {:keys [resource amount food bonuses]} (preview converted selected id extra? context)
@@ -62,5 +62,5 @@
                                       :aria-pressed (= (boolean extra?) extra) :class (when (= (boolean extra?) extra) "selected")
                                       :disabled (not legal?) :on-click #(choose-plane! extra)}
             [recipe resource amount food] [bonus-pieces bonuses]])]])
-     (when (seq (filter #(contains? (:improvements p) %) [:joinery :pottery :basketry]))
+     (when (seq (filter #(some #{%} (a/food-improvement-ids p)) [:joinery :pottery :basketry]))
        [:p.small "Each workshop can be used once this harvest. Click again to clear it. Shared card bonuses apply in the order selected."])]))

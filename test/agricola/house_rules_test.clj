@@ -125,5 +125,6 @@
       (is (not-any? #(house/banned? options (c/card %))
                      (concat (:minor-deck done) (mapcat #(mapcat val (:hand %)) (:players done)))))))
   (is (store/compatible-host-save? @store/engine-fingerprint))
+  (is (store/compatible-host-save? "cf9b4346d2ccd0b08ebc1d4da13bf18ec92de3f9c1e35458138dad149607a3d9"))
   (is (store/compatible-host-save? "c392563c1a00c063ed0975f223d2dae2adafc1aa84eba60c7d1c22f625a897f3"))
   (is (not (store/compatible-host-save? "unknown-version"))))

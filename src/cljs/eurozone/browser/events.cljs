@@ -114,7 +114,7 @@
                          :else (set! (.-hash js/location) (or % ""))))
 (rf/reg-event-fx :navigate
   (fn [{:keys [db]} [_ id]]
-    {:db (assoc db :game-id id :draft {} :inspect-player nil :error nil
+    {:db (assoc db :game-id id :draft {} :inspect-player nil :error nil :navigation-version (inc (:navigation-version db 0))
                 :panel (if (= :finished (:status (model/pull-game (:facts db) id))) :scores :board))
      :navigate id :dispatch [:chat/sync]}))
 (rf/reg-fx :send comms/send!)
@@ -138,7 +138,11 @@
       (let [room (model/pull-game (:facts db) (:game-id db))]
         {:db (assoc db :busy? true :error nil)
          (if (= :peer (:mode message)) :peer/create :send) (merge {:id (:game-id db) :revision (:revision room) :request-id (str (random-uuid))} message)}))))
-(rf/reg-event-fx :command (fn [_ [_ cmd]] {:dispatch [:send {:event :command :command cmd}]}))
+(rf/reg-event-fx :command
+  (fn [{:keys [db]} [_ cmd]]
+    {:dispatch [:send {:event :command :command
+                       (merge (when (and (#{:action :card-action :resolve :ability :convert} (:type cmd)) (not (:skip? cmd)))
+                                (select-keys (:draft db) [:school-card :school-resource])) cmd)}]}))
 (rf/reg-event-fx :server-message
   (fn [{:keys [db]} [_ message]]
     (case (:event message)

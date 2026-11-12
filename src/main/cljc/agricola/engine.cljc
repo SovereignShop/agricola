@@ -27,9 +27,20 @@
 (defn quantities! [m allowed]
   (require! (and (map? m) (every? (set allowed) (keys m)) (every? natural? (vals m))) "Invalid resource quantities."))
 (defn gain [p goods]
-  (-> p (update :goods #(merge-with + % goods))
-      (update :received #(merge-with + (or % {}) (into {} (filter (comp pos? val) goods))))))
-(defn pay [p goods]
+  (let [stack (when (cards/has? p :catalog/original-expansion-fr-68-card-player)
+                (get-in p [:card-state :catalog/original-expansion-fr-68-card-player :stack]))
+        goods (if (seq stack)
+                (into {} (for [[r n] goods]
+                           [r (if (pos? n) (+ n (cond (= r (first stack)) 1 (= r (last stack)) -1 :else 0)) n)])) goods)]
+    (-> p (update :goods #(merge-with + % goods))
+        (update :received #(merge-with + (or % {}) (into {} (filter (comp pos? val) goods)))))))
+(defn school-cost [p goods]
+  (let [{:keys [resource used?]} (:school-voucher p)]
+    (if (and resource (not used?) (pos? (get goods resource 0)))
+      [(assoc-in p [:school-voucher :used?] true) (update goods resource dec)] [p goods])))
+(defn remove-goods
+  "Remove goods for storage, sale, or return without treating the transfer as a cost."
+  [p goods]
   (quantities! goods resources)
   (require! (every? (fn [[r n]] (>= (amount p r) n)) goods) "You do not have enough resources.")
   (let [stock (max 0 (- (:food goods 0) (get-in p [:goods :food] 0)))
@@ -38,17 +49,30 @@
                      (let [n (min left (get-in player [:card-state cid :stored-goods :food] 0))]
                        [(if (pos? n) (update-in player [:card-state cid :stored-goods :food] - n) player) (- left n)]))
                    [paid stock] (if (pos? stock) (personal-food-cards p) [])))))
+(defn pay [p goods]
+  (let [[p goods] (school-cost p goods)] (remove-goods p goods)))
 (defn pay-construction [p goods]
-  (cond-> (pay p goods) (contains? p :construction-wood-spent)
-    (update :construction-wood-spent + (:wood goods 0))))
-(defn cell? [i] (and (integer? i) (<= 0 i 14)))
+  (let [[p goods] (school-cost p goods)]
+    (cond-> (pay p goods) (contains? p :construction-wood-spent)
+      (update :construction-wood-spent + (:wood goods 0)))))
+(def cell-coordinates
+  (vec (concat (for [y (range 3) x (range 5)] [x y])
+               (for [y (range -2 5) x (range -2 7)
+                     :let [distance (+ (max 0 (- x 4) (- x)) (max 0 (- y 2) (- y)))]
+                     :when (<= 1 distance 2)] [x y]))))
+(def coordinate-cells (zipmap cell-coordinates (range)))
+(def all-cells (vec (range (count cell-coordinates))))
+(defn cell? [i] (and (integer? i) (<= 0 i) (< i (count cell-coordinates))))
+(defn cell-position [i] (get cell-coordinates i))
 (defn neighbors [i]
-  (let [r (quot i 5) c (mod i 5)]
-    (cond-> [] (> r 0) (conj (- i 5)) (< r 2) (conj (+ i 5)) (> c 0) (conj (dec i)) (< c 4) (conj (inc i)))))
+  (let [[x y] (cell-position i)]
+    (if x (vec (keep coordinate-cells [[x (dec y)] [x (inc y)] [(dec x) y] [(inc x) y]])) [])))
 (defn edges [i]
-  (let [r (quot i 5) c (mod i 5)]
+  (let [[c r] (cell-position i)]
     [(str "h:" r ":" c) (str "h:" (inc r) ":" c)
      (str "v:" r ":" c) (str "v:" r ":" (inc c))]))
+(defn farm-cells [p] (keep-indexed #(when (not= :removed (:type %2)) %1) (:farm p)))
+(defn farm-edges [p] (set (mapcat edges (farm-cells p))))
 (def all-edges (set (mapcat edges (range 15))))
 (defn shared-edge [a b] (first (set/intersection (set (edges a)) (set (edges b)))))
 (defn connected? [cells]
@@ -58,18 +82,23 @@
         (if (seen i) (recur seen (rest todo))
             (recur (conj seen i) (concat (rest todo) (remove seen (filter cells (neighbors i))))))
         (= seen cells)))))
+(defn natural-fences [p]
+  (if (some true? (cards/passives p :shared-wall))
+    (set (mapcat edges (keep-indexed #(when (= :room (:type %2)) %1) (:farm p)))) #{}))
 (defn pastures [p]
-  (let [fences (set (:fences p))]
-    (loop [left (set (range 15)) result []]
+  (let [natural (natural-fences p) fences (set/union (set (:fences p)) natural) cells (set (farm-cells p))]
+    (loop [left cells result []]
       (if-let [start (first (sort left))]
         (let [region (loop [seen #{} todo [start]]
                        (if-let [i (first todo)]
                          (if (seen i) (recur seen (rest todo))
-                             (recur (conj seen i) (concat (rest todo) (remove seen (filter #(not (fences (shared-edge i %))) (neighbors i))))))
+                             (recur (conj seen i) (concat (rest todo) (remove seen (filter #(and (cells %) (not (fences (shared-edge i %)))) (neighbors i))))))
                          seen))
               boundary (->> region (mapcat edges) frequencies (filter #(= 1 (val %))) (map key))]
           (recur (set/difference left region)
-                 (cond-> result (every? fences boundary) (conj (vec (sort region))))))
+                 (cond-> result (and (every? fences boundary)
+                                    (or (empty? natural) (not-any? #(= :room (get-in p [:farm % :type])) region)))
+                   (conj (vec (sort region))))))
         result))))
 (defn pasture-cells [p] (set (mapcat identity (pastures p))))
 (defn empty-cell? [p i]
@@ -78,7 +107,7 @@
 (defn tiles [p t] (keep-indexed #(when (= t (:type %2)) %1) (:farm p)))
 (defn place-tile [p t i]
   (require! (empty-cell? p i) "Choose an unused farm space.")
-  (require! (or (empty? (tiles p t)) (some (set (tiles p t)) (neighbors i))) "Rooms and fields must touch another tile of their own kind.")
+  (require! (let [existing (remove #(and (= t :field) (get-in p [:farm % :permaculture?])) (tiles p t))] (or (empty? existing) (some (set existing) (neighbors i)))) "Rooms and fields must touch another tile of their own kind.")
   (assoc-in p [:farm i] {:type t}))
 (defn discounted [cost reductions]
   (reduce-kv (fn [m resource n] (update m resource #(max 0 (- (or % 0) n)))) cost reductions))
@@ -153,8 +182,16 @@
           (-> cost (assoc :reed 0) (update :wood (fnil inc 0)))) cost)))
 (def pelt-roof-id :catalog/original-expansion-g-91-pelt-roof)
 (defn pelt-roof-reed [p] (if (cards/has? p pelt-roof-id) (get-in p [:card-state pelt-roof-id :stored-goods :reed] 0) 0))
+(def expert-builder-id :catalog/original-expansion-wm-18-expert-builder)
+(defn expert-builder-stock [p] (if (cards/has? p expert-builder-id) (get-in p [:card-state expert-builder-id :stored-goods] {}) {}))
 (defn pay-home-construction [p cost options]
-  (let [maximum (min (:reed cost 0) (pelt-roof-reed p)) n (get options :pelt-roof-reed maximum)]
+  (let [[p cost] (school-cost p cost) stock (expert-builder-stock p)
+        chosen (merge (into {} (for [[r n] cost :when (pos? (get stock r 0))] [r (min n (get stock r 0))])) (:expert-goods options))
+        _ (quantities! chosen [:wood :clay :reed :stone])
+        _ (require! (every? (fn [[r n]] (<= n (min (get cost r 0) (get stock r 0)))) chosen) "Spend only Expert Builder resources needed for this construction.")
+        p (if (seq chosen) (update-in p [:card-state expert-builder-id :stored-goods] #(merge-with - % chosen)) p)
+        cost (merge-with - cost chosen)
+        maximum (min (:reed cost 0) (pelt-roof-reed p)) n (get options :pelt-roof-reed maximum)]
     (require! (and (natural? n) (<= n maximum)) "Use only stored Pelt Roof reed required by this extension or renovation.")
     (-> (cond-> p (pos? n) (update-in [:card-state pelt-roof-id :stored-goods :reed] - n))
           (pay-construction (update cost :reed (fnil - 0) n)))))
@@ -236,9 +273,14 @@
           carve? (if (wood-carver-available? p) [false true] [false])]
       (cond-> plan carve? (assoc :wood-carver? true)))
     (construction-payment-options p)))
-(defn room-construction-payment [p cells options {:keys [room-discount free? action-space?]}]
+(defn crane-discount [cost options enabled? default-resource]
+  (if-not enabled? cost
+    (let [resource (or (:discount-resource options) default-resource)]
+      (require! (some #{resource} [:wood :clay :reed :stone]) "Choose a building resource for Stone Crane's discount.")
+      (discounted cost {resource 1}))))
+(defn room-construction-payment [p cells options {:keys [room-discount free? action-space? stone-crane?]}]
    (let [miser-discount (when (and action-space? (not= false (:miser? options)) (= 1 (count cells)) (some true? (cards/passives p :miser))) {(:house p) 1 :reed 1})
-         per-room (mapv #(discounted (room-cost p (get-in options [:room-options %] options) miser-discount) room-discount) cells)
+         per-room (mapv #(crane-discount (discounted (room-cost p (get-in options [:room-options %] options) miser-discount) room-discount) (get-in options [:room-options %] options) stone-crane? (:house p)) cells)
          cost (apply merge-with + {} per-room)
          reductions (when (and (>= (count cells) 2) (some true? (cards/passives p :batch-room-discount)))
                       {:reed 2 (:house p) ({:wood 2 :clay 3 :stone 4} (:house p))})]
@@ -246,12 +288,13 @@
 (defn build-rooms
   ([p cells] (build-rooms p cells {}))
   ([p cells options] (build-rooms p cells options {}))
-  ([p cells options {:keys [room-discount free? action-space?]}]
-   (let [{:keys [per-room cost]} (room-construction-payment p cells options {:room-discount room-discount :free? free? :action-space? action-space?})]
+  ([p cells options {:keys [room-discount free? action-space? stone-crane?]}]
+   (let [{:keys [per-room cost]} (room-construction-payment p cells options {:room-discount room-discount :free? free? :action-space? action-space? :stone-crane? stone-crane?})]
      (require! (or (not (:wood-carver? options)) (and (not free?) (= :wood (:house p)))) "Wood Carver discounts only paid wooden rooms.")
      (let [paid cost
            built (reduce #(place-tile %1 :room %2) (use-wood-carver (pay-home-construction (branch-collector-gain p (take (min (count (filter #(or (pos? (:clay % 0)) (pos? (:stone % 0))) per-room)) (+ (:clay paid 0) (:stone paid 0))) (repeat {:clay 1}))) paid options) options) cells)]
        (cond-> built
+         (or (:track-room-cost? p) (cards/has? p expert-builder-id)) (assoc :last-room-cost (second (school-cost p paid)))
          (some true? (cards/passives p :rock-pyramid))
          (assoc :last-room-payment {:cells (vec cells)
                                    :stone-rooms (if (= :stone (:house p))
@@ -327,7 +370,7 @@
   ([p additions] (build-fences p additions {}))
   ([p additions options]
   (let [new (set additions) old (set (:fences p))]
-    (require! (and (seq new) (= (count new) (count additions)) (set/subset? new all-edges) (empty? (set/intersection new old))) "Select new fence edges.")
+    (require! (and (seq new) (= (count new) (count additions)) (set/subset? new (farm-edges p)) (empty? (set/intersection new old))) "Select new fence edges.")
     (require! (<= (count new) (+ (fences-available p) (fencing-master-stock p options))) "Not enough fence pieces remain in your supply.")
     (let [material (if (and (= :clay (:fence-material options)) (cards/has? p :a016)) :clay :wood)
           sawhorse (if (some true? (cards/passives p :sawhorse))
@@ -344,7 +387,12 @@
                (pos? (fencing-master-stock p options)) (update-in [:reserved-fences :fr-fencing-master] - (min (count new) (fencing-master-stock p options))))
           regions (pastures p') covered (set (mapcat identity regions))
           borders (set (mapcat (fn [region] (->> region (mapcat edges) frequencies (filter #(= 1 (val %))) (map key))) regions))]
-      (require! (and (seq covered) (connected? covered)) "Pastures must be adjacent and fully enclosed.")
+      (let [natural (natural-fences p')
+            connected-cells (mapcat identity
+                                   (remove (fn [region]
+                                             (every? natural (map key (filter #(= 1 (val %)) (frequencies (mapcat edges region))))))
+                                           regions))]
+        (require! (and (seq covered) (connected? connected-cells)) "Pastures must be adjacent and fully enclosed."))
       (require! (every? #(= :empty (get-in p [:farm % :type])) covered) "Pastures cannot contain rooms or fields.")
       (require! (set/subset? (:fences p') borders) "Every fence must border a fully enclosed pasture.")
       p'))))
@@ -375,7 +423,7 @@
         corral-cells (when corral? (set (filter #(and (some (set (tiles p :room)) (neighbors %))
                                                       (not (get-in p [:farm % :blocked-card]))
                                                       (zero? (get-in p [:farm % :count] 0))) (tiles p :field))))
-        stables (filter #(and (get-in p [:farm % :stable]) (not (get-in p [:farm % :stable-disabled?])) (not (fenced %))) (range 15))]
+        stables (filter #(and (get-in p [:farm % :stable]) (not (get-in p [:farm % :stable-disabled?])) (not (fenced %))) (farm-cells p))]
     (into (mapv #(cond-> % sheepdog? (assoc :allowed-animals #{:sheep}))
                 (cond (some true? (cards/passives p :no-house-animals)) []
                 (or (cards/has? p :a086) (some true? (cards/passives p :room-pets)))
@@ -400,10 +448,10 @@
                {:cells [i] :capacity stablemaster :kind :stable}
                (sheep-accommodation {:cells [i] :capacity 1 :kind :stable} (dec stable-sheep))))
            (for [i (take (if (or sheepdog? cowboy?) 0 (quot (apply max 0 (cards/passives p :unused-cattle-capacity)) 2))
-                         (filter #(empty-cell? p %) (range 15)))]
+                         (filter #(empty-cell? p %) (farm-cells p)))]
              {:cells [i] :capacity 2 :kind :unused :allowed-animals #{:cattle}})
            (when (or sheepdog? cowboy?)
-             (for [i (filter #(empty-cell? p %) (range 15))]
+             (for [i (filter #(empty-cell? p %) (farm-cells p))]
                {:cells [i] :capacity 2 :kind :unused :unused-shared? true}))
            (for [i corral-cells]
              {:cells [i] :capacity 2 :kind :field :corral? true})
@@ -582,7 +630,10 @@
         (if (seq goods) (gain p goods) p))
       p)))
 (defn owned-improvement-ids [p] (concat (:improvements p) (:minors p)))
-(defn baking-improvement-ids [p] (filter #(pos? (:bake (improvement-definition %) 0)) (owned-improvement-ids p)))
+(defn food-improvement-ids [p] (distinct (concat (owned-improvement-ids p) (:borrowed-food-improvements p))))
+(defn food-passives [p key]
+  (concat (cards/passives p key) (keep #(get-in (cards/card %) [:passive key]) (:borrowed-food-improvements p))))
+(defn baking-improvement-ids [p] (filter #(pos? (:bake (improvement-definition %) 0)) (food-improvement-ids p)))
 (defn fireplace-upgrades [p]
   (remove (:pawned-improvements p #{})
           (concat (sort (set/intersection (:improvements p) #{:fireplace-2 :fireplace-3}))
@@ -594,22 +645,22 @@
 (defn returnable-ovens [p]
   (sort (filter #(:oven (improvement-definition %)) (remove (:pawned-improvements p #{}) (owned-improvement-ids p)))))
 (defn animal-cooking-bonus [p goods]
-  (* (reduce + 0 (cards/passives p :animal-cooking-bonus)) (reduce + 0 (map #(get goods % 0) animals))))
+  (* (reduce + 0 (food-passives p :animal-cooking-bonus)) (reduce + 0 (map #(get goods % 0) animals))))
 (defn add-animal-cooking-bonus [p rates]
   (reduce (fn [rates animal] (if (pos? (get rates animal 0))
-                              (update rates animal + (reduce + 0 (cards/passives p :animal-cooking-bonus))) rates)) rates animals))
-(defn vegetarian? [p] (or (:vegetarian? p) (some true? (cards/passives p :vegetarian))))
-(defn vegetarian-food [p goods] (if (some true? (cards/passives p :vegetarian)) (+ (:grain goods 0) (:vegetable goods 0)) 0))
+                              (update rates animal + (reduce + 0 (food-passives p :animal-cooking-bonus))) rates)) rates animals))
+(defn vegetarian? [p] (or (:vegetarian? p) (some true? (food-passives p :vegetarian))))
+(defn vegetarian-food [p goods] (if (some true? (food-passives p :vegetarian)) (+ (:grain goods 0) (:vegetable goods 0)) 0))
 (defn require-animal-conversion! [p goods]
   (require! (or (not (vegetarian? p)) (not-any? #(pos? (get goods % 0)) animals)) "Vegetarian prevents converting animals into food."))
 (defn cook-rates [p]
-  (let [bonus (reduce + 0 (cards/passives p :vegetable-cooking-bonus))]
+  (let [bonus (reduce + 0 (food-passives p :vegetable-cooking-bonus))]
     ((if (vegetarian? p) #(apply dissoc % animals) identity)
      (add-animal-cooking-bonus p (apply merge-with max {:grain 1 :vegetable 1}
-           (concat (when-let [rates (get-in p [:temporary-animal-cooking :rates])] [rates]) (cards/passives p :animal-cooking)
-                   (when (some #(:oven (improvement-definition %)) (owned-improvement-ids p))
-                     (concat (cards/passives p :oven-animal-cooking) (cards/passives p :oven-cooking)))
-            (for [id (owned-improvement-ids p) :let [definition (improvement-definition id) rates (:cook definition {})]]
+           (concat (when-let [rates (get-in p [:temporary-animal-cooking :rates])] [rates]) (food-passives p :animal-cooking)
+                   (when (some #(:oven (improvement-definition %)) (food-improvement-ids p))
+                     (concat (food-passives p :oven-animal-cooking) (food-passives p :oven-cooking)))
+            (for [id (food-improvement-ids p) :let [definition (improvement-definition id) rates (:cook definition {})]]
              (cond-> rates
                (and (:vegetable rates) (or (#{:fireplace-2 :fireplace-3 :hearth-4 :hearth-5} id) (:fireplace definition) (:cooking-corner definition) (:cooking-hearth definition)))
                (update :vegetable + bonus)))))))))
@@ -619,12 +670,12 @@
         (:fireplace definition) (:cooking-corner definition) (:cooking-hearth definition))))
 (defn crock-improvement? [id]
   (or (fireplace-family? id) (:crock-compatible (improvement-definition id))))
-(defn crock? [p] (some true? (cards/passives p :cooking-pair-food)))
+(defn crock? [p] (some true? (food-passives p :cooking-pair-food)))
 (defn qualifying-cooked-units [p goods]
   (let [rates (cook-rates p)
-        spice (reduce + 0 (cards/passives p :vegetable-cooking-bonus))
+        spice (reduce + 0 (food-passives p :vegetable-cooking-bonus))
         qualifying (add-animal-cooking-bonus p (apply merge-with max {}
-                          (for [id (owned-improvement-ids p) :when (crock-improvement? id)
+                          (for [id (food-improvement-ids p) :when (crock-improvement? id)
                                 :let [rates (:cook (improvement-definition id) {})]]
                             (cond-> rates (and (:vegetable rates) (fireplace-family? id)) (update :vegetable + spice)))))]
     (reduce + 0 (for [[resource n] goods
@@ -633,10 +684,10 @@
   (vec (filter #(some (fn [trigger] (= :convert-food (:event trigger))) (:triggers (cards/card %)))
                (cards/active-owned p))))
 (defn spit-roast-bonus? [p goods context]
-  (and (= :feeding (:phase context)) (some true? (cards/passives p :spit-roast))
+  (and (= :feeding (:phase context)) (some true? (food-passives p :spit-roast))
        (not= (:round context) (:spit-roast-round p)) (some #(pos? (get goods % 0)) animals)))
 (defn artisan-bonus [p goods context improvement?]
-  (let [qualifies? (and improvement? (some true? (cards/passives p :artisan))
+  (let [qualifies? (and improvement? (some true? (food-passives p :artisan))
                         (#{:field-harvest :feeding :breeding} (:phase context))
                         (some #(pos? (get goods % 0)) [:wood :clay :reed :stone])
                         (not= (:round context) (:artisan-used-round p)))]
@@ -648,7 +699,7 @@
   (require-animal-conversion! p goods)
   (let [spit? (spit-roast-bonus? p goods context)
         source (:recipe-card context)
-        wheel (if (and (some true? (cards/passives p :potters-wheel))
+        wheel (if (and (some true? (food-passives p :potters-wheel))
                        (#{:pottery :catalog/original-base-e-214-potter} source)) (:clay goods 0) 0)]
     (cond-> (-> (gain (pay p goods) {:food (+ food wheel (vegetarian-food p goods) (animal-cooking-bonus p goods) (if spit? 1 0))})
                 (artisan-bonus goods context (or (contains? improvements source) (#{:minor :major} (:kind (cards/card source))))))
@@ -677,7 +728,7 @@
         (seq converted)
         (update :cooking-receipts (fnil conj []) (merge context {:goods converted :rates rates :listeners listeners})))))))
 (defn beehive-oven-id [p]
-  (first (filter #(get-in (cards/card %) [:passive :beehive-oven]) (cards/owned p))))
+  (first (filter #(get-in (cards/card %) [:passive :beehive-oven]) (food-improvement-ids p))))
 (defn baking-plan [p n ovens cooked]
   (loop [left n ovens ovens food 0 qualifying 0]
     (if (zero? left)
@@ -691,6 +742,10 @@
   ([p n cook-with-bake] (bake p n cook-with-bake {}))
   ([p n cook-with-bake context]
    (require! (natural? n) "Choose a whole number of grain to bake.")
+   (if (:kitchen-table? context)
+     (do (require! (cards/has? p :catalog/original-expansion-fr-34-kitchen-table) "Kitchen Table is required to store food instead of baking.")
+         (require! (and (zero? n) (not-any? pos? (vals cook-with-bake))) "Store food instead of baking or cooking.")
+         (-> p (pay {:food 1}) (update-in [:card-state :catalog/original-expansion-fr-34-kitchen-table :stored-goods :food] (fnil inc 0))))
    (let [cook-with-bake (or cook-with-bake {})]
      (quantities! cook-with-bake (concat animals [:grain :vegetable]))
      (require! (or (pos? n) (every? zero? (vals cook-with-bake))) "Cooking with baking requires at least one grain to bake.")
@@ -709,6 +764,7 @@
                         (baking-plan p n ovens cooked))]
          (require! selected "Your selected improvements cannot bake that much grain in one action.")
          (-> p (pay {:grain n}) (convert-food cook-with-bake context) (gain {:food (+ (:food selected) (vegetarian-food p {:grain n}))})))))))
+)
 (defn field-path [cell] (if (integer? cell) [:farm cell] [:card-fields cell]))
 (defn card-stack-fields [cid {:keys [crop count field?]}]
   (into {} (for [index (range count)
@@ -739,12 +795,13 @@
   (assoc-in player [:farm cell] {:type :empty}))
 (defn field-crop-count [field crop] (get (field-crops field) crop 0))
 (defn normalize-field [field]
+  (if (and (:permaculture? field) (not (pos? (:count field 0)))) {:type :empty}
   (if (pos? (:count field 0)) field
     (if-let [[crop amount] (first (filter (comp pos? val) (:under-crops field)))]
       (cond-> (assoc field :crop crop :count amount)
         true (update :under-crops dissoc crop)
         (= 1 (count (:under-crops field))) (dissoc :under-crops))
-      (assoc (dissoc field :crop :under-crops) :count 0))))
+      (assoc (dissoc field :crop :under-crops) :count 0)))))
 (defn remove-field-crop [player cell crop]
   (let [path (field-path cell) field (get-in player path)]
     (require! (pos? (field-crop-count field crop)) "That field does not contain this crop.")
@@ -755,6 +812,15 @@
   (cond-> [:grain :vegetable]
     (some true? (cards/passives p :reed-nursery)) (conj :reed)
     (some #(= :wood-stack (:type %)) (vals (:card-fields p))) (conj :wood)))
+(defn winter-room? [p cell]
+  (and (= :room (get-in p [:farm cell :type])) (some true? (cards/passives p :winter-garden))
+       (not-any? #(and (not= cell %) (pos? (get-in p [:farm % :count] 0))) (tiles p :room))))
+(defn permaculture-space? [p cell]
+  (and (some true? (cards/passives p :permaculturist)) (empty-cell? p cell)))
+(defn sowing-cells [p]
+  (concat (tiles p :field) (keys (:card-fields p))
+          (when (some true? (cards/passives p :winter-garden)) (tiles p :room))
+          (when (some true? (cards/passives p :permaculturist)) (filter #(empty-cell? p %) (range (count (:farm p)))))))
 (defn can-sow-field?
   ([p cell crop] (can-sow-field? p cell crop {}))
   ([p cell crop modifiers]
@@ -762,9 +828,12 @@
      (boolean
       (and (or (cell? cell) (contains? (:card-fields p) cell))
            (if (= :wood-stack (:type field)) (= :wood crop) (contains? (disj (set (sowable-crops p)) :wood) crop))
-           (#{:field :wood-stack} (:type field)) (not (:blocked-card field))
+           (or (#{:field :wood-stack} (:type field))
+               (and (#{:grain :vegetable} crop) (winter-room? p cell))
+               (and (= :grain crop) (permaculture-space? p cell))) (not (:blocked-card field))
            (or (empty? planted)
                (and (not (:empty-only? modifiers)) (some true? (cards/passives p :scythe)) (= #{crop} (set (keys planted)))))
+           (or (not (:permaculture? field)) (= crop :grain))
            (or (nil? (:allowed-crop field)) (= crop (:allowed-crop field))))))))
 (defn sow
   ([p plantings] (sow p plantings {}))
@@ -774,7 +843,9 @@
          smallholder? (and (get modifiers :smallholder? true) (some true? (cards/passives p :smallholder))
                            (<= (+ (count (tiles p :field)) (count (filter #(= :field (:type %)) (vals (:card-fields p))))) 2))]
   (reduce (fn [p {:keys [cell crop]}]
-            (let [path (field-path cell) field (get-in p path)]
+            (let [path (field-path cell) original (get-in p path)
+                  field (cond-> original (permaculture-space? p cell) (assoc :type :field :permaculture? true)
+                                         (winter-room? p cell) (assoc :winter-garden? true))]
               (require! (can-sow-field? p cell crop modifiers) "Sow an allowed crop in an eligible field.")
               (assoc-in (pay p {crop 1}) path
                         (assoc field :crop crop :count
@@ -784,7 +855,7 @@
                                          (if (and (cell? cell) (= :field (:type field))
                                                   (some true? (cards/passives p :adjacent-stable-sow-bonus)))
                                            (min 2 (count (filter #(and (get-in p [:farm % :stable]) (not (get-in p [:farm % :stable-disabled?]))) (neighbors cell)))) 0)
-                                         (if (and (integer? cell) (some (set (tiles p :room)) (neighbors cell)))
+                                         (if (and (integer? cell) (not (:permaculture? field)) (not (:winter-garden? field)) (some (set (tiles p :room)) (neighbors cell)))
                                            (reduce + 0 (map #(get % crop 0) (cards/passives p :adjacent-room-sow-bonus))) 0)))))))) p plantings))))
 (defn renovation-payment [p options modifiers]
    (let [material (if (and (= :wood (:house p)) (some true? (cards/passives p :direct-stone)) (= :stone (:renovate-to options))) :stone ({:wood :clay :clay :stone} (:house p)))
@@ -802,7 +873,7 @@
                                  (assoc :clay (reduce + 0 (cards/passives p :renovation-clay-discount)))))
          cost (construction-replacements p cost options material true)
          _ (require! (not (:wood-carver? options)) "Wood Carver cannot discount renovation.")]
-     {:material material :cost (if (:free? modifiers) {} (contractor-cost p cost options))}))
+     {:material material :cost (if (:free? modifiers) {} (crane-discount (contractor-cost p cost options) options (:stone-crane? modifiers) material))}))
 (defn renovate
   ([p] (renovate p {}))
   ([p options] (renovate p options {}))
@@ -1002,7 +1073,7 @@
                     (dissoc :well-food-per-round))
                   (cond-> (and (= improvement :well) (seq (cards/passives p :well-food-per-round)))
                     (assoc :well-food-per-round (apply max 1 (cards/passives p :well-food-per-round)))))
-           p' (if (:oven card) (bake p' (or bake-grain 0) cook-with-bake (select-keys options [:use-beehive?])) p')]
+           p' (if (:oven card) (bake p' (or bake-grain 0) cook-with-bake (select-keys options [:use-beehive? :kitchen-table?])) p')]
        (-> g (assoc-in [:players pid] p')
            (cond-> (:grain-mill-oven? options) (update :removed-cards (fnil conj []) (grain-mill-oven-id p)))
            (update :available-improvements #(cond-> (disj % improvement) (and upgrade (improvements upgrade)) (conj upgrade))))))))
@@ -1101,7 +1172,7 @@
                           (update p :bonus-points (fnil inc 0)) (gain p {crop 1}))
                   (not (and (= crop :vegetable) (some true? (cards/passives p :preserve-harvest-vegetables))))
                   (remove-field-crop cell crop)) p)))
-          p (concat (range 15) (keys (:card-fields p))))))
+          p (concat (farm-cells p) (keys (:card-fields p))))))
 (defn craft-stock [p resource]
   (+ (amount p resource)
      (if (cards/has? p :catalog/original-expansion-wm-47-storehouse-minder)
@@ -1109,7 +1180,8 @@
      (if (= resource :wood) (reduce + 0 (map #(field-crop-count % :wood) (vals (:card-fields p)))) 0)))
 (defn threshold-score [n thresholds] (if (< n (first thresholds)) -1 (count (filter #(>= n %) thresholds))))
 (defn score [p]
-  (let [crops (merge-with + (select-keys (:goods p) [:grain :vegetable])
+  (let [p (update p :farm #(mapv (fn [cell] (if (:permaculture? cell) {:type :empty} cell)) %))
+        crops (merge-with + (select-keys (:goods p) [:grain :vegetable])
                           (reduce #(merge-with + %1 (field-crops %2)) {} (concat (:farm p) (vals (:card-fields p)))))
         fenced (pasture-cells p)
         breakdown {:fields (threshold-score (count (tiles p :field)) [2 3 4 5])
@@ -1119,7 +1191,7 @@
                    :sheep (threshold-score (binding [*scoring-animals?* true] (amount p :sheep)) [1 4 6 8])
                    :boar (threshold-score (binding [*scoring-animals?* true] (amount p :boar)) [1 3 5 7])
                    :cattle (threshold-score (binding [*scoring-animals?* true] (amount p :cattle)) [1 2 4 6])
-                   :unused (- (max 0 (- (count (filter #(empty-cell? p %) (range 15))) (:paid-unused-spaces p 0))))
+                   :unused (- (max 0 (- (count (filter #(empty-cell? p %) (farm-cells p))) (:paid-unused-spaces p 0))))
                    :stables (count (filter #(get-in p [:farm % :stable]) fenced))
                    :rooms (* ({:wood 0 :clay 1 :stone 2} (:house p)) (count (tiles p :room)))
                    :family (* 3 (:family p))
@@ -1201,12 +1273,16 @@
                                    (update-in g [:players pid] #(-> % (pay (if (= choice :cattle) {:food 1} {}))
                                                                     (gain (merge {choice 1} (when (= choice :sheep) {:food 1}))))))
                 :fences (update-in g [:players pid] build-fences fences (select-keys command [:fence-material :wood-carver? :wood-clay :wood-stone :stonepiler-stone]))
-                :side-job (do (require! (and (<= (count stables) 1) (or (seq stables) (pos? (or bake-grain 0)) (replaced-baking? g pid space))) "Build one stable and/or bake bread.")
-                              (update-in g [:players pid] #(-> % (build-stables stables 1 command) (bake (or bake-grain 0) (:cook-with-bake command) (select-keys command [:use-beehive?])))))
-                :sow-bake (do (require! (or (seq plantings) (pos? (or bake-grain 0)) (replaced-baking? g pid space)) "Sow at least one field or bake bread.")
-                             (update-in g [:players pid] #(-> % (sow plantings (select-keys command [:smallholder?])) (bake (or bake-grain 0) (:cook-with-bake command) (select-keys command [:use-beehive?])))))
+                :side-job (do (require! (and (<= (count stables) 1) (or (seq stables) (pos? (or bake-grain 0)) (replaced-baking? g pid space) (:kitchen-table? command))) "Build one stable and/or bake bread.")
+                              (update-in g [:players pid] #(-> % (build-stables stables 1 command) (bake (or bake-grain 0) (:cook-with-bake command) (select-keys command [:use-beehive? :kitchen-table?])))))
+                :sow-bake (do (require! (or (seq plantings) (pos? (or bake-grain 0)) (replaced-baking? g pid space) (:kitchen-table? command)) "Sow at least one field or bake bread.")
+                             (update-in g [:players pid] #(-> % (sow plantings (select-keys command [:smallholder?])) (bake (or bake-grain 0) (:cook-with-bake command) (select-keys command [:use-beehive? :kitchen-table?])))))
                 :cultivation (do (require! (or (some? cell) (seq plantings) (and (= pid (get-in g [:plow-plan :player])) (= space (get-in g [:plow-plan :space])) (seq (get-in g [:plow-plan :cells])))) "Plow a field and/or sow.")
-                                 (assoc-in g [:players pid] (sow (plow-action-player g pid space cell) plantings (select-keys command [:smallholder?]))))
+                                 (do (require! (or (not (:irrigation-sow-first? command)) (cards/has? p :catalog/original-expansion-g-85-irrigation-canal)) "Irrigation Canal permits sowing before plowing.")
+                                     (assoc-in g [:players pid]
+                                       (if (:irrigation-sow-first? command)
+                                         (plow-action-player (update-in g [:players pid] sow plantings (select-keys command [:smallholder?])) pid space cell)
+                                         (sow (plow-action-player g pid space cell) plantings (select-keys command [:smallholder?]))))))
                 :growth (update-in g [:players pid] grow true command)
                 :modest-growth (update-in g [:players pid] grow true command)
                 :urgent-growth (update-in g [:players pid] grow false command)
@@ -1226,7 +1302,7 @@
     (let [p' (if cook? (convert-food p surplus) (pay p surplus))]
       (require! (animal-housing p') "Those animals do not fit in the available housing.")
       (-> g (assoc-in [:players pid] p') (assoc :phase :work) next-turn))))
-(defn plane? [p] (some true? (cards/passives p :plane)))
+(defn plane? [p] (some true? (food-passives p :plane)))
 (defn craft-food
   ([p craft plane-extra?] (craft-food p craft plane-extra? {}))
   ([p craft plane-extra? context]
@@ -1236,11 +1312,11 @@
              (let [{:keys [craft rate]} (improvements id)
                    plane (and (= id :joinery) (plane? p))
                    goods {craft (if (and plane plane-extra?) 2 1)}
-                   wheel (if (and (= id :pottery) (some true? (cards/passives p :potters-wheel))) 1 0)]
-               (require! (and ((:improvements p) id) craft) "You do not own that craft improvement.")
+                   wheel (if (and (= id :pottery) (some true? (food-passives p :potters-wheel))) 1 0)]
+               (require! (and (some #{id} (food-improvement-ids p)) craft) "You do not own that craft improvement.")
                (-> (gain (pay p goods) {:food (+ rate wheel (if plane (if plane-extra? 2 1) 0))})
                    (artisan-bonus goods context true)
-                   (cond-> (:track-prefect? context) (update :cooking-receipts (fnil conj []) (merge context {:prefect-only? true :recipe-card id :goods goods :rates {} :listeners []})))))) p craft)))
+                   (cond-> (or (:track-prefect? context) (seq (cooking-listeners p))) (update :cooking-receipts (fnil conj []) (merge context {:prefect-only? (empty? (cooking-listeners p)) :recipe-card id :goods goods :rates {} :listeners (cooking-listeners p)})))))) p craft)))
 (def begging-origin-cards #{:catalog/original-expansion-wm-6-borrower :catalog/original-expansion-wm-56-almshouse})
 (defn track-feeding-begging? [g]
   (or (some begging-origin-cards (:minor-deck g)) (some begging-origin-cards (:occupation-deck g))

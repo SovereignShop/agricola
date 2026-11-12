@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer"><title>Voice control · Eurozone</title>
+<link rel="stylesheet" href="/app.css"><style>body{padding:24px;max-width:620px;margin:auto}button,input{min-height:46px;margin:6px 0}input{width:100%}.voice-status{padding:18px;background:white;border-radius:12px;overflow-wrap:anywhere}</style>
+</head><body><main><h1>Voice control</h1><p>Keep your game open in Discord. This page sends commands to that game.</p>
+<p id="status" class="voice-status" role="status">Connecting to your game…</p>
+<button id="speak" class="button primary" disabled>Speak</button>
+<button id="stop" class="button secondary" disabled>Finish recording</button>
+<button id="cancel" class="button secondary" disabled>Cancel recording</button>
+<button id="continuous" class="button secondary" disabled aria-pressed="false">Start continuous listening</button>
+<p id="microphone" aria-live="polite">Microphone off.</p>
+<p id="heard" aria-live="polite"></p>
+<form id="command"><label for="text">Or type a command</label><input id="text" maxlength="300" autocomplete="off" placeholder="take wood"><button id="send" class="button" disabled>Send command</button></form>
+<p>Try “take wood” or “fishing” to act immediately. With ChatGPT connected in the game, ask for player farms, played cards, or choices in the open menu. Uncertain choices need clarification. Tap Speak for one phrase, or start continuous listening and pause after each command. Say “stop listening” or use Stop listening to turn the microphone off. All speech heard in continuous mode is treated as input.</p>
+<p>Audio goes to the game server when local transcription is enabled; otherwise it uses your browser’s speech service. If you have paired ChatGPT in your game, submitted commands and questions use that account’s plan. Continuous listening stays on while this page is open, including in another desktop tab. Closing the page or losing the pairing stops it. If your browser suspends audio, start listening again.</p>
+<p>Keep this voice link private. It controls only the paired game window and expires when that window closes or after one hour.</p>
+</main><script src="/voice-capture.js"></script><script src="/voice-companion.js"></script></body></html>

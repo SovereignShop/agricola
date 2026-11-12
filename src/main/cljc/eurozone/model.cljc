@@ -38,11 +38,11 @@
                              :eurozone.player/cells
                              (mapv (fn [i cell] (merge {:eurozone.cell/id (str id "/" (:id p) "/" i) :eurozone.cell/index i}
                                                        (qualify "agricola.cell" cell))) (range) (:farm p))}
-                            (qualify "agricola.player" (dissoc p :id :farm :goods :hand))
+                            (qualify "agricola.player" (dissoc p :id :farm :goods :hand :private-card-state))
                             (when (:hand p) {:agricola.player/hand-counts (into {} (map (fn [[k v]] [k (count v)]) (:hand p)))})
                             (qualify "agricola.resource" (:goods p)))) players)}
             (when (:scenario room) {:eurozone.game/scenario (:scenario room)})
-            (qualify "agricola.game" (cond-> (dissoc state :players :round-order :deck-order :minor-order :minor-deck :draw :card-rng) (:draw state) (assoc :draw (draw/public-view (:draw state))))))]))
+            (qualify "agricola.game" (cond-> (dissoc state :players :round-order :deck-order :minor-order :minor-deck :draw :card-rng :private-auction-bids) (:draw state) (assoc :draw (draw/public-view (:draw state))))))]))
 (defn pull-game [db id]
   (when-let [room (d/pull db '[* {:eurozone.game/players [* {:eurozone.player/cells [*]}]}] [:eurozone.game/id id])]
     (when (:eurozone.game/id room)

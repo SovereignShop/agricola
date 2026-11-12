@@ -116,7 +116,14 @@
       (is (false? (get-in timeline [:header :partial-start?]))))
     (is (thrown? clojure.lang.ExceptionInfo (s/export-recording store "spectator" id)))
     (swap! (:rooms store) assoc-in [id :mode] :online)
-    (is (thrown-with-msg? clojure.lang.ExceptionInfo #"after the game finishes" (s/export-recording store "host" id)))
+    (let [before @(:rooms store)
+          export (s/export-recording store "host" id)
+          records (edn/read-string (str "[" (:text export) "]"))
+          header (first records)]
+      (is (= :partial (:status (recording/timeline records))))
+      (is (= (get-in before [id :state]) (:saved-state header)))
+      (is (= (recording/state-hash (:saved-state header)) (:saved-state-hash header)))
+      (is (= before @(:rooms store))))
     (is (not (.contains (pr-str (:datoms (s/snapshot store "host"))) ":recording")))))
 (deftest finished-recordings-are-available-to-players-but-not-spectators
   (let [store (s/make-store nil) id (create store :online)
@@ -126,7 +133,8 @@
                     :seats [{:name "Ada" :owner "host"} {:name "Ben" :owner "guest"}]
                     :recording [(s/recording-header {} state true)])]
     (swap! (:rooms store) assoc id room)
-    (doseq [token ["host" "guest" "spectator"]]
+    (is (= :partial (:status (recording/timeline (edn/read-string (str "[" (:text (s/export-recording store "host" id)) "]"))))))
+    (doseq [token ["guest" "spectator"]]
       (is (thrown? clojure.lang.ExceptionInfo (s/export-recording store token id))))
     (swap! (:rooms store) assoc id (s/recorded-command room 1 {:type :breed :offspring {}}))
     (doseq [token ["host" "guest"]]

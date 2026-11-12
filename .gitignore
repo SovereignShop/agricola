@@ -31,6 +31,8 @@ target
 /data/
 __pycache__/
 .venv-ai/
+.venv-chatgpt/
+.venv-voice/
 
 node_modules/
 .env
