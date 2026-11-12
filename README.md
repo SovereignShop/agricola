@@ -12,16 +12,16 @@ playable game, including a beginner mode and the 96 base hand cards. Built in Cl
 the shared-schema, DataScript, re-frame and Reagent architecture of `../codenames`.
 
 Original G, World Championship (WM/G2), and France (FR/G3) now have
-68 playable cards with English printed faces: G **22/119**, WM **22/115**,
-and FR **24/120**. These packs are partial; only implemented cards enter games.
+354 playable cards with English printed faces: G **119/119**, WM **115/115**,
+and FR **120/120**. All three decks are complete. See the
+[final card review and prepared tables](docs/community-final-review.md).
 Their rules include optional decision popups, future-round pieces, passing cards,
 printed prerequisites/costs, and end-game scoring. Pack exclusions and the optional
 banlist also apply to these decks.
 
 Open **Card test tables** in the browser or Discord lobby for prepared positions.
-The third community batch provides Businesswoman, Singer, Gardening Tools, Shovel,
-Debris Dealer, Herdsman, Ruins, Steamer, Baguette, Barber Shop, Homework, and
-Trailblazer. Each test opens a fresh table controlled by its creator; decisions,
+The final 32-card batch begins with Astronomer and ends with Witches’ Dance
+Ground; the review guide lists every test table and what to try. Each test opens a fresh table controlled by its creator; decisions,
 card stock, and recorded actions survive reopening.
 
 
@@ -337,10 +337,10 @@ offers one optional extra exchange after actual baking.
 Field prerequisites include field cards; field-tile requirements count only
 tiles on the farm, including for scoring. Partial packs show implemented/total counts in table setup;
 only implemented cards enter hands. Hosts can exclude Artifex for base-only games.
-The playable pool contains 660 hand cards plus the ten base major improvements:
+The playable pool contains 946 hand cards plus the ten base major improvements:
 284 Revised cards (base, Artifex, five-player expansion and WizKids White),
 308 Original E/I/K cards (all 126 E cards, all 91 I cards and all 91 K cards),
-and 68 implemented cards from G/WM/FR.
+and all 354 cards from G/WM/FR.
 The original E, I and K packs are separately selectable/excludable in table setup. Their English card
 prints and native definitions use distinct edition-specific identities.
 Original rules use edition-specific identities, including different scoring,

@@ -59,7 +59,7 @@
 
 (defn task [pid cid effect] {:kind :effect :player pid :card cid :effect effect :context {}})
 (defn prepend [g tasks] (update g :effect-queue #(vec (concat tasks %))))
-(defn empty-cells [player] (set (filter #(a/empty-cell? player %) (range 15))))
+(defn empty-cells [player] (set (filter #(a/empty-cell? player %) (a/farm-cells player))))
 (defn watch-fences [g pid]
   (assoc-in g [:players pid :card-state (c/id :a034) :fences-seen]
             (count (get-in g [:players pid :fences]))))

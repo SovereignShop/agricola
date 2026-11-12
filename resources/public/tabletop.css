@@ -57,7 +57,6 @@
 .tt-round-note>strong {font-size:calc(30px * var(--text-scale,1));margin-bottom:12px}
 .tt-round-note p {font-size:calc(17px * var(--text-scale,1));color:#566047}
 .tt-player {border:0;background:none}
-.tt-player::before {content:"";position:absolute;left:8px;top:57px;width:714px;height:527px;border:1px dashed #eeead2a0;border-radius:15px;pointer-events:none}
 .tt-player-title {display:flex;gap:20px;align-items:center;padding:5px 24px;color:#404b32}
 .tt-player-title>button {font:calc(29px * var(--text-scale,1)) var(--tt-font);padding:1px 0 4px;background:none;border:0;border-bottom:4px solid var(--player-color);border-radius:0;color:#35412d}
 .tt-player-title>span {font-size:calc(15px * var(--text-scale,1))}
@@ -162,8 +161,6 @@
 .tt-game[data-material=checkered] {--cloth-wash:#e9ecd14d}
 .tt-game[data-material=leather] {--cloth-wash:#50311e44}
 .tt-viewport,.tt-canvas {background-image:linear-gradient(var(--cloth-wash),var(--cloth-wash)),var(--cloth)}
-.tt-player.tt-arranging::before {border:2px dashed #a77c32;box-shadow:0 0 0 5px #fff3bf22}
-.tt-player.tt-arranging .tt-farm {outline:1px dashed #e2b967;outline-offset:12px}
 .tt-modal .table-dialog:has(.tt-simple-action) {width:700px}
 .tt-simple-action .action-editor>.eyebrow,.tt-simple-action .action-editor>h3 {display:none}
 .tt-placement-confirmation button {background:#f5ebd4;border:1px solid #b3a27a;border-radius:4px;padding:7px 12px;color:#4b4733;font:calc(13px * var(--text-scale,1)) var(--tt-font)}
@@ -176,7 +173,6 @@
 .tt-resource .piece {width:32px;height:36px;object-fit:contain;filter:drop-shadow(1px 2px 1px #0005)}
 .tt-resource .pile-count {position:static;background:none;padding:0;border:0;box-shadow:none;color:inherit;font:inherit}
 .tt-inventory:hover>.tt-handle {opacity:1}
-.tt-player::before {top:145px}
 .tt-deck-cards.stack .tt-card:hover,.tt-deck-cards.stack .tt-card:focus-visible {transform:none;z-index:var(--stack-index)!important;outline:2px solid #ead49e;outline-offset:0}
 .tt-printed-card>strong {margin:0 0 5px;padding:0;border:0}
 .tt-card:disabled {opacity:1;cursor:default}
@@ -339,7 +335,7 @@
 .board-picker {width:100%;container-type:inline-size}
 .board-picker .action-board {padding:0;border:0;background:none;margin:8px 0}
 .board-picker .board-scroll {overflow:visible;padding:0}
-.board-picker .action-grid.physical-board.original-board {position:relative;display:block;width:100%;min-width:0;aspect-ratio:4225/1725;background:none;border:0;box-shadow:none;margin:0}
+.board-picker .action-grid.physical-board.original-board {position:relative;display:block;width:100%;min-width:0;aspect-ratio:4225/1725;background:none;border:0;box-shadow:none;margin:0;container-type:inline-size}
 .board-picker .action-card:disabled {opacity:.4;filter:grayscale(.4)}
 .board-picker .action-card:not(:disabled) {outline:2px solid #62743b;outline-offset:-2px;cursor:pointer}
 .board-picker .action-card.chosen {outline:4px solid #c4932d;outline-offset:-4px;background-color:#e7d89344}
@@ -352,25 +348,10 @@
  .choice-caption {font-size:calc(12px * var(--text-scale,1))}
  .choice-card-face,.choice-card-back,.choice-round-art {width:105px;height:157px}
  .field-card-choice {width:130px;height:195px}
- .board-picker .action-grid.physical-board.original-board {aspect-ratio:auto;display:flex;flex-direction:column;gap:10px}
- .board-picker .original-board>.board-segment {display:none}
- .board-picker .original-board>.action-card {position:relative;inset:auto!important;display:flex;width:100%!important;min-height:76px;padding:8px 12px;background:#e3e7c6;flex-direction:row;align-items:center;justify-content:space-between}
- .board-picker .original-board>.action-card:disabled {display:none}
- .board-picker .original-board .action-card strong {font-size:14px}
- .board-picker .original-board .action-description {font-size:12px}
- .board-picker .original-board .action-top,.board-picker .original-board .accumulation,.board-picker .original-board .occupant {display:none}
- .board-picker .original-board>.printed-action>strong {display:block}
- .board-picker .original-board>.printed-action>.board-piles {position:static;display:flex;width:auto;max-width:50%;margin:0;transform:none}
- .board-picker .original-board .piece-pile {transform:none;width:50px;height:45px}
- .board-picker .original-board .piece-pile .piece {width:28px;height:30px}
- .board-picker .original-board .player-count-actions {position:static;inset:auto!important;width:100%!important;height:auto!important;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto!important;gap:8px}
- .board-picker .player-count-card:not(:has(.action-card:not(:disabled))) {display:none}
- .board-picker .player-count-card {min-height:100px}
- .board-picker .original-board .round-card-slot {position:relative;inset:auto!important;align-self:flex-start;width:180px!important;height:240px!important}
- .board-picker .round-card-slot:not(:has(.action-card:not(:disabled))) {display:none}
- .board-picker .original-board .round-card-slot .action-card {width:100%;height:100%;min-height:0}
- .board-picker .original-board .placed-worker {max-width:36px;height:auto}
- .board-picker .future-round-markers,.board-picker .future-round-resources {display:none}
+ .board-picker .board-scroll {overflow-x:auto;overscroll-behavior-x:contain;padding:4px}
+ .board-picker .action-grid.physical-board.original-board {min-width:1100px}
+ .board-picker::after {content:"Swipe across the board to reach more spaces.";display:block;font-size:12px;color:#756349;margin-top:6px}
+
 }
 .bake-workflow {margin:12px 0}
 .bake-workflow h4 {font:600 22px Georgia,serif;margin:8px 0 12px}
@@ -417,11 +398,7 @@
 .board-picker .original-board>.action-card {position:absolute;min-height:0;padding:4px;overflow:hidden;background:transparent;border:0;box-shadow:none}
 .board-picker .original-board .round-action {position:absolute;inset:0;width:100%;height:100%;min-height:0;padding:0;background:transparent;border:0;box-shadow:none;overflow:visible;display:block}
 .board-picker .original-board>.action-card.chosen {background:#e7d89344}
-@media(max-width:600px) {
- .board-picker .original-board>.action-card {position:relative;min-height:76px;padding:8px 12px;background:#e3e7c6;overflow:visible}
- .board-picker .original-board>.printed-action>strong {position:static;width:auto;height:auto;margin:0;clip-path:none;white-space:normal}
- .board-picker .original-board .round-action {position:absolute;min-height:0}
-}
+
 
 /* Prepared card reviews keep navigation beside the live effect, including in dialogs. */
 .card-review {background:#eee6d3;color:#493d2c;padding:9px 16px;border-bottom:1px solid #b5a88d}
@@ -431,7 +408,7 @@
 .card-review-actions .button {padding:6px 10px;min-height:36px}
 .card-review>small {display:block;font-size:11px;margin-top:5px}
 .table-dialog .card-review {position:sticky;top:0;z-index:12;margin-bottom:12px;border:1px solid #b5a88d;border-radius:4px;box-shadow:0 3px 12px #493d2c18}
-@media(max-width:760px) {.card-review {padding:8px}.card-review-actions {gap:5px}.card-review-actions .button {font-size:12px;padding:6px 8px}}
+@media(max-width:760px) {.table-dialog .card-review {position:static}.card-review {padding:8px}.card-review-actions {gap:5px}.card-review-actions .button {font-size:12px;padding:6px 8px}}
 
 .stock-offer .tt-card-markers {position:static;margin:8px 0 16px}
 

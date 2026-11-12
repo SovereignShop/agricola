@@ -129,16 +129,18 @@
   (let [field (get-in p [:card-fields cid]) state (get-in p [:card-state cid])
         animals (reduce (fn [m slot] (merge-with + m (a/housing-animals slot))) {}
                         (filter #(and (= :card (:kind %)) (= cid (:card %))) (when p (a/animal-housing p))))
-        goods (merge-with + (frequencies (:resource-stack state)) (frequencies (:stock state))
+        goods (merge-with + (frequencies (:stack state)) (frequencies (:resource-stack state)) (frequencies (:stock state))
                           (:stored-goods state) (when (:pelts state) {:food (:pelts state)}) (when (:food state) {:food (:food state)})
                           (a/card-field-goods p cid)
                           (reduce (fn [goods [key slot]]
                                     (if (= cid (or (:card slot) key))
                                       (merge-with + goods (:under-crops slot)) goods)) {} (:card-fields p))
                           animals)]
-    (when (or (pos? (:markers state 0)) (and (= cid :catalog/original-expansion-fr-80-fencing-master) (pos? (get-in p [:reserved-fences :fr-fencing-master] 0))) (pos? (get-in p [:stored-stables cid] 0)) (contains? (:pawned-improvements p) cid) (pos? (:hidden-count state 0)) (seq goods) (seq (:bag state)) (:marked-space state) (and (= cid :catalog/original-base-k-138-reed-hut) (:reed-hut? p) (not (:reed-hut-placed? p)))
+    (when (or (:worker-on-card? state) (pos? (:markers state 0)) (and (= cid :catalog/original-expansion-fr-80-fencing-master) (pos? (get-in p [:reserved-fences :fr-fencing-master] 0))) (pos? (get-in p [:stored-stables cid] 0)) (contains? (:pawned-improvements p) cid) (pos? (:hidden-count state 0)) (seq goods) (seq (:bag state)) (:marked-space state) (and (= cid :catalog/original-base-k-138-reed-hut) (:reed-hut? p) (not (:reed-hut-placed? p)))
               (and (= cid :catalog/original-base-i-265-fence-deliveryman) (seq (:reserved-fences p))))
       [:div.tt-card-markers {:aria-label "Goods on card"}
+       (when (:worker-on-card? state)
+         [:img.piece {:src (art/worker-url (:id p)) :alt "Family member on Master Cook" :draggable false}])
        (when (and (= cid :catalog/original-expansion-fr-80-fencing-master) (pos? (get-in p [:reserved-fences :fr-fencing-master] 0)))
          [:span {:aria-label "Fences stored on this card"}
           [:svg.piece {:viewBox "0 0 24 24" :aria-hidden true} [:path {:d "M4 2V22M20 2V22M4 7H20M4 17H20" :fill "none" :stroke "#b07949" :stroke-width 4}]]
@@ -157,6 +159,9 @@
        (when-let [top (or (peek (:stock state)) (first (:resource-stack state)))]
          [:span {:aria-label (str "Next resource on " (:name (card-info cid)))
                  :data-next-resource (name top)} "Next: " [art/piece top]])
+       (when (seq (:stack state))
+         [:span {:aria-label "Card Player top and bottom"} "+1" [art/piece (first (:stack state))]
+          " / −1" [art/piece (last (:stack state))]])
        (when (seq (:bag state))
          [:span {:aria-label "Veterinarian bag"} (str "Bag: " (count (:bag state)) " animals")])
        (when-let [space (:marked-space state)]
@@ -383,37 +388,72 @@
      :w (+ center-x center-w 64 right-w 48)
      :h (+ 64 (apply max (+ 64 center-height) (map #(+ (:y %) (:h %)) placements)))}))
 
-(defn apply-camera! [viewport canvas world zoom x y]
-  (when (and viewport canvas world)
-    (set! (.. world -style -left) (px (/ (.-clientWidth viewport) 2)))
-    (set! (.. world -style -top) (px (/ (.-clientHeight viewport) 2)))
-    (set! (.. world -style -transform) (str "scale(" zoom ")"))
-    (set! (.. canvas -style -width) (px (+ (.-clientWidth viewport) (* zoom (js/parseFloat (.getAttribute world "data-width"))))) )
-    (set! (.. canvas -style -height) (px (+ (.-clientHeight viewport) (* zoom (js/parseFloat (.getAttribute world "data-height"))))) )
-    (set! (.-scrollLeft viewport) x) (set! (.-scrollTop viewport) y)))
+(defn zoom-indicator [zoom fit!]
+  ;; Only this small component subscribes to camera motion.
+  (r/with-let [label (r/atom @zoom)
+               watch-key (gensym "zoom-label")
+               watch (add-watch zoom watch-key (fn [_ _ _ z] (reset! label z)))]
+    [button (str (js/Math.round (* @label 100)) "%") fit!
+     {:aria-label "Fit view" :title "Fit current view"}]
+    (finally (remove-watch zoom watch-key))))
+
+(defn measure-viewport! [nodes]
+  (when-let [v (:viewport @nodes)]
+    ;; Read together, before camera writes. ResizeObserver invalidates this cache.
+    (swap! nodes assoc :viewport-size [(.-clientWidth v) (.-clientHeight v)])))
+
+(defn apply-camera! [nodes zoom z x y]
+  (let [{:keys [viewport canvas world viewport-size world-size applied-layout]} @nodes
+        [vw vh] viewport-size [ww wh] world-size
+        layout [vw vh ww wh z]]
+    (when (and viewport canvas world vw vh ww wh)
+      ;; No layout reads in the frame loop. Scroll extents must track scale so
+      ;; native scrolling and edge clamping remain correct at every zoom level.
+      (when (not= layout applied-layout)
+        (when (not= (take 2 layout) (take 2 applied-layout))
+          (set! (.. world -style -left) (px (/ vw 2)))
+          (set! (.. world -style -top) (px (/ vh 2))))
+        (set! (.. world -style -transform) (str "scale(" z ")"))
+        (set! (.. canvas -style -width) (px (+ vw (* z ww))))
+        (set! (.. canvas -style -height) (px (+ vh (* z wh))))
+        (swap! nodes assoc :applied-layout layout))
+      (set! (.-scrollLeft viewport) x)
+      (set! (.-scrollTop viewport) y)
+      (.setAttribute viewport "data-zoom" z)
+      ;; Keep the actual in-flight scale when a fit is interrupted by input.
+      (reset! zoom z))))
+
 (defn camera! [nodes zoom bounds animate? animation]
   (when-let [v (:viewport @nodes)]
     (when @animation (js/cancelAnimationFrame @animation))
-    (let [{:keys [x y w h]} bounds z (clamp (min (/ (- (.-clientWidth v) 56) w) (/ (- (.-clientHeight v) 48) h)) minimum-zoom 1.5)
+    (let [[vw vh] (:viewport-size @nodes)
+          {:keys [x y w h]} bounds z (clamp (min (/ (- vw 56) w) (/ (- vh 48) h)) minimum-zoom 1.5)
           tx (* (+ x (/ w 2)) z)
           ty (* (+ y (/ h 2)) z)
           start [(.-scrollLeft v) (.-scrollTop v) @zoom] began (.now js/performance)
-          duration (if (and animate? (not (.-matches (.matchMedia js/window "(prefers-reduced-motion: reduce)")))) 340 0)
+          duration (if (and animate? (not (.-matches (.matchMedia js/window "(prefers-reduced-motion: reduce)")))) 240 0)
           step (fn step [time]
-                 (let [t (if (zero? duration) 1 (clamp (/ (- time began) duration) 0 1)) e (- 1 (js/Math.pow (- 1 t) 3))
+                 (let [t (if (zero? duration) 1 (clamp (/ (- time began) duration) 0 1))
+                       ;; Critically damped response: gentle start, fast arrival,
+                       ;; no overshoot. Normalize to land exactly at 240ms.
+                       e (/ (- 1 (* (+ 1 (* 8 t)) (js/Math.exp (* -8 t))))
+                            (- 1 (* 9 (js/Math.exp -8))))
                        [nx ny nz] (mapv (fn [a b] (+ a (* e (- b a)))) start [tx ty z])]
-                   (apply-camera! v (:canvas @nodes) (:world @nodes) nz nx ny)
+                   (apply-camera! nodes zoom nz nx ny)
                    (if (< t 1) (reset! animation (js/requestAnimationFrame step))
-                       (do (reset! animation nil) (reset! zoom z)))))]
+                       (reset! animation nil))))]
       (reset! animation (js/requestAnimationFrame step)))))
 (defn zoom-at! [nodes zoom factor cx cy animation]
   (when-let [v (:viewport @nodes)]
     (when @animation (js/cancelAnimationFrame @animation) (reset! animation nil))
     (let [old @zoom z (clamp (* old factor) minimum-zoom 2) rect (.getBoundingClientRect v)
-          x (if cx (- cx (.-left rect)) (/ (.-clientWidth v) 2))
-          y (if cy (- cy (.-top rect)) (/ (.-clientHeight v) 2))]
-      (apply-camera! v (:canvas @nodes) (:world @nodes) z (+ (/ (.-clientWidth v) 2) (- (* (/ (- (+ (.-scrollLeft v) x) (/ (.-clientWidth v) 2)) old) z) x)) (+ (/ (.-clientHeight v) 2) (- (* (/ (- (+ (.-scrollTop v) y) (/ (.-clientHeight v) 2)) old) z) y)))
-      (reset! zoom z))))
+          [vw vh] (:viewport-size @nodes) hw (/ vw 2) hh (/ vh 2)
+          x (if cx (- cx (.-left rect)) hw)
+          y (if cy (- cy (.-top rect)) hh)
+          sx (.-scrollLeft v) sy (.-scrollTop v)]
+      (apply-camera! nodes zoom z
+                     (+ hw (- (* (/ (- (+ sx x) hw) old) z) x))
+                     (+ hh (- (* (/ (- (+ sy y) hh) old) z) y))))))
 
 (defn touch-camera! [el nodes zoom animation auto-fit? gesture]
   ;; Own the table gesture rather than scaling the whole Discord iframe. Keep
@@ -447,10 +487,10 @@
               (when @animation (js/cancelAnimationFrame @animation) (reset! animation nil))
               (if pinch?
                 (let [z (clamp (* old (/ (distance ps) (max 1 (distance start)))) minimum-zoom 2)
-                      rect (.getBoundingClientRect el) hw (/ (.-clientWidth el) 2) hh (/ (.-clientHeight el) 2)
+                      rect (.getBoundingClientRect el) [vw vh] (:viewport-size @nodes) hw (/ vw 2) hh (/ vh 2)
                       wx (/ (- (+ sx ox) (.-left rect) hw) old)
                       wy (/ (- (+ sy oy) (.-top rect) hh) old)]
-                  (apply-camera! el (:canvas @nodes) (:world @nodes) z
+                  (apply-camera! nodes zoom z
                                  (+ hw (* wx z) (- (.-left rect) x))
                                  (+ hh (* wy z) (- (.-top rect) y)))
                   (reset! zoom z))
@@ -476,29 +516,45 @@
                 (when @frame (js/cancelAnimationFrame @frame))
                 (reset! frame nil) (reset! motion nil))
         move! (fn [x y]
-                (let [before-x (.-scrollLeft el) before-y (.-scrollTop el)]
+                (let [drag @pan
+                      before-x (when drag (.-scrollLeft el))
+                      before-y (when drag (.-scrollTop el))]
                   (set! (.-scrollLeft el) x) (set! (.-scrollTop el) y)
-                  ;; A wheel gesture can accompany a held drag. Advance its
-                  ;; origin too so the next pointer movement doesn't jump back.
-                  (when @pan
+                  ;; Keep a simultaneous drag anchored to the scrolled position.
+                  (when drag
                     (swap! pan (fn [[px py sx sy]]
                                  [px py (+ sx (- (.-scrollLeft el) before-x))
                                   (+ sy (- (.-scrollTop el) before-y))])))))
         step! (fn step! [time]
-                (when-let [{:keys [x y tx ty began]} @motion]
-                  ;; An 85ms ease-out softens wheel notches without a long coast.
-                  ;; Interpolate from floats, not rounded DOM scroll positions.
-                  (let [t (clamp (/ (- time began) 85) 0 1) ease (- 1 (js/Math.pow (- 1 t) 3))]
-                    (move! (+ x (* ease (- tx x))) (+ y (* ease (- ty y))))
-                    (if (< t 1) (reset! frame (js/requestAnimationFrame step!))
-                        (do (reset! frame nil) (reset! motion nil))))))
+                (when-let [{:keys [x y tx ty at] :as m} @motion]
+                  ;; Follow the accumulated target without restarting an easing
+                  ;; curve on every event. An 18ms time constant is independent
+                  ;; of refresh rate and keeps sustained wheel input responsive.
+                  (let [alpha (- 1 (js/Math.exp (/ (- at time) 18)))
+                        nx (+ x (* alpha (- tx x))) ny (+ y (* alpha (- ty y)))
+                        done? (< (max (js/Math.abs (- tx nx)) (js/Math.abs (- ty ny))) 0.5)]
+                    (move! (if done? tx nx) (if done? ty ny))
+                    (if done?
+                      (do (reset! frame nil) (reset! motion nil))
+                      (do (reset! motion (assoc m :x nx :y ny :at time))
+                          (reset! frame (js/requestAnimationFrame step!)))))))
         scroll! (fn [dx dy]
-                  (let [x (.-scrollLeft el) y (.-scrollTop el)
-                        tx (clamp (+ (or (:tx @motion) x) dx) 0 (- (.-scrollWidth el) (.-clientWidth el)))
-                        ty (clamp (+ (or (:ty @motion) y) dy) 0 (- (.-scrollHeight el) (.-clientHeight el)))]
+                  (let [{:keys [x y tx ty max-x max-y dir-x dir-y] :as m}
+                        (or @motion
+                            ;; Measure bounds once per burst, before frame writes.
+                            {:x (.-scrollLeft el) :y (.-scrollTop el)
+                             :max-x (max 0 (- (.-scrollWidth el) (.-clientWidth el)))
+                             :max-y (max 0 (- (.-scrollHeight el) (.-clientHeight el)))
+                             :at (.now js/performance)})
+                        ;; A reversal should respond immediately, not spend the
+                        ;; next frames paying off travel in the old direction.
+                        tx (clamp (+ (if (neg? (* dx (or dir-x 0))) x (or tx x)) dx) 0 max-x)
+                        ty (clamp (+ (if (neg? (* dy (or dir-y 0))) y (or ty y)) dy) 0 max-y)]
                     (if (.-matches reduced?)
                       (do (stop!) (move! tx ty))
-                      (do (reset! motion {:x x :y y :tx tx :ty ty :began (.now js/performance)})
+                      (do (reset! motion (cond-> (assoc m :tx tx :ty ty)
+                                           (not (zero? dx)) (assoc :dir-x dx)
+                                           (not (zero? dy)) (assoc :dir-y dy)))
                           (when-not @frame (reset! frame (js/requestAnimationFrame step!)))))))
         track! (fn [e] (when (not= "touch" (.-pointerType e))
                          (reset! right? (and (not (.-shiftKey e)) (pos? (bit-and 2 (.-buttons e)))))))
@@ -523,12 +579,13 @@
                    [js/window "pointerup" track! true] [js/window "pointercancel" clear! true]
                    [js/window "pointerdown" stop! true] [js/window "touchstart" stop! #js {:passive true :capture true}]
                    [js/window "keydown" stop! true]
-                   [js/window "blur" clear! false] [el "contextmenu" menu! false]]]
+                   [js/window "blur" clear! false] [js/window "resize" stop! false]
+                   [el "contextmenu" menu! false]]]
     (doseq [[target event handler options] listeners] (.addEventListener target event handler options))
     (fn [] (stop!) (doseq [[target event handler options] listeners] (.removeEventListener target event handler options)))))
 
 (defn table [room renderers]
-  (r/with-let [prefs (r/atom (load-arrangement)) gesture (r/atom nil) zoom (r/atom 0.3)
+  (r/with-let [prefs (r/atom (load-arrangement)) gesture (r/atom nil) zoom (atom 0.3)
                mobile-query (.matchMedia js/window "(max-width: 760px), (hover: none) and (pointer: coarse)")
                mobile? (r/atom (.-matches mobile-query))
                view (r/atom :table) nodes (atom {}) geometry (atom nil) animation (atom nil)
@@ -537,7 +594,7 @@
                                                                  (= :board @view) (:board geo))]
                                      (camera! nodes zoom (or target (assoc geo :x 0 :y 0)) animate? animation)))
                focus! (fn [id] (reset! auto-fit? true) (reset! view id) (dispatch :inspect-player (when (number? id) id))
-                        (js/requestAnimationFrame #(js/requestAnimationFrame (fn [] (fit! true)))))
+                        (r/after-render #(fit! true)))
                zoom! (fn [factor cx cy] (reset! auto-fit? false) (zoom-at! nodes zoom factor cx cy animation))
                inspect! (fn [cid p] (reset! popup {:kind :card :id cid :player p}))
                open-deck! (fn [path] (reset! popup {:kind :deck :path path}))
@@ -558,6 +615,7 @@
           [before after] (split-with #(not= (:id anchor) (:id %)) (:players g))
           objects (mapv (fn [p] (assoc (player-objects p (get-in ui [:private-hands (:id room) (:id p)]) @prefs @view @mobile?) :player p)) (concat after before))
           geo (table-geometry objects @shared-height) _ (reset! geometry geo)
+          _ (swap! nodes assoc :world-size [(:w geo) (:h geo)])
           decision? (and can-play? (or (seq (:effect-queue g)) (#{:feeding :breeding :housing} (:phase g)) (:space (:draft ui))))
           decision-key [(:id room) (:revision room) actor (:phase g) (:space (:draft ui)) (get-in g [:effect-queue 0 :id]) (:action-selection ui)]
           simple-action? (and (:space (:draft ui)) (empty? (:effect-queue g))
@@ -604,7 +662,7 @@
              :title (when (= (:id p) (:starting-player g)) "Starting player") :aria-pressed (= @view (:id p)) :class (when (= actor (:id p)) "tt-active-player")}])]
         [:div.tt-camera-tools
          [button "−" #(zoom! 0.8 nil nil) {:aria-label "Zoom out"}]
-         [button (str (js/Math.round (* @zoom 100)) "%") #(do (reset! auto-fit? true) (fit! true)) {:aria-label "Fit view" :title "Fit current view"}]
+         [zoom-indicator zoom #(do (reset! auto-fit? true) (fit! true))]
          [button "+" #(zoom! 1.25 nil nil) {:aria-label "Zoom in"}]]
         [readability/controls]
         [button "Tablecloth" #(do (reset! dismissed decision-key) (reset! popup {:kind :cloth}))]
@@ -624,6 +682,7 @@
                           :ref (fn [el]
                                  (when (and el (not= el (:viewport @nodes)))
                                    (swap! nodes assoc :viewport el)
+                                   (measure-viewport! nodes)
                                    (touch-camera! el nodes zoom animation auto-fit? gesture)
                                    (when @wheel-cleanup (@wheel-cleanup))
                                    (reset! wheel-cleanup (wheel-camera! el zoom! pan auto-fit? animation))
@@ -640,12 +699,15 @@
                                                                                      (set! (.-scrollTop el) (- sy (- (.-clientY e) y))))))
                                    (doseq [event ["pointerup" "pointercancel" "lostpointercapture"]]
                                      (.addEventListener el event (fn [_] (reset! pan nil) (.remove (.-classList el) "is-panning"))))
-                                   (reset! observer (js/ResizeObserver. (fn [_] (when @auto-fit? (fit! false)))))
+                                   (reset! observer (js/ResizeObserver. (fn [_]
+                                                                        (measure-viewport! nodes)
+                                                                        (if @auto-fit? (fit! false)
+                                                                          (apply-camera! nodes zoom @zoom (.-scrollLeft el) (.-scrollTop el))))))
                                    (.observe @observer el)
                                    (js/requestAnimationFrame #(when @auto-fit? (fit! false)))))}
-        [:div.tt-canvas {:ref #(when % (swap! nodes assoc :canvas %)) :style {:width (px (+ (or (some-> (:viewport @nodes) .-clientWidth) 0) (* @zoom (:w geo)))) :height (px (+ (or (some-> (:viewport @nodes) .-clientHeight) 0) (* @zoom (:h geo))))}}
+        [:div.tt-canvas {:ref #(when % (swap! nodes assoc :canvas %)) :style {:width (px (+ (get-in @nodes [:viewport-size 0] 0) (* @zoom (:w geo)))) :height (px (+ (get-in @nodes [:viewport-size 1] 0) (* @zoom (:h geo))))}}
          [:div.tt-world {:ref #(when % (swap! nodes assoc :world %)) :data-width (:w geo) :data-height (:h geo)
-                         :style {:left (px (/ (or (some-> (:viewport @nodes) .-clientWidth) 0) 2)) :top (px (/ (or (some-> (:viewport @nodes) .-clientHeight) 0) 2)) :width (px (:w geo)) :height (px (:h geo)) :transform (str "scale(" @zoom ")")}}
+                         :style {:left (px (/ (get-in @nodes [:viewport-size 0] 0) 2)) :top (px (/ (get-in @nodes [:viewport-size 1] 0) 2)) :width (px (:w geo)) :height (px (:h geo)) :transform (str "scale(" @zoom ")")}}
           [:section.tt-shared.tabletop-main {:aria-label "Shared board"
                                             :ref (fn [el] (when (and el (nil? @shared-observer))
                                                             (reset! shared-observer (js/ResizeObserver. (fn [_] (let [h (.-offsetHeight el)] (when (not= h @shared-height) (reset! shared-height h) (js/requestAnimationFrame #(when @auto-fit? (fit! false))))))))
@@ -741,8 +803,10 @@
                     [button "Reset my arrangement" #(do (swap! prefs select-keys [:material :arrangement-version]) (save-arrangement! @prefs) (reset! popup nil) (js/requestAnimationFrame (fn [] (fit! true))))]
                     [(:recording-picker renderers)]
                     [(:recordings-button renderers)]
-                    (when (or (and (:host? permission) (= :local (:mode room))) (and finished? recording-allowed?))
-                      [button "Save recording" #(dispatch :request-recording :download) {:disabled (boolean recording-busy?)}])
+                    (when (or (:host? permission) (and finished? recording-allowed?))
+                      [:div
+                       [button "Save recording" #(dispatch :request-recording :download) {:disabled (boolean recording-busy?)}]
+                       [:p.small "Download the current position and move history, including an unfinished game."]])
                     [:p.small "Deck and goods positions are saved for your user in this browser. They do not change anyone else’s view."]
                     [:p.small "Move handles also accept arrow keys. Text controls change reading size; the zoom controls change the table’s scale."]]) close! [card-review/controls room]])
         ;; Kept outside the menu so votes and results can arrive while the table is visible.

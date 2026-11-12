@@ -126,7 +126,9 @@
 (deftest merchant-can-use-just-played-baking-tray-to-repeat-a-minor-action-with-an-oven
   (let [state (-> (fresh) rich (own 0 merchant) (hand tray))
         waiting (g/command state 0 {:type :action :space :meeting :card tray})
-        done (resolve! waiting {:improvement :clay-oven :discount-resource :stone})]
+        baking (resolve! waiting {:improvement :clay-oven :discount-resource :stone})
+        done (resolve! baking {:skip? true})]
+    (is (= :bake (op baking)))
     (is (some #(and (= :clay-oven (:improvement %)) (bot/preview waiting 0 %)) (bot/decision-candidates waiting 0)))
     (is (contains? (get-in done [:players 0 :improvements]) :clay-oven))
     (is (= 0 (delta state done :stone)))

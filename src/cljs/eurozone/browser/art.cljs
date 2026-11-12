@@ -9,9 +9,10 @@
 (defn card-url [id] (url (str "major-" (majors id) ".png")))
 (def major-indices {:pottery 0 :hearth-4 1 :fireplace-3 2 :hearth-5 3 :stone-oven 4
                     :basketry 5 :joinery 6 :clay-oven 7 :well 8 :fireplace-2 9})
+(def major-sheet "majors-en.jpg")
 (defn major-card [id & [attrs]]
   [:span (merge {:class "major-card-art" :role "img" :aria-label "Original English major improvement card"
-                 :data-major id :style {:background-image (str "url(" (url "majors-en.jpg") ")")
+                 :data-major id :style {:background-image (str "url(" (url major-sheet) ")")
                                        :background-position (str (* (/ (major-indices id) 9) 100) "% 0%")}} attrs)])
 (def round-card-indices
   {:fences 0 :improvement 1 :sheep 2 :sow-bake 3 :growth 4 :renovate 5

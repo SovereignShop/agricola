@@ -38,7 +38,7 @@
   (doseq [{:keys [id card]} scenarios/scenarios]
     (let [state (scenarios/initial-state id (:names (scenarios/options id "Ada")))
           player (game/p state 0)]
-      (is (or (some #{card} (concat (cards/owned player) (mapcat val (:hand player)))) (some #(= card (:card %)) (:effect-queue state))) id)
+      (is (or (some #{card} (concat (:improvements player) (cards/owned player) (mapcat val (:hand player)))) (some #(= card (:card %)) (:effect-queue state))) id)
       (is (= (:players (scenarios/scenario id) 2) (count (:players state)))))))
 
 (def review-commands

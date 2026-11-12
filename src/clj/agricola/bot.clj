@@ -2,7 +2,7 @@
   "A deterministic, bounded one-ply player. Candidate commands are checked by
    the same rules as human commands. The policy sees public information and its
    own hand only; previews stop before advancing the turn or revealing a round."
-  (:require [agricola.engine :as a] [agricola.card-game :as g]
+  (:require [agricola.engine :as a] [agricola.card-game :as g] [agricola.community-final :as final]
             [agricola.card-rules :as c] [agricola.five-player :as five] [agricola.card-expressions :as expression] [clojure.set :as set]))
 
 (def version 1)
@@ -11,8 +11,8 @@
              (if (= :illegal-command (:type (ex-data e))) nil (throw e)))))
 (defn observation [state pid]
   (-> state
-      (update :players #(mapv (fn [p] (if (= pid (:id p)) p (dissoc p :hand))) %))
-      (dissoc :minor-order :minor-deck :card-rng)
+      (update :players #(mapv (fn [p] (if (= pid (:id p)) p (dissoc p :hand :private-card-state))) %))
+      (dissoc :minor-order :minor-deck :card-rng :private-auction-bids)
       (update :round-order #(vec (take (:round state) %)))
       (dissoc :draw :log)))
 (defn without-continuations [state]
@@ -84,7 +84,7 @@
                       (for [extra (fence-plans staged)
                             :when (<= (count extra) (a/turn-free-fences-available p))]
                         {:cell cell :fences extra})))))
-          (filter #(and (= :empty (get-in p [:farm % :type])) (not ((a/pasture-cells p) %))) (range 15))))
+          (filter #(and (= :empty (get-in p [:farm % :type])) (not ((a/pasture-cells p) %))) (a/farm-cells p))))
 (defn bake-cooking-options [p grain]
   (cons {} (when (and (a/crock? p) (pos? grain))
              (for [resource (concat a/animals [:vegetable :grain])
@@ -117,7 +117,7 @@
   (let [p (g/p state pid) payments (payment-options p)
         minors (concat (hand-options p :minor) (supply-minor-options state p))
         majors (major-options state p)
-        cells (filter #(a/empty-cell? p %) (range 15))
+        cells (filter #(a/empty-cell? p %) (a/farm-cells p))
         fences (delay (for [f (fence-plans p) material (if (c/has? p :a016) [:wood :clay] [:wood])
                              carver? (if (a/wood-carver-available? p) [false true] [false])]
                        {:fences f :fence-material material :wood-carver? carver?}))]
@@ -132,7 +132,7 @@
                :house-building (for [cell cells opts (a/room-payment-plans p [cell])] (assoc opts :rooms [cell]))
                :animal-market (map #(hash-map :choice %) a/animals)
                :build (concat (for [cell cells opts (a/room-payment-plans p [cell])] (assoc opts :rooms [cell]))
-                              (for [cell (range 15) carver? (if (a/wood-carver-available? p) [false true] [false])] {:stables [cell] :wood-carver? carver?}))
+                              (for [cell (a/farm-cells p) carver? (if (a/wood-carver-available? p) [false true] [false])] {:stables [cell] :wood-carver? carver?}))
                :fences @fences
                :sow-bake (for [plantings (if (g/staged-sowing? state pid space) [[]] (sow-plans p)) grain (range (inc (min 8 (a/amount p :grain))))]
                            {:plantings plantings :bake-grain grain})
@@ -176,7 +176,7 @@
   (let [base (get-in effect [:source-command :cell])
         initial (if (some? base) (a/place-tile p :field base) p)
         extend (fn [paths]
-                 (for [[player cells] paths cell (range 15)
+                 (for [[player cells] paths cell (a/farm-cells p)
                        :let [next (attempt #(a/place-tile player :field cell))]
                        :when next] [next (conj cells cell)]))
         one (vec (extend [[initial []]])) two (vec (extend one))
@@ -198,6 +198,7 @@
                   (:minder-deposit :minder-increase)
                   (for [resources (remove empty? (subsets (if (= :minder-deposit (:op effect)) g/building-resources (g/minder-resources p (:card head)))))
                         :when (<= (count resources) (if (= :minder-deposit (:op effect)) 4 2))] {:resources resources})
+                  (:final-witches :final-mooch :final-road :final-auction-bid :final-writing-place :final-writing-arrive :final-badger :final-store-converted :final-bathroom-sow :final-personal-breed :final-downsize :final-expert-resource :final-musketeer-place :final-mailman-place :final-pickaxe :final-lender :final-irrigation :final-debt-schedule :final-debt-arrival :final-remodeler) (final/choices state head)
                   (:g-apprentice-mark :g-tax-resource :g-harvest-feast :g-pelt-roof :g-late-sleeper :g-hired-helpers)
                   (g/g-sixteen-choices state pid (:card head) (:op effect) (:context head))
                   (:g-mathematician :g-miner :g-opportunist :g-pilgrim :g-animal-farm :g-dunghill)
@@ -215,10 +216,10 @@
                     {:animals animals :payment {:wood wood :clay clay :reed reed :stone stone}})
                   :hunter (let [received (select-keys (get-in head [:context :goods]) a/animals)]
                             (cons {:goods received} (for [[animal n] received count (range 1 (inc n))] {:goods {animal count}})))
-                  :bee-keeper (map #(hash-map :cell %) (filter #(a/empty-cell? p %) (range 15)))
-                  :storage-shed (map #(hash-map :cell %) (filter #(get-in p [:farm % :stable]) (range 15)))
+                  :bee-keeper (map #(hash-map :cell %) (filter #(a/empty-cell? p %) (a/farm-cells p)))
+                  :storage-shed (map #(hash-map :cell %) (filter #(get-in p [:farm % :stable]) (a/farm-cells p)))
                   :stash-card (map #(hash-map :card %) (mapcat val (:hand p)))
-                  :farm-markers (let [cells (vec (filter #(a/empty-cell? p %) (range 15)))]
+                  :farm-markers (let [cells (vec (filter #(a/empty-cell? p %) (a/farm-cells p)))]
                                   (for [n (range 1 (inc (min (count cells) (:count effect)))) offset (range (count cells))]
                                     {:cells (vec (take n (drop offset (cycle cells))))}))
                   :boatswain (map #(hash-map :cells %) (remove empty? (subsets (g/boatswain-cells state pid))))
@@ -274,7 +275,7 @@
                   :apple-tree (map #(hash-map :cell %) (g/apple-tree-cells state pid))
                   :seasonal-plants (map #(hash-map :cell (:cell %)) (g/seasonal-plantings state pid (:context head)))
                   :return-stables
-                  (for [stables (subsets (filter #(get-in p [:farm % :stable]) (range 15)))
+                  (for [stables (subsets (filter #(get-in p [:farm % :stable]) (a/farm-cells p)))
                         :when (<= (:min-stables effect 1) (count stables) (:max-stables effect 2))]
                     {:stables stables})
                   :take-wild-breeding (map #(hash-map :space %) (get-in head [:context :added-spaces]))
@@ -320,13 +321,13 @@
                   :juggler [{}]
                   :return-animal-loan (g/animal-loan-choices p (:card head))
                   :collect-cooked-animal (map #(hash-map :amount %) (range 1 (inc (get-in head [:context :converted-goods (:resource effect)] 0))))
-                  (:plow :stable :plowsmith) (map #(hash-map :cell %) (or (:only-cells effect) (range 15)))
+                  (:plow :stable :plowsmith) (map #(hash-map :cell %) (or (:only-cells effect) (a/farm-cells p)))
                   (:mini-pasture :fence-overseer :corral-builder :amateur-fencer) (mini-pasture-choices p)
                   :remove-empty-field (map #(hash-map :cell %) (a/removable-field-cells p))
                   :wheel-plow (plow-decision-candidates p effect)
                   :plow-many (mapcat (fn [paths] (for [[_ cells] paths :when (>= (count cells) (:min-fields effect 1))] {:cells cells}))
                                       (take (:max-fields effect) (rest (iterate
-                                        (fn [paths] (take 32 (for [[player cells] paths cell (range 15)
+                                        (fn [paths] (take 32 (for [[player cells] paths cell (a/farm-cells p)
                                                                   :let [next (attempt #(a/place-tile player :field cell))] :when next]
                                                               [next (conj cells cell)]))) [[p []]]))))
                   :paper-knife (let [hand (vec (get-in p [:hand :occupation]))]
@@ -343,7 +344,7 @@
                   :sow-offer [{}]
                   :lodger-remove [{:person-kind :adult} {:person-kind :newborn}]
                   :reserve-stables (map #(hash-map :rounds %) (remove empty? (subsets (g/planner-rounds state effect))))
-                  :build-stables (let [cells (filter #(and (= :empty (get-in p [:farm % :type])) (not (get-in p [:farm % :stable]))) (range 15))]
+                  :build-stables (let [cells (filter #(and (= :empty (get-in p [:farm % :type])) (not (get-in p [:farm % :stable]))) (a/farm-cells p))]
                                    (concat (map #(hash-map :stables [%]) cells)
                                            (for [one cells two cells :when (< one two)] {:stables [one two]})
                                            (for [n [3 4] :when (<= n (:max-stables effect 4))] {:stables (vec (take n cells))})))
@@ -369,7 +370,7 @@
                   :housing (for [keep (housing-plans p) cook? [true false]
                                  accommodate? (if (get-in head [:context :reclamation?]) [true false] [true])]
                              {:keep keep :cook? cook? :accommodate-taken? accommodate?})
-                  :cottage (concat (for [cell (range 15) opts (payment-options p)] (assoc opts :action :room :cell cell))
+                  :cottage (concat (for [cell (a/farm-cells p) opts (payment-options p)] (assoc opts :action :room :cell cell))
                                    (map #(assoc % :action :renovate) (payment-options p)))
                   :boat-painter [{:resource :grain} {:resource :food}]
                   :countryman (for [cell (field-ids p) crop [:grain :vegetable]] {:plantings [{:cell cell :crop crop}]})
@@ -439,6 +440,8 @@
             (case (get-in (c/card cid) [:ability :op])
               :borrower-repay [{}]
               :minder-collect (map #(hash-map :resource %) (g/minder-resources p cid))
+              :final-permaculture-clear (map #(hash-map :cells [%]) (agricola.community-final/permaculture-cells p))
+              (:final-master-cook :final-late-grow :final-kitchen-table) [{}]
               :g-hired-helpers [{}]
               :g-animal-farm (for [r a/animals :when (pos? (a/amount p r))] {:resource r})
               :g-pilgrim-discard []
@@ -447,11 +450,11 @@
               :wine-closet (map #(hash-map :round %) (range (inc (:round state)) 15))
               :tinsmith (map #(hash-map :amount %) (range 1 (inc (a/amount p :clay))))
               :backyard-well
-              (for [cell (range 15) :when (and (a/empty-cell? p cell) (some (set (a/tiles p :room)) (a/neighbors cell)))]
+              (for [cell (a/farm-cells p) :when (and (a/empty-cell? p cell) (some (set (a/tiles p :room)) (a/neighbors cell)))]
                 {:cell cell})
               :benefactor
               (for [animal a/animals :when (pos? (a/amount p animal))
-                    cell (range 15) :when (and (a/empty-cell? p cell) (some (set (a/tiles p :room)) (a/neighbors cell)))]
+                    cell (a/farm-cells p) :when (and (a/empty-cell? p cell) (some (set (a/tiles p :room)) (a/neighbors cell)))]
                 {:animal animal :rooms [cell]})
               :return-animal-loan (when-not (get-in p [:card-state cid :loan-settled?]) (g/animal-loan-choices p cid))
               (:adopt :buy-stock :cash-card :reed-food :claim-goods :corn-profiteer) [{}]
@@ -460,8 +463,8 @@
               :renovate-clay-stone (map #(assoc % :renovate-to :stone) (payment-options p))
               :renovate-wood-clay (remove #(= :stone (:renovate-to %)) (payment-options p))
               :free-placement-fences (map #(hash-map :fences %) (fence-plans p))
-              :free-room (map #(hash-map :rooms [%]) (range 15))
-              :fr-park-plow (map #(hash-map :cell %) (range 15))
+              :free-room (map #(hash-map :rooms [%]) (a/farm-cells p))
+              :fr-park-plow (map #(hash-map :cell %) (a/farm-cells p))
               :wood-saw (for [rooms (g/room-plans p) opts (a/room-payment-plans p rooms)] (assoc opts :rooms rooms))
               :workaholic (map #(hash-map :option %) (range 3))
               :exchange-options

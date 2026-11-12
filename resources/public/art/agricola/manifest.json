@@ -3649,6 +3649,198 @@
       "source": "http://playagricola.com/Agricola/Cards/Cards/xminorRam_2141_8.jpg",
       "sha256": "89a0f71c40fb6ba6d1cb76325e2ec7510c0a6a464c08eb9db55ddf51be038a06",
       "note": "Unmodified final English Original WM print; card identity and printed rules visually verified."
+    },
+    {
+      "file": "cards/original-fr115.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx4UnicycleDriver_2821_5.jpg",
+      "sha256": "f31d424a71e5f4d6c0259bc05797d045db292f3694c88fb0d7a0ccdac36d063c",
+      "note": "Original FR115 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-fr120.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx3WritingManiac_2363_4.jpg",
+      "sha256": "7dcb9bea1a2e65c167dfc718fcf3d043e02a6edae7ba65e825f4f4ae6b1752b6",
+      "note": "Original FR120 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-fr027.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorGroundPickaxePlow_2854_7.jpg",
+      "sha256": "477ec7063d0f4b629f2b3a7f57fbb748b83b2a1c77dc68895ca88463929b8458",
+      "note": "Original FR027 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-fr034.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorKitchenTable_2794_26.jpg",
+      "sha256": "2581d5495b1265a701b06ee75b14335b1210e8c6b2bafe8e57b7faa1039f2a15",
+      "note": "Original FR034 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-fr059.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorWitchesDanceGround_2815_7.jpg",
+      "sha256": "e9cc9444499f3991fc836d9e483dec993234c36daae29e01b117b18fbbc064cc",
+      "note": "Original FR059 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-fr006.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorBadger_2851_11.jpg",
+      "sha256": "02f1efd0b6fe11cde9f3037c81c7e19451d67c23f5c58d955b290f83cb892bef",
+      "note": "Original FR006 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-fr061.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx3Agrarian_2311_7.jpg",
+      "sha256": "bedcc42f3b82b9a5c100a826e81bf80dc7f2aec103e1f31d20ad9eb0f7bc46f0",
+      "note": "Original FR061 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-fr068.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx1CardPlayer_3408_14.jpg",
+      "sha256": "20bcc84ee2142ddd2b4a50e2aa221567a76a95c344bf2f367782e55a5e996c58",
+      "note": "Original FR068 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-fr076.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx4DebtCollector_2680_7.jpg",
+      "sha256": "15c43b5c6d862c93666e80b868dff7c6290ddca626e40cf3020ad0ef378259ac",
+      "note": "Original FR076 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-fr009.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorBathroom_2569_13.jpg",
+      "sha256": "cc23ebff39bd76869c347b58a168d64442ad5b4c0461b5cb123274f19dc8bfe3",
+      "note": "Original FR009 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-fr095.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx4Musketeer_3357_5.jpg",
+      "sha256": "5cafcc838b0bf3f1d30c6587938a18cc32b423aa032097ffb01d74f7714d7fa3",
+      "note": "Original FR095 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-g106.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminorsharedwall.jpg",
+      "sha256": "fcfaaeda1025fbc29333ff8c8f33b08d113dbbb2fea6fac990f4a6628fab36e4",
+      "note": "Original G106 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-g112.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminorstonecrane.jpg",
+      "sha256": "e07f62f009ef2e1ac12238c3040c68bf63b8096be6d13e348e97d4c079eaafe9",
+      "note": "Original G112 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-g118.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminorwintergarden.jpg",
+      "sha256": "851e3807e41fae8521a537368576ba5b51b27e1717b5eea64e0adf33354c7ec5",
+      "note": "Original G118 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-g014.jpg",
+      "source": "http://playagricola.com/Agricola/Images/occg1earlyriser_v3.jpg",
+      "sha256": "acfbaf2c69c9a94c729140a45837064e584bdf43a5242aaf2f1dc7d652e2cdf8",
+      "note": "Original G014 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-g019.jpg",
+      "source": "http://playagricola.com/Agricola/Images/occg1foodcritic_v2.jpg",
+      "sha256": "56fbe4ddb614daec59772c22f5a06dc4abe014ec6e8cd9bc711891c611f4a9e3",
+      "note": "Original G019 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-g036.jpg",
+      "source": "http://playagricola.com/Agricola/Images/occg4latebloomer.jpg",
+      "sha256": "aa004dc4d57f5ff35dc5ecdb8cdf7471591fa11b3c5995e297f6680ad1b68876",
+      "note": "Original G036 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-g041.jpg",
+      "source": "http://playagricola.com/Agricola/Images/occg3mooch_v2.jpg",
+      "sha256": "3e8670e17101c6962db2ed7864d3256524d119949b744e907f9496102ac160aa",
+      "note": "Original G041 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-g061.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminoralmanac.jpg",
+      "sha256": "a59d223a4a0e91945aadc9e54207799a5b37ce55b6127b49e284ee87430b092d",
+      "note": "Original G061 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-g063.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminorbakingfield.jpg",
+      "sha256": "c66d64578abc3228d72afc905437ed93bc536be868ab27396f238886549db726",
+      "note": "Original G063 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-g007.jpg",
+      "source": "http://playagricola.com/Agricola/Images/occg3astronomer_v2.jpg",
+      "sha256": "70bb143a5967cf45da3c316309ee019b5d64ddfe104b60a47746bee7395ff18b",
+      "note": "Original G007 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-g008.jpg",
+      "source": "http://playagricola.com/Agricola/Images/occg4auctioneer_v2.jpg",
+      "sha256": "5ce554a9e3e1790f0881adf12c8090f04d173089907bdf35c164709e60208840",
+      "note": "Original G008 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-g085.jpg",
+      "source": "http://playagricola.com/Agricola/Images/gminorirrigationcanal.jpg",
+      "sha256": "e2a4dbd5e43cae5bcbf89ee22c541e6db0a83e43f83e9f9bc0c356db6ed6f05e",
+      "note": "Original G085 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-wm112.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorVillageSchool_639_3.jpg",
+      "sha256": "6ad9a5d53a03bac40c9c8792c6b326f5c488bffccad3f9d6f5f47dbc5f754dd9",
+      "note": "Original WM112 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-wm018.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx3ExpertBuilder_563_9.jpg",
+      "sha256": "dd4947ee38551655ffe8c3d541658a9cbb50d058638e793638163ab2727d4258",
+      "note": "Original WM018 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-wm035.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx3Mailman_1068_19.jpg",
+      "sha256": "53acc2db5bfee4b03e8a6999dec4f1970b529fd641ddfbd9ae61d7567dc674ce",
+      "note": "Original WM035 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-wm036.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx3MasterCook_505_7.jpg",
+      "sha256": "c23caa6e3a65c30b6b71a7713808a197abc81128babe84d5c1df7360a071df8f",
+      "note": "Original WM036 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-wm040.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx1Permaculturist_2126_6.jpg",
+      "sha256": "ddcdacca938d1b1d042eaf2850bdeee5d7b6403a36e130bda3240f7df472777c",
+      "note": "Original WM040 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-wm042.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx1Remodeler_180_12.jpg",
+      "sha256": "77d8380d270939854a55139317a5904c1db3800e0a1bd41444d20cbc41456870",
+      "note": "Original WM042 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-wm043.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx3ResourceLender_1065_9.jpg",
+      "sha256": "398f40c201e6af7fdde098b2642543c1050f8b75ae2b108b3163fdbb1d71813c",
+      "note": "Original WM043 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-wm048.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/occx3SundayWorker_548_10.jpg",
+      "sha256": "5d735e862459a85f8dded1f9897b665a8dfbbdb9bd96dab29173b85e54ec323a",
+      "note": "Original WM048 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
+    },
+    {
+      "file": "cards/original-wm075.jpg",
+      "source": "http://playagricola.com/Agricola/Cards/Cards/xminorDownsizing_250_12.jpg",
+      "sha256": "7667b7e0d9f3c20b65e6df78f4dc1a683394d01a44625cd4920e7504b69482c0",
+      "note": "Original WM075 English print. Title, deck identity, costs, prerequisites and full printed rules visually checked for the final community cohort."
     }
   ]
 }

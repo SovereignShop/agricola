@@ -128,7 +128,8 @@
   (into {} (for [[id room] @(:rooms store)]
              [id (into {} (for [[pid seat] (map-indexed vector (:seats room))
                                :when (= token (:owner seat))]
-                           [pid (get-in room [:state :players pid :hand])]))])))
+                           [pid (let [p (get-in room [:state :players pid])]
+                                  (cond-> (:hand p) (:private-card-state p) (assoc :private-card-state (:private-card-state p))))]))])))
 (defn private-draws [store token]
   (into {} (for [[id room] @(:rooms store) :when (get-in room [:state :draw])]
              [id (into {} (for [[pid seat] (map-indexed vector (:seats room)) :when (= token (:owner seat))]
@@ -146,7 +147,9 @@
   ;; food and printed scoring; only newly created games use the new defaults.
   ;; Network packets still require an exact match between running clients.
   (or (= @engine-fingerprint fingerprint)
-      (contains? #{;; Community batch fifteen preserves existing saves; 1,146 historical moves verified.
+      (contains? #{;; Baking prompts change future builds, not the shape of existing positions or decisions.
+                   "cf9b4346d2ccd0b08ebc1d4da13bf18ec92de3f9c1e35458138dad149607a3d9"
+                   ;; Community batch fifteen preserves existing saves; 1,146 historical moves verified.
                    "8b15324041cfc7fca80ccaf09d9c18453076d1f0c0e1bca55061eac4933736c1"
                    ;; Community batch fourteen preserves previous saves; 1,146 historical moves verified.
                    "c8ba3e3fed4def366f2609c73024b3d35ed58739233c4fe83c7139bda221775a"
@@ -242,11 +245,13 @@
                                   (and (= :finished (get-in room [:state :phase]))
                                        (some #(= token (:owner %)) (:seats room)))))
                         "Only the host or a player in a finished game can export this recording.")
-      (agricola/require! (or (= :local (:mode room)) (= :finished (get-in room [:state :phase])))
-                        "Online recordings can be exported after the game finishes, to keep hands private.")
       {:event :recording :id id :filename (str "agricola-" id ".edn")
        :text (apply str (map #(str (pr-str %) "\n")
-                            (or (:recording room) [(recording-header room (:state room) true)])))})))
+                            ;; Keep the exact live position as well as the move log.
+                            ;; A repair must not depend on replaying older rules.
+                            (update (vec (or (:recording room) [(recording-header room (:state room) true)]))
+                                    0 assoc :saved-state (:state room)
+                                    :saved-state-hash (recording/state-hash (:state room)))))})))
 (defn transition [rooms token {:keys [event id revision name title mode names command setup expected-players bots ready? player wave card] :as msg}]
   (if (= event :create)
     (if-let [scenario (:scenario msg)]

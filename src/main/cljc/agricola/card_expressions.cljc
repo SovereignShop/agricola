@@ -49,7 +49,7 @@
           (count (filter #(pos? (get (:printed-cost (a/improvement-definition %)) x
                                     (get (:cost (a/improvement-definition %)) x 0))) (a/owned-improvement-ids p)))
           :complete-farm-columns
-          (count (for [col (range 5) :let [cells [col (+ col 5) (+ col 10)] types (map #(get-in p [:farm % :type]) cells)]
+          (count (for [col (range 5) :let [cells (filter (set (a/farm-cells p)) [col (+ col 5) (+ col 10)]) types (map #(get-in p [:farm % :type]) cells)]
                        :when (or (every? #{:room} types) (every? #{:field} types)
                                  (some #(every? (set %) cells) (a/pastures p)))] col))
           :all-goods (reduce + 0 (map #(a/amount % x) (:players g)))
@@ -61,7 +61,7 @@
                                  :when (or (get-in (cards/card cid) [:passive :action-plow])
                                            (#{(cards/id :a018) (cards/id :b019)} cid))] cid))
           :welfarist-qualified (= #{:stables :fences} (get-in p [:work-actions (:round g)] #{}))
-          :work-used-spaces (max 0 (- (:work-unused-baseline p (count (filter #(a/empty-cell? p %) (range 15)))) (count (filter #(a/empty-cell? p %) (range 15)))))
+          :work-used-spaces (max 0 (- (:work-unused-baseline p (count (filter #(a/empty-cell? p %) (a/farm-cells p)))) (count (filter #(a/empty-cell? p %) (a/farm-cells p)))))
           :converted (get-in context [:converted-goods x] 0)
           :newborns-added (:newborns-added context (max 0 (- (:family p) (:family-before context (:family p)))))
           :growths-this-round (if (= (:round g) (get-in g [:round-growths pid :round])) (get-in g [:round-growths pid :count] 0) 0)
@@ -111,7 +111,7 @@
           :planted-fields (count (filter #(pos? (:count % 0)) (field-list p)))
           :empty-fields (count (filter #(and (not (:blocked-card %)) (zero? (:count % 0))) (field-list p)))
           :empty-farm-fields (count (filter #(and (= :field (:type %)) (not-any? pos? (vals (a/field-crops %)))) (:farm p)))
-          :unused (count (filter #(a/empty-cell? p %) (range 15)))
+          :unused (count (filter #(a/empty-cell? p %) (a/farm-cells p)))
           :pastures (count (a/pastures p))
           :pastures-at-least (count (filter #(>= (count %) (ev x)) (a/pastures p)))
           :fences (count (:fences p)) :fences-left (a/fences-available p)
@@ -141,7 +141,7 @@
           :other-owned-cards (reduce + 0 (for [other (:players g) :when (not= pid (:id other))]
                                           (count (filter x (cards/owned other)))))
           :baking-improvements (count (a/baking-improvement-ids p))
-          :ovens (count (filter #(:oven (a/improvement-definition %)) (a/owned-improvement-ids p)))
+          :ovens (count (filter #(:oven (a/improvement-definition %)) (a/food-improvement-ids p)))
           :cooking-improvements (count (filter #(:cook (a/improvement-definition %)) (a/owned-improvement-ids p)))
           :rounds-left (- 14 (:round g))
           :completed-harvests (count (filter #(< % (:round g)) a/harvest-rounds))
