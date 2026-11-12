@@ -114,7 +114,7 @@
                          :else (set! (.-hash js/location) (or % ""))))
 (rf/reg-event-fx :navigate
   (fn [{:keys [db]} [_ id]]
-    {:db (assoc db :game-id id :draft {} :inspect-player nil :error nil
+    {:db (assoc db :game-id id :draft {} :inspect-player nil :error nil :navigation-version (inc (:navigation-version db 0))
                 :panel (if (= :finished (:status (model/pull-game (:facts db) id))) :scores :board))
      :navigate id :dispatch [:chat/sync]}))
 (rf/reg-fx :send comms/send!)

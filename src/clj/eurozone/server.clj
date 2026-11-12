@@ -1,5 +1,6 @@
 (ns eurozone.server
   (:require [org.httpkit.server :as http] [eurozone.store :as store] [eurozone.chat :as chat] [eurozone.peer :as peer] [eurozone.discord :as discord] [eurozone.ascension :as ascension]
+            [eurozone.voice-relay :as voice] [eurozone.transcription :as transcription] [eurozone.assistant-relay :as assistant]
             [eurozone.table-flow :as flow] [eurozone.bot-player :as bot]
             [clojure.edn :as edn] [clojure.java.io :as io] [clojure.string :as str])
   (:import [java.io ByteArrayOutputStream] [java.security MessageDigest] [java.util.zip GZIPOutputStream])
@@ -103,6 +104,28 @@
   (let [uri (:uri request)]
     (cond
       (= uri "/health") {:status 200 :headers {"Content-Type" "text/plain"} :body "Eurozone is ready"}
+      (= uri "/assistant")
+      (if (and (= :get (:request-method request)) (same-origin? request))
+        (http/with-channel request channel
+          (if (:websocket? request)
+            (do (http/on-receive channel #(assistant/receive! (:assistant-service app) http/send! channel %))
+                (http/on-close channel (fn [_] (assistant/leave! (:assistant-service app) http/send! channel))))
+            (http/send! channel {:status 400 :body "WebSocket connection required"})))
+        {:status 403 :body "Origin not allowed"})
+      (= uri "/voice/config") (transcription/response 200 {:local (boolean (:transcription-url app))})
+      (= uri "/voice/transcribe")
+      (if (and (= :post (:request-method request)) (same-origin? request))
+        (http/with-channel request channel
+          (future (http/send! channel (transcription/transcribe app request))))
+        (transcription/response 403 {:error "Record from the game or its paired microphone page."}))
+      (= uri "/voice")
+      (if (and (= :get (:request-method request)) (same-origin? request))
+        (http/with-channel request channel
+          (if (:websocket? request)
+            (do (http/on-receive channel #(voice/receive! (:voice-service app) http/send! channel %))
+                (http/on-close channel (fn [_] (voice/leave! (:voice-service app) http/send! channel))))
+            (http/send! channel {:status 400 :body "WebSocket connection required"})))
+        {:status 403 :body "Origin not allowed"})
       (str/starts-with? uri "/discord/") (discord/handler app request)
       (= uri "/ascension/ws")
       (if (and (= :get (:request-method request)) (same-origin? request))
@@ -154,11 +177,14 @@
         (finally (swap! (:clock-jobs app) disj id))))))
 (defn start! [{:keys [port host path] :or {port 3001 host "127.0.0.1" path "data/eurozone.edn"}}]
   (let [config (discord/config)
-        app {:store (store/make-store path) :clients (atom {}) :peers (atom {})
+        app {:transcription-url (transcription/configured-url)
+             :voice-service (voice/service #(discord/authorize-peer! config %1 %2))
+             :assistant-service (assistant/service #(discord/authorize-peer! config %1 %2))
+             :store (store/make-store path) :clients (atom {}) :peers (atom {})
              :peer-service (assoc (peer/service (when path (str path ".peers"))) :authorize #(discord/authorize-peer! config %1 %2))
              :ascension-service (assoc (ascension/service (when path (str path ".ascension"))) :authorize #(discord/authorize-peer! config %1 %2))
              :discord-config config :activity-options (atom {}) :clock-jobs (atom #{}) :stopped (atom false)}
-        stop (http/run-server #(handler app %) {:port port :ip host :max-body 32768 :max-ws 1200000})
+        stop (http/run-server #(handler app %) {:port port :ip host :max-body 2000000 :max-ws 1200000})
         clock (future (while (not @(:stopped app)) (tick! app)
                         (try (ascension/tick! (:ascension-service app) http/send!)
                              (catch Exception e (binding [*out* *err*] (println "Ascension:" (.getMessage e)))))

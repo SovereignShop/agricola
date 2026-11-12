@@ -27,6 +27,9 @@ card stock, and recorded actions survive reopening.
 
 ## Run
 
+An optional [local ChatGPT connection](docs/chatgpt-connection-prototype.md) pairs each player’s own account with the game.
+The [voice interface](docs/voice-commands-prototype.md) supports continuous listening, native game/menu controls, player views, and an external microphone companion for Discord Activities.
+
 Requires a JDK (17 or newer), Clojure CLI, Python 3, and Node.js 20+ with npm
 to install the bundled Discord SDK. No external JavaScript CDN is used.
 

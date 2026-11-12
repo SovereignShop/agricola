@@ -11,11 +11,12 @@ from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
 from browser_smoke import ROOT, choose_action, confirm_action
 from browser_peer import PROBE
+from browser_voice import SPEECH
 
 PARENT = '''<!doctype html><style>body{margin:0}iframe{width:100vw;height:100vh;border:0}</style>
 <script>
 const user = USER;
-window.rpc = [];
+window.rpc = []; window.externalLinks = [];
 addEventListener('message', e => {
  const [op,p] = e.data || [];
  const reply = data => e.source.postMessage([1,data],e.origin);
@@ -23,6 +24,7 @@ addEventListener('message', e => {
  if (op === 1) {
    rpc.push(p.cmd);
    let data = null;
+   if (p.cmd === 'OPEN_EXTERNAL_LINK') { externalLinks.push(p.args.url); data = {opened:true}; }
    if (p.cmd === 'AUTHORIZE') data = {code:user.id};
    if (p.cmd === 'AUTHENTICATE') data = {access_token:'access-'+user.id, user:{...user,discriminator:'0',avatar:null,public_flags:0},scopes:['identify'],expires:'2121-01-01T00:00:00Z',application:{id:'123',name:'Eurozone',description:'test',icon:null}};
    reply({cmd:p.cmd,nonce:p.nonce,evt:null,data});
@@ -42,6 +44,7 @@ def check(base):
         def context(user):
             ctx = browser.new_context(viewport={'width':1440,'height':1100})
             ctx.add_init_script('(' + PROBE + ')()')
+            ctx.add_init_script(SPEECH)
             def authorize(route):
                 login=route.fetch(max_redirects=0)
                 params = urllib.parse.parse_qs(urllib.parse.urlsplit(login.headers['location']).query)
@@ -106,6 +109,46 @@ def check(base):
             assert child.evaluate('peerConnections.length')==0
             assert child.evaluate('EUROZONE_ACTIVITY')
             assert {'AUTHORIZE','AUTHENTICATE'} <= set(page.evaluate('rpc'))
+        # The real SDK opens the public website, not the Activity's proxy origin.
+        actor_index=next(i for i,f in enumerate(frames) if f.locator('.action-card[data-action="grain"]').is_enabled())
+        actor=frames[actor_index]; actor_page=pages[actor_index]
+        public_base=base.replace('127.0.0.1','localhost')
+        actor_page.frames[1].evaluate('(url) => window.EUROZONE_PUBLIC_URL = url',public_base)
+        actor.get_by_role('button',name='Voice commands',exact=True).click()
+        actor.get_by_role('button',name='Open voice companion',exact=True).click()
+        actor_page.wait_for_function('externalLinks.length === 1')
+        voice_url=actor_page.evaluate('externalLinks[0]')
+        assert voice_url.startswith(public_base+'/voice.html#'), 'Companion must use the external public origin'
+        microphone=contexts[actor_index].new_page(); microphone.goto(voice_url)
+        expect(microphone.get_by_role('button',name='Start continuous listening')).to_be_enabled()
+        actor.get_by_role('button',name='Connect my ChatGPT',exact=True).click()
+        pairing=actor.get_by_label('ChatGPT pairing link',exact=True)
+        expect(pairing).to_be_visible()
+        assistant_link=pairing.input_value()
+        assert assistant_link.startswith(public_base.replace('http','ws')+'/assistant#')
+        reply=microphone.evaluate("""link => new Promise((resolve,reject) => {
+          const url=new URL(link), pair=url.hash.slice(1); url.hash='';
+          const ws=window.testAssistantSocket=new WebSocket(url);
+          ws.onopen=()=>ws.send(JSON.stringify({op:'pair',pair,model:'Discord relay test'}));
+          ws.onmessage=e=>resolve(JSON.parse(e.data)); ws.onerror=()=>reject(new Error('Public assistant relay failed'));
+        })""",assistant_link)
+        assert reply['op']=='paired'
+        expect(actor.get_by_text('ChatGPT connected · Discord relay test',exact=True)).to_be_visible()
+        actor.get_by_role('button',name='Disconnect ChatGPT').click()
+        microphone.evaluate('window.testAssistantSocket.close()')
+        microphone.get_by_role('button',name='Start continuous listening').click()
+        microphone.wait_for_function('window.voiceRecognizer?.continuous === true')
+        microphone.evaluate("window.voiceRecognizer.onspeechstart(); window.voiceRecognizer.emit('take grain')")
+        for frame in frames:
+            expect(frame.locator('[data-piece-key^="worker::grain:"]')).to_have_count(1)
+        expect(microphone.get_by_role('button',name='Stop listening',exact=True)).to_be_visible()
+        microphone.wait_for_timeout(300)
+        microphone.evaluate("window.voiceRecognizer.onspeechstart(); window.voiceRecognizer.emit('stop listening')")
+        expect(microphone.get_by_role('button',name='Start continuous listening')).to_be_visible()
+        actor.get_by_role('button',name='Close voice commands').click()
+        expect(microphone.get_by_role('status')).to_contain_text('disconnected')
+        microphone.close()
+        print('Activity SDK external-link, distinct public origin, private authenticated pairing, continuous speech command and synchronized peer move: passed')
         # Emulate mobile visibility suspension while its socket still looks
         # open. Keep the old server socket alive to exercise nonce replacement.
         for page, frame in zip(pages,frames):
@@ -174,7 +217,7 @@ def check(base):
             expect(start).to_be_enabled();start.click()
             for frame in frames:
                 expect(frame.get_by_label('Players expected')).to_have_count(0)
-                if count==5: expect(frame.locator('.draw-packet .hand-card')).to_have_count(17)
+                if count==5: expect(frame.locator('.draw-packet .hand-card')).to_have_count(20)  # 7 + 3 of each type
                 else:
                     expect(frame.locator('.tt-game')).to_be_visible()
                     expect(frame.locator('[data-deck="hand-occupation"] .tt-card-face:not(.tt-card-back)')).to_have_count(7)

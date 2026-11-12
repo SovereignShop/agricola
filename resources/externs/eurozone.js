@@ -1,6 +1,7 @@
 /** @externs */
 // Boundary between Closure-compiled CLJS and the standalone Discord/peer bundles.
 Window.prototype.EUROZONE_READY;
+Window.prototype.EUROZONE_PUBLIC_URL;
 Window.prototype.EUROZONE_ACTIVITY;
 Window.prototype.EUROZONE_ACTIVITY_LOBBY;
 Window.prototype.EUROZONE_DISCORD_USER;

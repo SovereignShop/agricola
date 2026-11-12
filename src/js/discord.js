@@ -93,6 +93,7 @@ async function openDiscord() {
     }
   }
   // Discord controls its outer fullscreen window. The app uses the entire frame.
+  window.EUROZONE_OPEN_VOICE = url => sdk.commands.openExternalLink({url});
   window.EUROZONE_OPEN_BROWSER = () => sdk.commands.openExternalLink({url:config.publicUrl});
   window.EUROZONE_INVITE = () => sdk.commands.openInviteDialog();
 }

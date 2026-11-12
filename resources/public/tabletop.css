@@ -428,3 +428,14 @@
 }
 /* Stored goods come from the card; this is a small source marker, not a new card choice. */
 .choice-effect-pieces[aria-label="Take from this card"] .choice-card-back {width:24px;height:36px;flex:0 0 24px}
+/* Voice controls sit outside the panning farm surface. */
+.voice-controls{position:fixed;left:16px;bottom:calc(72px + env(safe-area-inset-bottom));z-index:20000}
+.voice-controls>button{min-height:44px;padding:10px 16px;background:#fffdf7;border:1px solid #b9c9ba;border-radius:12px;box-shadow:0 3px 14px #0003}
+.voice-panel{position:fixed;left:16px;bottom:calc(126px + env(safe-area-inset-bottom));width:min(370px,calc(100vw - 32px));max-height:calc(100dvh - 150px);overflow:auto;z-index:20001;background:#fffdf7;color:#263d31;border:1px solid #b9c9ba;border-radius:14px;padding:16px;box-shadow:0 8px 35px #0003;box-sizing:border-box;white-space:normal}
+.voice-heading{display:flex;justify-content:space-between;align-items:center}
+.voice-panel p{white-space:normal;line-height:1.45;margin:10px 0}
+.voice-panel button{min-height:44px;margin:3px;padding:8px 12px}
+.voice-panel input{display:block;width:100%;box-sizing:border-box;min-height:44px;margin:7px 0}
+.voice-panel label{display:block;margin-top:12px}
+
+.voice-controls>.voice-stop{margin-left:6px;background:#8d302d;color:white;border-color:#8d302d}

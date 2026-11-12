@@ -50,15 +50,18 @@
                outside-press? (atom false)
                top? (fn [] (= @node (last (array-seq (.querySelectorAll js/document ".table-dialog")))))
                handler (fn [e]
-                         (when (and (top?) (= "Escape" (.-key e)))
+                         (when (and (top?) (= "Escape" (.-key e)) (not (.closest (.-target e) ".voice-controls")))
                            (.stopImmediatePropagation e) (when-let [dismiss @current-close] (dismiss)))
                          (when (and (top?) (= "Tab" (.-key e)))
                            (when-let [dialog @node]
-                             (let [nodes (.querySelectorAll dialog "button:not([disabled]),select:not([disabled]),input:not([disabled]),[tabindex='0']")
-                                   first (aget nodes 0) last (aget nodes (dec (.-length nodes)))]
-                               (when (and first (or (and (.-shiftKey e) (= (.-activeElement js/document) first))
-                                                   (and (not (.-shiftKey e)) (= (.-activeElement js/document) last))))
-                                 (.preventDefault e) (.focus (if (.-shiftKey e) last first)))))))
+                             (let [selector "button:not([disabled]),summary,select:not([disabled]),input:not([disabled]),textarea:not([disabled]),a[href],[tabindex='0']"
+                                   voice (.querySelector js/document ".voice-controls")
+                                   nodes (vec (filter #(pos? (.-length (.getClientRects %)))
+                                                      (concat (array-seq (.querySelectorAll dialog selector))
+                                                              (when voice (array-seq (.querySelectorAll voice selector))))))
+                                   index (.indexOf (to-array nodes) (.-activeElement js/document))
+                                   next (when (seq nodes) (nth nodes (mod (+ index (if (.-shiftKey e) -1 1)) (count nodes))))]
+                               (when next (.preventDefault e) (.focus next))))))
                _ (.addEventListener js/document "keydown" handler)]
     (reset! current-close close)
     [:div.dialog-backdrop
@@ -70,7 +73,8 @@
                     (close))
                   (reset! outside-press? false))}
      [:section.table-dialog {:role "dialog" :aria-modal true :aria-label title :tab-index -1
-                             :ref #(when % (reset! node %) (when (and (top?) (not (.contains % (.-activeElement js/document)))) (.focus %)))}
+                             :ref #(when % (reset! node %) (when (and (top?) (not (.contains % (.-activeElement js/document)))
+                                                                    (not (.closest (.-activeElement js/document) ".voice-controls"))) (.focus %)))}
       [:div.section-heading [:h2 title] (when close [:button.text-button {:aria-label "Close dialog" :on-click close} "×"])]
       review
       children]]

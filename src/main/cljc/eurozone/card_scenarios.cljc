@@ -330,6 +330,8 @@
     :description "This round you built stables and fences on their proper action spaces. Take Grain Seeds with the final worker and observe one sheep, boar, and cattle arrive as people return home."}
    {:id "benefactor" :card :catalog/original-expansion-fr-65-benefactor :name "Benefactor" :players 3
     :description "Four fenced pastures and one sheep are ready. Open Benefactor, click the sheep to return it, then click a legal space for a free wooden room. This exchange is once per game."}
+   {:id "voice-control-review" :card :catalog/original-expansion-fr-65-benefactor :name "Voice controls · Benefactor" :players 3
+    :description "Connect ChatGPT in Voice commands. Ask to show Partner's farm or played improvements, then open your Benefactor. Use voice to return the pictured sheep and choose the room above your house directly on the farm. Clear choices run immediately; ambiguous requests ask for clarification. Check voice stays usable above card dialogs, minimize it on mobile, then reload and replay the recording. This is a fresh table owned by its creator."}
    {:id "cabbage-lover" :card :catalog/original-expansion-fr-67-cabbage-lover :name "Cabbage Lover" :players 4
     :description "You just converted one vegetable to food. Click the pictured clay payment to store one clay for one bonus point, or decline. Stored clay scores at most five points."}
    {:id "country-doctor" :card :catalog/original-expansion-fr-74-country-doctor :name "Country Doctor" :players 2
@@ -1009,7 +1011,7 @@
                             (update-in [:players 0] a/gain {:wood 12})
                             (game/command 0 {:type :action :space :build :stables [0]}) (assoc :turn 0)
                             (game/command 0 {:type :action :space :fences :fences (vec (distinct (mapcat a/edges [0 1 2])))}) final-worker)
-      "benefactor" (-> funded (update-in [:players 0] a/gain {:wood 12})
+      ("benefactor" "voice-control-review") (-> funded (update-in [:players 0] a/gain {:wood 12})
                        (update-in [:players 0] a/build-fences (vec (distinct (mapcat a/edges [1 2 3 4]))))
                        (update-in [:players 0] a/gain {:sheep 1}) (played 0 card))
       "cabbage-lover" (-> funded (played 0 card) (game/command 0 {:type :convert :goods {:vegetable 1}}))

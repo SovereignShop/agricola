@@ -5,7 +5,7 @@
             [clojure.string :as str] [agricola.engine :as a] [agricola.house-rules :as house]
             [agricola.card-game :as game] [agricola.card-impact :as impact] [agricola.card-rules :as cards]
             [eurozone.browser.art :as art] [eurozone.browser.card-art :as card-art]
-            [eurozone.browser.readability :as readability]
+            [eurozone.browser.readability :as readability] [eurozone.browser.voice :as voice]
             [eurozone.browser.card-review :as card-review]
             [eurozone.browser.table-controls :as controls]))
 
@@ -280,7 +280,7 @@
                        :style {:left (px (+ origin-x x)) :top (px y) :width (px (first size)) :height (px (second size))}}
      [:div.tt-deck-heading
       [move-handle label path xy size prefs gesture zoom]
-      [button label #(open-deck! path) {:class "tt-deck-title" :aria-label (str "Open " label " spread") :aria-haspopup "dialog"}]
+      [button label #(open-deck! path) {:class "tt-deck-title" :aria-label (str "Open " (:name p) "’s " label " spread") :aria-haspopup "dialog"}]
       [:span.tt-deck-count n]
       (when (pos? n)
         [button (if spread? "Stack" "Spread")
@@ -353,7 +353,7 @@
                           path [pid id] spread? (= :spread (get-in prefs (conj path :mode) (if (and kind (= pid focus)) :spread :stack)))]
                     ;; Opponents need only their public pieces; omitted decks also
                     ;; leave the camera bounds, including old saved hand positions.
-                    :when (if kind (some? hand) (or (some? hand) (seq ids)))]
+                    :when (if kind (some? hand) true)]
                 {:path path :label label :ids ids :spread? spread?
                  :xy (position prefs path (nth [(if left-hand? [(- (+ hand-width minor-width 48)) 160] [24 704])
                                                (if left-hand? [(- (+ minor-width 24)) 160] [(+ 48 hand-width) 704])
@@ -745,6 +745,7 @@
              (for [d decks] ^{:key (:path d)} [deck d player prefs gesture zoom open-deck!])])]]]
        [:div.tt-table-edge [:span {:title "Shift + right-click opens the browser menu."} "Drag to pan · right button + scroll to pan sideways · pinch or Ctrl / ⌘ + wheel to zoom"]
         (when (and decision? (= decision-key @dismissed)) [button decision-title #(reset! dismissed nil)])]
+       [voice/controls room]
        [:div.tt-modal
         (when (and active-popup (not vote-visible?) (not (seq (:takeback room))))
           [controls/modal

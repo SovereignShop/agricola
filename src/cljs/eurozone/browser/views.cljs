@@ -447,6 +447,7 @@
        [:g {:role (when editable? "button") :tab-index (when editable? (if selectable? 0 -1))
             :aria-disabled (when editable? (not selectable?)) :aria-pressed (when editable? (boolean chosen?))
             :aria-label (str "Farm space " (inc i) ": " (name tile) (when (fenced i) ", pasture"))
+            :data-voice-position (str "row " (inc (second (a/cell-position i))) ", column " (inc (first (a/cell-position i))))
             :on-click #(when selectable? (if-let [choose! (:choose-cell! draft)] (choose! i) (select-cell! draft i edit!)))
             :on-key-down #(when (and selectable? (#{"Enter" " "} (.-key %))) (.preventDefault %) (if-let [choose! (:choose-cell! draft)] (choose! i) (select-cell! draft i edit!)))}
         (when (or (>= i 15) (= tile :removed))
@@ -518,6 +519,7 @@
        ^{:key edge}
        [:g {:role (when (and fence-mode? eligible? (not built?)) "button") :tab-index (when (and fence-mode? eligible? (not built?)) 0)
             :aria-label (str "Fence " edge (when built? ", built"))
+            :aria-pressed (boolean selected?)
             :on-click (fn [e] (.stopPropagation e) (when (and fence-mode? eligible? (not built?)) (if edit! (edit! :fences (toggle-value (:fences draft) edge)) (dispatch :draft-toggle-value :fences edge))))
             :on-key-down #(when (and fence-mode? eligible? (not built?) (#{"Enter" " "} (.-key %))) (.preventDefault %) (if edit! (edit! :fences (toggle-value (:fences draft) edge)) (dispatch :draft-toggle-value :fences edge)))}
         [:line {:x1 (if horizontal? (+ x 6) x) :y1 (if horizontal? y (+ y 6))
