@@ -1,5 +1,17 @@
 # ChatGPT account connection prototype
 
+**Status: disabled at the user’s request.** Voice controls and hosted voice/assistant
+endpoints are unavailable. The implementation below is retained for future work.
+
+**Product requirement (2026-11-13): players must not install or run a local
+companion.** The prototype below does not meet this requirement and is retained
+as implementation history. The external microphone website needs no installation;
+the local ChatGPT account bridge is the part that must be replaced. Hosted AI
+can use the game's API account, or players' own ChatGPT plans through an approved
+hosted integration. The billing/access choice is pending; no hosted replacement
+has been deployed. OpenAI's [current integration guide](https://developers.openai.com/siwc/token-sharing-open-source)
+directs remotely hosted apps to request access separately from the local OSS flow.
+
 This local companion supports **Continue with ChatGPT** and an explicitly paired
 game assistant without changing game authentication or the paused state migration. It uses
 OpenAI's documented public-client registration flow for local open-source apps.

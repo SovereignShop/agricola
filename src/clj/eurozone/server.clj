@@ -103,6 +103,10 @@
 (defn handler [app request]
   (let [uri (:uri request)]
     (cond
+      ;; Voice is paused, including links opened from an older browser bundle.
+      (or (#{"/assistant" "/voice" "/voice.html"} uri)
+          (str/starts-with? uri "/voice/") (str/starts-with? uri "/voice-"))
+      (transcription/response 503 {:error "Voice commands are currently disabled."})
       (= uri "/health") {:status 200 :headers {"Content-Type" "text/plain"} :body "Eurozone is ready"}
       (= uri "/assistant")
       (if (and (= :get (:request-method request)) (same-origin? request))
