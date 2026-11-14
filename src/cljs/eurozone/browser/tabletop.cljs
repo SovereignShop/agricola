@@ -5,7 +5,7 @@
             [clojure.string :as str] [agricola.engine :as a] [agricola.house-rules :as house]
             [agricola.card-game :as game] [agricola.card-impact :as impact] [agricola.card-rules :as cards]
             [eurozone.browser.art :as art] [eurozone.browser.card-art :as card-art]
-            [eurozone.browser.readability :as readability] [eurozone.browser.voice :as voice]
+            [eurozone.browser.readability :as readability]
             [eurozone.browser.card-review :as card-review]
             [eurozone.browser.table-controls :as controls]))
 
@@ -745,7 +745,6 @@
              (for [d decks] ^{:key (:path d)} [deck d player prefs gesture zoom open-deck!])])]]]
        [:div.tt-table-edge [:span {:title "Shift + right-click opens the browser menu."} "Drag to pan · right button + scroll to pan sideways · pinch or Ctrl / ⌘ + wheel to zoom"]
         (when (and decision? (= decision-key @dismissed)) [button decision-title #(reset! dismissed nil)])]
-       [voice/controls room]
        [:div.tt-modal
         (when (and active-popup (not vote-visible?) (not (seq (:takeback room))))
           [controls/modal

@@ -1,5 +1,8 @@
 # Voice command prototype
 
+**Status: disabled at the user’s request.** Voice controls and hosted voice/assistant
+endpoints are unavailable. The implementation below is retained for future work.
+
 Open a seated game, choose **Voice commands**, then **Speak**. Allow the browser
 to use the microphone. Say “take wood”, “fishing”, “take grain”, or the name of an
 available resource/animal space. With local transcription, choose **Finish recording**
